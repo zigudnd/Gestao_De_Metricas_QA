@@ -10,6 +10,7 @@ if (typeof ChartDataLabels !== 'undefined') {
         formatter: function(value) { return value > 0 ? value : ''; }
     });
 }
+
 window.escapeHTML = function(str) {
         if (str === null || str === undefined) return '';
         return str.toString()
@@ -18,15 +19,6 @@ window.escapeHTML = function(str) {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
-    }
-
-    if (typeof ChartDataLabels !== 'undefined') {
-        Chart.register(ChartDataLabels);
-        Chart.defaults.set('plugins.datalabels', {
-            color: '#ffffff',
-            font: { weight: '600', size: 12, family: "'Inter', sans-serif" },
-            formatter: function(value) { return value > 0 ? value : ''; }
-        });
     }
 
 

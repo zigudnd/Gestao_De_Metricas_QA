@@ -219,13 +219,5 @@ window.saveState = function() {
     }
 
     
-window.getStorageKey = function() {
-        return currentSprintId ? (API_CONFIG.localBackupKey + '_' + currentSprintId) : API_CONFIG.localBackupKey;
-    }
 
-    let saveToastTimeout;
-    let remotePersistTimeout;
-    let remotePersistInFlight = false;
-    let remotePersistQueued = false;
 
-    
