@@ -852,6 +852,8 @@ Tela de Login,Login com sucesso,"Dado que o usuario esta na pagina de login\nQua
 Tela de Login,Login com senha incorreta,"Dado que o usuario esta na pagina de login\nQuando ele preenche a senha errada\nEntao exibe mensagem de erro",Baixa
 Recuperação de Senha,Solicitar redefinição,"Dado que o usuario clica em Esqueci minha senha\nQuando ele informa o e-mail\nEntao recebe o link de redefinição",Moderada
 `;
+    // Padrão obrigatório: coluna 1 = Funcionalidade, coluna 2 = Cenário
+    // Colunas 3 (Gherkin) e 4 (Complexidade) são opcionais
     _downloadFile(csvContent, 'template_importacao.csv', 'text/csv;charset=utf-8');
 };
 
@@ -999,14 +1001,16 @@ function _importFromCSV(text) {
     const rows = _parseCSV(text).filter(r => r.some(c => c.trim()));
     if (rows.length < 2) { alert('Arquivo CSV vazio ou inválido.'); return; }
 
+    // Padrão posicional: coluna 1 = Funcionalidade, coluna 2 = Cenário (obrigatórias)
+    // Colunas 3 (Gherkin) e 4 (Complexidade) são opcionais — detectadas por palavra-chave
+    const colFeature  = 0;
+    const colScenario = 1;
     const header = rows[0].map(h => h.toLowerCase().trim());
-    const colFeature  = header.findIndex(h => /funcionalidade|feature/.test(h));
-    const colScenario = header.findIndex(h => /cenário|cenario|scenario|caso|título|titulo|name/.test(h));
-    const colGherkin  = header.findIndex(h => /gherkin|passos|steps|descri/.test(h));
-    const colComplex  = header.findIndex(h => /complexidade|complexity/.test(h));
+    const colGherkin = header.findIndex(h => /gherkin|passos|steps|descri/.test(h));
+    const colComplex = header.findIndex(h => /complexidade|complexity/.test(h));
 
-    if (colFeature === -1 || colScenario === -1) {
-        alert(`Cabeçalho do CSV não reconhecido.\nColunas encontradas: ${rows[0].join(', ')}\n\nFormato esperado:\nFuncionalidade,Cenário,Gherkin,Complexidade`);
+    if (rows[0].length < 2) {
+        alert('O arquivo CSV precisa ter pelo menos 2 colunas:\nColuna 1 → Funcionalidade\nColuna 2 → Cenário');
         return;
     }
 
@@ -1054,23 +1058,30 @@ function _importFromXLSX(arrayBuffer) {
     }
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
 
-    if (rows.length === 0) { alert('Planilha vazia.'); return; }
+    // Lê como array de arrays para usar detecção posicional (col 0 = Feature, col 1 = Cenário)
+    const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+    if (rawRows.length < 2) { alert('Planilha vazia ou sem dados.'); return; }
 
-    const keys = Object.keys(rows[0]);
-    function findCol(candidates) {
-        return keys.find(k => candidates.some(c => k.toLowerCase().includes(c))) || null;
-    }
-    const colFeature  = findCol(['funcionalidade', 'feature']);
-    const colScenario = findCol(['cenário', 'cenario', 'scenario', 'caso', 'título', 'titulo', 'name']);
-    const colGherkin  = findCol(['gherkin', 'passos', 'steps', 'descri']);
-    const colComplex  = findCol(['complexidade', 'complexity']);
+    const headerRow = rawRows[0].map(h => String(h).toLowerCase().trim());
 
-    if (!colFeature || !colScenario) {
-        alert(`Cabeçalho da planilha não reconhecido.\nColunas encontradas: ${keys.join(', ')}\n\nFormato esperado:\nFuncionalidade | Cenário | Gherkin | Complexidade`);
+    if (headerRow.length < 2) {
+        alert('A planilha precisa ter pelo menos 2 colunas:\nColuna 1 → Funcionalidade\nColuna 2 → Cenário');
         return;
     }
+
+    // Padrão posicional: coluna 1 = Funcionalidade, coluna 2 = Cenário (obrigatórias)
+    // Colunas Gherkin e Complexidade são opcionais — detectadas por palavra-chave no cabeçalho
+    const colFeature  = 0;
+    const colScenario = 1;
+    function findCol(candidates) {
+        const idx = headerRow.findIndex(h => candidates.some(c => h.includes(c)));
+        return idx >= 0 ? idx : -1;
+    }
+    const colGherkin = findCol(['gherkin', 'passos', 'steps', 'descri']);
+    const colComplex = findCol(['complexidade', 'complexity']);
+
+    const rows = rawRows.slice(1); // remove cabeçalho
 
     let importedCount = 0;
     let newFeatureCount = 0;
@@ -1081,8 +1092,8 @@ function _importFromXLSX(arrayBuffer) {
         const scenarioName = String(row[colScenario] || '').trim();
         if (!scenarioName) return;
 
-        const gherkin    = colGherkin ? String(row[colGherkin] || '').trim() : '';
-        const rawComplex = colComplex ? String(row[colComplex] || '').trim() : '';
+        const gherkin    = colGherkin >= 0 ? String(row[colGherkin] || '').trim() : '';
+        const rawComplex = colComplex >= 0 ? String(row[colComplex] || '').trim() : '';
         const complexity = validComplexities.find(c => c.toLowerCase() === rawComplex.toLowerCase()) || 'Baixa';
 
         let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
