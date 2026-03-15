@@ -1,0 +1,17 @@
+{
+  "name": "qa-dashboard-supabase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA Dashboard com persistência em API Node.js + Supabase",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2"
+  }
+}
