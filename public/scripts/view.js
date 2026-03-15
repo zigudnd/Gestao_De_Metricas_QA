@@ -137,6 +137,7 @@ window.renderAll = function() {
         updateCalculations();
         renderDailyReport();
         renderAlertsList();
+        renderFailedScenariosList();
         renderOpenBugsList();
         renderAlignments();
         renderBugFilters();
@@ -326,11 +327,46 @@ window.updateCalculations = function() {
     }
 
     
+// ── Alertas de Impedimentos (funcionalidades bloqueadas) ─────────────────────
 window.renderAlertsList = function() {
         const container = document.getElementById('alerts-list-exec');
         if (!container) return;
 
-        let failedScenarios = [];
+        const blockedFeatures = state.features.filter(f => f.status === 'Bloqueada');
+        document.getElementById('kpi-telas-bloqueadas').innerText = blockedFeatures.length;
+
+        if (blockedFeatures.length === 0) {
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 72px; color: var(--success); font-weight: 600; padding: 16px 20px; background: #ecfdf5; border-radius: 8px; border: 1px dashed #a7f3d0;">
+                    ✅ Nenhum impedimento no momento. Tudo desbloqueado!
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = blockedFeatures.map(f => `
+            <div style="padding: 14px 16px; background: #fff5f5; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <strong style="color: #991b1b; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <span style="display: flex; align-items: center; justify-content: center; background: #fee2e2; width: 28px; height: 28px; border-radius: 6px; font-size: 14px;">🖥️</span>
+                        ${escapeHTML(f.name || 'Sem nome')}
+                    </strong>
+                    <span style="font-size: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0;">Tela Bloqueada</span>
+                </div>
+                <p style="font-size: 13px; color: #7f1d1d; background: #fee2e2; padding: 10px 12px; border-radius: 6px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; border: 1px dashed #fca5a5; margin: 0;">
+                    <span style="font-size: 14px; margin-top: 1px; flex-shrink: 0;">📌</span>
+                    <span><strong style="color: #991b1b;">Motivo:</strong><br>${escapeHTML(f.blockReason || 'Motivo não informado.')}</span>
+                </p>
+            </div>
+        `).join('');
+    }
+
+// ── Cenários com Falha ────────────────────────────────────────────────────────
+window.renderFailedScenariosList = function() {
+        const container = document.getElementById('failed-scenarios-list-exec');
+        if (!container) return;
+
+        const failedScenarios = [];
         state.features.forEach(f => {
             if (f.cases) {
                 f.cases.forEach(c => {
@@ -341,71 +377,29 @@ window.renderAlertsList = function() {
             }
         });
 
-        const blockedFeatures = state.features.filter(f => f.status === 'Bloqueada');
-        document.getElementById('kpi-telas-bloqueadas').innerText = blockedFeatures.length;
-
-        if (failedScenarios.length === 0 && blockedFeatures.length === 0) {
+        if (failedScenarios.length === 0) {
             container.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 100px; color: var(--success); font-weight: 600; padding: 20px; background: #ecfdf5; border-radius: 8px; border: 1px dashed #a7f3d0;">
-                    ✅ Nenhum impedimento ou falha no momento. Tudo limpo!
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 72px; color: var(--success); font-weight: 600; padding: 16px 20px; background: #ecfdf5; border-radius: 8px; border: 1px dashed #a7f3d0;">
+                    ✅ Nenhum cenário com falha!
                 </div>
             `;
             return;
         }
 
-        let html = '';
-
-        // ── Bloco: Itens Bloqueados ─────────────────────────────────────────
-        if (blockedFeatures.length > 0) {
-            html += `<div style="font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-block; width: 3px; height: 14px; background: #ef4444; border-radius: 2px;"></span>
-                Itens Bloqueados (${blockedFeatures.length})
-            </div>`;
-            html += blockedFeatures.map(f => `
-                <div style="padding: 14px 16px; background: #fff5f5; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                        <strong style="color: #991b1b; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                            <span style="display: flex; align-items: center; justify-content: center; background: #fee2e2; width: 28px; height: 28px; border-radius: 6px; font-size: 14px;">🖥️</span>
-                            ${escapeHTML(f.name || 'Sem nome')}
-                        </strong>
-                        <span style="font-size: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Tela Bloqueada</span>
-                    </div>
-                    <p style="font-size: 13px; color: #7f1d1d; background: #fee2e2; padding: 10px 12px; border-radius: 6px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; border: 1px dashed #fca5a5; margin: 0;">
-                        <span style="font-size: 14px; margin-top: 1px;">📌</span>
-                        <span><strong style="color: #991b1b;">Motivo do Impedimento:</strong><br>${escapeHTML(f.blockReason || 'Motivo não informado.')}</span>
-                    </p>
+        container.innerHTML = failedScenarios.map(item => `
+            <div style="padding: 12px 14px; background: #fff5f5; border: 1px solid #fecaca; border-left: 4px solid #f87171; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                    <strong style="color: #991b1b; font-size: 13px; display: flex; align-items: center; gap: 7px; line-height: 1.3;">
+                        <span style="display: flex; align-items: center; justify-content: center; background: #fee2e2; width: 26px; height: 26px; border-radius: 6px; font-size: 13px; flex-shrink: 0;">🧪</span>
+                        ${escapeHTML(item.scenario.name || 'Sem nome')}
+                    </strong>
+                    <span style="font-size: 10px; background: #f87171; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0;">Falhou</span>
                 </div>
-            `).join('');
-        }
-
-        // ── Separador visual entre os dois blocos ───────────────────────────
-        if (blockedFeatures.length > 0 && failedScenarios.length > 0) {
-            html += `<div style="border-top: 1px dashed #fca5a5; margin: 16px 0;"></div>`;
-        }
-
-        // ── Bloco: Cenários com Falha ───────────────────────────────────────
-        if (failedScenarios.length > 0) {
-            html += `<div style="font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-block; width: 3px; height: 14px; background: #f87171; border-radius: 2px;"></span>
-                Cenários com Falha (${failedScenarios.length})
-            </div>`;
-            html += failedScenarios.map(item => `
-                <div style="padding: 14px 16px; background: #fff5f5; border: 1px solid #fecaca; border-left: 4px solid #f87171; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                        <strong style="color: #991b1b; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                            <span style="display: flex; align-items: center; justify-content: center; background: #fee2e2; width: 28px; height: 28px; border-radius: 6px; font-size: 14px;">🧪</span>
-                            ${escapeHTML(item.scenario.name || 'Sem nome')}
-                        </strong>
-                        <span style="font-size: 10px; background: #f87171; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Cenário Falhou</span>
-                    </div>
-                    <div style="font-size: 13px; color: #7f1d1d; background: #fee2e2; padding: 6px 12px; border-radius: 6px; border: 1px dashed #fca5a5;">
-                        <strong style="color: #991b1b;">Funcionalidade:</strong> ${escapeHTML(item.featureName || 'Não Informada')}
-                    </div>
+                <div style="font-size: 12px; color: #7f1d1d; background: #fee2e2; padding: 5px 10px; border-radius: 6px; border: 1px dashed #fca5a5;">
+                    <strong style="color: #991b1b;">Funcionalidade:</strong> ${escapeHTML(item.featureName || 'Não informada')}
                 </div>
-            `).join('');
-        }
-
-        container.innerHTML = html;
+            </div>
+        `).join('');
     }
 
 window.renderOpenBugsList = function() {
