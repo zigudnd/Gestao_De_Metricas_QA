@@ -558,6 +558,7 @@ window.renderTables = function() {
             headDaily.innerHTML = `
                 <tr>
                     <th class="sticky-col">Funcionalidade / Tela</th>
+                    <th style="min-width: 180px; text-align: center;">Status / Bloqueio</th>
                     <th style="min-width: 130px; text-align: center;">Qtd. Testes (Total)</th>
                     <th style="min-width: 140px; text-align: center;">Total Executado</th>
                     ${headersDays}
@@ -586,11 +587,22 @@ window.renderTables = function() {
 
                 let colorExec = (f.exec === f.tests && f.tests > 0) ? 'var(--success)' : 'var(--text-main)';
 
+                const isBlocked = f.status === 'Bloqueada';
                 return `
-                <tr>
-                    <td class="sticky-col" style="font-weight: 600; color: #0f172a; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                        <span style="${f.status === 'Bloqueada' ? 'color: var(--danger); font-style: italic;' : ''}">${escapeHTML(f.name || 'Sem nome')}</span>
-                        ${f.status === 'Bloqueada' ? '<span style="font-size: 9px; background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #fecaca; white-space: nowrap;">Bloqueada</span>' : ''}
+                <tr style="${isBlocked ? 'background: #fff8f8;' : ''}">
+                    <td class="sticky-col" style="font-weight: 600; color: #0f172a;">
+                        <span style="${isBlocked ? 'color: var(--danger); font-style: italic;' : ''}">${escapeHTML(f.name || 'Sem nome')}</span>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle; padding: 6px 8px;">
+                        <select onchange="this.blur(); updateFeature(${index}, 'status', this.value)"
+                            style="width: 100%; font-size: 12px; font-weight: 700; padding: 5px 6px; border-radius: 6px; border: 1px solid ${isBlocked ? '#fca5a5' : '#a7f3d0'}; background: ${isBlocked ? '#fee2e2' : '#ecfdf5'}; color: ${isBlocked ? '#b91c1c' : '#047857'}; cursor: pointer;">
+                            <option value="Ativa" ${!isBlocked ? 'selected' : ''}>🟢 Ativa</option>
+                            <option value="Bloqueada" ${isBlocked ? 'selected' : ''}>🔴 Bloqueada</option>
+                        </select>
+                        ${isBlocked ? `<input type="text" value="${escapeHTML(f.blockReason || '')}"
+                            placeholder="Motivo do bloqueio..."
+                            onchange="updateFeature(${index}, 'blockReason', this.value)"
+                            style="margin-top: 5px; width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 5px; border: 1px solid #fca5a5; background: #fff1f1; color: #b91c1c; font-weight: 600; box-sizing: border-box;">` : ''}
                     </td>
                     <td style="color: var(--text-muted); font-weight: 600; text-align: center; font-size: 15px; background: #f8fafc;">${f.tests}</td>
                     <td style="font-weight: 700; text-align: center; color: ${colorExec}; font-size: 15px;">${f.exec}</td>
@@ -714,17 +726,6 @@ window.renderTestCasesAccordion = function() {
                             <div style="flex-grow: 1; min-width: 250px;">
                                 <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Nome da Funcionalidade</label>
                                 <input type="text" value="${escapeHTML(f.name)}" placeholder="Ex: Tela de Login" onchange="updateFeature(${fIndex}, 'name', this.value)" style="font-weight: 600; font-size: 15px; border-color: #cbd5e1;">
-                            </div>
-                            <div style="width: 140px;">
-                                <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Status Atual</label>
-                                <select onchange="this.blur(); updateFeature(${fIndex}, 'status', this.value)" style="font-weight: 600; font-size: 14px; border-color: #cbd5e1; height: 42px;">
-                                    <option value="Ativa" ${f.status === 'Ativa' ? 'selected' : ''}>🟢 Ativa</option>
-                                    <option value="Bloqueada" ${f.status === 'Bloqueada' ? 'selected' : ''}>🔴 Bloqueada</option>
-                                </select>
-                            </div>
-                            <div style="flex-grow: 1; min-width: 200px;">
-                                <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Motivo do Impedimento</label>
-                                <input type="text" value="${escapeHTML(f.blockReason || '')}" placeholder="${f.status === 'Bloqueada' ? 'Descreva o motivo da tela estar bloqueada...' : 'Não aplicável (Tela ativa)'}" onchange="updateFeature(${fIndex}, 'blockReason', this.value)" ${f.status !== 'Bloqueada' ? 'disabled' : ''} style="${f.status !== 'Bloqueada' ? 'opacity: 0.5; background: #f8fafc;' : ''} font-weight: 600; font-size: 14px; border-color: #cbd5e1;">
                             </div>
                             <div style="width: 150px;">
                                 <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Carga Massiva (Qtd)</label>
