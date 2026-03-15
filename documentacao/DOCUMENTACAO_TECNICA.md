@@ -1,5 +1,5 @@
 # Documentação Técnica — QA Dashboard
-**Versão:** 2.0 | **Atualizado em:** 2026-03-14
+**Versão:** 2.1 | **Atualizado em:** 2026-03-15
 
 ---
 
@@ -20,9 +20,11 @@
 13. [Funcionalidade: Importação de Cenários](#13-funcionalidade-importação-de-cenários)
 14. [Funcionalidade: Evidências Visuais (Mockups)](#14-funcionalidade-evidências-visuais-mockups)
 15. [Funcionalidade: Exportação de Dados](#15-funcionalidade-exportação-de-dados)
-16. [API do Servidor Node.js](#16-api-do-servidor-nodejs)
-17. [Guia de Manutenção por Funcionalidade](#17-guia-de-manutenção-por-funcionalidade)
-18. [Dependências Externas](#18-dependências-externas)
+16. [Funcionalidade: PDF de Conclusão de Sprint](#16-funcionalidade-pdf-de-conclusão-de-sprint)
+17. [API do Servidor Node.js](#17-api-do-servidor-nodejs)
+18. [API do Servidor MongoDB (server_mongo.js)](#18-api-do-servidor-mongodb-server_mongojs)
+19. [Guia de Manutenção por Funcionalidade](#19-guia-de-manutenção-por-funcionalidade)
+20. [Dependências Externas](#20-dependências-externas)
 
 ---
 
@@ -39,9 +41,10 @@ O **QA Dashboard** é uma aplicação web para acompanhamento de qualidade de so
 | Gráficos     | Chart.js 4 + chartjs-plugin-datalabels          |
 | Planilhas    | SheetJS (xlsx 0.20.3)                           |
 | Screenshot   | html2canvas 1.4.1                               |
+| PDF          | jsPDF 2.5.1 (geração de PDF multi-página no browser) |
 | Tipografia   | Google Fonts — Inter                            |
 | Backend      | Node.js + Express 4                             |
-| Persistência | LocalStorage (primário) + arquivo JSON local ou Supabase (secundário) |
+| Persistência | LocalStorage (primário) + arquivo JSON local, Supabase ou MongoDB (secundário) |
 
 ### Princípio Fundamental
 
@@ -53,19 +56,22 @@ O **QA Dashboard** é uma aplicação web para acompanhamento de qualidade de so
 
 ```
 qa_dashboard_project/
-├── server.js                    # API Express (backup remoto)
+├── server.js                    # API Express (backup remoto — JSON local ou Supabase)
+├── server_mongo.js              # API Express com MongoDB via Mongoose
 ├── package.json
-├── data/                        # JSONs por sprint (modo local)
+├── .env                         # Variáveis de ambiente (MONGODB_URI, etc.) — não versionado
+├── data/                        # JSONs por sprint (modo local) — não versionado
 │   └── dashboard_{sprintId}.json
 ├── public/
 │   ├── index.html               # SPA principal — todo o HTML estático
 │   └── scripts/
 │       ├── model.js             # Estado global, persistência, normalização
 │       ├── view.js              # Renderização de todos os painéis da sprint
-│       ├── controller.js        # Handlers de eventos, importação, lógica de negócio
+│       ├── controller.js        # Handlers de eventos, importação, lógica de negócio, PDF
 │       └── home_logic.js        # Tela Home: CRUD de sprints, filtros, drag & drop
 └── documentacao/
-    └── DOCUMENTACAO_TECNICA.md  # Este arquivo
+    ├── DOCUMENTACAO_TECNICA.md  # Este arquivo
+    └── TUTORIAL_MONGODB.md      # Tutorial passo a passo de setup com MongoDB
 ```
 
 ### Diagrama de Arquitetura
@@ -702,8 +708,24 @@ renderBurndown()
   │      execD = Σ feature.execution[`D${d}`] para todas features
   │      realData[d] = realData[d-1] − execD
   │
+  ├─ Flags de Dias com Execução Zero (zeroExecFlags):
+  │    Para d de 1 a sprintDays:
+  │      inRange = d <= maxDay (último dia com dado real)
+  │      execVal = globalExecution[`D${d}`] || 0
+  │      zeroExecFlags[d] = inRange && execVal === 0
+  │
+  ├─ Coloração condicional dos pontos da linha real:
+  │    pointBackgroundColor[d] = zeroExecFlags[d] ? '#ef4444' : '#2563eb'
+  │    pointRadius[d]          = zeroExecFlags[d] ? 7 : 4
+  │
+  ├─ Coloração do rótulo do eixo X:
+  │    ticks.color(ctx) = zeroExecFlags[ctx.index] ? '#ef4444' : '#94a3b8'
+  │    ticks.font(ctx)  = { weight: zeroExecFlags[ctx.index] ? '700' : '400' }
+  │
   └─ Chart.js renderiza gráfico de linhas
 ```
+
+> **Dias com execução zero** (dentro do intervalo executado) são sinalizados em **vermelho** no gráfico: o ponto fica maior (7px), vermelho, e o rótulo do eixo X fica negrito vermelho. Isso permite identificar visualmente dias improdutivos (impedimentos, ausências, feriados).
 
 ### Integração com Execução de Casos de Teste
 
@@ -846,17 +868,25 @@ _parseCSV(text):
     Senão: adiciona ao campo atual
 ```
 
-### Detecção de Colunas CSV/XLSX (Auto-mapping)
+### Detecção de Colunas CSV/XLSX — Padrão Posicional
+
+A importação utiliza **detecção por posição de coluna** (não por palavra-chave). O template padrão segue a ordem:
 
 ```
-Mapeamento por palavra-chave (case-insensitive, partial match):
-
-  'feature' → coluna de nome da Feature
-  'cenário' ou 'cenario' ou 'scenario' ou 'caso' ou 'test' → coluna de nome do Caso
-  'gherkin' ou 'steps' ou 'passos' → coluna de Gherkin
-  'complexidade' ou 'complexity' ou 'prioridade' → coluna de Complexidade
-  'status' → coluna de Status
+Coluna 0 (A) → Feature (nome da funcionalidade)
+Coluna 1 (B) → Cenário (nome do caso de teste)
+Coluna 2 (C) → Gherkin (passos BDD) — opcional
+Coluna 3 (D) → Complexidade — opcional
+Coluna 4 (E) → Status — opcional
 ```
+
+```
+CSV:  row[0] = Feature, row[1] = Cenario
+XLSX: XLSX.utils.sheet_to_json(sheet, { header: 1 })
+      → array de arrays → row[0], row[1]
+```
+
+> **Importante:** A primeira linha do arquivo é tratada como cabeçalho e ignorada. A partir da segunda linha, a coluna 0 é sempre Feature e a coluna 1 é sempre Cenário, independentemente dos nomes das colunas.
 
 ### Template CSV
 
@@ -975,7 +1005,70 @@ Arquivo gerado: qa_dashboard_backup_YYYY-MM-DD.json
 
 ---
 
-## 16. API do Servidor Node.js
+## 16. Funcionalidade: PDF de Conclusão de Sprint
+
+**Arquivo:** `controller.js` → `window.exportSprintPDF()`
+
+**Dependência:** jsPDF 2.5.1 (carregado via CDN no `index.html`) + html2canvas 1.4.1
+
+### Estrutura do Documento PDF
+
+O PDF é gerado com múltiplas páginas em formato A4 portrait:
+
+| Página | Conteúdo |
+|--------|----------|
+| 1      | Retrato Visual da Sprint — capturas dos gráficos (Burndown, Health Score, Bugs por Funcionalidade, Bugs por Stack) via html2canvas |
+| 2      | Alinhamentos Técnicos e de Produto — texto dos campos de alinhamento registrados na sprint |
+| 3      | Tabela de Bugs — lista de todos os bugs com severidade, status, dev responsável, MTTR |
+| 4      | Execução por Funcionalidade — tabela com totais de testes, executados, bugs e status por feature |
+| 5      | Premissas, Plano de Ação e Bloqueios — campos de riscos e anotações de gestão |
+| N+     | Reports Diários — um bloco por dia com data, texto do report e status das features |
+
+### Restrição de Encoding
+
+> jsPDF com a fonte padrão Helvetica suporta apenas **Latin-1 (ISO-8859-1)**. Caracteres fora desse conjunto (emojis, traço em, seta Unicode `→`) serão exibidos como caixa vazia no Chrome. A função substitui esses caracteres antes de chamar `doc.text()`:
+> - Emojis → removidos
+> - `—` (U+2014) → `-`
+> - `→` (U+2192) → `:`
+> - `·` (ponto central) → `|`
+
+### Diagrama de Fluxo
+
+```
+exportSprintPDF()
+  │
+  ├─ Verifica se jsPDF está carregado (window.jspdf)
+  ├─ Abre tab-1 temporariamente (display:block, visibility:hidden)
+  │    para garantir que os canvas Chart.js estejam renderizados
+  │
+  ├─ html2canvas(chartContainer) → imageData base64
+  │    └─ Página 1: cabeçalho + imagem dos gráficos
+  │
+  ├─ Página 2: Alinhamentos Técnicos (model.state.notes.alignments)
+  │
+  ├─ Página 3: Tabela de Bugs (model.state.bugs[])
+  │
+  ├─ Página 4: Tabela por Funcionalidade (model.state.features[])
+  │
+  ├─ Página 5: Premissas / Plano de Ação / Bloqueios (model.state.risks)
+  │
+  ├─ Para cada dia D1..maxDay:
+  │    Página N: Report diário + status features naquele dia
+  │
+  ├─ Rodapé em todas as páginas: "{sprint title} | {data} | Pag X/Y"
+  │
+  └─ doc.save('{squad}_{title}.pdf')
+```
+
+### Manutenção
+
+- **Adicionar nova seção ao PDF**: Adicione uma nova chamada a `doc.addPage()` + `_pdfHeader()` + `doc.text()` ou `doc.autoTable()` em `exportSprintPDF()` no ponto desejado.
+- **Mudar fonte/tamanho**: Altere `doc.setFontSize()` e `doc.setFont()` nas seções correspondentes.
+- **Adicionar logo**: Use `doc.addImage(base64, 'PNG', x, y, w, h)` após a leitura da imagem.
+
+---
+
+## 17. API do Servidor Node.js
 
 **Arquivo:** `server.js`
 
@@ -1034,7 +1127,70 @@ Browser                   model.js                    server.js
 
 ---
 
-## 17. Guia de Manutenção por Funcionalidade
+## 18. API do Servidor MongoDB (server_mongo.js)
+
+**Arquivo:** `server_mongo.js`
+**ODM:** Mongoose 8+
+**Banco:** MongoDB Atlas (cloud) ou instância local
+
+### Schema Mongoose
+
+```javascript
+const dashboardSchema = new mongoose.Schema({
+    sprint_id:  { type: String, required: true, unique: true, index: true },
+    payload:    { type: mongoose.Schema.Types.Mixed, required: true },
+    updated_at: { type: Date, default: Date.now }
+}, { strict: false });
+```
+
+Cada documento representa uma sprint completa. O campo `payload` armazena o JSON de estado integralmente (sem schema rígido).
+
+### Endpoints
+
+| Método | Rota                         | Descrição                                     |
+|--------|------------------------------|-----------------------------------------------|
+| GET    | `/api/health`                | Status do serviço + estado da conexão MongoDB |
+| GET    | `/config.js`                 | Configuração runtime (projectKey, storageType)|
+| GET    | `/api/dashboard/:sprintId`   | Lê payload de uma sprint                      |
+| PUT    | `/api/dashboard/:sprintId`   | Upsert (cria ou atualiza) uma sprint          |
+| GET    | `/api/sprints`               | Lista todas as sprints (id, title, squad, updatedAt) |
+| DELETE | `/api/dashboard/:sprintId`   | Remove uma sprint                             |
+| GET    | `*`                          | Serve `public/index.html` (SPA fallback)      |
+
+### Variáveis de Ambiente
+
+| Variável          | Padrão    | Obrigatória |
+|-------------------|-----------|-------------|
+| `MONGODB_URI`     | —         | **Sim**     |
+| `PORT`            | `3000`    | Não         |
+| `QA_PROJECT_KEY`  | `android` | Não         |
+
+### Como Iniciar
+
+```bash
+# Instalar dependências (inclui mongoose)
+npm install
+
+# Criar .env na raiz do projeto
+echo "MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/qa_dashboard" > .env
+
+# Iniciar o servidor MongoDB
+node server_mongo.js
+```
+
+### Diferenças em Relação ao server.js
+
+| Aspecto          | `server.js`              | `server_mongo.js`         |
+|------------------|--------------------------|---------------------------|
+| Storage          | JSON local ou Supabase   | MongoDB via Mongoose      |
+| Multi-sprint     | Por chave de projeto     | Por sprint_id (document)  |
+| Listagem         | Não suportado            | GET /api/sprints          |
+| Delete           | Não suportado            | DELETE /api/dashboard/:id |
+| Rota de config   | `storageType: 'local'`   | `storageType: 'mongodb'`  |
+
+---
+
+## 19. Guia de Manutenção por Funcionalidade
 
 ### 17.1 Adicionar Nova Aba ao Dashboard
 
@@ -1143,7 +1299,7 @@ Se o DnD parar de funcionar:
 
 ---
 
-## 18. Dependências Externas
+## 20. Dependências Externas
 
 ### CDNs (carregados em `index.html`)
 
@@ -1153,17 +1309,21 @@ Se o DnD parar de funcionar:
 | chartjs-plugin-datalabels| 2.0.0   | Labels nos gráficos de barras/pizza           | `cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0`         |
 | html2canvas              | 1.4.1   | Screenshot do dashboard para exportação PNG   | `cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js` |
 | SheetJS (xlsx)           | 0.20.3  | Leitura de arquivos .xlsx/.xls na importação  | `cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js`   |
+| jsPDF                    | 2.5.1   | Geração de PDF multi-página no browser        | `cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js` |
 | Google Fonts (Inter)     | —       | Tipografia                                    | `fonts.googleapis.com`                                         |
+
+> **Nota sobre jsPDF:** A fonte padrão Helvetica suporta apenas Latin-1 (ISO-8859-1). Caracteres Unicode fora desse range (emojis, `—`, `→`, `·`) devem ser substituídos antes de renderizar texto no PDF.
 
 ### Pacotes Node.js (`package.json`)
 
-| Pacote          | Uso                                |
-|-----------------|------------------------------------|
-| `express`       | Framework HTTP do servidor         |
-| `cors`          | Habilita CORS para dev local       |
-| `@supabase/supabase-js` | Cliente Supabase (opcional) |
-| `dotenv`        | Carrega variáveis de `.env`        |
+| Pacote                  | Uso                                          |
+|-------------------------|----------------------------------------------|
+| `express`               | Framework HTTP do servidor                   |
+| `cors`                  | Habilita CORS para dev local                 |
+| `@supabase/supabase-js` | Cliente Supabase (opcional, `server.js`)     |
+| `mongoose`              | ODM MongoDB (obrigatório, `server_mongo.js`) |
+| `dotenv`                | Carrega variáveis de `.env`                  |
 
 ---
 
-*Documentação gerada em 2026-03-14. Para contribuições ou correções, edite este arquivo em `documentacao/DOCUMENTACAO_TECNICA.md`.*
+*Documentação v2.1 — atualizada em 2026-03-15. Para contribuições ou correções, edite este arquivo em `documentacao/DOCUMENTACAO_TECNICA.md`.*
