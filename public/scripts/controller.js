@@ -1307,10 +1307,10 @@ window.exportSprintPDF = async function() {
             : '';
         const version = cfg.targetVersion || '';
         const now     = new Date();
-        const footerTxt = `QA Dashboard v2.0  ·  Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+        const footerTxt = `QA Dashboard v2.0  |  Gerado em ${now.toLocaleDateString('pt-BR')} as ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
 
         // ── helpers ───────────────────────────────────────────────────────────
-        const kv  = id => document.getElementById(id)?.innerText?.trim() || '—';
+        const kv  = id => document.getElementById(id)?.innerText?.trim() || '-';
         const img = (canvasId, x, y, w, h) => {
             const c = document.getElementById(canvasId);
             if (!c) return;
@@ -1349,7 +1349,7 @@ window.exportSprintPDF = async function() {
         sf(17, 'bold', [255,255,255]);
         doc.text(title, mg + 6, y + 11);
         sf(8.5, 'normal', [191,219,254]);
-        const sub = [squad && `Squad: ${squad}`, qaName && `QA: ${qaName}`, period && `Período: ${period}`, version && `Versão: ${version}`].filter(Boolean).join('   ·   ');
+        const sub = [squad && `Squad: ${squad}`, qaName && `QA: ${qaName}`, period && `Periodo: ${period}`, version && `Versao: ${version}`].filter(Boolean).join('   |   ');
         doc.text(sub || ' ', mg + 6, y + 20);
         y += 31;
 
@@ -1405,7 +1405,7 @@ window.exportSprintPDF = async function() {
 
         // MTTR heatmap + KPI
         sf(9, 'bold', [15,23,42]);
-        doc.text('MTTR — Tempo Médio de Resolução (dias)', mg, y);
+        doc.text('MTTR - Tempo Medio de Resolucao (dias)', mg, y);
         y += 3;
         img('chart-mttr', mg, y, cW * 0.65, 32);
         doc.setFillColor(245,243,255);
@@ -1463,7 +1463,7 @@ window.exportSprintPDF = async function() {
         const openBugs     = bugs.filter(b => b.status !== 'Resolvido').length;
         const resolvedBugs = bugs.filter(b => b.status === 'Resolvido').length;
         sf(8.5, 'normal', [100,116,139]);
-        doc.text(`Total: ${bugs.length}  ·  Em aberto: ${openBugs}  ·  Resolvidos: ${resolvedBugs}`, mg, y);
+        doc.text(`Total: ${bugs.length}  |  Em aberto: ${openBugs}  |  Resolvidos: ${resolvedBugs}`, mg, y);
         y += 7;
 
         if (bugs.length === 0) {
@@ -1489,18 +1489,18 @@ window.exportSprintPDF = async function() {
                 doc.setFillColor(i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
                 doc.rect(mg, y, cW, rh, 'F');
                 sf(8, 'normal', [51,65,85]);
-                doc.text(doc.splitTextToSize(b.desc || b.title || '—', 76)[0], tc.desc, y + 5.5);
+                doc.text(doc.splitTextToSize(b.desc || b.title || '-', 76)[0], tc.desc, y + 5.5);
                 sf(7.5, 'bold', sevRgb[b.severity] || [100,116,139]);
-                doc.text(b.severity || '—', tc.sev, y + 5.5);
+                doc.text(b.severity || '-', tc.sev, y + 5.5);
                 sf(8, 'normal', [51,65,85]);
-                doc.text(b.stack || '—', tc.stack, y + 5.5);
+                doc.text(b.stack || '-', tc.stack, y + 5.5);
                 sf(7.5, 'bold', statRgb[b.status] || [100,116,139]);
-                doc.text(b.status || '—', tc.status, y + 5.5);
+                doc.text(b.status || '-', tc.status, y + 5.5);
                 sf(8, 'normal', [51,65,85]);
                 if (b.openedAt && b.resolvedAt) {
                     const d = Math.max(0, Math.round((new Date(b.resolvedAt + 'T00:00:00') - new Date(b.openedAt + 'T00:00:00')) / 86400000));
                     doc.text(`${d}d`, tc.mttr, y + 5.5);
-                } else { doc.text('—', tc.mttr, y + 5.5); }
+                } else { doc.text('-', tc.mttr, y + 5.5); }
                 y += rh;
             });
         }
@@ -1539,7 +1539,7 @@ window.exportSprintPDF = async function() {
                 const failed = (f.cases || []).filter(c => c.status === 'Falhou').length;
 
                 sf(8, 'normal', [51,65,85]);
-                doc.text(doc.splitTextToSize(f.name || '—', 93)[0], mg + 2, y + 6);
+                doc.text(doc.splitTextToSize(f.name || '-', 93)[0], mg + 2, y + 6);
                 sf(7.5, 'bold', f.status === 'Bloqueada' ? [239,68,68] : [16,185,129]);
                 doc.text(f.status || 'Ativa', mg + 100, y + 6);
                 sf(8, 'normal', [51,65,85]);
@@ -1567,7 +1567,7 @@ window.exportSprintPDF = async function() {
                 y += 6;
                 if (y + failedCases.length * 7 + 16 > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
                 sf(9, 'bold', [239,68,68]);
-                doc.text(`❌ Cenários com Falha (${failedCases.length})`, mg, y);
+                doc.text(`Cenarios com Falha (${failedCases.length})`, mg, y);
                 y += 4; hLine(y, [254,202,202]); y += 4;
                 failedCases.forEach(fc => {
                     if (y > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
@@ -1577,7 +1577,7 @@ window.exportSprintPDF = async function() {
                     doc.roundedRect(mg, y, cW, 7, 2, 2, 'FD');
                     doc.setFillColor(248,113,113); doc.rect(mg, y, 2.5, 7, 'F');
                     sf(8, 'normal', [153,27,27]);
-                    doc.text(doc.splitTextToSize(`${fc.feat}  →  ${fc.case}`, cW - 8)[0], mg + 5, y + 4.8);
+                    doc.text(doc.splitTextToSize(`${fc.feat}: ${fc.case}`, cW - 8)[0], mg + 5, y + 4.8);
                     y += 8;
                 });
             }
@@ -1662,7 +1662,7 @@ window.exportSprintPDF = async function() {
                 doc.roundedRect(mg, y, cW, cardH, 2, 2, 'FD');
                 doc.setFillColor(99,102,241); doc.rect(mg, y, 3, cardH, 'F');
                 sf(9, 'bold', [99,102,241]);
-                doc.text(`📅 ${formatted}`, mg + 6, y + 8);
+                doc.text(formatted, mg + 6, y + 8);
                 sf(8.5, 'normal', [51,65,85]);
                 doc.text(lines, mg + 6, y + 14);
                 y += cardH + 5;
