@@ -866,7 +866,7 @@ window.renderTestCasesAccordion = function() {
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    <button class="btn-outline" style="padding: 6px 12px; color: var(--primary-blue); border-color: #cbd5e1; font-size: 13px;" onclick="duplicateTestCase(${fIndex}, ${tcIndex})" title="Duplicar Caso de Teste">📑 Copiar</button>
+                                    <button class="btn-outline" style="padding: 6px 12px; color: var(--primary-blue); border-color: #cbd5e1; font-size: 13px;" onclick="duplicateTestCase(${fIndex}, ${tcIndex})" title="Duplicar Caso de Teste">🔁 Clonar</button>
                                     <button class="btn-outline" style="padding: 6px 12px; color: var(--danger); border-color: transparent; background: #fef2f2; font-size: 13px;" onclick="removeTestCase(${fIndex}, ${tcIndex})" title="Excluir">🗑️</button>
                                 </div>
                             </div>
