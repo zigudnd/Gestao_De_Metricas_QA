@@ -1268,6 +1268,423 @@ window.exportToImage = function() {
 
     
 
+// ─── Exportação PDF — Documento de Conclusão de Sprint ───────────────────────
+
+window.exportSprintPDF = async function() {
+    if (typeof window.jspdf === 'undefined') {
+        alert('Biblioteca jsPDF não carregada. Verifique sua conexão com a internet e recarregue a página.');
+        return;
+    }
+
+    // Toast de progresso
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;background:#1e293b;color:#fff;padding:14px 22px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.35);display:flex;align-items:center;gap:10px;';
+    toast.innerHTML = '<span style="animation:spin 1s linear infinite;display:inline-block;">⏳</span> Gerando PDF da Sprint…';
+    document.body.appendChild(toast);
+
+    // Garante que os gráficos estejam renderizados (tab-1 pode estar inativa)
+    const tab1 = document.getElementById('tab-1');
+    const wasInactive = tab1 && !tab1.classList.contains('active');
+    if (wasInactive) {
+        tab1.style.cssText += ';display:block!important;visibility:hidden;position:absolute;pointer-events:none;';
+    }
+    if (typeof window.renderCharts === 'function') {
+        try { window.renderCharts(); } catch(e) {}
+    }
+    await new Promise(r => setTimeout(r, 600));
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pW = 210, pH = 297, mg = 14, cW = pW - 2 * mg;
+
+        const cfg     = state.config  || {};
+        const title   = cfg.title     || 'Sprint QA';
+        const squad   = cfg.squad     || '';
+        const qaName  = cfg.qaName    || '';
+        const period  = (cfg.startDate && cfg.endDate)
+            ? `${window.formatDateBR(cfg.startDate)} a ${window.formatDateBR(cfg.endDate)}`
+            : '';
+        const version = cfg.targetVersion || '';
+        const now     = new Date();
+        const footerTxt = `QA Dashboard v2.0  ·  Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+
+        // ── helpers ───────────────────────────────────────────────────────────
+        const kv  = id => document.getElementById(id)?.innerText?.trim() || '—';
+        const img = (canvasId, x, y, w, h) => {
+            const c = document.getElementById(canvasId);
+            if (!c) return;
+            try { doc.addImage(c.toDataURL('image/png'), 'PNG', x, y, w, h); } catch(e) {}
+        };
+        const sf = (sz, style = 'normal', rgb = [15,23,42]) => {
+            doc.setFontSize(sz);
+            doc.setFont('helvetica', style);
+            doc.setTextColor(...rgb);
+        };
+        const footer = (pageNum) => {
+            sf(7.5, 'normal', [148,163,184]);
+            doc.text(footerTxt, pW / 2, pH - 6, { align: 'center' });
+            doc.text(String(pageNum), pW - mg, pH - 6, { align: 'right' });
+        };
+        const sectionHeader = (label, rgb) => {
+            doc.setFillColor(...rgb);
+            doc.roundedRect(mg, 14, cW, 13, 2.5, 2.5, 'F');
+            sf(11, 'bold', [255,255,255]);
+            doc.text(label, mg + 5, 14 + 9);
+        };
+        const hLine = (y, rgb = [226,232,240]) => {
+            doc.setDrawColor(...rgb);
+            doc.setLineWidth(0.25);
+            doc.line(mg, y, pW - mg, y);
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINA 1 — RETRATO FINAL DA SPRINT
+        // ═══════════════════════════════════════════════════════════════════
+        let y = mg;
+
+        // Cabeçalho azul
+        doc.setFillColor(37, 99, 235);
+        doc.roundedRect(mg, y, cW, 26, 3, 3, 'F');
+        sf(17, 'bold', [255,255,255]);
+        doc.text(title, mg + 6, y + 11);
+        sf(8.5, 'normal', [191,219,254]);
+        const sub = [squad && `Squad: ${squad}`, qaName && `QA: ${qaName}`, period && `Período: ${period}`, version && `Versão: ${version}`].filter(Boolean).join('   ·   ');
+        doc.text(sub || ' ', mg + 6, y + 20);
+        y += 31;
+
+        // KPIs — 2 linhas de 4
+        const kpis = [
+            { id: 'kpi-total',         label: 'Total Testes',   rgb: [37,99,235]   },
+            { id: 'kpi-exec',          label: 'Executados',     rgb: [16,185,129]  },
+            { id: 'kpi-rest',          label: 'Restantes',      rgb: [245,158,11]  },
+            { id: 'kpi-meta',          label: 'Meta/Dia',       rgb: [99,102,241]  },
+            { id: 'kpi-health-score',  label: 'Health Score',   rgb: [139,92,246]  },
+            { id: 'resumo-status',     label: 'Status Sprint',  rgb: [15,23,42]    },
+            { id: 'kpi-bugs',          label: 'Bugs Abertos',   rgb: [239,68,68]   },
+            { id: 'kpi-mttr',          label: 'MTTR Global',    rgb: [139,92,246]  },
+        ];
+        const kpiCols = 4, kpiW = (cW - (kpiCols - 1) * 3) / kpiCols, kpiH = 17;
+        kpis.forEach((k, i) => {
+            const col = i % kpiCols, row = Math.floor(i / kpiCols);
+            const kx = mg + col * (kpiW + 3), ky = y + row * (kpiH + 3);
+            doc.setFillColor(248,250,252);
+            doc.setDrawColor(226,232,240);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(kx, ky, kpiW, kpiH, 2, 2, 'FD');
+            doc.setFillColor(...k.rgb);
+            doc.rect(kx, ky + kpiH - 3, kpiW, 3, 'F');
+            sf(13, 'bold', k.rgb);
+            doc.text(kv(k.id), kx + kpiW / 2, ky + 9.5, { align: 'center' });
+            sf(6.5, 'normal', [100,116,139]);
+            doc.text(k.label, kx + kpiW / 2, ky + 14, { align: 'center', maxWidth: kpiW - 2 });
+        });
+        y += 2 * kpiH + 3 * 3 + 4;
+
+        // Burndown
+        sf(9, 'bold', [15,23,42]);
+        doc.text('Burndown Chart', mg, y);
+        y += 3;
+        img('chart-burndown', mg, y, cW, 52);
+        y += 55;
+
+        // Bugs — Stack (pizza) + Status por Stack (barra)
+        sf(9, 'bold', [15,23,42]);
+        doc.text('Distribuição de Bugs', mg, y);
+        y += 3;
+        img('chart-bugs-stack', mg,               y, cW * 0.34, 38);
+        img('chart-bugs-bar',   mg + cW * 0.36,   y, cW * 0.64, 38);
+        y += 41;
+
+        // Progresso por funcionalidade
+        sf(9, 'bold', [15,23,42]);
+        doc.text('Progresso por Funcionalidade', mg, y);
+        y += 3;
+        img('chart-feature-progress', mg, y, cW, 38);
+        y += 41;
+
+        // MTTR heatmap + KPI
+        sf(9, 'bold', [15,23,42]);
+        doc.text('MTTR — Tempo Médio de Resolução (dias)', mg, y);
+        y += 3;
+        img('chart-mttr', mg, y, cW * 0.65, 32);
+        doc.setFillColor(245,243,255);
+        doc.roundedRect(mg + cW * 0.67, y, cW * 0.33, 32, 2, 2, 'F');
+        sf(18, 'bold', [139,92,246]);
+        doc.text(kv('kpi-mttr'), mg + cW * 0.67 + (cW * 0.33) / 2, y + 14, { align: 'center' });
+        sf(7.5, 'normal', [100,116,139]);
+        doc.text('MTTR Global', mg + cW * 0.67 + (cW * 0.33) / 2, y + 21, { align: 'center' });
+        doc.text(doc.splitTextToSize(kv('kpi-mttr-sub'), cW * 0.30), mg + cW * 0.67 + (cW * 0.33) / 2, y + 27, { align: 'center' });
+
+        footer(1);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINA 2 — ALINHAMENTOS TÉCNICOS E DE PRODUTO
+        // ═══════════════════════════════════════════════════════════════════
+        doc.addPage();
+        sectionHeader('Alinhamentos Técnicos e de Produto', [37,99,235]);
+        y = 34;
+
+        const alignments = (state.alignments || []).filter(a => a && (a.text || '').trim());
+        if (alignments.length === 0) {
+            sf(10, 'italic', [148,163,184]);
+            doc.text('Nenhum alinhamento registrado nesta sprint.', mg, y);
+        } else {
+            alignments.forEach((al, i) => {
+                const text  = (al.text || '').trim();
+                const date  = al.date  || '';
+                const lines = doc.splitTextToSize(text, cW - 12);
+                const cardH = lines.length * 4.8 + 12;
+                if (y + cardH > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                doc.setFillColor(248,250,252);
+                doc.setDrawColor(226,232,240);
+                doc.setLineWidth(0.25);
+                doc.roundedRect(mg, y, cW, cardH, 2, 2, 'FD');
+                doc.setFillColor(37,99,235);
+                doc.rect(mg, y, 3, cardH, 'F');
+                sf(8, 'bold', [37,99,235]);
+                doc.text(`#${i + 1}`, mg + 6, y + 7);
+                if (date) { sf(7.5, 'normal', [148,163,184]); doc.text(date, pW - mg, y + 7, { align: 'right' }); }
+                sf(9, 'normal', [51,65,85]);
+                doc.text(lines, mg + 6, y + 13);
+                y += cardH + 4;
+            });
+        }
+        footer(doc.internal.getCurrentPageInfo().pageNumber);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINA 3 — RASTREAMENTO DE BUGS (tabela completa)
+        // ═══════════════════════════════════════════════════════════════════
+        doc.addPage();
+        sectionHeader('Rastreamento Completo de Bugs', [239,68,68]);
+        y = 34;
+
+        const bugs = (state.bugs || []).filter(b => b);
+        const openBugs     = bugs.filter(b => b.status !== 'Resolvido').length;
+        const resolvedBugs = bugs.filter(b => b.status === 'Resolvido').length;
+        sf(8.5, 'normal', [100,116,139]);
+        doc.text(`Total: ${bugs.length}  ·  Em aberto: ${openBugs}  ·  Resolvidos: ${resolvedBugs}`, mg, y);
+        y += 7;
+
+        if (bugs.length === 0) {
+            sf(10, 'italic', [148,163,184]);
+            doc.text('Nenhum bug registrado nesta sprint.', mg, y);
+        } else {
+            // Cabeçalho da tabela
+            const tc = { desc: mg + 2, sev: mg + 82, stack: mg + 112, status: mg + 140, mttr: mg + 172 };
+            doc.setFillColor(241,245,249);
+            doc.rect(mg, y, cW, 7.5, 'F');
+            sf(7.5, 'bold', [71,85,105]);
+            doc.text('Descrição', tc.desc, y + 5); doc.text('Severity', tc.sev, y + 5);
+            doc.text('Stack', tc.stack, y + 5);    doc.text('Status', tc.status, y + 5);
+            doc.text('MTTR', tc.mttr, y + 5);
+            y += 8;
+
+            const sevRgb   = { 'Crítica':[153,27,27], 'Alta':[194,65,12], 'Média':[180,83,9], 'Blocker':[109,40,217], 'Baixa':[22,101,52] };
+            const statRgb  = { 'Aberto':[239,68,68], 'Em Andamento':[245,158,11], 'Resolvido':[16,185,129], 'Aguardando Retest':[99,102,241] };
+
+            bugs.forEach((b, i) => {
+                if (y > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                const rh = 8;
+                doc.setFillColor(i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
+                doc.rect(mg, y, cW, rh, 'F');
+                sf(8, 'normal', [51,65,85]);
+                doc.text(doc.splitTextToSize(b.desc || b.title || '—', 76)[0], tc.desc, y + 5.5);
+                sf(7.5, 'bold', sevRgb[b.severity] || [100,116,139]);
+                doc.text(b.severity || '—', tc.sev, y + 5.5);
+                sf(8, 'normal', [51,65,85]);
+                doc.text(b.stack || '—', tc.stack, y + 5.5);
+                sf(7.5, 'bold', statRgb[b.status] || [100,116,139]);
+                doc.text(b.status || '—', tc.status, y + 5.5);
+                sf(8, 'normal', [51,65,85]);
+                if (b.openedAt && b.resolvedAt) {
+                    const d = Math.max(0, Math.round((new Date(b.resolvedAt + 'T00:00:00') - new Date(b.openedAt + 'T00:00:00')) / 86400000));
+                    doc.text(`${d}d`, tc.mttr, y + 5.5);
+                } else { doc.text('—', tc.mttr, y + 5.5); }
+                y += rh;
+            });
+        }
+        footer(doc.internal.getCurrentPageInfo().pageNumber);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINA 4 — EXECUÇÃO POR FUNCIONALIDADE
+        // ═══════════════════════════════════════════════════════════════════
+        doc.addPage();
+        sectionHeader('Execução por Funcionalidade', [16,185,129]);
+        y = 34;
+
+        const feats = (state.features || []).filter(f => f);
+        if (feats.length === 0) {
+            sf(10, 'italic', [148,163,184]);
+            doc.text('Nenhuma funcionalidade cadastrada.', mg, y);
+        } else {
+            doc.setFillColor(241,245,249);
+            doc.rect(mg, y, cW, 7.5, 'F');
+            sf(7.5, 'bold', [71,85,105]);
+            doc.text('Funcionalidade', mg + 2, y + 5);
+            doc.text('Status', mg + 100, y + 5);
+            doc.text('Total', mg + 128, y + 5);
+            doc.text('Exec.', mg + 148, y + 5);
+            doc.text('Falhou', mg + 163, y + 5);
+            doc.text('Progresso', mg + 178, y + 5);
+            y += 8;
+
+            feats.forEach((f, i) => {
+                if (y > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                const rh = 9;
+                doc.setFillColor(i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
+                doc.rect(mg, y, cW, rh, 'F');
+
+                const pct    = f.tests > 0 ? Math.round((f.exec / f.tests) * 100) : 0;
+                const failed = (f.cases || []).filter(c => c.status === 'Falhou').length;
+
+                sf(8, 'normal', [51,65,85]);
+                doc.text(doc.splitTextToSize(f.name || '—', 93)[0], mg + 2, y + 6);
+                sf(7.5, 'bold', f.status === 'Bloqueada' ? [239,68,68] : [16,185,129]);
+                doc.text(f.status || 'Ativa', mg + 100, y + 6);
+                sf(8, 'normal', [51,65,85]);
+                doc.text(String(f.tests || 0), mg + 131, y + 6, { align: 'center' });
+                doc.text(String(f.exec  || 0), mg + 151, y + 6, { align: 'center' });
+                sf(7.5, 'bold', failed > 0 ? [239,68,68] : [51,65,85]);
+                doc.text(String(failed), mg + 168, y + 6, { align: 'center' });
+
+                // Barra de progresso
+                const bx = mg + 176, by = y + 3, bw = cW - 176 - 2, bh = 3.5;
+                doc.setFillColor(226,232,240); doc.roundedRect(bx, by, bw, bh, 1, 1, 'F');
+                if (pct > 0) {
+                    doc.setFillColor(...(pct === 100 ? [16,185,129] : [37,99,235]));
+                    doc.roundedRect(bx, by, bw * pct / 100, bh, 1, 1, 'F');
+                }
+                sf(6.5, 'normal', [100,116,139]);
+                doc.text(`${pct}%`, bx + bw + 1, y + 6);
+                y += rh;
+            });
+
+            // Cenários que falharam — detalhe
+            const failedCases = [];
+            feats.forEach(f => (f.cases || []).forEach(c => { if (c.status === 'Falhou') failedCases.push({ feat: f.name, case: c.name }); }));
+            if (failedCases.length > 0) {
+                y += 6;
+                if (y + failedCases.length * 7 + 16 > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                sf(9, 'bold', [239,68,68]);
+                doc.text(`❌ Cenários com Falha (${failedCases.length})`, mg, y);
+                y += 4; hLine(y, [254,202,202]); y += 4;
+                failedCases.forEach(fc => {
+                    if (y > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                    doc.setFillColor(255,245,245);
+                    doc.setDrawColor(254,202,202);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(mg, y, cW, 7, 2, 2, 'FD');
+                    doc.setFillColor(248,113,113); doc.rect(mg, y, 2.5, 7, 'F');
+                    sf(8, 'normal', [153,27,27]);
+                    doc.text(doc.splitTextToSize(`${fc.feat}  →  ${fc.case}`, cW - 8)[0], mg + 5, y + 4.8);
+                    y += 8;
+                });
+            }
+        }
+        footer(doc.internal.getCurrentPageInfo().pageNumber);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINA 5 — PREMISSAS, PLANO DE AÇÃO E IMPEDIMENTOS
+        // ═══════════════════════════════════════════════════════════════════
+        doc.addPage();
+        sectionHeader('Premissas, Plano de Ação e Impedimentos', [245,158,11]);
+        y = 34;
+
+        const sections5 = [
+            { label: 'Premissas Operacionais', text: state.notes?.operationalPremises, rgb: [180,83,9] },
+            { label: 'Premissas Gerais',        text: state.notes?.premises,            rgb: [180,83,9] },
+            { label: 'Plano de Ação',           text: state.notes?.actionPlan,          rgb: [239,68,68] },
+        ];
+        sections5.forEach(sec => {
+            if (y > pH - 30) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+            sf(9.5, 'bold', sec.rgb);
+            doc.text(sec.label, mg, y); y += 3;
+            hLine(y, [226,232,240]); y += 5;
+            if (sec.text && sec.text.trim()) {
+                const lines = doc.splitTextToSize(sec.text.trim(), cW);
+                doc.setFillColor(255,251,235);
+                doc.roundedRect(mg, y, cW, lines.length * 4.8 + 6, 2, 2, 'F');
+                sf(9, 'normal', [51,65,85]);
+                doc.text(lines, mg + 4, y + 5);
+                y += lines.length * 4.8 + 10;
+            } else {
+                sf(9, 'italic', [148,163,184]);
+                doc.text('Não registrado.', mg, y); y += 10;
+            }
+        });
+
+        // Funcionalidades bloqueadas
+        const blocked = feats.filter(f => f.status === 'Bloqueada');
+        if (blocked.length > 0) {
+            if (y > pH - 30) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+            sf(9.5, 'bold', [239,68,68]);
+            doc.text(`Funcionalidades Bloqueadas (${blocked.length})`, mg, y); y += 3;
+            hLine(y, [254,202,202]); y += 5;
+            blocked.forEach(f => {
+                if (y > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+                const reason = f.blockReason || 'Motivo não informado.';
+                const lines  = doc.splitTextToSize(`${f.name}: ${reason}`, cW - 8);
+                const cardH  = lines.length * 4.8 + 8;
+                doc.setFillColor(255,245,245); doc.setDrawColor(254,202,202); doc.setLineWidth(0.2);
+                doc.roundedRect(mg, y, cW, cardH, 2, 2, 'FD');
+                doc.setFillColor(239,68,68); doc.rect(mg, y, 3, cardH, 'F');
+                sf(8.5, 'normal', [153,27,27]);
+                doc.text(lines, mg + 6, y + 6);
+                y += cardH + 4;
+            });
+        }
+        footer(doc.internal.getCurrentPageInfo().pageNumber);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PÁGINAS FINAIS — REPORTS DIÁRIOS
+        // ═══════════════════════════════════════════════════════════════════
+        const reports     = state.reports || {};
+        const reportDates = Object.keys(reports).filter(d => (reports[d] || '').trim()).sort();
+
+        if (reportDates.length > 0) {
+            doc.addPage();
+            sectionHeader('Reports Diários da Sprint', [99,102,241]);
+            y = 34;
+            sf(8.5, 'normal', [100,116,139]);
+            doc.text(`${reportDates.length} dia(s) com registro`, mg, y); y += 8;
+
+            reportDates.forEach(date => {
+                const text = (reports[date] || '').trim();
+                if (!text) return;
+                const formatted = window.formatDateBR ? window.formatDateBR(date) : date;
+                const lines     = doc.splitTextToSize(text, cW - 8);
+                const cardH     = lines.length * 4.8 + 14;
+
+                if (y + cardH > pH - 18) { footer(doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = mg; }
+
+                doc.setFillColor(248,250,252); doc.setDrawColor(199,210,254); doc.setLineWidth(0.3);
+                doc.roundedRect(mg, y, cW, cardH, 2, 2, 'FD');
+                doc.setFillColor(99,102,241); doc.rect(mg, y, 3, cardH, 'F');
+                sf(9, 'bold', [99,102,241]);
+                doc.text(`📅 ${formatted}`, mg + 6, y + 8);
+                sf(8.5, 'normal', [51,65,85]);
+                doc.text(lines, mg + 6, y + 14);
+                y += cardH + 5;
+            });
+            footer(doc.internal.getCurrentPageInfo().pageNumber);
+        }
+
+        // Salva
+        const safeName = title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+        doc.save(`Conclusao_Sprint_${safeName}_${now.toISOString().split('T')[0]}.pdf`);
+
+    } finally {
+        document.body.removeChild(toast);
+        if (wasInactive && tab1) {
+            tab1.style.display = '';
+            tab1.style.visibility = '';
+            tab1.style.position = '';
+            tab1.style.pointerEvents = '';
+        }
+    }
+};
+
 window.addEventListener('load', () => {
     try {
         window.initRouting();

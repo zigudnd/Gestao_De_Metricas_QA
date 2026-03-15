@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root {
@@ -223,6 +224,7 @@
                 </div>
             </div>
             <div class="header-actions" id="action-buttons">
+                <button class="btn-outline" onclick="exportSprintPDF()" style="color:#6366f1;border-color:#a5b4fc;" title="Gerar documento PDF de conclusão da sprint">📄 Conclusão da Sprint</button>
                 <button class="btn-primary" onclick="exportToImage()">📸 Exportar Imagem</button>
                 <button class="btn-outline" onclick="exportJSON()">💾 Exportar JSON</button>
                 <button class="btn-outline" onclick="document.getElementById('importFile').click()">📂 Importar JSON</button>
