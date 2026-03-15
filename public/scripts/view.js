@@ -1102,13 +1102,63 @@ window.renderCharts = function() {
                 }
             }
 
+            // ── Dias com execução zero dentro do range já decorrido ──────────
+            // zeroExecFlags[i] = true quando o dia i já aconteceu mas exec foi 0
+            const zeroExecFlags = [false]; // índice 0 = "Início", nunca marcado
+            for (let i = 1; i <= sprintDays; i++) {
+                const inRange = i <= maxDay;
+                const execVal = globalExecution[`D${i}`] || 0;
+                zeroExecFlags.push(inRange && execVal === 0);
+            }
+
+            // Cores e tamanhos dos pontos da linha Real
+            const ptColor  = zeroExecFlags.map((z, idx) =>
+                (z ? '#ef4444' : (realData[idx] !== null ? '#2563eb' : 'transparent'))
+            );
+            const ptRadius = zeroExecFlags.map((z, idx) =>
+                (idx === 0 ? 3 : z ? 7 : (realData[idx] !== null ? 4 : 0))
+            );
+            const ptBorderW = zeroExecFlags.map(z => z ? 2 : 1);
+
             createChart('chart-burndown', 'line', {
                 labels: labelsBD,
                 datasets: [
-                    { label: 'Ideal', data: idealData, borderColor: '#ef4444', borderDash: [5, 5], tension: 0.1, pointRadius: 0, datalabels: { display: false } },
-                    { label: 'Real', data: realData, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1, datalabels: { align: 'top', color: '#2563eb', font: { weight: 'bold', size: 10 } } }
+                    {
+                        label: 'Ideal',
+                        data: idealData,
+                        borderColor: '#ef4444',
+                        borderDash: [5, 5],
+                        tension: 0.1,
+                        pointRadius: 0,
+                        datalabels: { display: false }
+                    },
+                    {
+                        label: 'Real',
+                        data: realData,
+                        borderColor: '#2563eb',
+                        backgroundColor: '#2563eb',
+                        tension: 0.1,
+                        pointBackgroundColor: ptColor,
+                        pointBorderColor: ptColor,
+                        pointRadius: ptRadius,
+                        pointHoverRadius: ptRadius.map(r => r + 2),
+                        pointBorderWidth: ptBorderW,
+                        datalabels: { align: 'top', color: '#2563eb', font: { weight: 'bold', size: 10 } }
+                    }
                 ]
-            }, { responsive: true, maintainAspectRatio: false });
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: (ctx) => zeroExecFlags[ctx.index] ? '#ef4444' : '#94a3b8',
+                            font:  (ctx) => ({ weight: zeroExecFlags[ctx.index] ? '700' : '400', size: 11 })
+                        }
+                    },
+                    y: { beginAtZero: true }
+                }
+            });
 
             const validBlockers = (state.blockers || []).filter(b => b !== null && b !== undefined);
             const blockersGrouped = validBlockers.reduce((acc, b) => { 
