@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToStatos — Design System Checkpoint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* ── Palette ── */
+            --primary-blue:   #2563eb;
+            --primary-hover:  #1d4ed8;
+            --primary-light:  #eff6ff;
+            --primary-border: #bfdbfe;
+
+            --success:        #10b981;
+            --success-light:  #ecfdf5;
+            --success-border: #a7f3d0;
+
+            --warning:        #f59e0b;
+            --warning-light:  #fffbeb;
+            --warning-border: #fde68a;
+
+            --danger:         #ef4444;
+            --danger-light:   #fef2f2;
+            --danger-border:  #fecaca;
+
+            --purple:         #8b5cf6;
+            --purple-light:   #f5f3ff;
+            --purple-border:  #ddd6fe;
+
+            --indigo:         #6366f1;
+            --orange:         #f97316;
+
+            /* Neutrals */
+            --bg-outer:       #e2e8f0;
+            --card-bg:        #ffffff;
+            --surface:        #f8fafc;
+            --surface-hover:  #f1f5f9;
+            --text-main:      #334155;
+            --text-heading:   #0f172a;
+            --text-muted:     #64748b;
+            --text-faint:     #94a3b8;
+            --border-color:   #e2e8f0;
+            --border-strong:  #cbd5e1;
+
+            /* Stack colors */
+            --stack-front:    #3b82f6;
+            --stack-bff:      #8b5cf6;
+            --stack-back:     #10b981;
+
+            /* Radii */
+            --radius-sm:  6px;
+            --radius:     12px;
+            --radius-lg:  16px;
+
+            /* Shadows */
+            --shadow-sm:  0 1px 2px 0 rgba(0,0,0,.05);
+            --shadow-md:  0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+            --shadow-lg:  0 20px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.05);
+
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-outer);
+            color: var(--text-main);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ── Page layout ── */
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        /* ── Page header ── */
+        .ds-header {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        .ds-header-badge {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: 99px;
+            padding: 4px 14px;
+            display: inline-block;
+            margin-bottom: 14px;
+        }
+        .ds-header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-heading);
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+        .ds-header p {
+            color: var(--text-muted);
+            font-size: 15px;
+            max-width: 560px;
+            line-height: 1.6;
+        }
+        .ds-header-meta {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .ds-header-meta .version {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-heading);
+            font-family: var(--mono);
+        }
+        .ds-header-meta .date {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ── Section ── */
+        .ds-section {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 28px;
+            overflow: hidden;
+        }
+        .ds-section-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .ds-section-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            color: var(--primary-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .ds-section-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-heading);
+        }
+        .ds-section-header span {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+        .ds-section-body { padding: 28px; }
+
+        /* ── Token label ── */
+        .token-label {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: block;
+        }
+        .token-value {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text-faint);
+        }
+
+        /* ── Color grid ── */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 14px;
+        }
+        .color-chip {
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,.07);
+        }
+        .color-swatch {
+            height: 64px;
+        }
+        .color-info {
+            padding: 8px 10px;
+            background: #fff;
+        }
+        .color-info .name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-heading);
+            display: block;
+        }
+        .color-info .hex {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
+
+        /* ── Typography scale ── */
+        .type-row {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: baseline;
+            gap: 20px;
+        }
+        .type-row:last-child { border-bottom: none; }
+        .type-meta {
+            width: 200px;
+            flex-shrink: 0;
+        }
+        .type-meta .label { font-size: 12px; font-weight: 700; color: var(--text-heading); }
+        .type-meta .specs { font-size: 11px; font-family: var(--mono); color: var(--text-muted); margin-top: 2px; }
+
+        /* ── Spacing grid ── */
+        .space-grid { display: flex; flex-direction: column; gap: 10px; }
+        .space-row { display: flex; align-items: center; gap: 14px; }
+        .space-bar { background: var(--primary-blue); border-radius: 3px; height: 20px; opacity: 0.7; }
+        .space-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; width: 60px; }
+        .space-desc { font-size: 12px; color: var(--text-muted); }
+
+        /* ── Shadow cards ── */
+        .shadow-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .shadow-card {
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .shadow-card .shadow-name { font-size: 13px; font-weight: 700; color: var(--text-heading); }
+        .shadow-card .shadow-code { font-size: 11px; font-family: var(--mono); color: var(--text-muted); line-height: 1.5; }
+
+        /* ── Radius demos ── */
+        .radius-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+        .radius-demo {
+            width: 64px; height: 64px;
+            background: var(--primary-light);
+            border: 2px solid var(--primary-blue);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px;
+        }
+        .radius-demo span { font-size: 11px; font-family: var(--mono); color: var(--primary-blue); font-weight: 600; }
+
+        /* ── Button showcase ── */
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        button.ds {
+            padding: 8px 18px; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; font-size: 13px; font-family: var(--font);
+            display: inline-flex; align-items: center; justify-content: center; height: 38px; gap: 6px;
+        }
+        .ds.btn-primary   { background: var(--primary-blue); color: #fff; box-shadow: var(--shadow-sm); }
+        .ds.btn-outline   { background: #fff; border: 1px solid var(--border-strong); color: var(--text-main); }
+        .ds.btn-danger    { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+        .ds.btn-success   { background: var(--success); color: #fff; }
+        .ds.btn-purple    { background: var(--purple-light); border: 1px solid var(--purple-border); color: var(--purple); }
+        .ds.btn-indigo    { background: #f0f0ff; border: 1px solid #a5b4fc; color: var(--indigo); }
+        .ds.btn-ghost     { background: transparent; border: none; color: var(--text-muted); }
+        .ds.btn-sm        { height: 32px; padding: 4px 12px; font-size: 12px; }
+        .ds.btn-lg        { height: 46px; padding: 10px 24px; font-size: 15px; }
+
+        /* ── Input showcase ── */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .input-demo input, .input-demo select, .input-demo textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong);
+            border-radius: 8px; font-family: var(--font); font-size: 14px;
+            outline: none; background: #fff; color: var(--text-main);
+        }
+        .input-demo.focus input { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+        .input-demo.disabled input { background: #f1f5f9; cursor: not-allowed; color: var(--text-muted); }
+        .input-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
+
+        /* ── Cards ── */
+        .card-demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .kpi-card-demo {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm);
+        }
+        .kpi-value { font-size: 32px; font-weight: 800; color: var(--text-heading); letter-spacing: -1px; margin: 4px 0; }
+        .kpi-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: .5px; }
+        .kpi-sub   { font-size: 12px; color: var(--text-muted); }
+
+        /* ── Badge/Tag ── */
+        .badge-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700;
+            border: 1px solid transparent;
+        }
+        .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+        /* ── Status rows ── */
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .status-pill {
+            padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 7px;
+        }
+
+        /* ── Table demo ── */
+        .table-demo { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .table-demo th {
+            background: var(--surface); padding: 10px 14px; font-weight: 700;
+            color: var(--text-muted); border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase; font-size: 11px; letter-spacing: .5px; text-align: left;
+        }
+        .table-demo td { padding: 11px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        .table-demo tr:last-child td { border-bottom: none; }
+        .table-demo tr:hover td { background: var(--surface-hover); }
+
+        /* ── Accordion demo ── */
+        .accordion-demo {
+            border: 1px solid var(--border-color); border-radius: var(--radius);
+            overflow: hidden; box-shadow: var(--shadow-sm);
+        }
+        .accordion-summary {
+            padding: 16px 20px; background: var(--surface); font-weight: 600; font-size: 14px;
+            color: var(--text-heading); display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .accordion-body { padding: 20px; background: #fff; font-size: 13px; color: var(--text-muted); }
+
+        /* ── Toast demo ── */
+        .toast-demo {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #1e293b; color: #fff; padding: 14px 20px;
+            border-radius: 8px; font-size: 13px; font-weight: 500;
+            box-shadow: var(--shadow-lg);
+        }
+        .toast-error { background: #b91c1c; }
+
+        /* ── Modal demo (inline) ── */
+        .modal-demo {
+            background: rgba(15,23,42,.08); border-radius: 12px;
+            padding: 24px; display: flex; justify-content: center;
+        }
+        .modal-card {
+            background: #fff; border-radius: var(--radius-lg); padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.15); width: 100%; max-width: 420px;
+            border: 1px solid var(--border-color);
+        }
+        .modal-header-demo {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
+        }
+        .modal-title { font-size: 17px; font-weight: 700; color: var(--text-heading); }
+        .modal-close { background: transparent; border: none; font-size: 22px; color: var(--text-faint); cursor: pointer; line-height: 1; }
+
+        /* ── Sprint card demo ── */
+        .sprint-card-demo {
+            background: var(--card-bg); border-radius: 14px;
+            border: 1px solid var(--border-color); overflow: hidden;
+            box-shadow: var(--shadow-sm); max-width: 300px;
+        }
+        .sprint-stripe { height: 3px; }
+        .sprint-body { padding: 18px 20px; }
+        .sprint-title { font-size: 14px; font-weight: 700; color: var(--text-heading); margin-bottom: 10px; }
+        .sprint-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+        .sprint-progress-track { height: 4px; background: #f1f5f9; border-radius: 99px; margin-bottom: 5px; }
+        .sprint-progress-fill { height: 4px; border-radius: 99px; }
+        .sprint-progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
+
+        /* ── Icon grid ── */
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+        .icon-item {
+            background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            padding: 12px 8px; text-align: center; font-size: 11px; color: var(--text-muted);
+        }
+        .icon-item .icon { font-size: 22px; display: block; margin-bottom: 6px; }
+
+        /* ── Tab demo ── */
+        .tabs-demo {
+            display: inline-flex; gap: 4px;
+            background: #f1f5f9; padding: 5px; border-radius: 10px;
+            border: 1px solid var(--border-color); flex-wrap: wrap;
+        }
+        .tab-btn-demo {
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 8px 16px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border-radius: 8px; font-family: var(--font);
+        }
+        .tab-btn-demo.active {
+            background: var(--card-bg); color: var(--primary-blue);
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+
+        /* ── Code block ── */
+        .code-block {
+            background: #0f172a; color: #e2e8f0; border-radius: 8px;
+            padding: 16px 20px; font-family: var(--mono); font-size: 12px;
+            line-height: 1.7; overflow-x: auto;
+        }
+        .code-block .k  { color: #7dd3fc; }
+        .code-block .v  { color: #a7f3d0; }
+        .code-block .c  { color: #64748b; font-style: italic; }
+        .code-block .s  { color: #fde68a; }
+        .code-block .p  { color: #94a3b8; }
+
+        /* ── Two-col layout ── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+        /* ── Divider ── */
+        .ds-divider { height: 1px; background: var(--border-color); margin: 24px 0; }
+
+        /* ── Label chip ── */
+        .chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 700; padding: 3px 9px;
+            border-radius: 99px; text-transform: uppercase; letter-spacing: .5px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="ds-header">
+        <div>
+            <div class="ds-header-badge">Design System · Checkpoint</div>
+            <h1>ToStatos</h1>
+            <p>Documentação completa do sistema visual: tokens de cor, tipografia, espaçamento, componentes e padrões de interação utilizados na plataforma de métricas de QA.</p>
+        </div>
+        <div class="ds-header-meta">
+            <div class="version">v1.0.0</div>
+            <div class="date">Gerado em <script>document.write(new Date().toLocaleDateString('pt-BR'))</script></div>
+            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+                <div class="chip" style="background:#eff6ff; color:#2563eb;">Inter · Font</div>
+                <div class="chip" style="background:#f0fdf4; color:#059669;">Chart.js · Gráficos</div>
+                <div class="chip" style="background:#fdf4ff; color:#7c3aed;">Emoji Icons</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         1. COLOR PALETTE
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🎨</div>
+            <h2>Paleta de Cores</h2>
+            <span>CSS Custom Properties · :root</span>
+        </div>
+        <div class="ds-section-body">
+
+            <!-- Primary -->
+            <div style="margin-bottom: 24px;">
+                <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Principal</p>
+                <div class="color-grid">
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#2563eb;"></div>
+                        <div class="color-info"><span class="name">Primary Blue</span><span class="hex">--primary-blue · #2563eb</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#1d4ed8;"></div>
+                        <div class="color-info"><span class="name">Primary Hover</span><span class="hex">--primary-hover · #1d4ed8</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#eff6ff;"></div>
+                        <div class="color-info"><span class="name">Primary Light</span><span class="hex">#eff6ff</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#bfdbfe;"></div>
+                        <div class="color-info"><span class="name">Primary Border</span><span class="hex">#bfdbfe</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Semantic -->
+            <div style="margin-bottom: 24px;">
+                <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Semânticas</p>
+                <div class="color-grid">
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#10b981;"></div>
+                        <div class="color-info"><span class="name">Success</span><span class="hex">--success · #10b981</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#ecfdf5;"></div>
+                        <div class="color-info"><span class="name">Success Light</span><span class="hex">#ecfdf5</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#f59e0b;"></div>
+                        <div class="color-info"><span class="name">Warning</span><span class="hex">--warning · #f59e0b</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#fffbeb;"></div>
+                        <div class="color-info"><span class="name">Warning Light</span><span class="hex">#fffbeb</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#ef4444;"></div>
+                        <div class="color-info"><span class="name">Danger</span><span class="hex">--danger · #ef4444</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#fef2f2;"></div>
+                        <div class="color-info"><span class="name">Danger Light</span><span class="hex">#fef2f2</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#8b5cf6;"></div>
+                        <div class="color-info"><span class="name">Purple (MTTR)</span><span class="hex">#8b5cf6</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#6366f1;"></div>
+                        <div class="color-info"><span class="name">Indigo (PDF)</span><span class="hex">#6366f1</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#f97316;"></div>
+                        <div class="color-info"><span class="name">Orange (Alta)</span><span class="hex">#f97316</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Neutrals -->
+            <div style="margin-bottom: 24px;">
+                <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Neutros</p>
+                <div class="color-grid">
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#0f172a;"></div>
+                        <div class="color-info"><span class="name">Heading</span><span class="hex">#0f172a</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#334155;"></div>
+                        <div class="color-info"><span class="name">Text Main</span><span class="hex">--text-main · #334155</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#64748b;"></div>
+                        <div class="color-info"><span class="name">Text Muted</span><span class="hex">--text-muted · #64748b</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#94a3b8;"></div>
+                        <div class="color-info"><span class="name">Text Faint</span><span class="hex">#94a3b8</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#e2e8f0; border:1px solid #cbd5e1;"></div>
+                        <div class="color-info"><span class="name">Border / BG</span><span class="hex">--bg-outer · #e2e8f0</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#cbd5e1; border:1px solid #e2e8f0;"></div>
+                        <div class="color-info"><span class="name">Border Strong</span><span class="hex">#cbd5e1</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#f8fafc; border:1px solid #e2e8f0;"></div>
+                        <div class="color-info"><span class="name">Surface</span><span class="hex">#f8fafc</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#f1f5f9; border:1px solid #e2e8f0;"></div>
+                        <div class="color-info"><span class="name">Surface Hover</span><span class="hex">#f1f5f9</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#ffffff; border:1px solid #e2e8f0;"></div>
+                        <div class="color-info"><span class="name">Card BG</span><span class="hex">--card-bg · #ffffff</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stack colors -->
+            <div>
+                <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Stack (Bugs)</p>
+                <div class="color-grid">
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#3b82f6;"></div>
+                        <div class="color-info"><span class="name">Front</span><span class="hex">#3b82f6</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#8b5cf6;"></div>
+                        <div class="color-info"><span class="name">BFF</span><span class="hex">#8b5cf6</span></div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-swatch" style="background:#10b981;"></div>
+                        <div class="color-info"><span class="name">Back</span><span class="hex">#10b981</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         2. TYPOGRAPHY
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">Aa</div>
+            <h2>Tipografia</h2>
+            <span>Inter · Google Fonts</span>
+        </div>
+        <div class="ds-section-body">
+
+            <div class="two-col" style="margin-bottom: 28px;">
+                <div>
+                    <p class="token-label">--font-family</p>
+                    <p style="font-size: 20px; font-weight: 700; color: var(--text-heading); margin-top: 6px;">Inter, system-ui, -apple-system, sans-serif</p>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">Fonte principal — usada em todos os textos da interface</p>
+                </div>
+                <div>
+                    <p class="token-label">Monospace</p>
+                    <p style="font-size: 18px; font-family: 'JetBrains Mono', monospace; color: var(--text-heading); margin-top: 6px;">JetBrains Mono</p>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">Usada em tokens CSS, valores hex, IDs de bugs e blocos de código</p>
+                </div>
+            </div>
+
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Page Title</span><span class="specs">26–32px · 800 · -1px</span></div>
+                <div style="font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -1px;">ToStatos</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Section Header</span><span class="specs">18px · 700</span></div>
+                <div style="font-size: 18px; font-weight: 700; color: #0f172a;">Gestão de Casos de Teste</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Card Title</span><span class="specs">14–15px · 600</span></div>
+                <div style="font-size: 15px; font-weight: 600; color: #0f172a;">Burndown Chart · Visão Executiva</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">KPI Label</span><span class="specs">11–12px · 700 · UPPERCASE</span></div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: .5px; text-transform: uppercase;">QA HEALTH SCORE</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">KPI Value</span><span class="specs">32px · 800 · -1px</span></div>
+                <div style="font-size: 32px; font-weight: 800; color: #0f172a; letter-spacing: -1px;">98%</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Body / Default</span><span class="specs">14px · 400 · 1.5</span></div>
+                <div style="font-size: 14px; line-height: 1.5; color: #334155;">Acompanhe a execução individual dos cenários Gherkin.</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Caption / Muted</span><span class="specs">12–13px · 500</span></div>
+                <div style="font-size: 12px; color: #64748b; font-weight: 500;">Baseado em 3 bug(s) resolvido(s)</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta"><span class="label">Monospace ID</span><span class="specs">12–13px · 700 · mono</span></div>
+                <div style="font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #475569;">BUG-042</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         3. SPACING & RADIUS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📐</div>
+            <h2>Espaçamento & Border Radius</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="two-col">
+                <div>
+                    <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 16px;">Escala de Espaçamento</p>
+                    <div class="space-grid">
+                        <div class="space-row"><span class="space-label">4px</span>  <div class="space-bar" style="width:4px;"></div>  <span class="space-desc">Micro — gap entre ícone e label</span></div>
+                        <div class="space-row"><span class="space-label">6px</span>  <div class="space-bar" style="width:6px;"></div>  <span class="space-desc">Labels de input, padding de badge</span></div>
+                        <div class="space-row"><span class="space-label">8px</span>  <div class="space-bar" style="width:8px;"></div>  <span class="space-desc">Gap interno de linhas</span></div>
+                        <div class="space-row"><span class="space-label">10px</span> <div class="space-bar" style="width:10px;"></div> <span class="space-desc">Padding de botões pequenos</span></div>
+                        <div class="space-row"><span class="space-label">12px</span> <div class="space-bar" style="width:12px;"></div> <span class="space-desc">Gap entre cards/botões</span></div>
+                        <div class="space-row"><span class="space-label">15px</span> <div class="space-bar" style="width:15px;"></div> <span class="space-desc">Gap do KPI grid</span></div>
+                        <div class="space-row"><span class="space-label">18px</span> <div class="space-bar" style="width:18px;"></div> <span class="space-desc">Padding interno do accordion</span></div>
+                        <div class="space-row"><span class="space-label">20px</span> <div class="space-bar" style="width:20px;"></div> <span class="space-desc">Padding de card, gap de chart grid</span></div>
+                        <div class="space-row"><span class="space-label">25px</span> <div class="space-bar" style="width:25px;"></div> <span class="space-desc">Margin-bottom de seções</span></div>
+                        <div class="space-row"><span class="space-label">30px</span> <div class="space-bar" style="width:30px;"></div> <span class="space-desc">Margin-bottom entre blocos maiores</span></div>
+                        <div class="space-row"><span class="space-label">40px</span> <div class="space-bar" style="width:40px;"></div> <span class="space-desc">Padding do main-wrapper / page</span></div>
+                        <div class="space-row"><span class="space-label">48px</span> <div class="space-bar" style="width:48px;"></div> <span class="space-desc">Padding do home wrapper</span></div>
+                    </div>
+                </div>
+                <div>
+                    <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 16px;">Border Radius</p>
+                    <div class="radius-row">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:6px;"><span>6px</span><span style="font-size:10px;color:#94a3b8;">sm</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:8px;"><span>8px</span><span style="font-size:10px;color:#94a3b8;">btn</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:10px;"><span>10px</span><span style="font-size:10px;color:#94a3b8;">tab</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:12px;"><span>12px</span><span style="font-size:10px;color:#94a3b8;">card</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:14px;"><span>14px</span><span style="font-size:10px;color:#94a3b8;">sprint</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:16px;"><span>16px</span><span style="font-size:10px;color:#94a3b8;">modal</span></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div class="radius-demo" style="border-radius:99px;width:80px;"><span>99px</span><span style="font-size:10px;color:#94a3b8;">pill</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         4. SHADOWS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">💡</div>
+            <h2>Elevação & Sombras</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="shadow-row">
+                <div class="shadow-card" style="box-shadow: 0 1px 2px 0 rgba(0,0,0,.05);">
+                    <div class="shadow-name">Shadow SM</div>
+                    <div class="shadow-code">--shadow-sm<br>0 1px 2px 0 rgba(0,0,0,.05)</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Cards KPI, botões, inputs</div>
+                </div>
+                <div class="shadow-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);">
+                    <div class="shadow-name">Shadow MD</div>
+                    <div class="shadow-code">--shadow-md<br>0 4px 6px -1px rgba(0,0,0,.1),<br>0 2px 4px -1px rgba(0,0,0,.06)</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Cards em hover, tabs ativas</div>
+                </div>
+                <div class="shadow-card" style="box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.05);">
+                    <div class="shadow-name">Shadow LG</div>
+                    <div class="shadow-code">--shadow-lg<br>0 20px 25px -5px rgba(0,0,0,.1),<br>0 8px 10px -6px rgba(0,0,0,.05)</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Main wrapper, modais, toast</div>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="shadow-card" style="box-shadow: 0 20px 60px rgba(0,0,0,.18); max-width: 320px;">
+                    <div class="shadow-name">Modal Shadow</div>
+                    <div class="shadow-code">0 20px 60px rgba(0,0,0,.18)</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Exclusiva para janelas modais</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         5. BUTTONS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🔘</div>
+            <h2>Botões</h2>
+        </div>
+        <div class="ds-section-body">
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Variantes principais</p>
+            <div class="btn-row">
+                <button class="ds btn-primary">📸 Exportar Imagem</button>
+                <button class="ds btn-outline">💾 Exportar JSON</button>
+                <button class="ds btn-danger">🗑️ Resetar Dados</button>
+                <button class="ds btn-success">✅ Confirmar</button>
+                <button class="ds btn-purple">📤 Exportar Cobertura</button>
+                <button class="ds btn-indigo">📄 Conclusão da Sprint</button>
+            </div>
+
+            <div class="ds-divider"></div>
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Tamanhos</p>
+            <div class="btn-row">
+                <button class="ds btn-primary btn-sm">Pequeno</button>
+                <button class="ds btn-primary">Padrão (38px)</button>
+                <button class="ds btn-primary btn-lg">Grande</button>
+            </div>
+
+            <div class="ds-divider"></div>
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Contextuais (em tabelas / ações inline)</p>
+            <div class="btn-row">
+                <button class="ds btn-outline btn-sm">✏️ Editar</button>
+                <button class="ds btn-outline btn-sm" style="color:var(--primary-blue);border-color:#cbd5e1;">📑 Duplicar</button>
+                <button class="ds btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);">🗑️ Remover</button>
+                <button class="ds btn-outline btn-sm" style="color:#6b7280;border-color:#d1d5db;">⛔ Cancelar</button>
+            </div>
+
+            <div class="ds-divider"></div>
+            <div class="code-block">
+<span class="c">/* Estrutura base */</span>
+button <span class="p">{</span>
+  padding<span class="p">:</span> <span class="v">8px 18px</span><span class="p">;</span>  border-radius<span class="p">:</span> <span class="v">8px</span><span class="p">;</span>  height<span class="p">:</span> <span class="v">38px</span><span class="p">;</span>
+  font-weight<span class="p">:</span> <span class="v">600</span><span class="p">;</span>  font-size<span class="p">:</span> <span class="v">13px</span><span class="p">;</span>  transition<span class="p">:</span> <span class="v">all 0.2s</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">.btn-primary</span>  <span class="p">{</span> background<span class="p">:</span> <span class="v">#2563eb</span><span class="p">;</span>  color<span class="p">:</span> <span class="v">#fff</span><span class="p">;</span> <span class="p">}</span>
+<span class="k">.btn-outline</span>  <span class="p">{</span> background<span class="p">:</span> <span class="v">#fff</span><span class="p">;</span>       border<span class="p">:</span> <span class="v">1px solid #cbd5e1</span><span class="p">;</span> <span class="p">}</span>
+<span class="k">.btn-danger</span>   <span class="p">{</span> border<span class="p">:</span> <span class="v">1px solid #ef4444</span><span class="p">;</span>  color<span class="p">:</span> <span class="v">#ef4444</span><span class="p">;</span> <span class="p">}</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         6. TABS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📑</div>
+            <h2>Navegação por Abas</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="tabs-demo">
+                <button class="tab-btn-demo active">Visão Executiva</button>
+                <button class="tab-btn-demo">Área Operacional</button>
+                <button class="tab-btn-demo">Gestão de Casos de Teste</button>
+                <button class="tab-btn-demo">📝 Anotações</button>
+                <button class="tab-btn-demo">🛡️ Riscos</button>
+                <button class="tab-btn-demo">⚙️ Configurações</button>
+                <button class="tab-btn-demo">📖 Documentação</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="code-block">
+<span class="k">.tabs-nav</span> <span class="p">{</span>
+  background<span class="p">:</span> <span class="v">#f1f5f9</span><span class="p">;</span>  padding<span class="p">:</span> <span class="v">5px</span><span class="p">;</span>  border-radius<span class="p">:</span> <span class="v">10px</span><span class="p">;</span>
+  border<span class="p">:</span> <span class="v">1px solid #e2e8f0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">.tab-btn.active</span> <span class="p">{</span>
+  background<span class="p">:</span> <span class="v">#fff</span><span class="p">;</span>  color<span class="p">:</span> <span class="v">#2563eb</span><span class="p">;</span>
+  box-shadow<span class="p">:</span> <span class="v">0 1px 3px rgba(0,0,0,.1)</span><span class="p">;</span>
+<span class="p">}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         7. FORM INPUTS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">✏️</div>
+            <h2>Campos de Formulário</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="input-grid">
+                <div class="input-demo">
+                    <label class="input-label">Padrão</label>
+                    <input type="text" placeholder="Ex: Tela de Login" value="">
+                </div>
+                <div class="input-demo focus">
+                    <label class="input-label">Focado</label>
+                    <input type="text" placeholder="Com foco ativo" style="border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);">
+                </div>
+                <div class="input-demo">
+                    <label class="input-label">Data</label>
+                    <input type="date" value="2025-03-17">
+                </div>
+                <div class="input-demo disabled">
+                    <label class="input-label">Desabilitado</label>
+                    <input type="text" value="Somente leitura" disabled>
+                </div>
+                <div class="input-demo">
+                    <label class="input-label">Select</label>
+                    <select>
+                        <option>🟢 Ativa</option>
+                        <option>🔴 Bloqueada</option>
+                        <option>⛔ Cancelada</option>
+                    </select>
+                </div>
+                <div class="input-demo">
+                    <label class="input-label">Número</label>
+                    <input type="number" value="42" min="0">
+                </div>
+                <div class="input-demo" style="grid-column: 1 / -1;">
+                    <label class="input-label">Textarea</label>
+                    <textarea rows="3" placeholder="Descreva o comportamento incorreto encontrado..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         8. KPI CARDS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📊</div>
+            <h2>Cards KPI</h2>
+        </div>
+        <div class="ds-section-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;">
+
+                <div class="kpi-card-demo" style="border-bottom: 3px solid #10b981;">
+                    <div class="kpi-title">QA Health Score</div>
+                    <div class="kpi-value" style="color:#10b981;">98%</div>
+                    <div class="kpi-sub">Saúde da Entrega</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title">Status da Sprint</div>
+                    <div class="kpi-value" style="font-size:22px; color:#10b981;">No Ritmo</div>
+                    <div class="kpi-sub">Progresso geral</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title">Total de Testes</div>
+                    <div class="kpi-value">248</div>
+                    <div class="kpi-sub">Soma da base</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title">Meta por Dia</div>
+                    <div class="kpi-value">12</div>
+                    <div class="kpi-sub">Planejado / sprint</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title">Executados</div>
+                    <div class="kpi-value">186</div>
+                    <div class="kpi-sub">Casos acumulados</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title">Restantes</div>
+                    <div class="kpi-value">62</div>
+                    <div class="kpi-sub">Saldo de testes</div>
+                </div>
+
+                <div class="kpi-card-demo" style="border-bottom:3px solid #ef4444;">
+                    <div class="kpi-title" style="color:#ef4444;">Bugs Abertos</div>
+                    <div class="kpi-value" style="color:#ef4444;">7</div>
+                    <div class="kpi-sub">Em aberto / andamento</div>
+                </div>
+
+                <div class="kpi-card-demo" style="border-bottom:3px solid #ef4444;">
+                    <div class="kpi-title" style="color:#ef4444;">Telas Bloqueadas</div>
+                    <div class="kpi-value" style="color:#ef4444;">2</div>
+                    <div class="kpi-sub">Com impedimento atual</div>
+                </div>
+
+                <div class="kpi-card-demo">
+                    <div class="kpi-title" style="color:#f59e0b;">Total Retestes</div>
+                    <div class="kpi-value" style="color:#f59e0b;">14</div>
+                    <div class="kpi-sub">Gargalo de correções</div>
+                </div>
+
+                <div class="kpi-card-demo" style="border-bottom:3px solid #8b5cf6;">
+                    <div class="kpi-title" style="color:#8b5cf6;">⏱️ MTTR Global</div>
+                    <div class="kpi-value" style="color:#8b5cf6; font-size:26px;">2.4d</div>
+                    <div class="kpi-sub">Tempo médio resolução</div>
+                </div>
+
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="code-block">
+<span class="c">/* Health Score: borda inferior muda com saúde */</span>
+<span class="k">≥ 90%</span>  → border-bottom<span class="p">:</span> <span class="v">3px solid #10b981</span> <span class="c">(verde)</span>
+<span class="k">≥ 70%</span>  → border-bottom<span class="p">:</span> <span class="v">3px solid #f59e0b</span> <span class="c">(amarelo)</span>
+<span class="k">&lt; 70%</span>  → border-bottom<span class="p">:</span> <span class="v">3px solid #ef4444</span> <span class="c">(vermelho)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         9. BADGES & STATUS PILLS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🏷️</div>
+            <h2>Badges & Status Pills</h2>
+        </div>
+        <div class="ds-section-body">
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Severidade de Bugs</p>
+            <div class="badge-row" style="margin-bottom: 20px;">
+                <span class="badge" style="background:#10b98122;color:#10b981;border-color:#10b98144;">Baixa</span>
+                <span class="badge" style="background:#f59e0b22;color:#f59e0b;border-color:#f59e0b44;">Média</span>
+                <span class="badge" style="background:#f9731622;color:#f97316;border-color:#f9731644;">Alta</span>
+                <span class="badge" style="background:#ef444422;color:#ef4444;border-color:#ef444444;">Crítica</span>
+            </div>
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Stack de Bug</p>
+            <div class="badge-row" style="margin-bottom: 20px;">
+                <span class="badge" style="background:#3b82f622;color:#3b82f6;border-color:#3b82f644;">Front</span>
+                <span class="badge" style="background:#8b5cf622;color:#8b5cf6;border-color:#8b5cf644;">BFF</span>
+                <span class="badge" style="background:#10b98122;color:#10b981;border-color:#10b98144;">Back</span>
+            </div>
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Status de Bug</p>
+            <div class="badge-row" style="margin-bottom: 20px;">
+                <span class="status-pill" style="background:#fef2f2;color:#ef4444;">
+                    <span class="badge-dot" style="background:#ef4444;"></span> Aberto
+                </span>
+                <span class="status-pill" style="background:#fffbeb;color:#f59e0b;">
+                    <span class="badge-dot" style="background:#f59e0b;"></span> Em Andamento
+                </span>
+                <span class="status-pill" style="background:#ecfdf5;color:#10b981;">
+                    <span class="badge-dot" style="background:#10b981;"></span> Resolvido
+                </span>
+            </div>
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Status de Funcionalidade</p>
+            <div class="badge-row" style="margin-bottom: 20px;">
+                <span class="status-pill" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;">🟢 Ativa</span>
+                <span class="status-pill" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">🔴 Bloqueada</span>
+                <span class="status-pill" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;">⛔ Cancelada</span>
+            </div>
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Status de Caso de Teste</p>
+            <div class="badge-row" style="margin-bottom: 20px;">
+                <span class="status-pill" style="background:#f0f9ff;color:#0369a1;">⏳ Pendente</span>
+                <span class="status-pill" style="background:#ecfdf5;color:#10b981;">✅ Concluído</span>
+                <span class="status-pill" style="background:#fef2f2;color:#ef4444;">❌ Falhou</span>
+                <span class="status-pill" style="background:#fffbeb;color:#f59e0b;">🚧 Bloqueado</span>
+            </div>
+
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 12px;">Status da Sprint (Home)</p>
+            <div class="badge-row">
+                <span class="status-pill" style="background:#eff6ff;color:#2563eb;">
+                    <span class="badge-dot" style="background:#3b82f6;"></span> Em andamento
+                </span>
+                <span class="status-pill" style="background:#ecfdf5;color:#059669;">
+                    <span class="badge-dot" style="background:#10b981;"></span> Concluída
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         10. TABLE
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📋</div>
+            <h2>Tabela</h2>
+        </div>
+        <div class="ds-section-body" style="padding: 0;">
+            <div style="overflow-x: auto; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                <table class="table-demo">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Descrição</th>
+                            <th>Stack</th>
+                            <th>Severidade</th>
+                            <th>Status</th>
+                            <th>Retestes</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-family:monospace;font-weight:700;color:#475569;">BUG-001</td>
+                            <td>
+                                <div style="font-weight:600;color:#0f172a;">Botão de submit não responde</div>
+                                <div style="font-size:11px;color:#64748b;">Tela de Login</div>
+                            </td>
+                            <td><span class="badge" style="background:#3b82f622;color:#3b82f6;border-color:#3b82f644;">Front</span></td>
+                            <td><span class="badge" style="background:#ef444422;color:#ef4444;border-color:#ef444444;">Crítica</span></td>
+                            <td><span style="color:#ef4444;font-weight:700;">Aberto</span></td>
+                            <td style="text-align:center;"><input type="number" value="2" style="width:55px;text-align:center;padding:5px;border:1px solid #e2e8f0;border-radius:6px;font-family:inherit;"></td>
+                            <td style="text-align:center;">
+                                <button class="ds btn-outline btn-sm">✏️</button>
+                                <button class="ds btn-outline btn-sm" style="color:var(--primary-blue);border-color:#cbd5e1;">📑</button>
+                                <button class="ds btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);">🗑️</button>
+                            </td>
+                        </tr>
+                        <tr style="opacity:.82;background:#f0fdf4;">
+                            <td style="font-family:monospace;font-weight:700;color:#475569;">BUG-002</td>
+                            <td>
+                                <div style="font-weight:600;color:#0f172a;">Label com texto errado</div>
+                                <div style="font-size:11px;color:#64748b;">Tela de Pagamento</div>
+                            </td>
+                            <td><span class="badge" style="background:#10b98122;color:#10b981;border-color:#10b98144;">Back</span></td>
+                            <td><span class="badge" style="background:#f59e0b22;color:#f59e0b;border-color:#f59e0b44;">Média</span></td>
+                            <td><span style="color:#10b981;font-weight:700;">Resolvido</span></td>
+                            <td style="text-align:center;"><input type="number" value="1" style="width:55px;text-align:center;padding:5px;border:1px solid #e2e8f0;border-radius:6px;font-family:inherit;"></td>
+                            <td style="text-align:center;">
+                                <button class="ds btn-outline btn-sm">✏️</button>
+                                <button class="ds btn-outline btn-sm" style="color:var(--primary-blue);border-color:#cbd5e1;">📑</button>
+                                <button class="ds btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);">🗑️</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         11. ACCORDION
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🗂️</div>
+            <h2>Accordion (Gestão de Casos de Teste)</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="accordion-demo" style="margin-bottom: 12px;">
+                <div class="accordion-summary" style="color:#2563eb; background:#fff; border-bottom:1px solid #e2e8f0;">
+                    <span style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:#cbd5e1;cursor:grab;">⠿</span>
+                        ▶ Tela de Login
+                    </span>
+                    <span style="background:#2563eb;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;">12 Testes no Total</span>
+                </div>
+                <div class="accordion-body">Conteúdo da funcionalidade: campos de edição, cenários Gherkin, mockup e ações em massa.</div>
+            </div>
+            <div class="accordion-demo" style="margin-bottom: 12px; border-color:#fecaca;">
+                <div class="accordion-summary" style="background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca;">
+                    <span style="display:flex;align-items:center;gap:8px;"><span style="color:#fca5a5;cursor:grab;">⠿</span> ▶ Tela de Pagamento 🛑</span>
+                    <span style="background:#dc2626;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;">8 Testes no Total</span>
+                </div>
+            </div>
+            <div class="accordion-demo" style="border-color:#d1d5db;opacity:.8;">
+                <div class="accordion-summary" style="background:#f3f4f6;color:#6b7280;border-bottom:1px solid #d1d5db;">
+                    <span style="display:flex;align-items:center;gap:8px;"><span style="color:#d1d5db;cursor:grab;">⠿</span>
+                        ▶ <span style="text-decoration:line-through;">Tela de Perfil</span> ⛔
+                        <span style="font-size:11px;background:#e5e7eb;color:#6b7280;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:4px;">Cancelada — não contabilizada</span>
+                    </span>
+                    <span style="background:#9ca3af;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;">5 Testes no Total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         12. SPRINT CARD
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🏃</div>
+            <h2>Sprint Card (Home Screen)</h2>
+        </div>
+        <div class="ds-section-body">
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+
+                <!-- Active -->
+                <div class="sprint-card-demo">
+                    <div class="sprint-stripe" style="background:linear-gradient(90deg,#3b82f6,#6366f1);"></div>
+                    <div class="sprint-body">
+                        <div class="sprint-title">ToStatos — Sprint 14</div>
+                        <div class="sprint-meta">
+                            <span>👥 Squad Checkout</span>
+                            <span>📅 10/03 → 24/03/2025</span>
+                        </div>
+                        <div class="sprint-card-progress">
+                            <div class="sprint-progress-track">
+                                <div class="sprint-progress-fill" style="width:75%;background:linear-gradient(90deg,#3b82f6,#6366f1);"></div>
+                            </div>
+                            <div class="sprint-progress-labels">
+                                <span>186 / 248 testes</span>
+                                <span style="font-weight:700;color:#2563eb;">75%</span>
+                            </div>
+                        </div>
+                        <span class="status-pill" style="background:#eff6ff;color:#2563eb;font-size:11.5px;padding:3px 10px;">
+                            <span class="badge-dot" style="background:#3b82f6;"></span> Em andamento
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Completed -->
+                <div class="sprint-card-demo">
+                    <div class="sprint-stripe" style="background:linear-gradient(90deg,#10b981,#059669);"></div>
+                    <div class="sprint-body">
+                        <div class="sprint-title">ToStatos — Sprint 13</div>
+                        <div class="sprint-meta">
+                            <span>👥 Squad Pagamentos</span>
+                            <span>📅 24/02 → 07/03/2025</span>
+                        </div>
+                        <div class="sprint-card-progress">
+                            <div class="sprint-progress-track">
+                                <div class="sprint-progress-fill" style="width:100%;background:linear-gradient(90deg,#10b981,#059669);"></div>
+                            </div>
+                            <div class="sprint-progress-labels">
+                                <span>200 / 200 testes</span>
+                                <span style="font-weight:700;color:#059669;">100%</span>
+                            </div>
+                        </div>
+                        <span class="status-pill" style="background:#ecfdf5;color:#059669;font-size:11.5px;padding:3px 10px;">
+                            <span class="badge-dot" style="background:#10b981;"></span> Concluída
+                        </span>
+                    </div>
+                </div>
+
+                <!-- New -->
+                <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;padding:30px 20px;color:#94a3b8;max-width:200px;cursor:pointer;">
+                    <div style="width:44px;height:44px;border-radius:12px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:22px;">+</div>
+                    <span style="font-size:13px;font-weight:600;">Nova Sprint</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         13. MODAL
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🪟</div>
+            <h2>Modal</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="modal-demo">
+                <div class="modal-card">
+                    <div class="modal-header-demo">
+                        <div class="modal-title">🐞 Registrar Bug</div>
+                        <button class="modal-close">×</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+                        <div>
+                            <label class="input-label">ID do Bug</label>
+                            <input type="text" placeholder="BUG-001" style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13px;">
+                        </div>
+                        <div>
+                            <label class="input-label">Data de Abertura</label>
+                            <input type="date" value="2025-03-17" style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13px;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <label class="input-label">Descrição</label>
+                        <textarea rows="2" placeholder="Descreva o bug..." style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13px;resize:none;"></textarea>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+                        <button class="ds btn-outline">Cancelar</button>
+                        <button class="ds btn-primary">💾 Salvar Bug</button>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="code-block">
+<span class="c">/* Backdrop com blur */</span>
+<span class="k">.modal-overlay</span> <span class="p">{</span>
+  background<span class="p">:</span> <span class="v">rgba(15, 23, 42, .55)</span><span class="p">;</span>
+  backdrop-filter<span class="p">:</span> <span class="v">blur(4px)</span><span class="p">;</span>
+  <span class="c">/* abre/fecha com opacity + visibility */</span>
+<span class="p">}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         14. TOAST
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🍞</div>
+            <h2>Toast / Notificações</h2>
+        </div>
+        <div class="ds-section-body">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                <div class="toast-demo">✅ Dados salvos com sucesso!</div>
+                <div class="toast-demo toast-error">❌ Erro ao salvar. Tente novamente.</div>
+                <div class="toast-demo" style="background:#059669;">📤 Cobertura exportada com sucesso!</div>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="code-block">
+<span class="k">#toast</span> <span class="p">{</span>
+  background<span class="p">:</span> <span class="v">#1e293b</span><span class="p">;</span>  color<span class="p">:</span> <span class="v">#fff</span><span class="p">;</span>
+  position<span class="p">:</span> <span class="v">fixed</span><span class="p">;</span>  bottom<span class="p">:</span> <span class="v">30px</span><span class="p">;</span>  right<span class="p">:</span> <span class="v">30px</span><span class="p">;</span>
+  border-radius<span class="p">:</span> <span class="v">8px</span><span class="p">;</span>  padding<span class="p">:</span> <span class="v">14px 20px</span><span class="p">;</span>
+  <span class="c">/* erro: background #b91c1c */</span>
+<span class="p">}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         15. CHARTS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📈</div>
+            <h2>Gráficos (Chart.js)</h2>
+        </div>
+        <div class="ds-section-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius);padding:18px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">Burndown Chart</div>
+                    <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+                        Tipo: <strong>Line</strong><br>
+                        Linha Ideal: <span style="display:inline-block;width:24px;height:3px;background:#94a3b8;border-radius:2px;vertical-align:middle;"></span> tracejada, cinza<br>
+                        Linha Real: <span style="display:inline-block;width:24px;height:3px;background:#2563eb;border-radius:2px;vertical-align:middle;"></span> sólida, azul<br>
+                        Canvas: <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">#chart-burndown</code>
+                    </div>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius);padding:18px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">Progresso por Funcionalidade</div>
+                    <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+                        Tipo: <strong>Bar (stacked)</strong><br>
+                        Executados: <span style="display:inline-block;width:14px;height:14px;background:#10b981;border-radius:3px;vertical-align:middle;"></span> verde<br>
+                        Restantes: <span style="display:inline-block;width:14px;height:14px;background:#e2e8f0;border-radius:3px;vertical-align:middle;"></span> cinza<br>
+                        Canvas: <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">#chart-feature-progress</code>
+                    </div>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius);padding:18px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">Origem dos Bugs (Stack)</div>
+                    <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+                        Tipo: <strong>Doughnut</strong><br>
+                        Front: <span style="display:inline-block;width:14px;height:14px;background:#3b82f6;border-radius:3px;vertical-align:middle;"></span>
+                        BFF: <span style="display:inline-block;width:14px;height:14px;background:#8b5cf6;border-radius:3px;vertical-align:middle;"></span>
+                        Back: <span style="display:inline-block;width:14px;height:14px;background:#10b981;border-radius:3px;vertical-align:middle;"></span>
+                    </div>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius);padding:18px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8b5cf6;margin-bottom:10px;">MTTR por Stack e Criticidade</div>
+                    <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+                        Tipo: <strong>Bar (grouped)</strong><br>
+                        Baixa: <span style="display:inline-block;width:14px;height:14px;background:#10b981;border-radius:3px;vertical-align:middle;"></span>
+                        Média: <span style="display:inline-block;width:14px;height:14px;background:#f59e0b;border-radius:3px;vertical-align:middle;"></span>
+                        Alta: <span style="display:inline-block;width:14px;height:14px;background:#f97316;border-radius:3px;vertical-align:middle;"></span>
+                        Crítica: <span style="display:inline-block;width:14px;height:14px;background:#ef4444;border-radius:3px;vertical-align:middle;"></span>
+                    </div>
+                </div>
+
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="code-block">
+<span class="c">/* Biblioteca: Chart.js + chartjs-plugin-datalabels */</span>
+Chart.defaults.color <span class="p">=</span> <span class="s">'#64748b'</span><span class="p">;</span>
+Chart.defaults.font.family <span class="p">=</span> <span class="s">"'Inter', sans-serif"</span><span class="p">;</span>
+
+<span class="c">/* Datalabels (rótulos sobre barras) */</span>
+datalabels<span class="p">:</span> <span class="p">{</span>
+  color<span class="p">:</span> <span class="s">'#ffffff'</span><span class="p">,</span>  font<span class="p">:</span> <span class="p">{</span> weight<span class="p">:</span> <span class="s">'600'</span><span class="p">,</span> size<span class="p">:</span> <span class="v">12</span> <span class="p">},</span>
+  formatter<span class="p">:</span> value <span class="p">=></span> value <span class="p">></span> <span class="v">0</span> <span class="p">?</span> value <span class="p">:</span> <span class="s">''</span>
+<span class="p">}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         16. ICONOGRAFIA
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🗃️</div>
+            <h2>Iconografia — Sistema Emoji</h2>
+            <span>Sem biblioteca de ícones SVG separada</span>
+        </div>
+        <div class="ds-section-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">
+                O ToStatos utiliza <strong>emojis Unicode nativos</strong> como sistema de ícones, garantindo zero dependência externa e consistência cross-platform.
+            </p>
+            <div class="icon-grid">
+                <div class="icon-item"><span class="icon">📊</span>Visão Executiva</div>
+                <div class="icon-item"><span class="icon">⚙️</span>Área Operacional</div>
+                <div class="icon-item"><span class="icon">🗂️</span>Casos de Teste</div>
+                <div class="icon-item"><span class="icon">📝</span>Anotações</div>
+                <div class="icon-item"><span class="icon">🛡️</span>Riscos</div>
+                <div class="icon-item"><span class="icon">⚙️</span>Configurações</div>
+                <div class="icon-item"><span class="icon">📖</span>Documentação</div>
+                <div class="icon-item"><span class="icon">🐞</span>Registrar Bug</div>
+                <div class="icon-item"><span class="icon">✅</span>Concluído / OK</div>
+                <div class="icon-item"><span class="icon">❌</span>Falhou / Erro</div>
+                <div class="icon-item"><span class="icon">🛑</span>Bloqueada</div>
+                <div class="icon-item"><span class="icon">⛔</span>Cancelada</div>
+                <div class="icon-item"><span class="icon">🚧</span>Bloqueado (tc)</div>
+                <div class="icon-item"><span class="icon">⏳</span>Pendente</div>
+                <div class="icon-item"><span class="icon">⏱️</span>MTTR</div>
+                <div class="icon-item"><span class="icon">📈</span>Burndown</div>
+                <div class="icon-item"><span class="icon">📸</span>Exportar Imagem</div>
+                <div class="icon-item"><span class="icon">💾</span>Exportar JSON</div>
+                <div class="icon-item"><span class="icon">📤</span>Export .feature</div>
+                <div class="icon-item"><span class="icon">📂</span>Importar JSON</div>
+                <div class="icon-item"><span class="icon">📁</span>Importar Arquivo</div>
+                <div class="icon-item"><span class="icon">📄</span>PDF Conclusão</div>
+                <div class="icon-item"><span class="icon">📋</span>Template CSV</div>
+                <div class="icon-item"><span class="icon">📥</span>Template .feature</div>
+                <div class="icon-item"><span class="icon">🗑️</span>Excluir</div>
+                <div class="icon-item"><span class="icon">✏️</span>Editar</div>
+                <div class="icon-item"><span class="icon">📑</span>Duplicar</div>
+                <div class="icon-item"><span class="icon">➕</span>Adicionar</div>
+                <div class="icon-item"><span class="icon">🔍</span>Buscar</div>
+                <div class="icon-item"><span class="icon">🚨</span>Alerta</div>
+                <div class="icon-item"><span class="icon">📌</span>Premissa</div>
+                <div class="icon-item"><span class="icon">🤝</span>Alinhamento</div>
+                <div class="icon-item"><span class="icon">🖥️</span>Tela / Feature</div>
+                <div class="icon-item"><span class="icon">📎</span>Mockup / Anexo</div>
+                <div class="icon-item"><span class="icon">⠿</span>Drag handle</div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">SVGs inline (Home Screen)</p>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-muted);">
+                    <span>👥 Users (Squad)</span>
+                    <span>📅 Calendar (Datas)</span>
+                    <span>✔ Check (Status)</span>
+                    <span>+ Plus (Nova Sprint)</span>
+                    <span>↑ Export (Backup)</span>
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Definidos como constantes <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">_SVG_USERS</code>, <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">_SVG_CALENDAR</code>, etc. em <code style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">home_logic.js</code></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         17. GRID SYSTEM
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">🔲</div>
+            <h2>Grid System & Layout</h2>
+        </div>
+        <div class="ds-section-body">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:8px;padding:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">KPI Grid — 6 colunas</div>
+                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                        <div style="background:#dbeafe;border-radius:6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d4ed8;">KPI</div>
+                    </div>
+                    <code style="font-size:11px;font-family:monospace;color:#64748b;">grid-template-columns: repeat(6, 1fr) · gap: 15px</code>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:8px;padding:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Main Grid — 2fr + 1fr</div>
+                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
+                        <div style="background:#d1fae5;border-radius:6px;height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#065f46;">Report Diário (2fr)</div>
+                        <div style="background:#fef3c7;border-radius:6px;height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#92400e;">Gráfico (1fr)</div>
+                    </div>
+                    <code style="font-size:11px;font-family:monospace;color:#64748b;">grid-template-columns: 2fr 1fr · gap: 20px</code>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:8px;padding:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Charts Row — 3 colunas iguais</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                        <div style="background:#e0e7ff;border-radius:6px;height:36px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#3730a3;">Stack</div>
+                        <div style="background:#e0e7ff;border-radius:6px;height:36px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#3730a3;">Bugs Bar (span 2)</div>
+                        <div style="background:#e0e7ff;border-radius:6px;height:36px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#3730a3;"></div>
+                    </div>
+                    <code style="font-size:11px;font-family:monospace;color:#64748b;">grid-template-columns: 1fr 1fr 1fr · gap: 20px</code>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:8px;padding:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Sprint Grid (Home) — auto-fill</div>
+                    <code style="font-size:11px;font-family:monospace;color:#64748b;">grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)) · gap: 18px</code>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:6px;">Adapta automaticamente o número de colunas ao tamanho da tela.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         18. ANIMATIONS
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">✨</div>
+            <h2>Animações & Transições</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="code-block">
+<span class="c">/* Entrada de tab */</span>
+<span class="k">@keyframes fadeIn</span> <span class="p">{</span>
+  from <span class="p">{</span> opacity<span class="p">:</span> <span class="v">0</span><span class="p">;</span> transform<span class="p">:</span> <span class="v">translateY(5px)</span><span class="p">; }</span>
+  to   <span class="p">{</span> opacity<span class="p">:</span> <span class="v">1</span><span class="p">;</span> transform<span class="p">:</span> <span class="v">translateY(0)</span><span class="p">; }</span>
+<span class="p">}</span>
+
+<span class="c">/* Entrada da Home */</span>
+<span class="k">@keyframes homeIn</span> <span class="p">{</span>
+  from <span class="p">{</span> opacity<span class="p">:</span> <span class="v">0</span><span class="p">;</span> transform<span class="p">:</span> <span class="v">translateY(10px)</span><span class="p">; }</span>
+  to   <span class="p">{</span> opacity<span class="p">:</span> <span class="v">1</span><span class="p">;</span> transform<span class="p">:</span> <span class="v">translateY(0)</span><span class="p">; }</span>
+<span class="p">}</span>
+
+<span class="c">/* Hover de card */</span>
+.kpi-card:hover  <span class="p">{</span> transform<span class="p">:</span> <span class="v">translateY(-3px)</span><span class="p">;</span> box-shadow<span class="p">:</span> <span class="v">var(--shadow-md)</span><span class="p">; }</span>
+.sprint-card:hover <span class="p">{</span> transform<span class="p">:</span> <span class="v">translateY(-3px)</span><span class="p">; }</span>
+.btn-primary:hover <span class="p">{</span> transform<span class="p">:</span> <span class="v">translateY(-1px)</span><span class="p">; }</span>
+
+<span class="c">/* Modal */</span>
+.modal-overlay <span class="p">{</span> transition<span class="p">:</span> <span class="v">opacity 0.25s</span><span class="p">,</span> <span class="v">visibility 0.25s</span><span class="p">; }</span>
+.modal-content <span class="p">{</span> transition<span class="p">:</span> <span class="v">transform 0.25s ease</span><span class="p">; }</span>
+
+<span class="c">/* Padrão global */</span>
+transition<span class="p">:</span> <span class="v">all 0.2s ease</span><span class="p">;</span>  <span class="c">/* usado em botões, cards, links */</span>
+transition<span class="p">:</span> <span class="v">all 0.15s</span><span class="p">;</span>       <span class="c">/* elementos menores (filtros, delete btn) */</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         19. RESPONSIVIDADE
+    ═══════════════════════════════════════ -->
+    <div class="ds-section">
+        <div class="ds-section-header">
+            <div class="ds-section-icon">📱</div>
+            <h2>Breakpoints & Responsividade</h2>
+        </div>
+        <div class="ds-section-body">
+            <div class="code-block">
+<span class="c">/* ≤ 1200px — colapsa grids complexos */</span>
+<span class="k">@media (max-width: 1200px)</span> <span class="p">{</span>
+  .kpi-grid    <span class="p">{</span> grid-template-columns<span class="p">:</span> <span class="v">repeat(4, 1fr)</span><span class="p">; }</span>
+  .main-grid,
+  .charts-row-1 <span class="p">{</span> grid-template-columns<span class="p">:</span> <span class="v">1fr</span><span class="p">; }</span>
+<span class="p">}</span>
+
+<span class="c">/* ≤ 1024px — padding reduzido */</span>
+<span class="k">@media (max-width: 1024px)</span> <span class="p">{</span>
+  .kpi-grid      <span class="p">{</span> grid-template-columns<span class="p">:</span> <span class="v">repeat(3, 1fr)</span><span class="p">; }</span>
+  .main-wrapper  <span class="p">{</span> padding<span class="p">:</span> <span class="v">20px</span><span class="p">; }</span>
+<span class="p">}</span>
+
+<span class="c">/* ≤ 768px — mobile */</span>
+<span class="k">@media (max-width: 768px)</span> <span class="p">{</span>
+  .kpi-grid <span class="p">{</span> grid-template-columns<span class="p">:</span> <span class="v">repeat(2, 1fr)</span><span class="p">; }</span>
+<span class="p">}</span></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding-top:20px;font-size:13px;color:var(--text-muted);">
+        ToStatos Design System · Desenvolvido por
+        <a href="https://www.linkedin.com/in/jhonny-robert/" target="_blank" style="color:var(--primary-blue);font-weight:600;text-decoration:none;">Jhonny Robert</a>
+        · checkpoint.html
+    </div>
+
+</div>
+</body>
+</html>
