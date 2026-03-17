@@ -401,7 +401,7 @@ function injectHomeAndModalViews() {
         <!-- Header -->
         <div class="home-header">
             <div class="home-title">
-                <h1>QA Dashboards</h1>
+                <h1>ToStatos</h1>
                 <p>Gerencie e acompanhe a qualidade de múltiplas Sprints e projetos.</p>
             </div>
             <div class="home-actions">

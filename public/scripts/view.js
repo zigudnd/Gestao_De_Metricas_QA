@@ -216,10 +216,11 @@ window.renderNotes = function() {
     
 window.updateCalculations = function() {
         const sprintDays = parseInt(state.config.sprintDays) || 20;
-        const totalTests = state.features.reduce((acc, f) => acc + (parseInt(f.tests) || 0), 0);
+        const activeFeatures = state.features.filter(f => f.status !== 'Cancelada');
+        const totalTests = activeFeatures.reduce((acc, f) => acc + (parseInt(f.tests) || 0), 0);
         document.getElementById('kpi-total').innerText = totalTests;
-        
-        let totalExec = state.features.reduce((acc, f) => acc + (parseInt(f.exec) || 0), 0);
+
+        let totalExec = activeFeatures.reduce((acc, f) => acc + (parseInt(f.exec) || 0), 0);
         document.getElementById('kpi-exec').innerText = totalExec;
 
         const remaining = totalTests - totalExec;
@@ -235,7 +236,7 @@ window.updateCalculations = function() {
         document.getElementById('kpi-bugs').innerText = openBugs;
 
         let maxDay = 1;
-        state.features.forEach(f => {
+        activeFeatures.forEach(f => {
             if(f.execution) {
                 Object.keys(f.execution).forEach(k => {
                     let val = parseInt(f.execution[k]) || 0;
@@ -580,21 +581,26 @@ window.renderTables = function() {
                 let colorExec = (f.exec === f.tests && f.tests > 0) ? 'var(--success)' : 'var(--text-main)';
 
                 const isBlocked = f.status === 'Bloqueada';
+                const isCancelled = f.status === 'Cancelada';
+                const statusBorder = isBlocked ? '#fca5a5' : isCancelled ? '#d1d5db' : '#a7f3d0';
+                const statusBg = isBlocked ? '#fee2e2' : isCancelled ? '#f3f4f6' : '#ecfdf5';
+                const statusColor = isBlocked ? '#b91c1c' : isCancelled ? '#6b7280' : '#047857';
                 return `
-                <tr style="${isBlocked ? 'background: #fff8f8;' : ''}">
+                <tr style="${isBlocked ? 'background: #fff8f8;' : isCancelled ? 'background: #f9fafb; opacity: 0.7;' : ''}">
                     <td class="sticky-col" style="font-weight: 600; color: #0f172a;">
-                        <span style="${isBlocked ? 'color: var(--danger); font-style: italic;' : ''}">${escapeHTML(f.name || 'Sem nome')}</span>
+                        <span style="${isBlocked ? 'color: var(--danger); font-style: italic;' : isCancelled ? 'color: #6b7280; text-decoration: line-through;' : ''}">${escapeHTML(f.name || 'Sem nome')}</span>
                     </td>
                     <td style="text-align: center; vertical-align: middle; padding: 6px 8px;">
                         <select onchange="this.blur(); updateFeature(${index}, 'status', this.value)"
-                            style="width: 100%; font-size: 12px; font-weight: 700; padding: 5px 6px; border-radius: 6px; border: 1px solid ${isBlocked ? '#fca5a5' : '#a7f3d0'}; background: ${isBlocked ? '#fee2e2' : '#ecfdf5'}; color: ${isBlocked ? '#b91c1c' : '#047857'}; cursor: pointer;">
-                            <option value="Ativa" ${!isBlocked ? 'selected' : ''}>🟢 Ativa</option>
+                            style="width: 100%; font-size: 12px; font-weight: 700; padding: 5px 6px; border-radius: 6px; border: 1px solid ${statusBorder}; background: ${statusBg}; color: ${statusColor}; cursor: pointer;">
+                            <option value="Ativa" ${!isBlocked && !isCancelled ? 'selected' : ''}>🟢 Ativa</option>
                             <option value="Bloqueada" ${isBlocked ? 'selected' : ''}>🔴 Bloqueada</option>
+                            <option value="Cancelada" ${isCancelled ? 'selected' : ''}>⛔ Cancelada</option>
                         </select>
-                        ${isBlocked ? `<input type="text" value="${escapeHTML(f.blockReason || '')}"
-                            placeholder="Motivo do bloqueio..."
+                        ${isBlocked || isCancelled ? `<input type="text" value="${escapeHTML(f.blockReason || '')}"
+                            placeholder="${isBlocked ? 'Motivo do bloqueio...' : 'Motivo do cancelamento...'}"
                             onchange="updateFeature(${index}, 'blockReason', this.value)"
-                            style="margin-top: 5px; width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 5px; border: 1px solid #fca5a5; background: #fff1f1; color: #b91c1c; font-weight: 600; box-sizing: border-box;">` : ''}
+                            style="margin-top: 5px; width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 5px; border: 1px solid ${statusBorder}; background: ${isBlocked ? '#fff1f1' : '#f3f4f6'}; color: ${statusColor}; font-weight: 600; box-sizing: border-box;">` : ''}
                     </td>
                     <td style="color: var(--text-muted); font-weight: 600; text-align: center; font-size: 15px; background: #f8fafc;">${f.tests}</td>
                     <td style="font-weight: 700; text-align: center; color: ${colorExec}; font-size: 15px;">${f.exec}</td>
@@ -697,19 +703,21 @@ window.renderTestCasesAccordion = function() {
             const isOpen = openFeatureIds.includes(String(f.id)) ? 'open' : '';
             
             const isBlocked = f.status === 'Bloqueada';
-            const sumHeaderStyle = isBlocked ? "background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;" : "";
-            
+            const isCancelled = f.status === 'Cancelada';
+            const sumHeaderStyle = isBlocked ? "background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;" : isCancelled ? "background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db;" : "";
+
             const currentFilter = f.activeFilter || 'Todos';
-            
+
             return `
-            <details class="styled-accordion" data-feature-id="${f.id}" ${isOpen} style="${isBlocked ? 'border-color: #fecaca;' : ''}">
+            <details class="styled-accordion" data-feature-id="${f.id}" ${isOpen} style="${isBlocked ? 'border-color: #fecaca;' : isCancelled ? 'border-color: #d1d5db; opacity: 0.75;' : ''}">
                 <summary style="${sumHeaderStyle}">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <span class="dnd-handle" draggable="true" onclick="event.preventDefault(); event.stopPropagation();" title="Arraste para reordenar a funcionalidade">⠿</span>
-                        ▶ ${escapeHTML(f.name || 'Funcionalidade sem nome')}
-                        ${isBlocked ? '🛑' : ''}
+                        ▶ ${isCancelled ? `<span style="text-decoration: line-through;">${escapeHTML(f.name || 'Funcionalidade sem nome')}</span>` : escapeHTML(f.name || 'Funcionalidade sem nome')}
+                        ${isBlocked ? '🛑' : isCancelled ? '⛔' : ''}
+                        ${isCancelled ? '<span style="font-size:11px; background:#e5e7eb; color:#6b7280; padding:2px 7px; border-radius:10px; font-weight:700; margin-left:4px;">Cancelada — não contabilizada</span>' : ''}
                     </span>
-                    <span class="badge" style="${isBlocked ? 'background: #dc2626;' : ''}">${f.tests} Testes no Total</span>
+                    <span class="badge" style="${isBlocked ? 'background: #dc2626;' : isCancelled ? 'background: #9ca3af;' : ''}">${f.tests} Testes no Total</span>
                 </summary>
                 <div class="accordion-content">
                     
@@ -1041,7 +1049,7 @@ window.renderCharts = function() {
             
             const sprintDays = parseInt(state.config.sprintDays) || 20;
             
-            const validFeatures = (state.features || []).filter(f => f !== null && f !== undefined);
+            const validFeatures = (state.features || []).filter(f => f !== null && f !== undefined && f.status !== 'Cancelada');
             if (validFeatures.length === 0) return;
 
             const totalTests = validFeatures.reduce((acc, f) => acc + (parseInt(f.tests) || 0), 0);

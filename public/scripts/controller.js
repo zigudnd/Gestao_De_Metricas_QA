@@ -262,7 +262,7 @@ window.updateFeature = function(index, field, value) {
         const oldName = state.features[index].name;
         state.features[index][field] = value; 
         
-        if (field === 'status' && value !== 'Bloqueada') {
+        if (field === 'status' && value !== 'Bloqueada' && value !== 'Cancelada') {
             state.features[index].blockReason = '';
         }
 
@@ -391,7 +391,7 @@ window.handleBugStatusChange = function(index, newStatus, selectElement) {
             _resolveModalPrevStatus = state.bugs[index].status;
             _resolveModalBugIndex = index;
             _resolveModalSelectElement = selectElement;
-            document.getElementById('resolve-modal-date').value = state.currentDate || '';
+            document.getElementById('resolve-modal-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('modal-resolve-bug').classList.add('active');
         } else {
             if (state.bugs[index].resolvedAt) {
@@ -433,6 +433,7 @@ let _editingBugIndex = null;
 
 window.openBugModal = function(prefilled) {
         const p = prefilled || {};
+        const today = new Date().toISOString().split('T')[0];
         const featureSelect = document.getElementById('bug-modal-feature');
         featureSelect.innerHTML = '<option value="">Não informada</option>' +
             (state.features || []).map(f =>
@@ -444,6 +445,7 @@ window.openBugModal = function(prefilled) {
         document.getElementById('bug-modal-categoria').value = p.categoria || 'Layout';
         document.getElementById('bug-modal-assignee').value = p.assignee || '';
         document.getElementById('bug-modal-desc').value = p.desc || '';
+        document.getElementById('bug-modal-openedAt').value = p.openedAt || today;
         document.getElementById('modal-bug-form').classList.add('active');
     }
 
@@ -465,6 +467,7 @@ window.closeBugModal = function() {
 
 window.saveBugFromModal = function() {
         const today = new Date().toISOString().split('T')[0];
+        const openedAt = document.getElementById('bug-modal-openedAt').value || today;
         const fields = {
             id:       document.getElementById('bug-modal-id').value.trim() || 'BUG-XXX',
             feature:  document.getElementById('bug-modal-feature').value,
@@ -476,14 +479,14 @@ window.saveBugFromModal = function() {
         };
 
         if (_editingBugIndex !== null) {
-            // Edição: preserva status, retests, openedAt, resolvedAt
-            Object.assign(state.bugs[_editingBugIndex], fields);
+            // Edição: preserva status, retests, resolvedAt mas atualiza openedAt se alterado
+            Object.assign(state.bugs[_editingBugIndex], fields, { openedAt });
         } else {
             // Criação
             state.bugs.unshift(Object.assign(fields, {
                 status: 'Aberto',
                 retests: 0,
-                openedAt: state.currentDate || today,
+                openedAt,
                 resolvedAt: ''
             }));
         }
@@ -855,6 +858,51 @@ Recuperação de Senha,Solicitar redefinição,"Dado que o usuario clica em Esqu
     // Padrão obrigatório: coluna 1 = Funcionalidade, coluna 2 = Cenário
     // Colunas 3 (Gherkin) e 4 (Complexidade) são opcionais
     _downloadFile(csvContent, 'template_importacao.csv', 'text/csv;charset=utf-8');
+};
+
+window.exportSprintCoverage = function() {
+    const sprintTitle = (state.config && state.config.title) || 'Sprint';
+    const sprintStart = (state.config && state.config.startDate) ? ` | Início: ${state.config.startDate}` : '';
+    const sprintEnd   = (state.config && state.config.endDate)   ? ` | Fim: ${state.config.endDate}` : '';
+    const squad       = (state.config && state.config.squad)     ? ` | Squad: ${state.config.squad}` : '';
+
+    let lines = [];
+    lines.push(`# ${sprintTitle}${squad}${sprintStart}${sprintEnd}`);
+    lines.push(`# Exportado em: ${new Date().toLocaleDateString('pt-BR')}`);
+    lines.push('');
+
+    const features = (state.features || []).filter(f => f.status !== 'Cancelada');
+
+    if (features.length === 0) {
+        showToast('Nenhuma funcionalidade ativa para exportar.', true);
+        return;
+    }
+
+    features.forEach(f => {
+        lines.push(`Funcionalidade: ${f.name || 'Sem nome'}`);
+
+        const cases = (f.cases || []);
+        if (cases.length === 0) {
+            lines.push('  # Nenhum cenário cadastrado');
+        } else {
+            cases.forEach(tc => {
+                lines.push('');
+                lines.push(`  Cenário: ${tc.name || 'Sem nome'}`);
+                if (tc.gherkin && tc.gherkin.trim()) {
+                    tc.gherkin.split('\n').forEach(gl => {
+                        lines.push(`    ${gl.trim()}`);
+                    });
+                } else {
+                    lines.push('    # (sem steps Gherkin cadastrados)');
+                }
+            });
+        }
+        lines.push('');
+    });
+
+    const safeTitle = sprintTitle.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+    _downloadFile(lines.join('\n'), `cobertura_${safeTitle}.feature`, 'text/plain;charset=utf-8');
+    showToast('Cobertura exportada com sucesso!');
 };
 
 function _downloadFile(content, filename, mimeType) {

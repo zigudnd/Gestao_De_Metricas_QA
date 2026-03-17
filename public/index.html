@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QA Dashboard - Acompanhamento da Sprint</title>
+    <title>ToStatos - Acompanhamento da Sprint</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -504,6 +504,7 @@
                     <button class="btn-outline" style="height: 42px; padding: 0 16px; color: #475569; border-color: #cbd5e1; font-weight: 600; box-shadow: none; background: #f8fafc;" onclick="downloadCSVTemplate()">📋 Template CSV</button>
                     <button class="btn-outline" style="height: 42px; padding: 0 16px; color: var(--primary-blue); border-color: #bfdbfe; background-color: #eff6ff; font-weight: 600; box-shadow: none;" onclick="document.getElementById('importFeatureFile').click()">📁 Importar (.feature / .csv / .xlsx)</button>
                     <input type="file" id="importFeatureFile" accept=".feature,.csv,.xlsx,.xls" style="display: none;" onchange="importFeature(event)">
+                    <button class="btn-outline" style="height: 42px; padding: 0 16px; color: #7c3aed; border-color: #ddd6fe; background-color: #f5f3ff; font-weight: 600; box-shadow: none;" onclick="exportSprintCoverage()" title="Exportar cobertura de testes da sprint em formato Gherkin .feature">📤 Exportar Cobertura (.feature)</button>
                     <button class="btn-primary" style="height: 42px; padding: 0 20px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="addFeature()">➕ Nova Funcionalidade</button>
                 </div>
             </div>
@@ -834,7 +835,7 @@
                 <button class="btn-close-modal" onclick="window.closeBugModal()">×</button>
             </div>
             <div style="padding: 0 5px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                     <div>
                         <label class="input-label">ID do Bug</label>
                         <input type="text" id="bug-modal-id" placeholder="BUG-001">
@@ -850,6 +851,10 @@
                             <option value="BFF">BFF</option>
                             <option value="Back">Back</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="input-label">Data de Abertura</label>
+                        <input type="date" id="bug-modal-openedAt">
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">

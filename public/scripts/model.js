@@ -4,7 +4,7 @@
 // ==========================================
 
 window.DEFAULT_STATE = {
-    config: { sprintDays: 20, title: "QA Dashboard - Acompanhamento da Sprint", startDate: "", endDate: "", targetVersion: "", squad: "", qaName: "", hsCritical: 15, hsHigh: 10, hsMedium: 5, hsLow: 2, hsRetest: 2, hsBlocked: 10, hsDelayed: 2 },
+    config: { sprintDays: 20, title: "ToStatos - Acompanhamento da Sprint", startDate: "", endDate: "", targetVersion: "", squad: "", qaName: "", hsCritical: 15, hsHigh: 10, hsMedium: 5, hsLow: 2, hsRetest: 2, hsBlocked: 10, hsDelayed: 2 },
     currentDate: new Date().toISOString().split('T')[0],
     reports: {},
     notes: { premises: "", actionPlan: "", operationalPremises: "" },
