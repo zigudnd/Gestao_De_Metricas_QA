@@ -226,10 +226,51 @@ window.removeAlignment = function(index) {
     }
 
     
-window.addFeature = function() {
+// ─── Suite de Testes — CRUD ────────────────────────────────────────────────────
+
+window.addSuite = function() {
+    if (!state.suites) state.suites = [];
+    const newId = Date.now();
+    state.suites.push({ id: newId, name: '' });
+    saveState();
+    setTimeout(() => {
+        const inputEl = document.querySelector(`[data-suite-name-id="${newId}"]`);
+        if (inputEl) {
+            inputEl.focus();
+            inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 150);
+};
+
+window.updateSuite = function(index, field, value) {
+    if (!state.suites || !state.suites[index]) return;
+    state.suites[index][field] = value;
+    saveState();
+};
+
+window.removeSuite = function(index) {
+    if (!state.suites || !state.suites[index]) return;
+    const suite = state.suites[index];
+    const featureCount = state.features.filter(f => String(f.suiteId) === String(suite.id)).length;
+    window.showConfirmModal(
+        'Excluir Suite de Testes',
+        `Tem certeza? Isso excluirá a suite <strong>"${escapeHTML(suite.name || 'sem nome')}"</strong> e suas <strong>${featureCount} funcionalidade(s)</strong> com todos os casos de teste.`,
+        () => {
+            state.features = state.features.filter(f => String(f.suiteId) !== String(suite.id));
+            state.suites.splice(index, 1);
+            saveState();
+        }
+    );
+};
+
+// ─── Funcionalidade — CRUD ────────────────────────────────────────────────────
+
+window.addFeature = function(suiteId) {
+        if (!suiteId) suiteId = state.suites && state.suites[0] ? state.suites[0].id : 1;
         const newId = Date.now();
         state.features.unshift({
             id: newId,
+            suiteId: suiteId,
             name: '',
             tests: 0,
             manualTests: 0,
@@ -242,8 +283,8 @@ window.addFeature = function() {
             activeFilter: 'Todos',
             cases: []
         });
-        saveState(); 
-        
+        saveState();
+
         setTimeout(() => {
             const detailsElement = document.querySelector(`details[data-feature-id="${newId}"]`);
             if (detailsElement) {
@@ -860,21 +901,25 @@ Recuperação de Senha,Solicitar redefinição,"Dado que o usuario clica em Esqu
     _downloadFile(csvContent, 'template_importacao.csv', 'text/csv;charset=utf-8');
 };
 
-window.exportSprintCoverage = function() {
+window.exportSprintCoverage = function(suiteId) {
     const sprintTitle = (state.config && state.config.title) || 'Sprint';
     const sprintStart = (state.config && state.config.startDate) ? ` | Início: ${state.config.startDate}` : '';
     const sprintEnd   = (state.config && state.config.endDate)   ? ` | Fim: ${state.config.endDate}` : '';
     const squad       = (state.config && state.config.squad)     ? ` | Squad: ${state.config.squad}` : '';
 
+    const suite = suiteId ? (state.suites || []).find(s => String(s.id) === String(suiteId)) : null;
+    const suiteLabel = suite ? ` | Suite: ${suite.name || 'Sem nome'}` : '';
+
     let lines = [];
-    lines.push(`# ${sprintTitle}${squad}${sprintStart}${sprintEnd}`);
+    lines.push(`# ${sprintTitle}${squad}${sprintStart}${sprintEnd}${suiteLabel}`);
     lines.push(`# Exportado em: ${new Date().toLocaleDateString('pt-BR')}`);
     lines.push('');
 
-    const features = (state.features || []).filter(f => f.status !== 'Cancelada');
+    let features = (state.features || []).filter(f => f.status !== 'Cancelada');
+    if (suiteId) features = features.filter(f => String(f.suiteId) === String(suiteId));
 
     if (features.length === 0) {
-        showToast('Nenhuma funcionalidade ativa para exportar.', true);
+        showToast('Nenhuma funcionalidade ativa para exportar nesta suite.', true);
         return;
     }
 
@@ -900,7 +945,7 @@ window.exportSprintCoverage = function() {
         lines.push('');
     });
 
-    const safeTitle = sprintTitle.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+    const safeTitle = (suite ? (suite.name || 'suite') : sprintTitle).replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
     _downloadFile(lines.join('\n'), `cobertura_${safeTitle}.feature`, 'text/plain;charset=utf-8');
     showToast('Cobertura exportada com sucesso!');
 };
@@ -919,22 +964,23 @@ function _downloadFile(content, filename, mimeType) {
 
 // ─── Importação Unificada (.feature / .csv / .xlsx) ──────────────────────────
 
-window.importFeature = function(event) {
+window.importFeature = function(event, suiteId) {
     const file = event.target.files[0];
     if (!file) return;
     const fileName = file.name.toLowerCase();
+    const targetSuiteId = suiteId || (state.suites && state.suites[0] ? state.suites[0].id : 1);
 
     if (fileName.endsWith('.feature')) {
         const reader = new FileReader();
-        reader.onload = function(e) { _importFromFeatureText(e.target.result); };
+        reader.onload = function(e) { _importFromFeatureText(e.target.result, targetSuiteId); };
         reader.readAsText(file);
     } else if (fileName.endsWith('.csv')) {
         const reader = new FileReader();
-        reader.onload = function(e) { _importFromCSV(e.target.result); };
+        reader.onload = function(e) { _importFromCSV(e.target.result, targetSuiteId); };
         reader.readAsText(file, 'UTF-8');
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
         const reader = new FileReader();
-        reader.onload = function(e) { _importFromXLSX(e.target.result); };
+        reader.onload = function(e) { _importFromXLSX(e.target.result, targetSuiteId); };
         reader.readAsArrayBuffer(file);
     } else {
         alert('Formato não suportado. Use: .feature, .csv, .xlsx ou .xls');
@@ -943,7 +989,7 @@ window.importFeature = function(event) {
 };
 
 // Parser .feature: suporta múltiplas funcionalidades num único arquivo
-function _importFromFeatureText(text) {
+function _importFromFeatureText(text, suiteId) {
     const featureRegex = /^(funcionalidade|feature)\s*:/i;
     const scenarioRegex = /^(cenario|cenário|scenario|esquema do cenario|esquema do cenário|scenario outline)\s*:/i;
 
@@ -989,12 +1035,14 @@ function _importFromFeatureText(text) {
 
     let totalScenarios = 0;
     const summary = [];
+    const _importSuiteId = suiteId || (state.suites && state.suites[0] ? state.suites[0].id : 1);
     featuresWithScenarios.forEach((featureName, fi) => {
         const scenarios = featuresMap[featureName];
-        let targetFeature = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
+        let targetFeature = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase() && String(f.suiteId) === String(_importSuiteId));
         if (!targetFeature) {
             targetFeature = {
                 id: Date.now() + fi,
+                suiteId: _importSuiteId,
                 name: featureName,
                 tests: 0, manualTests: 0, exec: 0,
                 execution: {}, manualExecData: {}, mockupImage: '',
@@ -1045,7 +1093,7 @@ function _parseCSV(text) {
     return rows;
 }
 
-function _importFromCSV(text) {
+function _importFromCSV(text, suiteId) {
     const rows = _parseCSV(text).filter(r => r.some(c => c.trim()));
     if (rows.length < 2) { alert('Arquivo CSV vazio ou inválido.'); return; }
 
@@ -1065,6 +1113,7 @@ function _importFromCSV(text) {
     let importedCount = 0;
     let newFeatureCount = 0;
     const validComplexities = ['Baixa', 'Moderada', 'Alta'];
+    const _csvSuiteId = suiteId || (state.suites && state.suites[0] ? state.suites[0].id : 1);
 
     for (let i = 1; i < rows.length; i++) {
         const cols = rows[i];
@@ -1079,7 +1128,7 @@ function _importFromCSV(text) {
         let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
         if (!target) {
             target = {
-                id: Date.now() + i, name: featureName,
+                id: Date.now() + i, suiteId: _csvSuiteId, name: featureName,
                 tests: 0, manualTests: 0, exec: 0,
                 execution: {}, manualExecData: {}, mockupImage: '',
                 status: 'Ativa', blockReason: '', activeFilter: 'Todos', cases: []
@@ -1099,7 +1148,7 @@ function _importFromCSV(text) {
     alert(`✅ Importação CSV concluída!\n\n${importedCount} cenário(s) importado(s)${newFeatureCount > 0 ? ` em ${newFeatureCount} nova(s) funcionalidade(s) criada(s)` : ''}.`);
 }
 
-function _importFromXLSX(arrayBuffer) {
+function _importFromXLSX(arrayBuffer, suiteId) {
     if (typeof XLSX === 'undefined') {
         alert('Biblioteca XLSX não carregada. Verifique a conexão e recarregue a página.');
         return;
@@ -1134,6 +1183,7 @@ function _importFromXLSX(arrayBuffer) {
     let importedCount = 0;
     let newFeatureCount = 0;
     const validComplexities = ['Baixa', 'Moderada', 'Alta'];
+    const _xlsxSuiteId = suiteId || (state.suites && state.suites[0] ? state.suites[0].id : 1);
 
     rows.forEach((row, idx) => {
         const featureName  = String(row[colFeature]  || '').trim() || 'Importado de Planilha';
@@ -1147,7 +1197,7 @@ function _importFromXLSX(arrayBuffer) {
         let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
         if (!target) {
             target = {
-                id: Date.now() + idx, name: featureName,
+                id: Date.now() + idx, suiteId: _xlsxSuiteId, name: featureName,
                 tests: 0, manualTests: 0, exec: 0,
                 execution: {}, manualExecData: {}, mockupImage: '',
                 status: 'Ativa', blockReason: '', activeFilter: 'Todos', cases: []
@@ -1284,15 +1334,15 @@ window.exportToImage = function() {
             const container = document.getElementById('export-wrapper');
 
             setTimeout(() => {
-                html2canvas(container, { 
-                    scale: 2, 
+                html2canvas(container, {
+                    scale: 1.5,
                     backgroundColor: '#ffffff',
                     useCORS: true,
                     logging: false
                 }).then(canvas => {
                     const link = document.createElement('a');
-                    link.download = `QADashboard_${state.currentDate}.png`;
-                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.download = `QADashboard_${state.currentDate}.jpg`;
+                    link.href = canvas.toDataURL('image/jpeg', 0.85);
                     link.click();
                 }).catch(err => {
                     alert("Erro ao exportar a imagem. Tente usar o Google Chrome. Erro: " + err.message);

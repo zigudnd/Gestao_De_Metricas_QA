@@ -690,215 +690,264 @@ window.renderTables = function() {
     }
 
     
+// ─── Helper: renderiza o HTML interno de uma funcionalidade (accordion interno) ──
+function _renderFeatureAccordionHtml(f, fIndex, openFeatureIds) {
+    const cases = f.cases || [];
+    const isOpen = openFeatureIds.has(String(f.id)) ? 'open' : '';
+    const isBlocked = f.status === 'Bloqueada';
+    const isCancelled = f.status === 'Cancelada';
+    const sumHeaderStyle = isBlocked ? 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;' : isCancelled ? 'background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db;' : '';
+    const currentFilter = f.activeFilter || 'Todos';
+
+    const casesHtml = cases.map((tc, tcIndex) => {
+        let borderColor = 'var(--primary-blue)';
+        let bgColor = '#ffffff';
+        let opacity = '1';
+        let statusVal = tc.status || 'Pendente';
+
+        if (statusVal === 'Concluído') { borderColor = 'var(--success)'; bgColor = '#f8fafc'; opacity = '0.85'; }
+        else if (statusVal === 'Falhou') { borderColor = 'var(--danger)'; }
+        else if (statusVal === 'Bloqueado') { borderColor = 'var(--warning)'; }
+
+        const displayStyle = (currentFilter !== 'Todos' && statusVal !== currentFilter) ? 'display: none;' : 'display: block;';
+
+        const _startCfg     = state.config.startDate || '';
+        const _sprintDayCnt = parseInt(state.config.sprintDays) || 20;
+        const _execDateVal  = (tc.executionDay && _startCfg) ? dayKeyToDate(tc.executionDay) : '';
+        const _execEndDate  = state.config.endDate || (_startCfg ? (() => {
+            const d = new Date(_startCfg + 'T00:00:00');
+            d.setDate(d.getDate() + _sprintDayCnt - 1);
+            return d.toISOString().split('T')[0];
+        })() : '');
+        const _execHasError = !!(tc.status && tc.status !== 'Pendente' && !tc.executionDay);
+        const _execBorder   = _execHasError ? 'border: 2px solid var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,0.12);' : '';
+        const _execTitle    = !_startCfg
+            ? 'Configure a Data de Início (aba Configurações) para ativar o cálculo automático do dia da sprint.'
+            : _execHasError ? 'Selecione a data de execução para confirmar o novo status.'
+            : `Data de execução — calculada a partir de ${_startCfg}`;
+        const _execBadge    = tc.executionDay
+            ? `<span style="font-size:11px;font-weight:700;color:var(--primary-blue);background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;white-space:nowrap;" title="Dia calculado automaticamente">${escapeHTML(tc.executionDay)}</span>`
+            : (_startCfg ? '' : '<span style="font-size:11px;color:var(--warning);white-space:nowrap;" title="Data de Início não configurada">⚠️</span>');
+
+        const _isSelected = !!(window._selectedCases && window._selectedCases[`${fIndex}:${tcIndex}`]);
+        const _selStyle   = _isSelected ? 'outline: 2px solid var(--primary-blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.1);' : '';
+
+        return `
+        <div id="tc-card-${fIndex}-${tcIndex}" class="test-case-card" style="border-left-color: ${borderColor}; background-color: ${bgColor}; opacity: ${opacity}; ${displayStyle} ${_selStyle}">
+            <div class="flex-between mb-2" style="flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-grow: 1; flex-wrap: wrap; align-items: flex-start;">
+                    <label style="display:flex; align-items:center; flex-shrink:0; cursor:pointer; margin-top:6px;" onclick="event.stopPropagation()">
+                        <input type="checkbox"
+                            data-bulk-findex="${fIndex}"
+                            data-bulk-tcindex="${tcIndex}"
+                            ${_isSelected ? 'checked' : ''}
+                            onchange="toggleCaseSelection(${fIndex}, ${tcIndex}, this.checked)"
+                            style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary-blue);">
+                    </label>
+                    <input type="text" id="tc-name-${tc.id}" value="${escapeHTML(tc.name)}" placeholder="Título do Caso de Teste" onchange="this.blur(); updateTestCase(${fIndex}, ${tcIndex}, 'name', this.value)" style="font-weight: 600; flex-grow: 1; min-width: 200px;">
+                    <select onchange="this.blur(); updateTestCase(${fIndex}, ${tcIndex}, 'complexity', this.value)" style="width: 130px; font-weight: 600; color: var(--text-muted);">
+                        <option value="Baixa" ${tc.complexity === 'Baixa' ? 'selected' : ''}>🟢 Baixa</option>
+                        <option value="Moderada" ${tc.complexity === 'Moderada' ? 'selected' : ''}>🟡 Moderada</option>
+                        <option value="Alta" ${tc.complexity === 'Alta' ? 'selected' : ''}>🔴 Alta</option>
+                    </select>
+                    <select data-role="status-select" onchange="handleTestCaseStatusChange(${fIndex}, ${tcIndex}, this.value, this)" style="width: 130px; font-weight: 600; color: ${tc.status === 'Concluído' ? 'var(--success)' : tc.status === 'Falhou' ? 'var(--danger)' : tc.status === 'Bloqueado' ? 'var(--warning)' : 'var(--text-muted)'};">
+                        <option value="Pendente" ${tc.status === 'Pendente' || !tc.status ? 'selected' : ''}>⏳ Pendente</option>
+                        <option value="Concluído" ${tc.status === 'Concluído' ? 'selected' : ''}>✅ Concluído</option>
+                        <option value="Falhou" ${tc.status === 'Falhou' ? 'selected' : ''}>❌ Falhou</option>
+                        <option value="Bloqueado" ${tc.status === 'Bloqueado' ? 'selected' : ''}>🚧 Bloqueado</option>
+                    </select>
+                    <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;">
+                        <input type="date"
+                            data-role="execution-day"
+                            value="${_execDateVal}"
+                            ${_startCfg ? `min="${_startCfg}" max="${_execEndDate}"` : ''}
+                            onchange="this.blur(); handleExecutionDateChange(${fIndex}, ${tcIndex}, this.value, this)"
+                            style="width:148px; font-weight:600; color:var(--text-muted); font-size:13px; padding:6px 8px; ${_execBorder}"
+                            title="${_execTitle}">
+                        ${_execBadge}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-outline" style="padding: 6px 12px; color: var(--primary-blue); border-color: #cbd5e1; font-size: 13px;" onclick="duplicateTestCase(${fIndex}, ${tcIndex})" title="Duplicar Caso de Teste">🔁 Clonar</button>
+                    <button class="btn-outline" style="padding: 6px 12px; color: var(--danger); border-color: transparent; background: #fef2f2; font-size: 13px;" onclick="removeTestCase(${fIndex}, ${tcIndex})" title="Excluir">🗑️</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                <textarea placeholder="Escreva o cenário em Gherkin..." onchange="updateTestCase(${fIndex}, ${tcIndex}, 'gherkin', this.value)" rows="5" style="font-family: monospace; font-size: 13px; resize: vertical; flex: 1 1 0; min-width: 0; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background-color: #fafafa; margin-bottom: 0;">${escapeHTML(tc.gherkin)}</textarea>
+                ${f.mockupImage ? `
+                <div style="flex: 0 0 auto; width: clamp(120px, 35%, 260px);">
+                    <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">📎 Referência Visual</div>
+                    <img src="${f.mockupImage}" onclick="previewMockup(${fIndex})" style="width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: contain; max-height: 160px; background: #fff; cursor: zoom-in;" title="Imagem de referência — clique para ampliar" alt="Mockup">
+                </div>
+                ` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    return `
+    <details class="styled-accordion" data-feature-id="${f.id}" ${isOpen} style="${isBlocked ? 'border-color: #fecaca;' : isCancelled ? 'border-color: #d1d5db; opacity: 0.75;' : ''}">
+        <summary style="${sumHeaderStyle}">
+            <span style="display: flex; align-items: center; gap: 8px;">
+                <span class="dnd-handle" draggable="true" onclick="event.preventDefault(); event.stopPropagation();" title="Arraste para reordenar">⠿</span>
+                ▶ ${isCancelled ? `<span style="text-decoration: line-through;">${escapeHTML(f.name || 'Funcionalidade sem nome')}</span>` : escapeHTML(f.name || 'Funcionalidade sem nome')}
+                ${isBlocked ? '🛑' : isCancelled ? '⛔' : ''}
+                ${isCancelled ? '<span style="font-size:11px; background:#e5e7eb; color:#6b7280; padding:2px 7px; border-radius:10px; font-weight:700; margin-left:4px;">Cancelada — não contabilizada</span>' : ''}
+            </span>
+            <span class="badge" style="${isBlocked ? 'background: #dc2626;' : isCancelled ? 'background: #9ca3af;' : ''}">${f.tests} Testes no Total</span>
+        </summary>
+        <div class="accordion-content">
+            <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex-grow: 1; min-width: 250px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Nome da Funcionalidade</label>
+                        <input type="text" value="${escapeHTML(f.name)}" placeholder="Ex: Tela de Login" onchange="updateFeature(${fIndex}, 'name', this.value)" style="font-weight: 600; font-size: 15px; border-color: #cbd5e1;">
+                    </div>
+                    <div style="width: 150px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Carga Massiva (Qtd)</label>
+                        <input type="number" min="0" value="${f.manualTests || 0}" placeholder="0" onchange="updateFeature(${fIndex}, 'manualTests', this.value)" style="font-weight: 600; font-size: 15px; border-color: #cbd5e1;">
+                    </div>
+                    <button class="btn-outline" style="height: 42px; color: var(--danger); border-color: var(--danger);" onclick="removeFeature(${fIndex})">🗑 Excluir Funcionalidade</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; flex-shrink: 0; white-space: nowrap;">📎 Imagem de Referência</label>
+                    ${f.mockupImage ? `
+                    <img src="${f.mockupImage}" onclick="previewMockup(${fIndex})" style="height: 60px; width: auto; max-width: 120px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; cursor: zoom-in; background: #fff;" title="Clique para visualizar em tela cheia" alt="Mockup">
+                    <span style="font-size: 12px; color: var(--text-muted);">Clique na imagem para ampliar</span>
+                    <button class="btn-outline" onclick="removeMockupImage(${fIndex})" style="padding: 5px 12px; height: 32px; font-size: 12px; color: var(--danger); border-color: #fecaca; background: #fef2f2;">🗑️ Remover</button>
+                    <button class="btn-outline" onclick="document.getElementById('mockup-${fIndex}').click()" style="padding: 5px 12px; height: 32px; font-size: 12px; color: var(--primary-blue); border-color: #bfdbfe; background: #eff6ff;">🔄 Substituir</button>
+                    ` : `
+                    <button class="btn-outline" onclick="document.getElementById('mockup-${fIndex}').click()" style="padding: 5px 14px; height: 34px; font-size: 12px; color: var(--primary-blue); border-color: #bfdbfe; background: #eff6ff; font-weight: 600;">📸 Anexar Mockup</button>
+                    <span style="font-size: 12px; color: var(--text-muted);">PNG, JPG, WebP, GIF — máx. 5MB</span>
+                    `}
+                    <input type="file" id="mockup-${fIndex}" accept="image/*" style="display: none;" onchange="uploadMockupImage(${fIndex}, this)">
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <h4 style="font-size: 14px; color: #0f172a; margin: 0;">Cenários Gherkin Mapeados (${cases.length})</h4>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Filtrar Status:</label>
+                    <select onchange="updateFeatureFilter(${fIndex}, this.value)" style="width: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; color: var(--text-main); height: 32px; cursor: pointer; outline: none;">
+                        <option value="Todos" ${currentFilter === 'Todos' ? 'selected' : ''}>👀 Mostrar Todos</option>
+                        <option value="Pendente" ${currentFilter === 'Pendente' ? 'selected' : ''}>⏳ Pendentes</option>
+                        <option value="Concluído" ${currentFilter === 'Concluído' ? 'selected' : ''}>✅ Concluídos</option>
+                        <option value="Falhou" ${currentFilter === 'Falhou' ? 'selected' : ''}>❌ Falharam</option>
+                        <option value="Bloqueado" ${currentFilter === 'Bloqueado' ? 'selected' : ''}>🚧 Bloqueados</option>
+                    </select>
+                </div>
+            </div>
+            <div id="bulk-bar-${fIndex}" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 14px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; margin-bottom:14px;">
+                <label style="display:flex; align-items:center; gap:7px; font-weight:700; font-size:13px; cursor:pointer; color:var(--primary-blue); flex-shrink:0; user-select:none;">
+                    <input type="checkbox" id="bulk-select-all-${fIndex}"
+                        onchange="selectAllCasesInFeature(${fIndex}, this.checked)"
+                        style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary-blue);">
+                    Selecionar Todos
+                </label>
+                <span class="bulk-count" style="font-size:12px; color:#64748b; font-weight:600;"></span>
+                <div class="bulk-actions" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <select id="bulk-status-${fIndex}" style="font-size:13px; font-weight:600; padding:5px 10px; border-radius:6px; border:1px solid #cbd5e1; height:34px; cursor:pointer;">
+                        <option value="Pendente">⏳ Pendente</option>
+                        <option value="Concluído">✅ Concluído</option>
+                        <option value="Falhou">❌ Falhou</option>
+                        <option value="Bloqueado">🚧 Bloqueado</option>
+                    </select>
+                    <input type="date" id="bulk-date-${fIndex}"
+                        ${state.config.startDate ? `min="${state.config.startDate}"` : ''}
+                        ${state.config.endDate ? `max="${state.config.endDate}"` : ''}
+                        style="font-size:13px; padding:5px 8px; border-radius:6px; border:1px solid #cbd5e1; height:34px;"
+                        title="Data de execução para todos os cenários selecionados (opcional)">
+                    <button onclick="bulkApplyStatus(${fIndex})" class="btn-primary" style="padding:5px 14px; height:34px; font-size:13px;">✅ Aplicar em Massa</button>
+                    <button onclick="clearBulkSelection(${fIndex})" class="btn-outline" style="padding:5px 12px; height:34px; font-size:13px; color:var(--text-muted);">✕ Limpar</button>
+                </div>
+            </div>
+            ${casesHtml}
+            <button class="btn-outline" onclick="addTestCase(${fIndex})" style="margin-top: 10px; width: 100%; border-style: dashed; padding: 12px; font-weight: 600; color: var(--primary-blue); border-color: #93c5fd;">+ Adicionar Novo Caso de Teste</button>
+        </div>
+    </details>`;
+}
+
 window.renderTestCasesAccordion = function() {
         const container = document.getElementById('test-cases-container');
-        if(isUserTypingIn(container)) return; 
-        
-        const openFeatureIds = Array.from(container.querySelectorAll('details[open]')).map(d => d.dataset.featureId);
+        if (isUserTypingIn(container)) return;
 
-        let html = '';
+        const containerWasEmpty = container.children.length === 0;
+        const openSuiteIds = new Set(Array.from(container.querySelectorAll('details.suite-accordion[open]')).map(d => d.dataset.suiteId));
+        const openFeatureIds = new Set(Array.from(container.querySelectorAll('details.styled-accordion[open]')).map(d => d.dataset.featureId));
 
-        html += state.features.map((f, fIndex) => {
-            const cases = f.cases || [];
-            const isOpen = openFeatureIds.includes(String(f.id)) ? 'open' : '';
-            
-            const isBlocked = f.status === 'Bloqueada';
-            const isCancelled = f.status === 'Cancelada';
-            const sumHeaderStyle = isBlocked ? "background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;" : isCancelled ? "background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db;" : "";
+        const suites = state.suites || [];
 
-            const currentFilter = f.activeFilter || 'Todos';
+        const html = suites.map((suite, sIndex) => {
+            const suiteFeatures = [];
+            state.features.forEach((f, i) => {
+                if (String(f.suiteId) === String(suite.id)) suiteFeatures.push({ f, i });
+            });
+
+            const totalTests = suiteFeatures.reduce((acc, { f }) => acc + (parseInt(f.tests) || 0), 0);
+            const totalExec  = suiteFeatures.reduce((acc, { f }) => acc + (parseInt(f.exec)  || 0), 0);
+            const blockedCount = suiteFeatures.filter(({ f }) => f.status === 'Bloqueada').length;
+            const isSuiteOpen = containerWasEmpty || openSuiteIds.has(String(suite.id));
+
+            const featuresHtml = suiteFeatures.map(({ f, i: fIndex }) =>
+                _renderFeatureAccordionHtml(f, fIndex, openFeatureIds)
+            ).join('');
 
             return `
-            <details class="styled-accordion" data-feature-id="${f.id}" ${isOpen} style="${isBlocked ? 'border-color: #fecaca;' : isCancelled ? 'border-color: #d1d5db; opacity: 0.75;' : ''}">
-                <summary style="${sumHeaderStyle}">
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <span class="dnd-handle" draggable="true" onclick="event.preventDefault(); event.stopPropagation();" title="Arraste para reordenar a funcionalidade">⠿</span>
-                        ▶ ${isCancelled ? `<span style="text-decoration: line-through;">${escapeHTML(f.name || 'Funcionalidade sem nome')}</span>` : escapeHTML(f.name || 'Funcionalidade sem nome')}
-                        ${isBlocked ? '🛑' : isCancelled ? '⛔' : ''}
-                        ${isCancelled ? '<span style="font-size:11px; background:#e5e7eb; color:#6b7280; padding:2px 7px; border-radius:10px; font-weight:700; margin-left:4px;">Cancelada — não contabilizada</span>' : ''}
+            <details class="suite-accordion" data-suite-id="${suite.id}" ${isSuiteOpen ? 'open' : ''}
+                style="background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+                <summary style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-radius: 8px; background: #f8fafc; list-style: none; user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <span style="display: block; width: 4px; height: 20px; background: var(--primary-blue); border-radius: 4px; flex-shrink: 0;"></span>
+                        <strong style="font-size: 16px; color: #0f172a;">${escapeHTML(suite.name || 'Suite sem nome')}</strong>
+                        ${blockedCount > 0 ? `<span style="font-size: 11px; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 10px; font-weight: 700;">🛑 ${blockedCount} bloqueada(s)</span>` : ''}
                     </span>
-                    <span class="badge" style="${isBlocked ? 'background: #dc2626;' : isCancelled ? 'background: #9ca3af;' : ''}">${f.tests} Testes no Total</span>
+                    <span style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">${suiteFeatures.length} funcionalidade(s) &nbsp;·&nbsp; ${totalTests} testes &nbsp;·&nbsp; ${totalExec} executados</span>
+                    </span>
                 </summary>
-                <div class="accordion-content">
-                    
-                    <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 14px;">
-                        <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
-                            <div style="flex-grow: 1; min-width: 250px;">
-                                <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Nome da Funcionalidade</label>
-                                <input type="text" value="${escapeHTML(f.name)}" placeholder="Ex: Tela de Login" onchange="updateFeature(${fIndex}, 'name', this.value)" style="font-weight: 600; font-size: 15px; border-color: #cbd5e1;">
-                            </div>
-                            <div style="width: 150px;">
-                                <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase;">Carga Massiva (Qtd)</label>
-                                <input type="number" min="0" value="${f.manualTests || 0}" placeholder="0" onchange="updateFeature(${fIndex}, 'manualTests', this.value)" style="font-weight: 600; font-size: 15px; border-color: #cbd5e1;">
-                            </div>
-                            <button class="btn-outline" style="height: 42px; color: var(--danger); border-color: var(--danger);" onclick="removeFeature(${fIndex})">🗑 Excluir Funcionalidade</button>
+                <div style="padding: 16px 20px 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding: 14px 16px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">Nome da Suite</label>
+                            <input type="text" value="${escapeHTML(suite.name)}" placeholder="Ex: Suite de Regressão"
+                                onchange="updateSuite(${sIndex}, 'name', this.value)"
+                                data-suite-name-id="${suite.id}"
+                                style="flex: 1; min-width: 200px; font-weight: 700; font-size: 15px; border-color: #cbd5e1;">
+                            <button class="btn-outline" style="height: 42px; color: var(--danger); border-color: var(--danger); white-space: nowrap; flex-shrink: 0;"
+                                onclick="removeSuite(${sIndex})">🗑 Excluir Suite</button>
                         </div>
-                        <!-- Imagem de Referência (Mockup) -->
-                        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-top: 1px solid #e2e8f0; padding-top: 14px;">
-                            <label style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; flex-shrink: 0; white-space: nowrap;">📎 Imagem de Referência</label>
-                            ${f.mockupImage ? `
-                            <img src="${f.mockupImage}" onclick="previewMockup(${fIndex})" style="height: 60px; width: auto; max-width: 120px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; cursor: zoom-in; background: #fff;" title="Clique para visualizar em tela cheia" alt="Mockup">
-                            <span style="font-size: 12px; color: var(--text-muted);">Clique na imagem para ampliar</span>
-                            <button class="btn-outline" onclick="removeMockupImage(${fIndex})" style="padding: 5px 12px; height: 32px; font-size: 12px; color: var(--danger); border-color: #fecaca; background: #fef2f2;">🗑️ Remover</button>
-                            <button class="btn-outline" onclick="document.getElementById('mockup-${fIndex}').click()" style="padding: 5px 12px; height: 32px; font-size: 12px; color: var(--primary-blue); border-color: #bfdbfe; background: #eff6ff;">🔄 Substituir</button>
-                            ` : `
-                            <button class="btn-outline" onclick="document.getElementById('mockup-${fIndex}').click()" style="padding: 5px 14px; height: 34px; font-size: 12px; color: var(--primary-blue); border-color: #bfdbfe; background: #eff6ff; font-weight: 600;">📸 Anexar Mockup</button>
-                            <span style="font-size: 12px; color: var(--text-muted);">PNG, JPG, WebP, GIF — máx. 5MB</span>
-                            `}
-                            <input type="file" id="mockup-${fIndex}" accept="image/*" style="display: none;" onchange="uploadMockupImage(${fIndex}, this)">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                            <button class="btn-outline" style="height: 36px; padding: 0 14px; color: var(--primary-blue); border-color: #bfdbfe; background: #eff6ff; font-weight: 600; font-size: 13px;"
+                                onclick="document.getElementById('import-file-suite-${suite.id}').click()">📁 Importar (.feature / .csv / .xlsx)</button>
+                            <input type="file" id="import-file-suite-${suite.id}" accept=".feature,.csv,.xlsx,.xls" style="display: none;"
+                                onchange="importFeature(event, ${suite.id})">
+                            <button class="btn-outline" style="height: 36px; padding: 0 14px; color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff; font-weight: 600; font-size: 13px;"
+                                onclick="exportSprintCoverage(${suite.id})" title="Exportar cobertura desta suite em formato Gherkin .feature">📤 Exportar Cobertura (.feature)</button>
                         </div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                        <h4 style="font-size: 14px; color: #0f172a; margin: 0;">Cenários Gherkin Mapeados (${cases.length})</h4>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <label style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Filtrar Status:</label>
-                            <select onchange="updateFeatureFilter(${fIndex}, this.value)" style="width: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; color: var(--text-main); height: 32px; cursor: pointer; outline: none;">
-                                <option value="Todos" ${currentFilter === 'Todos' ? 'selected' : ''}>👀 Mostrar Todos</option>
-                                <option value="Pendente" ${currentFilter === 'Pendente' ? 'selected' : ''}>⏳ Pendentes</option>
-                                <option value="Concluído" ${currentFilter === 'Concluído' ? 'selected' : ''}>✅ Concluídos</option>
-                                <option value="Falhou" ${currentFilter === 'Falhou' ? 'selected' : ''}>❌ Falharam</option>
-                                <option value="Bloqueado" ${currentFilter === 'Bloqueado' ? 'selected' : ''}>🚧 Bloqueados</option>
-                            </select>
-                        </div>
+                    <div class="suite-features-container" data-suite-id="${suite.id}">
+                        ${featuresHtml}
                     </div>
-
-                    <!-- Barra de Ações em Massa -->
-                    <div id="bulk-bar-${fIndex}" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 14px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; margin-bottom:14px;">
-                        <label style="display:flex; align-items:center; gap:7px; font-weight:700; font-size:13px; cursor:pointer; color:var(--primary-blue); flex-shrink:0; user-select:none;">
-                            <input type="checkbox" id="bulk-select-all-${fIndex}"
-                                onchange="selectAllCasesInFeature(${fIndex}, this.checked)"
-                                style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary-blue);">
-                            Selecionar Todos
-                        </label>
-                        <span class="bulk-count" style="font-size:12px; color:#64748b; font-weight:600;"></span>
-                        <div class="bulk-actions" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
-                            <select id="bulk-status-${fIndex}" style="font-size:13px; font-weight:600; padding:5px 10px; border-radius:6px; border:1px solid #cbd5e1; height:34px; cursor:pointer;">
-                                <option value="Pendente">⏳ Pendente</option>
-                                <option value="Concluído">✅ Concluído</option>
-                                <option value="Falhou">❌ Falhou</option>
-                                <option value="Bloqueado">🚧 Bloqueado</option>
-                            </select>
-                            <input type="date" id="bulk-date-${fIndex}"
-                                ${state.config.startDate ? `min="${state.config.startDate}"` : ''}
-                                ${state.config.endDate ? `max="${state.config.endDate}"` : ''}
-                                style="font-size:13px; padding:5px 8px; border-radius:6px; border:1px solid #cbd5e1; height:34px;"
-                                title="Data de execução para todos os cenários selecionados (opcional — usa data atual como fallback)">
-                            <button onclick="bulkApplyStatus(${fIndex})" class="btn-primary" style="padding:5px 14px; height:34px; font-size:13px;">✅ Aplicar em Massa</button>
-                            <button onclick="clearBulkSelection(${fIndex})" class="btn-outline" style="padding:5px 12px; height:34px; font-size:13px; color:var(--text-muted);">✕ Limpar</button>
-                        </div>
-                    </div>
-
-                    ${cases.map((tc, tcIndex) => {
-                        let borderColor = 'var(--primary-blue)';
-                        let bgColor = '#ffffff';
-                        let opacity = '1';
-                        let statusVal = tc.status || 'Pendente';
-
-                        if(statusVal === 'Concluído') { borderColor = 'var(--success)'; bgColor = '#f8fafc'; opacity = '0.85'; }
-                        else if(statusVal === 'Falhou') { borderColor = 'var(--danger)'; }
-                        else if(statusVal === 'Bloqueado') { borderColor = 'var(--warning)'; }
-
-                        let displayStyle = (currentFilter !== 'Todos' && statusVal !== currentFilter) ? 'display: none;' : 'display: block;';
-
-                        // --- Date Picker: conversão dayKey ↔ data real ---
-                        const _startCfg      = state.config.startDate || '';
-                        const _sprintDayCnt  = parseInt(state.config.sprintDays) || 20;
-                        const _execDateVal   = (tc.executionDay && _startCfg) ? dayKeyToDate(tc.executionDay) : '';
-                        // Prioriza endDate configurado; fallback: startDate + sprintDays - 1
-                        const _execEndDate   = state.config.endDate || (_startCfg ? (() => {
-                            const d = new Date(_startCfg + 'T00:00:00');
-                            d.setDate(d.getDate() + _sprintDayCnt - 1);
-                            return d.toISOString().split('T')[0];
-                        })() : '');
-                        const _execHasError  = !!(tc.status && tc.status !== 'Pendente' && !tc.executionDay);
-                        const _execBorder    = _execHasError
-                            ? 'border: 2px solid var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,0.12);'
-                            : '';
-                        const _execTitle     = !_startCfg
-                            ? 'Configure a Data de Início (aba Configurações) para ativar o cálculo automático do dia da sprint.'
-                            : _execHasError
-                                ? 'Selecione a data de execução para confirmar o novo status.'
-                                : `Data de execução — calculada a partir de ${_startCfg}`;
-                        const _execBadge     = tc.executionDay
-                            ? `<span style="font-size:11px;font-weight:700;color:var(--primary-blue);background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;white-space:nowrap;" title="Dia calculado automaticamente">${escapeHTML(tc.executionDay)}</span>`
-                            : (_startCfg ? '' : '<span style="font-size:11px;color:var(--warning);white-space:nowrap;" title="Data de Início não configurada">⚠️</span>');
-
-                        const _isSelected = !!(window._selectedCases && window._selectedCases[`${fIndex}:${tcIndex}`]);
-                        const _selStyle = _isSelected ? 'outline: 2px solid var(--primary-blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.1);' : '';
-
-                        return `
-                        <div id="tc-card-${fIndex}-${tcIndex}" class="test-case-card" style="border-left-color: ${borderColor}; background-color: ${bgColor}; opacity: ${opacity}; ${displayStyle} ${_selStyle}">
-                            <div class="flex-between mb-2" style="flex-wrap: wrap; gap: 10px;">
-                                <div style="display: flex; gap: 10px; flex-grow: 1; flex-wrap: wrap; align-items: flex-start;">
-                                    <label style="display:flex; align-items:center; flex-shrink:0; cursor:pointer; margin-top:6px;" onclick="event.stopPropagation()">
-                                        <input type="checkbox"
-                                            data-bulk-findex="${fIndex}"
-                                            data-bulk-tcindex="${tcIndex}"
-                                            ${_isSelected ? 'checked' : ''}
-                                            onchange="toggleCaseSelection(${fIndex}, ${tcIndex}, this.checked)"
-                                            style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary-blue);">
-                                    </label>
-                                    <input type="text" id="tc-name-${tc.id}" value="${escapeHTML(tc.name)}" placeholder="Título do Caso de Teste" onchange="this.blur(); updateTestCase(${fIndex}, ${tcIndex}, 'name', this.value)" style="font-weight: 600; flex-grow: 1; min-width: 200px;">
-                                    
-                                    <select onchange="this.blur(); updateTestCase(${fIndex}, ${tcIndex}, 'complexity', this.value)" style="width: 130px; font-weight: 600; color: var(--text-muted);">
-                                        <option value="Baixa" ${tc.complexity === 'Baixa' ? 'selected' : ''}>🟢 Baixa</option>
-                                        <option value="Moderada" ${tc.complexity === 'Moderada' ? 'selected' : ''}>🟡 Moderada</option>
-                                        <option value="Alta" ${tc.complexity === 'Alta' ? 'selected' : ''}>🔴 Alta</option>
-                                    </select>
-
-                                    <select data-role="status-select" onchange="handleTestCaseStatusChange(${fIndex}, ${tcIndex}, this.value, this)" style="width: 130px; font-weight: 600; color: ${tc.status === 'Concluído' ? 'var(--success)' : tc.status === 'Falhou' ? 'var(--danger)' : tc.status === 'Bloqueado' ? 'var(--warning)' : 'var(--text-muted)'};">
-                                        <option value="Pendente" ${tc.status === 'Pendente' || !tc.status ? 'selected' : ''}>⏳ Pendente</option>
-                                        <option value="Concluído" ${tc.status === 'Concluído' ? 'selected' : ''}>✅ Concluído</option>
-                                        <option value="Falhou" ${tc.status === 'Falhou' ? 'selected' : ''}>❌ Falhou</option>
-                                        <option value="Bloqueado" ${tc.status === 'Bloqueado' ? 'selected' : ''}>🚧 Bloqueado</option>
-                                    </select>
-
-                                    <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;">
-                                        <input type="date"
-                                            data-role="execution-day"
-                                            value="${_execDateVal}"
-                                            ${_startCfg ? `min="${_startCfg}" max="${_execEndDate}"` : ''}
-                                            onchange="this.blur(); handleExecutionDateChange(${fIndex}, ${tcIndex}, this.value, this)"
-                                            style="width:148px; font-weight:600; color:var(--text-muted); font-size:13px; padding:6px 8px; ${_execBorder}"
-                                            title="${_execTitle}"
-                                        >
-                                        ${_execBadge}
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-outline" style="padding: 6px 12px; color: var(--primary-blue); border-color: #cbd5e1; font-size: 13px;" onclick="duplicateTestCase(${fIndex}, ${tcIndex})" title="Duplicar Caso de Teste">🔁 Clonar</button>
-                                    <button class="btn-outline" style="padding: 6px 12px; color: var(--danger); border-color: transparent; background: #fef2f2; font-size: 13px;" onclick="removeTestCase(${fIndex}, ${tcIndex})" title="Excluir">🗑️</button>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                <textarea placeholder="Escreva o cenário em Gherkin..." onchange="updateTestCase(${fIndex}, ${tcIndex}, 'gherkin', this.value)" rows="5" style="font-family: monospace; font-size: 13px; resize: vertical; flex: 1 1 0; min-width: 0; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background-color: #fafafa; margin-bottom: 0;">${escapeHTML(tc.gherkin)}</textarea>
-                                ${f.mockupImage ? `
-                                <div style="flex: 0 0 auto; width: clamp(120px, 35%, 260px);">
-                                    <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">📎 Referência Visual</div>
-                                    <img src="${f.mockupImage}" onclick="previewMockup(${fIndex})" style="width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: contain; max-height: 160px; background: #fff; cursor: zoom-in;" title="Imagem de referência — clique para ampliar" alt="Mockup">
-                                </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                    }).join('')}
-                    <button class="btn-outline" onclick="addTestCase(${fIndex})" style="margin-top: 10px; width: 100%; border-style: dashed; padding: 12px; font-weight: 600; color: var(--primary-blue); border-color: #93c5fd;">+ Adicionar Novo Caso de Teste</button>
+                    <button class="btn-outline" onclick="addFeature(${suite.id})"
+                        style="margin-top: 12px; width: 100%; border-style: dashed; padding: 12px; font-weight: 600; color: var(--primary-blue); border-color: #93c5fd; border-radius: 8px; background: #f8fafc;">
+                        ➕ Nova Funcionalidade
+                    </button>
                 </div>
             </details>`;
         }).join('');
 
         container.innerHTML = html;
-        initFeatureDragDrop();
+
+        suites.forEach(suite => {
+            const suiteContainer = container.querySelector(`.suite-features-container[data-suite-id="${suite.id}"]`);
+            if (suiteContainer) initSuiteFeatureDragDrop(suiteContainer, suite.id);
+        });
     }
 
-    // ─── Drag & Drop — Funcionalidades ────────────────────────────────────────
-window.initFeatureDragDrop = function() {
-        const container = document.getElementById('test-cases-container');
+    // ─── Drag & Drop — Funcionalidades dentro de uma Suite ────────────────────
+window.initSuiteFeatureDragDrop = function(container, suiteId) {
         if (!container || container._dndBound) return;
         container._dndBound = true;
 
-        let _dragSrcIndex = null;
+        let _dragSrcDomIdx = null;
 
         container.addEventListener('dragstart', (e) => {
             const handle = e.target.closest('.dnd-handle');
@@ -907,10 +956,10 @@ window.initFeatureDragDrop = function() {
             if (!details) { e.preventDefault(); return; }
 
             const allDetails = [...container.querySelectorAll(':scope > details[data-feature-id]')];
-            _dragSrcIndex = allDetails.indexOf(details);
+            _dragSrcDomIdx = allDetails.indexOf(details);
             details.classList.add('dnd-dragging');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', String(_dragSrcIndex));
+            e.dataTransfer.setData('text/plain', String(_dragSrcDomIdx));
         });
 
         container.addEventListener('dragover', (e) => {
@@ -930,21 +979,30 @@ window.initFeatureDragDrop = function() {
 
         container.addEventListener('dragend', () => {
             container.querySelectorAll('details[data-feature-id]').forEach(d => d.classList.remove('dnd-dragging', 'dnd-over'));
-            _dragSrcIndex = null;
+            _dragSrcDomIdx = null;
         });
 
         container.addEventListener('drop', (e) => {
             e.preventDefault();
             const details = e.target.closest('details[data-feature-id]');
-            if (!details || _dragSrcIndex === null) return;
+            if (!details || _dragSrcDomIdx === null) return;
 
             const allDetails = [...container.querySelectorAll(':scope > details[data-feature-id]')];
-            const dropIndex = allDetails.indexOf(details);
-            if (dropIndex === -1 || _dragSrcIndex === dropIndex) { _dragSrcIndex = null; return; }
+            const dropDomIdx = allDetails.indexOf(details);
+            if (dropDomIdx === -1 || _dragSrcDomIdx === dropDomIdx) { _dragSrcDomIdx = null; return; }
 
-            const moved = state.features.splice(_dragSrcIndex, 1)[0];
-            state.features.splice(dropIndex, 0, moved);
-            _dragSrcIndex = null;
+            // Reordenar apenas as features desta suite dentro do array flat
+            const suiteIndices = [];
+            state.features.forEach((f, i) => { if (String(f.suiteId) === String(suiteId)) suiteIndices.push(i); });
+
+            if (_dragSrcDomIdx >= suiteIndices.length || dropDomIdx >= suiteIndices.length) { _dragSrcDomIdx = null; return; }
+
+            const ordered = suiteIndices.map(i => state.features[i]);
+            const moved = ordered.splice(_dragSrcDomIdx, 1)[0];
+            ordered.splice(dropDomIdx, 0, moved);
+            suiteIndices.forEach((flatIdx, i) => { state.features[flatIdx] = ordered[i]; });
+
+            _dragSrcDomIdx = null;
             saveState();
         });
     }

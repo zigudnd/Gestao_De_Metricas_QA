@@ -8,9 +8,12 @@ window.DEFAULT_STATE = {
     currentDate: new Date().toISOString().split('T')[0],
     reports: {},
     notes: { premises: "", actionPlan: "", operationalPremises: "" },
-    alignments: [], 
+    alignments: [],
+    suites: [
+        { id: 1, name: 'Suite Principal' }
+    ],
     features: [
-        { id: 1, name: 'Apresentação', tests: 1, manualTests: 0, exec: 1, execution: {}, manualExecData: {'D1': 1}, mockupImage: '', status: 'Ativa', blockReason: '', activeFilter: 'Todos', cases: [{id: 101, name: 'Validar UI Inicial', complexity: 'Baixa', status: 'Pendente', executionDay: '', gherkin: ''}] }
+        { id: 1, suiteId: 1, name: 'Apresentação', tests: 1, manualTests: 0, exec: 1, execution: {}, manualExecData: {'D1': 1}, mockupImage: '', status: 'Ativa', blockReason: '', activeFilter: 'Todos', cases: [{id: 101, name: 'Validar UI Inicial', complexity: 'Baixa', status: 'Pendente', executionDay: '', gherkin: ''}] }
     ],
     blockers: [],
     bugs: []
@@ -46,6 +49,15 @@ window.normalizeState = function(rawState) {
         const normalizedState = rawState ? rawState : cloneDefaultState();
 
         if(!normalizedState.config) normalizedState.config = cloneDefaultState().config;
+
+        // ── Migração: dados antigos sem suites → criar Suite Principal e atribuir suiteId ──
+        if (!Array.isArray(normalizedState.suites) || normalizedState.suites.length === 0) {
+            const defaultSuiteId = Date.now();
+            normalizedState.suites = [{ id: defaultSuiteId, name: 'Suite Principal' }];
+            if (Array.isArray(normalizedState.features)) {
+                normalizedState.features.forEach(f => { f.suiteId = defaultSuiteId; });
+            }
+        }
         if(normalizedState.config.squad === undefined) normalizedState.config.squad = "";
         if(normalizedState.config.qaName === undefined) normalizedState.config.qaName = "";
         if(normalizedState.config.hsCritical === undefined) normalizedState.config.hsCritical = 15;
@@ -70,7 +82,10 @@ window.normalizeState = function(rawState) {
             if (b.assignee === undefined) b.assignee = '';
         });
 
+        // Garantir suiteId em todas as features (usa primeira suite como fallback)
+        const _firstSuiteId = normalizedState.suites[0] ? normalizedState.suites[0].id : 1;
         normalizedState.features.forEach(f => {
+            if (!f.suiteId) f.suiteId = _firstSuiteId;
             if (f.exec === undefined) f.exec = 0;
             if (f.manualTests === undefined) f.manualTests = 0;
             if (f.status === undefined || f.status === 'Concluída') f.status = 'Ativa';

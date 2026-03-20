@@ -502,10 +502,7 @@
                 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end;">
                     <button class="btn-outline" style="height: 42px; padding: 0 16px; color: #475569; border-color: #cbd5e1; font-weight: 600; box-shadow: none; background: #f8fafc;" onclick="downloadFeatureTemplate()">📥 Template .feature</button>
                     <button class="btn-outline" style="height: 42px; padding: 0 16px; color: #475569; border-color: #cbd5e1; font-weight: 600; box-shadow: none; background: #f8fafc;" onclick="downloadCSVTemplate()">📋 Template CSV</button>
-                    <button class="btn-outline" style="height: 42px; padding: 0 16px; color: var(--primary-blue); border-color: #bfdbfe; background-color: #eff6ff; font-weight: 600; box-shadow: none;" onclick="document.getElementById('importFeatureFile').click()">📁 Importar (.feature / .csv / .xlsx)</button>
-                    <input type="file" id="importFeatureFile" accept=".feature,.csv,.xlsx,.xls" style="display: none;" onchange="importFeature(event)">
-                    <button class="btn-outline" style="height: 42px; padding: 0 16px; color: #7c3aed; border-color: #ddd6fe; background-color: #f5f3ff; font-weight: 600; box-shadow: none;" onclick="exportSprintCoverage()" title="Exportar cobertura de testes da sprint em formato Gherkin .feature">📤 Exportar Cobertura (.feature)</button>
-                    <button class="btn-primary" style="height: 42px; padding: 0 20px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="addFeature()">➕ Nova Funcionalidade</button>
+                    <button class="btn-primary" style="height: 42px; padding: 0 20px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);" onclick="addSuite()">➕ Nova Suite de Testes</button>
                 </div>
             </div>
 
