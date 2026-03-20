@@ -21,6 +21,7 @@ window.DEFAULT_STATE = {
 
 window.state = {};
 window.pendingTestCaseStatus = {};
+window._activeSuiteFilter = new Set(); // vazio = todas as suites visíveis
 window.runtimeConfig = window.__QA_DASHBOARD_CONFIG__ || {};
 
 window.currentSprintId = '';

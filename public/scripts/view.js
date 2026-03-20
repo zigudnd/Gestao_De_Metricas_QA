@@ -124,7 +124,97 @@ window.renderBugFilters = function() {
         </div>`;
 };
 
+// ─── Filtro de Suites ────────────────────────────────────────────────────────
+
+window.isSuiteActive = function(suiteId) {
+    if (window._activeSuiteFilter.size === 0) return true; // vazio = todas ativas
+    return window._activeSuiteFilter.has(String(suiteId));
+};
+
+window.getFilteredFeatures = function() {
+    if (window._activeSuiteFilter.size === 0) return state.features;
+    return state.features.filter(f => window._activeSuiteFilter.has(String(f.suiteId)));
+};
+
+window.toggleSuiteFilter = function(suiteId) {
+    suiteId = String(suiteId);
+    const allIds = (state.suites || []).map(s => String(s.id));
+
+    // Se o Set está vazio (todas ativas), expande para todas antes de desmarcar
+    if (window._activeSuiteFilter.size === 0) {
+        allIds.forEach(id => window._activeSuiteFilter.add(id));
+    }
+
+    if (window._activeSuiteFilter.has(suiteId)) {
+        // Não permite desmarcar a última suite restante
+        if (window._activeSuiteFilter.size > 1) {
+            window._activeSuiteFilter.delete(suiteId);
+        }
+    } else {
+        window._activeSuiteFilter.add(suiteId);
+        // Se todas estão marcadas → colapsa de volta para "vazio" (= todas)
+        if (window._activeSuiteFilter.size === allIds.length) {
+            window._activeSuiteFilter = new Set();
+        }
+    }
+
+    renderAll();
+};
+
+window.clearSuiteFilter = function() {
+    window._activeSuiteFilter = new Set();
+    renderAll();
+};
+
+window.renderSuiteFilter = function() {
+    const bar = document.getElementById('suite-filter-bar');
+    if (!bar) return;
+
+    const suites = state.suites || [];
+
+    // Só exibe o filtro se houver 2+ suites
+    if (suites.length < 2) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    // Limpa IDs inválidos (suites deletadas)
+    const validIds = new Set(suites.map(s => String(s.id)));
+    if (window._activeSuiteFilter.size > 0) {
+        for (const id of [...window._activeSuiteFilter]) {
+            if (!validIds.has(id)) window._activeSuiteFilter.delete(id);
+        }
+        if (window._activeSuiteFilter.size === suites.length) {
+            window._activeSuiteFilter = new Set();
+        }
+    }
+
+    const isFiltered = window._activeSuiteFilter.size > 0;
+
+    const pills = suites.map(suite => {
+        const active = isSuiteActive(suite.id);
+        const featCount = state.features.filter(f => String(f.suiteId) === String(suite.id)).length;
+        return `<button onclick="toggleSuiteFilter(${suite.id})"
+            style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 2px solid ${active ? 'var(--primary-blue)' : '#cbd5e1'}; background: ${active ? 'var(--primary-blue)' : '#f8fafc'}; color: ${active ? '#fff' : '#94a3b8'}; font-weight: 700; font-size: 12px; cursor: pointer; transition: all 0.15s; height: auto; white-space: nowrap;">
+            ${escapeHTML(suite.name || 'Suite')}
+            <span style="font-size: 10px; opacity: 0.75;">${featCount}f</span>
+        </button>`;
+    }).join('');
+
+    bar.style.display = 'block';
+    bar.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0;">📊 Filtrar Suites:</span>
+            ${pills}
+            ${isFiltered ? `
+            <span style="font-size: 11px; color: #b45309; font-weight: 700; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 3px 10px; white-space: nowrap;">⚠️ Filtro ativo</span>
+            <button onclick="clearSuiteFilter()" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #64748b; cursor: pointer; height: auto;">✕ Ver todas</button>
+            ` : ''}
+        </div>`;
+};
+
 window.renderAll = function() {
+        renderSuiteFilter();
         renderHeaderAndConfig();
         updateCalculations();
         renderDailyReport();
@@ -216,7 +306,7 @@ window.renderNotes = function() {
     
 window.updateCalculations = function() {
         const sprintDays = parseInt(state.config.sprintDays) || 20;
-        const activeFeatures = state.features.filter(f => f.status !== 'Cancelada');
+        const activeFeatures = getFilteredFeatures().filter(f => f.status !== 'Cancelada');
         const totalTests = activeFeatures.reduce((acc, f) => acc + (parseInt(f.tests) || 0), 0);
         document.getElementById('kpi-total').innerText = totalTests;
 
@@ -291,7 +381,7 @@ window.updateCalculations = function() {
             }
         });
 
-        const blockedFeaturesCount = state.features.filter(f => f.status === 'Bloqueada').length;
+        const blockedFeaturesCount = getFilteredFeatures().filter(f => f.status === 'Bloqueada').length;
         healthScore -= (blockedFeaturesCount * wBlocked); 
 
         if (atrasoCasos > 0) {
@@ -325,7 +415,7 @@ window.renderAlertsList = function() {
         const container = document.getElementById('alerts-list-exec');
         if (!container) return;
 
-        const blockedFeatures = state.features.filter(f => f.status === 'Bloqueada');
+        const blockedFeatures = getFilteredFeatures().filter(f => f.status === 'Bloqueada');
         document.getElementById('kpi-telas-bloqueadas').innerText = blockedFeatures.length;
 
         if (blockedFeatures.length === 0) {
@@ -360,7 +450,7 @@ window.renderFailedScenariosList = function() {
         if (!container) return;
 
         const failedScenarios = [];
-        state.features.forEach(f => {
+        getFilteredFeatures().forEach(f => {
             if (f.cases) {
                 f.cases.forEach(c => {
                     if (c.status === 'Falhou') {
@@ -439,7 +529,7 @@ window.renderBlockedFeaturesList = function() {
         const container = document.getElementById('blocked-features-list');
         if(!container) return;
 
-        const blocked = state.features.filter(f => f.status === 'Bloqueada');
+        const blocked = getFilteredFeatures().filter(f => f.status === 'Bloqueada');
         document.getElementById('kpi-telas-bloqueadas').innerText = blocked.length;
 
         if (blocked.length === 0) {
@@ -559,6 +649,7 @@ window.renderTables = function() {
             `;
 
             bodyDaily.innerHTML = state.features.map((f, index) => {
+                if (!isSuiteActive(f.suiteId)) return '';
                 let daysHtml = '';
                 for(let i=1; i<=sprintDays; i++) {
                     let gCount = (f.gherkinExecs && f.gherkinExecs[`D${i}`]) || 0;
@@ -1107,7 +1198,7 @@ window.renderCharts = function() {
             
             const sprintDays = parseInt(state.config.sprintDays) || 20;
             
-            const validFeatures = (state.features || []).filter(f => f !== null && f !== undefined && f.status !== 'Cancelada');
+            const validFeatures = getFilteredFeatures().filter(f => f !== null && f !== undefined && f.status !== 'Cancelada');
             if (validFeatures.length === 0) return;
 
             const totalTests = validFeatures.reduce((acc, f) => acc + (parseInt(f.tests) || 0), 0);
