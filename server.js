@@ -42,8 +42,16 @@ if (STORAGE_TYPE === 'supabase') {
   console.log('✅ Back-end configurado para usar: LOCAL (Pasta data/)');
 }
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(cors({ origin: 'http://localhost:' + PORT }));
+app.use(express.json({ limit: '2mb' }));
+
+const KEY_REGEX = /^[a-zA-Z0-9_-]{1,80}$/;
+function validateKey(req, res, next) {
+  if (!KEY_REGEX.test(req.params.projectKey)) {
+    return res.status(400).json({ error: 'projectKey inválido' });
+  }
+  next();
+}
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/config.js', (req, res) => {
@@ -62,7 +70,7 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'qa-dashboard-api', storage: STORAGE_TYPE });
 });
 
-app.get('/api/dashboard/:projectKey', async (req, res) => {
+app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
   try {
     const { projectKey } = req.params;
 
@@ -96,7 +104,7 @@ app.get('/api/dashboard/:projectKey', async (req, res) => {
   }
 });
 
-app.put('/api/dashboard/:projectKey', async (req, res) => {
+app.put('/api/dashboard/:projectKey', validateKey, async (req, res) => {
   try {
     const { projectKey } = req.params;
     const payload = req.body?.payload;

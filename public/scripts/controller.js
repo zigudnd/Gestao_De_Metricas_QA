@@ -1125,7 +1125,7 @@ function _importFromCSV(text, suiteId) {
         const rawComplex = colComplex >= 0 ? (cols[colComplex] || '').trim() : '';
         const complexity = validComplexities.find(c => c.toLowerCase() === rawComplex.toLowerCase()) || 'Baixa';
 
-        let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
+        let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase() && String(f.suiteId) === String(_csvSuiteId));
         if (!target) {
             target = {
                 id: Date.now() + i, suiteId: _csvSuiteId, name: featureName,
@@ -1194,7 +1194,7 @@ function _importFromXLSX(arrayBuffer, suiteId) {
         const rawComplex = colComplex >= 0 ? String(row[colComplex] || '').trim() : '';
         const complexity = validComplexities.find(c => c.toLowerCase() === rawComplex.toLowerCase()) || 'Baixa';
 
-        let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase());
+        let target = state.features.find(f => f.name.toLowerCase() === featureName.toLowerCase() && String(f.suiteId) === String(_xlsxSuiteId));
         if (!target) {
             target = {
                 id: Date.now() + idx, suiteId: _xlsxSuiteId, name: featureName,
