@@ -1,0 +1,539 @@
+import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, BarElement, LineElement, PointElement,
+  ArcElement, Title, Tooltip, Legend,
+} from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
+import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2'
+import { useSprintStore, getFilteredFeatures } from '../../store/sprintStore'
+import { useSprintMetrics } from './useSprintMetrics'
+import type { Bug } from '../../types/sprint.types'
+
+ChartJS.register(
+  CategoryScale, LinearScale, BarElement, LineElement, PointElement,
+  ArcElement, Title, Tooltip, Legend, ChartDataLabels,
+)
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const BASE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
+function getColors(n: number) { return Array.from({ length: n }, (_, i) => BASE_COLORS[i % BASE_COLORS.length]) }
+
+function calcMTTR(bug: Bug): number | null {
+  if (!bug.openedAt || !bug.resolvedAt) return null
+  const ms = new Date(bug.resolvedAt + 'T00:00:00').getTime() - new Date(bug.openedAt + 'T00:00:00').getTime()
+  return isNaN(ms) ? null : ms < 0 ? 0 : Math.round(ms / 86400000)
+}
+
+
+// ─── OverviewTab ─────────────────────────────────────────────────────────────
+
+export function OverviewTab() {
+  const state = useSprintStore((s) => s.state)
+  const filter = useSprintStore((s) => s.activeSuiteFilter)
+  const toggleSuiteFilter = useSprintStore((s) => s.toggleSuiteFilter)
+  const clearSuiteFilter = useSprintStore((s) => s.clearSuiteFilter)
+  const {
+    totalTests, totalExec, remaining, metaPerDay,
+    totalBlockedHours, openBugs, atrasoCasos, healthScore,
+    totalRetests, blockedFeatureCount, ritmoStatus, sprintDays,
+    activeFeatures,
+  } = useSprintMetrics()
+
+  const suites = state.suites ?? []
+  const filtered = getFilteredFeatures(state, filter)
+
+  // ── Burndown & Execução por Dia ───────────────────────────────────────────
+  const globalExec: Record<string, number> = {}
+  let maxDay = 0
+  activeFeatures.forEach((f) => {
+    Object.entries(f.execution ?? {}).forEach(([k, v]) => {
+      if (v > 0) {
+        const n = parseInt(k.replace('D', ''))
+        if (n > maxDay) maxDay = n
+        globalExec[k] = (globalExec[k] || 0) + v
+      }
+    })
+  })
+
+  const sd = state.config.startDate
+  const dayLabels = Array.from({ length: sprintDays }, (_, i) => {
+    if (sd) {
+      const d = new Date(sd + 'T00:00:00')
+      d.setDate(d.getDate() + i)
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    }
+    return `D${i + 1}`
+  })
+
+  const exactMeta = totalTests > 0 ? totalTests / sprintDays : 0
+  const idealLine = Array.from({ length: sprintDays + 1 }, (_, i) => Math.max(0, totalTests - exactMeta * i))
+
+  const realLine: (number | null)[] = [totalTests]
+  let cumBurn = totalTests
+  for (let i = 1; i <= sprintDays; i++) {
+    if (i <= maxDay) { cumBurn -= globalExec[`D${i}`] || 0; realLine.push(cumBurn) }
+    else realLine.push(null)
+  }
+
+  const zeroFlags = [false, ...Array.from({ length: sprintDays }, (_, i) => {
+    const d = i + 1
+    return d <= maxDay && (globalExec[`D${d}`] || 0) === 0
+  })]
+  const ptColors = zeroFlags.map((z, idx) => z ? '#ef4444' : realLine[idx] !== null ? '#2563eb' : 'transparent')
+  const ptRadius = zeroFlags.map((z, idx) => idx === 0 ? 3 : z ? 7 : realLine[idx] !== null ? 4 : 0)
+
+  const execPerDay = Array.from({ length: sprintDays }, (_, i) => globalExec[`D${i + 1}`] || 0)
+
+  // ── Feature Progress ──────────────────────────────────────────────────────
+  const featNames = activeFeatures.map((f) => f.name || 'Sem Nome')
+  const featExec = activeFeatures.map((f) => f.exec || 0)
+  const featRest = activeFeatures.map((f) => Math.max(0, (f.tests || 0) - (f.exec || 0)))
+
+  // ── Blockers ──────────────────────────────────────────────────────────────
+  const allBlockers = state.blockers ?? []
+  const blockersAll = allBlockers.reduce<Record<string, number>>((acc, b) => {
+    acc[b.reason || 'Outros'] = (acc[b.reason || 'Outros'] || 0) + (b.hours || 0)
+    return acc
+  }, {})
+  const blockersToday = allBlockers.filter((b) => b.date === state.currentDate).reduce<Record<string, number>>((acc, b) => {
+    acc[b.reason || 'Outros'] = (acc[b.reason || 'Outros'] || 0) + (b.hours || 0)
+    return acc
+  }, {})
+  const totalHorasHoje = Object.values(blockersToday).reduce((a, b) => a + b, 0)
+  const totalHorasGeral = Object.values(blockersAll).reduce((a, b) => a + b, 0)
+
+  // ── Bugs ──────────────────────────────────────────────────────────────────
+  const validBugs = state.bugs ?? []
+  const bugsGrouped = validBugs.reduce<Record<string, number>>((acc, b) => {
+    const st = b.stack || 'Não Informado'
+    acc[st] = (acc[st] || 0) + 1
+    return acc
+  }, {})
+  const uniqueStacks = validBugs.length ? [...new Set(validBugs.map((b) => b.stack || 'Não Informado'))] : ['Nenhum']
+  const abertoData  = uniqueStacks.map((s) => validBugs.filter((b) => (b.stack || 'Não Informado') === s && b.status === 'Aberto').length)
+  const andamentoData = uniqueStacks.map((s) => validBugs.filter((b) => (b.stack || 'Não Informado') === s && b.status === 'Em Andamento').length)
+  const resolvidoData = uniqueStacks.map((s) => validBugs.filter((b) => (b.stack || 'Não Informado') === s && b.status === 'Resolvido').length)
+  const uniqueFeatBugs = validBugs.length ? [...new Set(validBugs.map((b) => b.feature || 'Não informada'))] : ['Nenhuma']
+  const bugFront = uniqueFeatBugs.map((f) => validBugs.filter((b) => (b.feature || 'Não informada') === f && b.stack === 'Front').length)
+  const bugBff   = uniqueFeatBugs.map((f) => validBugs.filter((b) => (b.feature || 'Não informada') === f && b.stack === 'BFF').length)
+  const bugBack  = uniqueFeatBugs.map((f) => validBugs.filter((b) => (b.feature || 'Não informada') === f && b.stack === 'Back').length)
+
+  // ── MTTR ──────────────────────────────────────────────────────────────────
+  const resolvedBugs = validBugs.filter((b) => b.status === 'Resolvido' && b.openedAt && b.resolvedAt)
+  const mttrDays = resolvedBugs.map(calcMTTR).filter((d): d is number => d !== null)
+  const mttrGlobal = mttrDays.length ? (mttrDays.reduce((a, b) => a + b, 0) / mttrDays.length).toFixed(1) : null
+  const STACKS = ['Front', 'BFF', 'Back']
+  const SEV_COLORS: Record<string, string> = { Baixa: '#10b981', Média: '#f59e0b', Alta: '#f97316', Crítica: '#ef4444' }
+  const mttrDatasets = (['Baixa', 'Média', 'Alta', 'Crítica'] as const).map((sev) => ({
+    label: sev,
+    backgroundColor: SEV_COLORS[sev],
+    borderRadius: 4,
+    data: STACKS.map((stack) => {
+      const grp = resolvedBugs.filter((b) => b.stack === stack && b.severity === sev)
+      if (!grp.length) return null
+      const days = grp.map(calcMTTR).filter((d): d is number => d !== null)
+      return days.length ? Math.round((days.reduce((a, b) => a + b, 0) / days.length) * 10) / 10 : null
+    }),
+  }))
+
+  // ── Lists ─────────────────────────────────────────────────────────────────
+  const blockedFeatures = filtered.filter((f) => f.status === 'Bloqueada')
+  const failedScenarios: { featureName: string; scenarioName: string }[] = []
+  filtered.forEach((f) => {
+    ;(f.cases ?? []).forEach((c) => {
+      if (c.status === 'Falhou') failedScenarios.push({ featureName: f.name, scenarioName: c.name })
+    })
+  })
+  const openBugsList = validBugs.filter((b) => b.status !== 'Resolvido')
+
+  // ── Colors ────────────────────────────────────────────────────────────────
+  const hsColor = healthScore >= 90 ? 'var(--color-green)' : healthScore >= 70 ? 'var(--color-yellow)' : 'var(--color-red)'
+  const ritmoLabel = ritmoStatus === 'ok' ? 'No Ritmo' : ritmoStatus === 'warning' ? 'Atenção' : 'Em Atraso'
+  const ritmoColor = ritmoStatus === 'ok' ? 'var(--color-green)' : ritmoStatus === 'warning' ? 'var(--color-yellow)' : 'var(--color-red)'
+  const atrasoPercent = totalTests > 0 ? Math.round((atrasoCasos / totalTests) * 100) : 0
+  const atrasoPercentColor = atrasoPercent === 0 ? 'var(--color-green)' : atrasoPercent < 20 ? 'var(--color-yellow)' : 'var(--color-red)'
+  const todayReport = state.reports?.[state.currentDate] ?? ''
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── Suite Filter ───────────────────────────────────────────────────── */}
+      {suites.length >= 2 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>
+            Filtrar Suites:
+          </span>
+          {suites.map((suite) => {
+            const active = filter.size === 0 || filter.has(String(suite.id))
+            const cnt = state.features.filter((f) => String(f.suiteId) === String(suite.id)).length
+            return (
+              <button
+                key={suite.id}
+                onClick={() => toggleSuiteFilter(String(suite.id))}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 20,
+                  border: `2px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
+                  background: active ? 'var(--color-blue)' : 'var(--color-bg)',
+                  color: active ? '#fff' : 'var(--color-text-2)',
+                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                }}
+              >
+                {suite.name || 'Suite'} <span style={{ fontSize: 10, opacity: 0.8 }}>{cnt}f</span>
+              </button>
+            )
+          })}
+          {filter.size > 0 && (
+            <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 10, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer' }}>
+              ✕ Ver todas
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+        <KpiCard label="Status da Sprint" value={ritmoLabel} valueColor={ritmoColor} borderColor={ritmoColor} />
+        <KpiCard label="QA Health Score" value={`${healthScore}%`} valueColor={hsColor} borderColor={hsColor} />
+        <KpiCard label="Total de Testes" value={totalTests} />
+        <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
+        <KpiCard label="Executados" value={totalExec} />
+        <KpiCard label="Restantes" value={remaining} />
+        <KpiCard label="Atraso %" value={`${atrasoPercent}%`} valueColor={atrasoPercentColor} />
+        <KpiCard label="Atraso em Casos" value={atrasoCasos} />
+        <KpiCard label="Bugs Abertos" value={openBugs} />
+        <KpiCard label="Telas Bloqueadas" value={blockedFeatureCount} />
+        <KpiCard label="Total Retestes" value={totalRetests} />
+        <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} />
+        <KpiCard label="MTTR Global" value={mttrGlobal !== null ? `${mttrGlobal}d` : '—'} valueColor="#8b5cf6" borderColor="#8b5cf6" />
+      </div>
+
+      {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="📋 Report do Dia">
+          {todayReport
+            ? <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{todayReport}</div>
+            : <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum report registrado para hoje.</div>
+          }
+        </Card>
+        <Card title={`🔴 Bloqueios por Motivo (Hoje) — ${totalHorasHoje}h`}>
+          <div style={{ height: 200 }}>
+            <Doughnut
+              data={{
+                labels: Object.keys(blockersToday).length ? Object.keys(blockersToday) : ['Nenhum'],
+                datasets: [{ data: Object.values(blockersToday).length ? Object.values(blockersToday) : [0], backgroundColor: getColors(Math.max(Object.keys(blockersToday).length, 1)), borderWidth: 1 }],
+              }}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Burndown Chart ────────────────────────────────────────────────── */}
+      <Card title="📉 Burndown Chart">
+        <div style={{ height: 280 }}>
+          <Line
+            data={{
+              labels: ['Início', ...dayLabels],
+              datasets: [
+                {
+                  label: 'Ideal', data: idealLine,
+                  borderColor: '#ef4444', borderDash: [5, 5], borderWidth: 2,
+                  pointRadius: 0, tension: 0,
+                },
+                {
+                  label: 'Real', data: realLine,
+                  borderColor: '#2563eb', borderWidth: 2,
+                  pointBackgroundColor: ptColors, pointBorderColor: ptColors,
+                  pointRadius: ptRadius, tension: 0.1, spanGaps: false,
+                },
+              ],
+            }}
+            options={{
+              maintainAspectRatio: false,
+              scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Testes Restantes' } },
+                x: { ticks: { maxRotation: 45, autoSkip: false } },
+              },
+              plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+            } as object}
+          />
+        </div>
+      </Card>
+
+      {/* ── Progresso por Funcionalidade + Bugs Abertos ──────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="🧪 Progresso de Testes por Funcionalidade">
+          <div style={{ height: Math.max(220, Math.max(1, activeFeatures.length) * 38) }}>
+            <Bar
+              data={{
+                labels: featNames.length ? featNames : ['Nenhuma'],
+                datasets: [
+                  { label: 'Executados', data: featExec, backgroundColor: '#10b981', borderRadius: 4 },
+                  { label: 'Restantes',  data: featRest, backgroundColor: '#e2e8f0', borderRadius: 4 },
+                ],
+              }}
+              options={{
+                indexAxis: 'y' as const,
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true, beginAtZero: true }, y: { stacked: true } },
+                plugins: { legend: { position: 'top' }, datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } },
+              } as object}
+            />
+          </div>
+        </Card>
+        {/* Bugs Abertos sem scroll — aparece completo na exportação de imagem */}
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🐞</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>Bugs Abertos</span>
+            <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', background: 'var(--color-border)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
+              {openBugsList.length}
+            </span>
+          </div>
+          <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {openBugsList.length === 0 ? <EmptyOk label="🎉 Nenhum bug aberto no momento!" /> : (
+              openBugsList.map((b) => {
+                const sevColor = b.severity === 'Crítica' ? '#991b1b' : b.severity === 'Alta' ? '#c2410c' : b.severity === 'Média' ? '#b45309' : '#64748b'
+                return (
+                  <div key={b.id} style={alertCard('#fffbeb', '#fde68a', '#f59e0b')}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <strong style={{ color: '#92400e', fontSize: 14 }}>🐞 {b.desc || 'Sem descrição'}</strong>
+                      <span style={{ fontSize: 11, background: sevColor, color: '#fff', padding: '3px 8px', borderRadius: 12, fontWeight: 700, flexShrink: 0 }}>
+                        {b.severity}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#92400e', background: '#fef3c7', padding: '5px 10px', borderRadius: 6 }}>
+                      <strong>Responsável:</strong> {b.assignee || '🚫 Não atribuído'}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Execução por Dia + MTTR ───────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="📊 Execução por Dia">
+          <div style={{ height: 220 }}>
+            <Bar
+              data={{
+                labels: dayLabels,
+                datasets: [{
+                  label: 'Executados',
+                  data: execPerDay,
+                  backgroundColor: execPerDay.map((v, i) =>
+                    i + 1 <= maxDay && v === 0 ? '#ef4444' : v > 0 ? '#2563eb' : '#e2e8f0'
+                  ),
+                  borderRadius: 4,
+                }],
+              }}
+              options={{
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#64748b', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } },
+              } as object}
+            />
+          </div>
+        </Card>
+        <Card title="⏱️ MTTR — Tempo Médio de Resolução por Stack e Criticidade (dias)">
+          <div style={{ height: 220 }}>
+            <Bar
+              data={{ labels: STACKS, datasets: mttrDatasets }}
+              options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Dias (média)' } } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'end', align: 'top', color: '#64748b', font: { weight: 'bold', size: 10 }, formatter: (v: number | null) => v && v > 0 ? `${v}d` : '' } } } as object}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Bloqueios Geral + Origem dos Bugs ────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title={`🚧 Bloqueios Externos (Geral Acumulado) — ${totalHorasGeral}h`}>
+          <div style={{ height: 220 }}>
+            <Doughnut
+              data={{
+                labels: Object.keys(blockersAll).length ? Object.keys(blockersAll) : ['Nenhum'],
+                datasets: [{ data: Object.values(blockersAll).length ? Object.values(blockersAll) : [0], backgroundColor: getColors(Math.max(Object.keys(blockersAll).length, 1)), borderWidth: 1 }],
+              }}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
+            />
+          </div>
+        </Card>
+        <Card title="🐛 Origem dos Bugs (Stack)">
+          <div style={{ height: 220 }}>
+            <Pie
+              data={{
+                labels: Object.keys(bugsGrouped).length ? Object.keys(bugsGrouped) : ['Nenhum'],
+                datasets: [{ data: Object.values(bugsGrouped).length ? Object.values(bugsGrouped) : [0], backgroundColor: ['#3b82f6', '#10b981', '#0f172a', '#f59e0b'], borderWidth: 1 }],
+              }}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Status Bugs/Stack + Bugs/Feature/Stack ────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="📋 Status dos Bugs por Stack">
+          <div style={{ height: 220 }}>
+            <Bar
+              data={{
+                labels: uniqueStacks,
+                datasets: [
+                  { label: 'Aberto',       data: abertoData,    backgroundColor: '#ef4444', borderRadius: 2 },
+                  { label: 'Em Andamento', data: andamentoData, backgroundColor: '#f59e0b', borderRadius: 2 },
+                  { label: 'Resolvido',    data: resolvidoData, backgroundColor: '#10b981', borderRadius: 2 },
+                ],
+              }}
+              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+            />
+          </div>
+        </Card>
+        <Card title="🔍 Bugs por Funcionalidade e Stack">
+          <div style={{ height: 220 }}>
+            <Bar
+              data={{
+                labels: uniqueFeatBugs,
+                datasets: [
+                  { label: 'Front', data: bugFront, backgroundColor: '#3b82f6', borderRadius: 2 },
+                  { label: 'BFF',   data: bugBff,   backgroundColor: '#10b981', borderRadius: 2 },
+                  { label: 'Back',  data: bugBack,  backgroundColor: '#0f172a', borderRadius: 2 },
+                ],
+              }}
+              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+            />
+          </div>
+        </Card>
+      </div>
+
+
+      {/* ── Impedimentos + Falhas ─────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Section title="Impedimentos" icon="🛑" count={blockedFeatures.length}>
+          {blockedFeatures.length === 0 ? <EmptyOk label="Nenhum impedimento no momento." /> : (
+            blockedFeatures.map((f) => (
+              <div key={f.id} style={alertCard('#fef2f2', '#fecaca', '#ef4444')}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ color: '#991b1b', fontSize: 14 }}>🖥️ {f.name || 'Sem nome'}</strong>
+                  <Badge label="Bloqueada" color="#ef4444" />
+                </div>
+                <p style={{ fontSize: 13, color: '#7f1d1d', background: '#fee2e2', padding: '8px 10px', borderRadius: 6, margin: 0, lineHeight: 1.5 }}>
+                  📌 <strong>Motivo:</strong> {f.blockReason || 'Não informado.'}
+                </p>
+              </div>
+            ))
+          )}
+        </Section>
+
+        <Section title="Cenários com Falha" icon="❌" count={failedScenarios.length}>
+          {failedScenarios.length === 0 ? <EmptyOk label="Nenhum cenário com falha!" /> : (
+            failedScenarios.map((item, i) => (
+              <div key={i} style={alertCard('#fff5f5', '#fecaca', '#f87171')}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <strong style={{ color: '#991b1b', fontSize: 13 }}>🧪 {item.scenarioName || 'Sem nome'}</strong>
+                  <Badge label="Falhou" color="#f87171" />
+                </div>
+                <div style={{ fontSize: 12, color: '#7f1d1d', background: '#fee2e2', padding: '4px 10px', borderRadius: 6 }}>
+                  <strong>Funcionalidade:</strong> {item.featureName || 'Não informada'}
+                </div>
+              </div>
+            ))
+          )}
+        </Section>
+      </div>
+
+      {/* ── Alinhamentos Técnicos e de Produto ───────────────────────────── */}
+      <Card title="🤝 Alinhamentos Técnicos e de Produto" borderLeftColor="var(--color-blue)">
+        {state.alignments.length === 0 ? (
+          <div style={{ color: 'var(--color-text-2)', fontSize: 13, fontStyle: 'italic' }}>
+            Nenhum alinhamento ou débito técnico registrado no momento.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {state.alignments.map((a, i) => (
+              <div key={a.id} style={{ display: 'flex', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderLeft: '4px solid var(--color-blue)', borderRadius: 6, fontSize: 13, color: 'var(--color-text)', lineHeight: 1.5 }}>
+                <span style={{ color: 'var(--color-blue)', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                <span>{a.text || 'Não descrito'}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Premissas do Projeto + Plano de Ação ─────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="📌 Premissas do Projeto" borderLeftColor="var(--color-amber)">
+          {state.notes.operationalPremises ? (
+            <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.operationalPremises}</div>
+          ) : (
+            <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
+          )}
+        </Card>
+        <Card title="🎯 Plano de Ação e Gatilhos" borderLeftColor="var(--color-red)">
+          {state.notes.actionPlan ? (
+            <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.actionPlan}</div>
+          ) : (
+            <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum plano de ação registrado.</div>
+          )}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, sub, valueColor, borderColor }: {
+  label: string; value: string | number; sub?: string; valueColor?: string; borderColor?: string
+}) {
+  return (
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderBottom: borderColor ? `3px solid ${borderColor}` : undefined, borderRadius: 10, padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: valueColor ?? 'var(--color-text)', lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function Card({ title, children, borderLeftColor }: { title: string; children: React.ReactNode; borderLeftColor?: string }) {
+  return (
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderLeft: borderLeftColor ? `4px solid ${borderLeftColor}` : undefined, borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)', fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>{title}</div>
+      <div style={{ padding: '12px 16px' }}>{children}</div>
+    </div>
+  )
+}
+
+function Section({ title, icon, count, children }: { title: string; icon: string; count: number; children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span>{icon}</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>{title}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', background: 'var(--color-border)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>{count}</span>
+      </div>
+      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
+    </div>
+  )
+}
+
+function EmptyOk({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: '#ecfdf5', borderRadius: 8, border: '1px dashed #a7f3d0', fontSize: 13 }}>
+      ✅ {label}
+    </div>
+  )
+}
+
+function Badge({ label, color }: { label: string; color: string }) {
+  return (
+    <span style={{ fontSize: 10, background: color, color: '#fff', padding: '3px 8px', borderRadius: 12, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0 }}>{label}</span>
+  )
+}
+
+function alertCard(bg: string, border: string, accent: string): React.CSSProperties {
+  return { padding: '12px 14px', background: bg, border: `1px solid ${border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8 }
+}
