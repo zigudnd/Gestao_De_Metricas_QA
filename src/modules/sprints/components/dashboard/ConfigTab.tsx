@@ -1,9 +1,14 @@
 import { useSprintStore } from '../../store/sprintStore'
 import type { SprintConfig } from '../../types/sprint.types'
 
+const ROLE_SUGGESTIONS = ['PO', 'TL', 'Coordenador', 'Gerente', 'Dev Lead', 'Scrum Master', 'Designer', 'Dev']
+
 export function ConfigTab() {
   const state = useSprintStore((s) => s.state)
   const updateConfig = useSprintStore((s) => s.updateConfig)
+  const addResponsible = useSprintStore((s) => s.addResponsible)
+  const updateResponsible = useSprintStore((s) => s.updateResponsible)
+  const removeResponsible = useSprintStore((s) => s.removeResponsible)
 
   function field(key: keyof SprintConfig, type: 'text' | 'number' | 'date' = 'text') {
     const value = state.config[key]
@@ -57,6 +62,49 @@ export function ConfigTab() {
             />
           </FormGroup>
         </div>
+      </Card>
+
+      {/* Outros Responsáveis */}
+      <Card title="Outros Responsáveis">
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
+          Adicione os demais responsáveis da sprint (PO, TL, Coordenador, Gerente, etc.).
+          Eles aparecerão no Termo de Conclusão.
+        </p>
+        <datalist id="role-suggestions">
+          {ROLE_SUGGESTIONS.map((r) => <option key={r} value={r} />)}
+        </datalist>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+          {(state.responsibles ?? []).map((r, i) => (
+            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 32px', gap: 8, alignItems: 'center' }}>
+              <input
+                type="text"
+                list="role-suggestions"
+                placeholder="Cargo (ex: PO)"
+                value={r.role}
+                onChange={(e) => updateResponsible(i, 'role', e.target.value)}
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="Nome completo"
+                value={r.name}
+                onChange={(e) => updateResponsible(i, 'name', e.target.value)}
+                style={inputStyle}
+              />
+              <button
+                onClick={() => removeResponsible(i)}
+                title="Remover"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text-2)', lineHeight: 1 }}
+              >✕</button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addResponsible}
+          style={{ padding: '7px 14px', border: '1px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+        >
+          + Adicionar responsável
+        </button>
       </Card>
 
       {/* Health Score */}

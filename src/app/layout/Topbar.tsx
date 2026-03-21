@@ -1,6 +1,8 @@
+import { useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSprintStore } from '@/modules/sprints/store/sprintStore'
-import { exportToImage, exportJSON } from '@/modules/sprints/services/exportService'
+import { exportToImage, exportJSON, importFromJSON } from '@/modules/sprints/services/exportService'
+import { TermoConclusaoModal } from '@/app/components/TermoConclusaoModal'
 
 export function Topbar() {
   const location = useLocation()
@@ -8,6 +10,21 @@ export function Topbar() {
   const params = useParams<{ sprintId?: string }>()
   const sprintTitle = useSprintStore((s) => s.state?.config?.title)
   const sprintState = useSprintStore((s) => s.state)
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [showTermo, setShowTermo] = useState(false)
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const newId = await importFromJSON(file)
+      navigate(`/sprints/${newId}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao importar sprint.')
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
 
   const isDashboard = location.pathname.startsWith('/sprints/') && !!params.sprintId
 
@@ -44,18 +61,6 @@ export function Topbar() {
 
       {/* Ações contextuais */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {!isDashboard && (
-          <button
-            className="btn-primary-sm"
-            onClick={() => {
-              const el = document.getElementById('create-sprint-trigger')
-              el?.click()
-            }}
-            style={btnPrimary}
-          >
-            + Nova sprint
-          </button>
-        )}
         {isDashboard && (
           <>
             <button onClick={() => navigate('/sprints')} style={btnOutline}>
@@ -73,9 +78,17 @@ export function Topbar() {
             >
               💾 Exportar JSON
             </button>
+            <label title="Importar sprint de arquivo JSON" style={{ ...btnOutline, display: 'inline-flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
+              📥 Importar JSON
+              <input ref={importInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+            </label>
+            <button onClick={() => setShowTermo(true)} style={btnPrimary}>
+              📋 Termo de Conclusão
+            </button>
           </>
         )}
       </div>
+      {showTermo && <TermoConclusaoModal onClose={() => setShowTermo(false)} />}
     </header>
   )
 }

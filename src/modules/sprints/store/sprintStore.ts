@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type {
   SprintState, Feature, Bug, Blocker, Alignment,
-  TestCase, Suite, SprintConfig, Notes,
+  TestCase, Suite, SprintConfig, Notes, ResponsiblePerson,
 } from '../types/sprint.types'
 import {
   computeFields, saveToStorage, upsertSprintInMasterIndex,
@@ -92,8 +92,14 @@ interface SprintStore {
 
   // Alignments
   addAlignment: () => void
+  addAlignmentFull: (text: string) => void
   updateAlignment: (index: number, value: string) => void
   removeAlignment: (index: number) => void
+
+  // Responsibles
+  addResponsible: () => void
+  updateResponsible: (index: number, field: keyof ResponsiblePerson, value: string) => void
+  removeResponsible: (index: number) => void
 
   // Suite filter
   toggleSuiteFilter: (suiteId: string) => void
@@ -358,6 +364,14 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     })
   },
 
+  addAlignmentFull: (text) => {
+    const { state, _commit } = get()
+    _commit({
+      ...state,
+      alignments: [...state.alignments, { id: Date.now(), text }],
+    })
+  },
+
   updateAlignment: (index, value) => {
     const { state, _commit } = get()
     _commit({
@@ -369,6 +383,31 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   removeAlignment: (index) => {
     const { state, _commit } = get()
     _commit({ ...state, alignments: state.alignments.filter((_, i) => i !== index) })
+  },
+
+  // ── Responsibles ───────────────────────────────────────────────────────────
+  addResponsible: () => {
+    const { state, _commit } = get()
+    _commit({
+      ...state,
+      responsibles: [...(state.responsibles ?? []), { id: Date.now(), role: '', name: '' }],
+    })
+  },
+
+  updateResponsible: (index, field, value) => {
+    const { state, _commit } = get()
+    _commit({
+      ...state,
+      responsibles: (state.responsibles ?? []).map((r, i) => i === index ? { ...r, [field]: value } : r),
+    })
+  },
+
+  removeResponsible: (index) => {
+    const { state, _commit } = get()
+    _commit({
+      ...state,
+      responsibles: (state.responsibles ?? []).filter((_, i) => i !== index),
+    })
   },
 
   // ── Suite Filter ───────────────────────────────────────────────────────────

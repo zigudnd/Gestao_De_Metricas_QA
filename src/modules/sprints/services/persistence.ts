@@ -66,6 +66,7 @@ export const DEFAULT_STATE: SprintState = {
   ],
   blockers: [],
   bugs: [],
+  responsibles: [],
 }
 
 // ─── normalizeState — port fiel do model.js ──────────────────────────────────
@@ -104,6 +105,7 @@ export function normalizeState(rawState: any): SprintState {
   if (!Array.isArray(s.features)) s.features = JSON.parse(JSON.stringify(DEFAULT_STATE.features))
   if (!Array.isArray(s.blockers)) s.blockers = []
   if (!Array.isArray(s.bugs)) s.bugs = []
+  if (!Array.isArray(s.responsibles)) s.responsibles = []
   if (!s.currentDate) s.currentDate = new Date().toISOString().split('T')[0]
   if (s.reports[s.currentDate] === undefined) s.reports[s.currentDate] = ''
 
@@ -252,6 +254,14 @@ export function upsertSprintInMasterIndex(sprintId: string, state: SprintState):
   } else {
     index.unshift(entry)
   }
+  saveMasterIndex(index)
+}
+
+export function toggleFavoriteSprint(sprintId: string): void {
+  const index = getMasterIndex()
+  const idx = index.findIndex((s) => s.id === sprintId)
+  if (idx === -1) return
+  index[idx] = { ...index[idx], favorite: !index[idx].favorite }
   saveMasterIndex(index)
 }
 

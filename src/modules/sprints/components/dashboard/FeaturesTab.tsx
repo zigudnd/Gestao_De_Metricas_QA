@@ -2,7 +2,9 @@ import { useRef, useState } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
 import { parseFeatureText, parseCSVText, parseXLSXBuffer } from '../../services/importService'
+import { exportCoverage } from '../../services/exportService'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { NewBugModal } from '@/app/components/NewBugModal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -123,9 +125,12 @@ function SuiteAccordion({
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(suiteName)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const state = useSprintStore((s) => s.state)
   const activeSuiteFilter = useSprintStore((s) => s.activeSuiteFilter)
   const importFeatures = useSprintStore((s) => s.importFeatures)
+  const reorderFeatures = useSprintStore((s) => s.reorderFeatures)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const suiteFeatures = state.features.map((f, i) => ({ f, i }))
@@ -229,6 +234,11 @@ function SuiteAccordion({
 
         <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
           <button
+            onClick={() => exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })}
+            style={iconBtn}
+            title="Exportar cobertura desta suite (CSV)"
+          >📊</button>
+          <button
             onClick={() => { setNameVal(suiteName); setEditingName(true) }}
             style={iconBtn}
             title="Renomear suite"
@@ -241,8 +251,38 @@ function SuiteAccordion({
 
       {open && (
         <div style={{ padding: '16px 20px 20px' }}>
-          {suiteFeatures.map(({ f, i }) => (
-            <FeatureAccordion key={f.id} feature={f} featureIndex={i} />
+          {suiteFeatures.map(({ f, i }, domIdx) => (
+            <div
+              key={f.id}
+              draggable
+              onDragStart={(e) => { setDragIdx(domIdx); e.dataTransfer.effectAllowed = 'move' }}
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverIdx(domIdx) }}
+              onDrop={(e) => {
+                e.preventDefault()
+                if (dragIdx !== null && dragIdx !== domIdx) reorderFeatures(suiteId, dragIdx, domIdx)
+                setDragIdx(null); setDragOverIdx(null)
+              }}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+              style={{
+                opacity: dragIdx === domIdx ? 0.4 : 1,
+                outline: dragOverIdx === domIdx && dragIdx !== domIdx ? '2px dashed var(--color-blue)' : 'none',
+                outlineOffset: 2,
+                borderRadius: 8,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+                <div
+                  title="Arraste para reordenar"
+                  style={{ cursor: 'grab', color: 'var(--color-text-3)', fontSize: 16, padding: '12px 2px 0', flexShrink: 0, userSelect: 'none', lineHeight: 1 }}
+                >
+                  ⠿
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <FeatureAccordion feature={f} featureIndex={i} />
+                </div>
+              </div>
+            </div>
           ))}
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button
@@ -288,10 +328,13 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [blockModal, setBlockModal] = useState(false)
   const [blockReason, setBlockReason] = useState('')
+  const [cancelModal, setCancelModal] = useState(false)
+  const [cancelAlignment, setCancelAlignment] = useState('')
   const state = useSprintStore((s) => s.state)
   const updateFeature = useSprintStore((s) => s.updateFeature)
   const removeFeature = useSprintStore((s) => s.removeFeature)
   const addTestCase = useSprintStore((s) => s.addTestCase)
+  const addAlignmentFull = useSprintStore((s) => s.addAlignmentFull)
   const setMockupImage = useSprintStore((s) => s.setMockupImage)
   const removeMockupImage = useSprintStore((s) => s.removeMockupImage)
 
@@ -397,6 +440,9 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   if (val === 'Bloqueada') {
                     setBlockReason('')
                     setBlockModal(true)
+                  } else if (val === 'Cancelada') {
+                    setCancelAlignment('')
+                    setCancelModal(true)
                   } else {
                     updateFeature(featureIndex, 'status', val)
                     if (val === 'Ativa') updateFeature(featureIndex, 'blockReason', '')
@@ -486,6 +532,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
               testCase={tc}
               caseIndex={ci}
               featureIndex={featureIndex}
+              featureName={feature.name || ''}
               startDate={startDate}
               endDate={state.config.endDate || ''}
               sprintDays={state.config.sprintDays || 20}
@@ -549,6 +596,55 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
         </div>
       )}
 
+      {cancelModal && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setCancelModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid #6b7280', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>⛔ Cancelar Funcionalidade</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Registre o alinhamento técnico referente ao cancelamento de <strong>"{feature.name || 'Sem nome'}"</strong>.
+              O registro ficará visível na aba <strong>Alinhamentos</strong>.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Alinhamento Técnico *
+              </label>
+              <textarea
+                autoFocus
+                value={cancelAlignment}
+                onChange={(e) => setCancelAlignment(e.target.value)}
+                placeholder={`Ex: Funcionalidade "${feature.name || ''}" cancelada por decisão do PO em alinhamento com o time técnico…`}
+                rows={4}
+                onKeyDown={(e) => { if (e.key === 'Escape') setCancelModal(false) }}
+                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setCancelModal(false)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Voltar
+              </button>
+              <button
+                disabled={!cancelAlignment.trim()}
+                onClick={() => {
+                  updateFeature(featureIndex, 'status', 'Cancelada')
+                  updateFeature(featureIndex, 'blockReason', cancelAlignment.trim())
+                  addAlignmentFull(`[Cancelamento] ${feature.name || 'Funcionalidade'}: ${cancelAlignment.trim()}`)
+                  setCancelModal(false)
+                }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#6b7280', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelAlignment.trim() ? 'pointer' : 'not-allowed', opacity: cancelAlignment.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+              >
+                Confirmar Cancelamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Funcionalidade"
@@ -565,11 +661,12 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
 // ─── TestCaseCard ─────────────────────────────────────────────────────────────
 
 function TestCaseCard({
-  testCase, caseIndex, featureIndex, startDate, endDate, sprintDays, mockupImage,
+  testCase, caseIndex, featureIndex, featureName, startDate, endDate, sprintDays, mockupImage,
 }: {
   testCase: TestCase
   caseIndex: number
   featureIndex: number
+  featureName: string
   startDate: string
   endDate: string
   sprintDays: number
@@ -578,7 +675,14 @@ function TestCaseCard({
   const updateTestCase = useSprintStore((s) => s.updateTestCase)
   const removeTestCase = useSprintStore((s) => s.removeTestCase)
   const duplicateTestCase = useSprintStore((s) => s.duplicateTestCase)
+  const addBugFull = useSprintStore((s) => s.addBugFull)
+  const state = useSprintStore((s) => s.state)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [concluindoDate, setConcluindoDate] = useState<string | null>(null)
+  const [showBugModal, setShowBugModal] = useState(false)
+
+  const featureNames = state.features.map((f) => f.name).filter(Boolean)
+  const knownAssignees = Array.from(new Set(state.bugs.map((b) => b.assignee?.trim()).filter(Boolean) as string[]))
 
   const borderColor = STATUS_COLORS[testCase.status] ?? 'var(--color-blue)'
   const execDateVal = testCase.executionDay && startDate
@@ -592,6 +696,27 @@ function TestCaseCard({
     }
     const dayKey = dateToDayKey(dateVal, startDate, sprintDays)
     updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey ?? '')
+  }
+
+  function handleStatusChange(newStatus: TestCaseStatus) {
+    if (newStatus === 'Concluído') {
+      const today = new Date().toISOString().split('T')[0]
+      setConcluindoDate(execDateVal || today)
+    } else if (newStatus === 'Falhou') {
+      updateTestCase(featureIndex, caseIndex, 'status', 'Falhou')
+      setShowBugModal(true)
+    } else {
+      updateTestCase(featureIndex, caseIndex, 'status', newStatus)
+    }
+  }
+
+  function confirmConcluido() {
+    updateTestCase(featureIndex, caseIndex, 'status', 'Concluído')
+    if (concluindoDate) {
+      const dayKey = dateToDayKey(concluindoDate, startDate, sprintDays)
+      updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey ?? '')
+    }
+    setConcluindoDate(null)
   }
 
   return (
@@ -625,7 +750,7 @@ function TestCaseCard({
         </select>
         <select
           value={testCase.status}
-          onChange={(e) => updateTestCase(featureIndex, caseIndex, 'status', e.target.value as TestCaseStatus)}
+          onChange={(e) => handleStatusChange(e.target.value as TestCaseStatus)}
           style={{
             ...inputSm,
             width: 140,
@@ -696,6 +821,55 @@ function TestCaseCard({
           onConfirm={() => { removeTestCase(featureIndex, caseIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
         />
+      )}
+
+      {showBugModal && (
+        <NewBugModal
+          featureNames={featureNames}
+          assignees={knownAssignees}
+          currentDate={state.currentDate}
+          initialDraft={{ feature: featureName, desc: testCase.name ? `Falhou: ${testCase.name}` : '' }}
+          onConfirm={(draft) => { addBugFull(draft); setShowBugModal(false) }}
+          onCancel={() => setShowBugModal(false)}
+        />
+      )}
+
+      {concluindoDate !== null && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setConcluindoDate(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-green)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 380, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>✅ Data de Execução</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Informe a data em que o caso <strong>"{testCase.name || 'Sem título'}"</strong> foi executado.
+            </div>
+            <input
+              type="date"
+              value={concluindoDate}
+              min={startDate || undefined}
+              max={endDate || undefined}
+              onChange={(e) => setConcluindoDate(e.target.value)}
+              style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 6, fontSize: 14, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConcluindoDate(null)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmConcluido}
+                disabled={!concluindoDate}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: concluindoDate ? 'var(--color-green)' : 'var(--color-border)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: concluindoDate ? 'pointer' : 'default', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

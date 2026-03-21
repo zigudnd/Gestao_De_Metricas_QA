@@ -77,6 +77,14 @@ export interface Alignment {
   text: string
 }
 
+// ─── Responsible ──────────────────────────────────────────────────────────────
+
+export interface ResponsiblePerson {
+  id: number
+  role: string   // PO, TL, Coordenador, Gerente, etc.
+  name: string
+}
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 export interface SprintConfig {
@@ -117,6 +125,7 @@ export interface SprintState {
   features: Feature[]
   blockers: Blocker[]
   bugs: Bug[]
+  responsibles: ResponsiblePerson[]
 }
 
 // ─── Master Index ─────────────────────────────────────────────────────────────
@@ -130,4 +139,5 @@ export interface SprintIndexEntry {
   totalTests: number
   totalExec: number
   updatedAt: string
+  favorite?: boolean
 }

@@ -1,8 +1,88 @@
-# QA Dashboard com Armazenamento Local (Node.js)
+# ToStatos — QA Metrics Dashboard
 
-Projeto pronto para executar seu dashboard localmente. Em vez de depender de bancos de dados em nuvem como Supabase, esta arquitetura salva todo o estado das suas sprints em arquivos JSON locais na máquina. Isso garante flexibilidade, segurança e total conformidade (Sem vazamento de métricas confidenciais na web).
+Plataforma de gestão de métricas QA para acompanhamento de sprints. Centraliza KPIs, progresso de testes, bugs, impedimentos e alinhamentos em um único painel. Todo o estado das sprints é salvo localmente (LocalStorage + arquivos JSON via API Node.js), sem vazamento de dados confidenciais para a nuvem.
 
-## Estrutura
+**Stack:** React 19 + TypeScript · Vite 6 · Zustand · Chart.js · Express
+
+---
+
+## ⚙️ Pré-requisitos
+
+Antes de instalar, certifique-se de ter:
+
+| Ferramenta | Versão mínima | Como verificar |
+|---|---|---|
+| **Node.js** | 18 LTS ou superior | `node --version` |
+| **npm** | 9 ou superior | `npm --version` |
+| **Git** | qualquer versão recente | `git --version` |
+| **Navegador** | Chrome, Edge ou Firefox (versão atual) | — |
+
+> **Recomendado:** Node.js 20 LTS. Baixe em [nodejs.org](https://nodejs.org).
+
+---
+
+## 🚀 Instalação e execução
+
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/zigudnd/Gestao_De_Metricas_QA.git
+cd Gestao_De_Metricas_QA
+```
+
+### 2. Instale as dependências
+
+```bash
+npm install
+```
+
+### 3. Configure o ambiente
+
+Crie o arquivo `.env` na raiz do projeto:
+
+```bash
+cp .env.example .env   # se existir o exemplo
+# ou crie manualmente:
+```
+
+```env
+# Armazenamento local (recomendado para compliance)
+STORAGE_TYPE=local
+QA_PROJECT_KEY=meu_projeto
+```
+
+> Para usar Supabase, veja a seção **Configurar o Banco de Dados** mais abaixo.
+
+### 4. Rode em modo desenvolvimento
+
+Abra **dois terminais** e execute um comando em cada:
+
+**Terminal 1 — Backend Express (API):**
+```bash
+npm run dev
+```
+> Servidor disponível em `http://localhost:3000`
+
+**Terminal 2 — Frontend Vite (React):**
+```bash
+npm run dev:client
+```
+> Interface disponível em `http://localhost:5173`
+
+### 5. Build para produção
+
+```bash
+# Gera os arquivos estáticos em /dist
+npm run build
+
+# Inicia o servidor Express servindo o build
+npm start
+```
+> Acesse em `http://localhost:3000`
+
+---
+
+## 📁 Estrutura
 
 - `public/index.html`: dashboard principal.
 - `server.js`: API Node.js ultraleve com rotas de salvamento.
