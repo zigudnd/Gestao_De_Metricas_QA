@@ -54,7 +54,7 @@ interface SprintStore {
   _commit: (next: SprintState) => void
 
   // Config
-  updateConfig: (field: keyof SprintConfig, value: string | number) => void
+  updateConfig: (field: keyof SprintConfig, value: string | number | boolean) => void
 
   // Notes & reports
   updateNotes: (field: keyof Notes, value: string) => void
@@ -144,16 +144,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   // ── Config ─────────────────────────────────────────────────────────────────
   updateConfig: (field, value) => {
     const { state, _commit } = get()
-    const config = { ...state.config, [field]: value }
-    // auto-calc sprintDays from dates
-    if ((field === 'startDate' || field === 'endDate') && config.startDate && config.endDate) {
-      const diff = Math.round(
-        (new Date(config.endDate + 'T00:00:00').getTime() - new Date(config.startDate + 'T00:00:00').getTime())
-        / (1000 * 60 * 60 * 24)
-      ) + 1
-      if (diff > 0) config.sprintDays = diff
-    }
-    _commit({ ...state, config })
+    _commit({ ...state, config: { ...state.config, [field]: value } })
   },
 
   // ── Notes & Reports ────────────────────────────────────────────────────────

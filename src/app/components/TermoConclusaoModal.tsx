@@ -59,7 +59,7 @@ export function TermoConclusaoModal({ onClose }: Props) {
   const hasSuites     = suiteSummary.length > 0
   const hasBlockers   = blockers.length > 0
   const hasReports    = Object.values(state.reports ?? {}).some((t) => t && t.trim())
-  const hasNotes      = !!(state.notes?.actionPlan || state.notes?.premises || state.notes?.operationalPremises)
+  const hasNotes      = !!(state.notes?.actionPlan || state.notes?.premises)
 
   let _n = 2
   const sec = {
@@ -348,7 +348,7 @@ export function TermoConclusaoModal({ onClose }: Props) {
             })()}
 
             {/* Notas */}
-            {(state.notes?.actionPlan || state.notes?.premises || state.notes?.operationalPremises) && (
+            {(state.notes?.actionPlan || state.notes?.premises) && (
               <>
                 <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', borderBottom: '2px solid #0c447c', paddingBottom: 4, marginBottom: 10 }}>
                   {sec.notas}. OBSERVAÇÕES E PLANO DE AÇÃO
@@ -363,12 +363,6 @@ export function TermoConclusaoModal({ onClose }: Props) {
                   <div style={{ marginBottom: 12 }}>
                     <strong style={{ fontSize: 13 }}>Plano de Ação:</strong>
                     <p style={{ fontSize: 13, color: '#374151', whiteSpace: 'pre-wrap', marginTop: 4 }}>{state.notes.actionPlan}</p>
-                  </div>
-                )}
-                {state.notes.operationalPremises && (
-                  <div style={{ marginBottom: 20 }}>
-                    <strong style={{ fontSize: 13 }}>Premissas Operacionais:</strong>
-                    <p style={{ fontSize: 13, color: '#374151', whiteSpace: 'pre-wrap', marginTop: 4 }}>{state.notes.operationalPremises}</p>
                   </div>
                 )}
               </>

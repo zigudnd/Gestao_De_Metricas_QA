@@ -7,6 +7,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2'
 import { useSprintStore, getFilteredFeatures } from '../../store/sprintStore'
 import { useSprintMetrics } from './useSprintMetrics'
+import { sprintDayToDate } from '../../services/persistence'
 import type { Bug } from '../../types/sprint.types'
 
 ChartJS.register(
@@ -57,10 +58,10 @@ export function OverviewTab() {
   })
 
   const sd = state.config.startDate
+  const excludeWeekends = state.config.excludeWeekends ?? false
   const dayLabels = Array.from({ length: sprintDays }, (_, i) => {
     if (sd) {
-      const d = new Date(sd + 'T00:00:00')
-      d.setDate(d.getDate() + i)
+      const d = sprintDayToDate(sd, i + 1, excludeWeekends)
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
     }
     return `D${i + 1}`
@@ -519,23 +520,31 @@ export function OverviewTab() {
         )}
       </Card>
 
-      {/* ── Premissas do Projeto + Plano de Ação ─────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Card title="📌 Premissas do Projeto" borderLeftColor="var(--color-amber)">
-          {state.notes.operationalPremises ? (
-            <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.operationalPremises}</div>
-          ) : (
-            <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
-          )}
-        </Card>
-        <Card title="🎯 Plano de Ação e Gatilhos" borderLeftColor="var(--color-red)">
-          {state.notes.actionPlan ? (
-            <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.actionPlan}</div>
-          ) : (
-            <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum plano de ação registrado.</div>
-          )}
-        </Card>
-      </div>
+      {/* ── Premissas + Plano de Ação ─────────────────────────────────────── */}
+      <Card title="📌 Premissas e Plano de Ação" borderLeftColor="var(--color-amber)">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+              Premissas do Ciclo de Testes
+            </div>
+            {state.notes.premises ? (
+              <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.premises}</div>
+            ) : (
+              <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
+            )}
+          </div>
+          <div style={{ borderLeft: '1px solid var(--color-border)', paddingLeft: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+              Plano de Ação e Gatilhos
+            </div>
+            {state.notes.actionPlan ? (
+              <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.actionPlan}</div>
+            ) : (
+              <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum plano de ação registrado.</div>
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

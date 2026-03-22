@@ -27,16 +27,6 @@ export function NotesTab() {
         borderColor="#fecaca"
         textColor="#991b1b"
       />
-      <NoteArea
-        label="Premissas Operacionais"
-        field="operationalPremises"
-        value={state.notes.operationalPremises}
-        placeholder="Registre premissas operacionais — ambientes, acessos, configurações…"
-        onChange={(v) => updateNotes('operationalPremises', v)}
-        color="#fffbeb"
-        borderColor="#fde68a"
-        textColor="#92400e"
-      />
     </div>
   )
 }

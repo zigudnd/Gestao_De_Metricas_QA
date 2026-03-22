@@ -61,6 +61,19 @@ export function ConfigTab() {
               placeholder="20"
             />
           </FormGroup>
+          <FormGroup label="Excluir fins de semana">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', paddingTop: 6 }}>
+              <input
+                type="checkbox"
+                checked={!!state.config.excludeWeekends}
+                onChange={(e) => updateConfig('excludeWeekends', e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--color-blue)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
+                Contar apenas dias úteis (seg–sex)
+              </span>
+            </label>
+          </FormGroup>
         </div>
       </Card>
 

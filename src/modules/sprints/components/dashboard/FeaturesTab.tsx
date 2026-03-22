@@ -3,28 +3,22 @@ import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
 import { parseFeatureText, parseCSVText, parseXLSXBuffer } from '../../services/importService'
 import { exportCoverage } from '../../services/exportService'
+import { sprintDayToDate, dateToSprintDayKey } from '../../services/persistence'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { NewBugModal } from '@/app/components/NewBugModal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function dayKeyToDate(dayKey: string, startDate: string): string {
+function dayKeyToDate(dayKey: string, startDate: string, excludeWeekends: boolean): string {
   if (!dayKey || !startDate) return ''
   const n = parseInt(dayKey.replace('D', ''))
   if (isNaN(n) || n < 1) return ''
-  const d = new Date(startDate + 'T00:00:00')
-  d.setDate(d.getDate() + n - 1)
-  return d.toISOString().split('T')[0]
+  return sprintDayToDate(startDate, n, excludeWeekends).toISOString().split('T')[0]
 }
 
-function dateToDayKey(dateStr: string, startDate: string, sprintDays: number): string | null {
+function dateToDayKey(dateStr: string, startDate: string, sprintDays: number, excludeWeekends: boolean): string | null {
   if (!dateStr || !startDate) return null
-  const s = new Date(startDate + 'T00:00:00')
-  const e = new Date(dateStr + 'T00:00:00')
-  const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24))
-  const n = diff + 1
-  if (n < 1 || n > sprintDays) return null
-  return `D${n}`
+  return dateToSprintDayKey(dateStr, startDate, sprintDays, excludeWeekends)
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -536,6 +530,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
               startDate={startDate}
               endDate={state.config.endDate || ''}
               sprintDays={state.config.sprintDays || 20}
+              excludeWeekends={state.config.excludeWeekends ?? false}
               mockupImage={feature.mockupImage}
             />
           )
@@ -661,7 +656,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
 // ─── TestCaseCard ─────────────────────────────────────────────────────────────
 
 function TestCaseCard({
-  testCase, caseIndex, featureIndex, featureName, startDate, endDate, sprintDays, mockupImage,
+  testCase, caseIndex, featureIndex, featureName, startDate, endDate, sprintDays, excludeWeekends, mockupImage,
 }: {
   testCase: TestCase
   caseIndex: number
@@ -670,6 +665,7 @@ function TestCaseCard({
   startDate: string
   endDate: string
   sprintDays: number
+  excludeWeekends: boolean
   mockupImage: string
 }) {
   const updateTestCase = useSprintStore((s) => s.updateTestCase)
@@ -686,7 +682,7 @@ function TestCaseCard({
 
   const borderColor = STATUS_COLORS[testCase.status] ?? 'var(--color-blue)'
   const execDateVal = testCase.executionDay && startDate
-    ? dayKeyToDate(testCase.executionDay, startDate)
+    ? dayKeyToDate(testCase.executionDay, startDate, excludeWeekends)
     : ''
 
   function handleDateChange(dateVal: string) {
@@ -694,7 +690,7 @@ function TestCaseCard({
       updateTestCase(featureIndex, caseIndex, 'executionDay', '')
       return
     }
-    const dayKey = dateToDayKey(dateVal, startDate, sprintDays)
+    const dayKey = dateToDayKey(dateVal, startDate, sprintDays, excludeWeekends)
     updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey ?? '')
   }
 
@@ -713,7 +709,7 @@ function TestCaseCard({
   function confirmConcluido() {
     updateTestCase(featureIndex, caseIndex, 'status', 'Concluído')
     if (concluindoDate) {
-      const dayKey = dateToDayKey(concluindoDate, startDate, sprintDays)
+      const dayKey = dateToDayKey(concluindoDate, startDate, sprintDays, excludeWeekends)
       updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey ?? '')
     }
     setConcluindoDate(null)

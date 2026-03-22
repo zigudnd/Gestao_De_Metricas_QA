@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG: SprintConfig = {
   targetVersion: '',
   squad: '',
   qaName: '',
+  excludeWeekends: false,
   hsCritical: 15,
   hsHigh: 10,
   hsMedium: 5,
@@ -27,7 +28,6 @@ export const DEFAULT_CONFIG: SprintConfig = {
 export const DEFAULT_NOTES: Notes = {
   premises: '',
   actionPlan: '',
-  operationalPremises: '',
 }
 
 export const DEFAULT_STATE: SprintState = {
@@ -90,6 +90,7 @@ export function normalizeState(rawState: any): SprintState {
 
   if (s.config.squad === undefined) s.config.squad = ''
   if (s.config.qaName === undefined) s.config.qaName = ''
+  if (s.config.excludeWeekends === undefined) s.config.excludeWeekends = false
   if (s.config.hsCritical === undefined) s.config.hsCritical = 15
   if (s.config.hsHigh === undefined) s.config.hsHigh = 10
   if (s.config.hsMedium === undefined) s.config.hsMedium = 5
@@ -99,7 +100,6 @@ export function normalizeState(rawState: any): SprintState {
   if (s.config.hsDelayed === undefined) s.config.hsDelayed = 2
 
   if (!s.notes) s.notes = { ...DEFAULT_NOTES }
-  if (s.notes.operationalPremises === undefined) s.notes.operationalPremises = ''
   if (!s.reports || typeof s.reports !== 'object') s.reports = {}
   if (!Array.isArray(s.alignments)) s.alignments = []
   if (!Array.isArray(s.features)) s.features = JSON.parse(JSON.stringify(DEFAULT_STATE.features))
@@ -149,15 +149,76 @@ export function normalizeState(rawState: any): SprintState {
   return s
 }
 
+// ─── Working day helpers ──────────────────────────────────────────────────────
+
+/** Conta os dias entre startDate e endDate (inclusive), excluindo sáb/dom se pedido. */
+export function countSprintDays(startDate: string, endDate: string, excludeWeekends: boolean): number {
+  const start = new Date(startDate + 'T00:00:00')
+  const end   = new Date(endDate   + 'T00:00:00')
+  if (end < start) return 0
+  if (!excludeWeekends) {
+    return Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+  }
+  let count = 0
+  const d = new Date(start)
+  while (d <= end) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++
+    d.setDate(d.getDate() + 1)
+  }
+  return count
+}
+
+/**
+ * Retorna a data do N-ésimo dia da sprint (1-indexado).
+ * Com excludeWeekends, D1 = startDate, D2 = próximo dia útil, etc.
+ */
+export function sprintDayToDate(startDate: string, n: number, excludeWeekends: boolean): Date {
+  const d = new Date(startDate + 'T00:00:00')
+  if (!excludeWeekends) {
+    d.setDate(d.getDate() + n - 1)
+    return d
+  }
+  let count = 1
+  // Se o startDate já cair no fim de semana, conta como D1 (edge case raro)
+  while (count < n) {
+    d.setDate(d.getDate() + 1)
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++
+  }
+  return d
+}
+
+/**
+ * Converte uma data de calendário para o Dn da sprint.
+ * Retorna null se a data não pertencer à sprint (fora do range ou for fim de semana com excludeWeekends).
+ */
+export function dateToSprintDayKey(
+  dateStr: string, startDate: string, sprintDays: number, excludeWeekends: boolean
+): string | null {
+  const start  = new Date(startDate + 'T00:00:00')
+  const target = new Date(dateStr   + 'T00:00:00')
+  if (target < start) return null
+  if (excludeWeekends && (target.getDay() === 0 || target.getDay() === 6)) return null
+  if (!excludeWeekends) {
+    const n = Math.round((target.getTime() - start.getTime()) / 86400000) + 1
+    return n >= 1 && n <= sprintDays ? `D${n}` : null
+  }
+  let count = 1
+  const d = new Date(start)
+  while (d < target) {
+    d.setDate(d.getDate() + 1)
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++
+  }
+  return count >= 1 && count <= sprintDays ? `D${count}` : null
+}
+
 // ─── computeFields — equivalente ao saveState() do model.js ──────────────────
 
 export function computeFields(state: SprintState): SprintState {
+  const excludeWeekends = state.config.excludeWeekends ?? false
   let sprintDays: number
   if (state.config.startDate && state.config.endDate) {
-    const s = new Date(state.config.startDate + 'T00:00:00')
-    const e = new Date(state.config.endDate + 'T00:00:00')
-    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    sprintDays = diff > 0 ? diff : (state.config.sprintDays || 20)
+    const days = countSprintDays(state.config.startDate, state.config.endDate, excludeWeekends)
+    sprintDays = days > 0 ? days : (state.config.sprintDays || 20)
   } else {
     sprintDays = state.config.sprintDays || 20
   }

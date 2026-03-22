@@ -95,6 +95,7 @@ export interface SprintConfig {
   targetVersion: string
   squad: string
   qaName: string
+  excludeWeekends: boolean
   // Health Score weights
   hsCritical: number
   hsHigh: number
@@ -110,7 +111,6 @@ export interface SprintConfig {
 export interface Notes {
   premises: string
   actionPlan: string
-  operationalPremises: string
 }
 
 // ─── SprintState ──────────────────────────────────────────────────────────────
