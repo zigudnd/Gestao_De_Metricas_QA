@@ -679,6 +679,7 @@ function TestCaseCard({
 
   const featureNames = state.features.map((f) => f.name).filter(Boolean)
   const knownAssignees = Array.from(new Set(state.bugs.map((b) => b.assignee?.trim()).filter(Boolean) as string[]))
+  const knownStacks = Array.from(new Set(state.bugs.map((b) => b.stack).filter(Boolean) as string[]))
 
   const borderColor = STATUS_COLORS[testCase.status] ?? 'var(--color-blue)'
   const execDateVal = testCase.executionDay && startDate
@@ -823,6 +824,7 @@ function TestCaseCard({
         <NewBugModal
           featureNames={featureNames}
           assignees={knownAssignees}
+          stacks={knownStacks}
           currentDate={state.currentDate}
           initialDraft={{ feature: featureName, desc: testCase.name ? `Falhou: ${testCase.name}` : '' }}
           onConfirm={(draft) => { addBugFull(draft); setShowBugModal(false) }}

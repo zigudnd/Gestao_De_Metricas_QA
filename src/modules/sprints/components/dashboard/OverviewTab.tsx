@@ -199,19 +199,20 @@ export function OverviewTab() {
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-        <KpiCard label="Status da Sprint" value={ritmoLabel} valueColor={ritmoColor} borderColor={ritmoColor} />
         <KpiCard label="QA Health Score" value={`${healthScore}%`} valueColor={hsColor} borderColor={hsColor} />
+        <KpiCard label="Status da Sprint" value={ritmoLabel} valueColor={ritmoColor} borderColor={ritmoColor} />
+        <KpiCard label="Atraso %" value={`${atrasoPercent}%`} valueColor={atrasoPercentColor} />
         <KpiCard label="Total de Testes" value={totalTests} />
-        <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
         <KpiCard label="Executados" value={totalExec} />
         <KpiCard label="Restantes" value={remaining} />
-        <KpiCard label="Atraso %" value={`${atrasoPercent}%`} valueColor={atrasoPercentColor} />
         <KpiCard label="Atraso em Casos" value={atrasoCasos} />
-        <KpiCard label="Bugs Abertos" value={openBugs} />
+        <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
+        <KpiCard label="Bugs Abertos" value={openBugs} valueColor={openBugs > 0 ? 'var(--color-red)' : undefined} borderColor={openBugs > 0 ? 'var(--color-red)' : undefined} />
         <KpiCard label="Telas Bloqueadas" value={blockedFeatureCount} />
         <KpiCard label="Total Retestes" value={totalRetests} />
         <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} />
         <KpiCard label="MTTR Global" value={mttrGlobal !== null ? `${mttrGlobal}d` : '—'} valueColor="#8b5cf6" borderColor="#8b5cf6" />
+        <KpiCard label="Defeitos Prevenidos" value={validBugs.length} valueColor="var(--color-green)" borderColor="var(--color-green)" />
       </div>
 
       {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}

@@ -16,20 +16,54 @@ export function emptyDraft(currentDate: string): NewBugDraft {
   return { desc: '', feature: '', stack: 'Front', severity: 'Média', assignee: '', notes: '', status: 'Aberto', openedAt: currentDate }
 }
 
+const DEFAULT_STACKS = ['Front', 'BFF', 'Back', 'Mobile', 'Infra']
+const NEW_STACK_SENTINEL = '__new__'
+
 interface Props {
   featureNames: string[]
   assignees: string[]
+  stacks?: string[]
   initialDraft?: Partial<NewBugDraft>
   currentDate: string
   onConfirm: (draft: NewBugDraft) => void
   onCancel: () => void
 }
 
-export function NewBugModal({ featureNames, assignees, initialDraft, currentDate, onConfirm, onCancel }: Props) {
+export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft, currentDate, onConfirm, onCancel }: Props) {
   const [draft, setDraft] = useState<NewBugDraft>(() => ({ ...emptyDraft(currentDate), ...initialDraft }))
+  const [addingStack, setAddingStack] = useState(false)
+  const [newStackVal, setNewStackVal] = useState('')
+  const [customStacks, setCustomStacks] = useState<string[]>(() =>
+    stacks.filter((s) => !DEFAULT_STACKS.includes(s))
+  )
+
+  const allStacks = [...DEFAULT_STACKS, ...customStacks]
 
   function set<K extends keyof NewBugDraft>(field: K, value: NewBugDraft[K]) {
     setDraft((d) => ({ ...d, [field]: value }))
+  }
+
+  function handleStackChange(value: string) {
+    if (value === NEW_STACK_SENTINEL) {
+      setAddingStack(true)
+      setNewStackVal('')
+    } else {
+      set('stack', value as BugStack)
+    }
+  }
+
+  function confirmNewStack() {
+    const trimmed = newStackVal.trim()
+    if (!trimmed) return
+    if (!customStacks.includes(trimmed)) setCustomStacks((cs) => [...cs, trimmed])
+    set('stack', trimmed as BugStack)
+    setAddingStack(false)
+    setNewStackVal('')
+  }
+
+  function cancelNewStack() {
+    setAddingStack(false)
+    setNewStackVal('')
   }
 
   const canSubmit = draft.desc.trim() && draft.openedAt
@@ -75,9 +109,27 @@ export function NewBugModal({ featureNames, assignees, initialDraft, currentDate
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Stack">
-              <select value={draft.stack} onChange={(e) => set('stack', e.target.value as BugStack)} style={inputStyle}>
-                {(['Front', 'BFF', 'Back', 'Mobile', 'Infra'] as BugStack[]).map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              {addingStack ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newStackVal}
+                    onChange={(e) => setNewStackVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') confirmNewStack(); if (e.key === 'Escape') cancelNewStack() }}
+                    placeholder="Nome da nova stack…"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button onClick={confirmNewStack} style={btnConfirmSmall} title="Confirmar">✓</button>
+                  <button onClick={cancelNewStack} style={btnCancelSmall} title="Cancelar">✕</button>
+                </div>
+              ) : (
+                <select value={draft.stack} onChange={(e) => handleStackChange(e.target.value)} style={inputStyle}>
+                  {allStacks.map((s) => <option key={s} value={s}>{s}</option>)}
+                  <option disabled style={{ color: 'var(--color-text-3)' }}>──────────</option>
+                  <option value={NEW_STACK_SENTINEL}>➕ Nova stack…</option>
+                </select>
+              )}
             </Field>
             <Field label="Severidade">
               <select value={draft.severity} onChange={(e) => set('severity', e.target.value as BugSeverity)} style={inputStyle}>
@@ -180,4 +232,28 @@ const btnOutline: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+}
+
+const btnConfirmSmall: React.CSSProperties = {
+  padding: '0 10px',
+  background: 'var(--color-green)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 8,
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: 'pointer',
+  flexShrink: 0,
+}
+
+const btnCancelSmall: React.CSSProperties = {
+  padding: '0 10px',
+  background: 'transparent',
+  color: 'var(--color-text-2)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: 'pointer',
+  flexShrink: 0,
 }

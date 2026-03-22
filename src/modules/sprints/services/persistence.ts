@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG: SprintConfig = {
   targetVersion: '',
   squad: '',
   qaName: '',
-  excludeWeekends: false,
+  excludeWeekends: true,
   hsCritical: 15,
   hsHigh: 10,
   hsMedium: 5,
@@ -90,7 +90,7 @@ export function normalizeState(rawState: any): SprintState {
 
   if (s.config.squad === undefined) s.config.squad = ''
   if (s.config.qaName === undefined) s.config.qaName = ''
-  if (s.config.excludeWeekends === undefined) s.config.excludeWeekends = false
+  if (s.config.excludeWeekends === undefined) s.config.excludeWeekends = true
   if (s.config.hsCritical === undefined) s.config.hsCritical = 15
   if (s.config.hsHigh === undefined) s.config.hsHigh = 10
   if (s.config.hsMedium === undefined) s.config.hsMedium = 5
@@ -214,7 +214,7 @@ export function dateToSprintDayKey(
 // ─── computeFields — equivalente ao saveState() do model.js ──────────────────
 
 export function computeFields(state: SprintState): SprintState {
-  const excludeWeekends = state.config.excludeWeekends ?? false
+  const excludeWeekends = state.config.excludeWeekends ?? true
   let sprintDays: number
   if (state.config.startDate && state.config.endDate) {
     const days = countSprintDays(state.config.startDate, state.config.endDate, excludeWeekends)

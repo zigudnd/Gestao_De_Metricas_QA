@@ -44,6 +44,10 @@ export function BugsTab() {
     new Set(state.bugs.map((b) => b.assignee?.trim()).filter(Boolean) as string[])
   )
 
+  const knownStacks = Array.from(
+    new Set(state.bugs.map((b) => b.stack).filter(Boolean) as string[])
+  )
+
   const assignees = ['Todos', 'Não Atribuído', ...knownAssignees]
 
   const sorted = [...state.bugs]
@@ -194,6 +198,7 @@ export function BugsTab() {
         <NewBugModal
           featureNames={featureNames}
           assignees={knownAssignees}
+          stacks={knownStacks}
           currentDate={state.currentDate}
           onConfirm={(draft) => { addBugFull(draft); setShowNewModal(false) }}
           onCancel={() => setShowNewModal(false)}
