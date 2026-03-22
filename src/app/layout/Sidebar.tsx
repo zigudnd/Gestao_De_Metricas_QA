@@ -82,6 +82,7 @@ export function Sidebar() {
 
       <div style={{ flex: 1 }} />
       <div style={{ width: 28, height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
+      <NavItem icon="📖" label="Documentação" active={location.pathname === '/docs'} onClick={() => navigate('/docs')} />
       <NavItem icon="⚙" label="Configurações" disabled />
     </aside>
   )

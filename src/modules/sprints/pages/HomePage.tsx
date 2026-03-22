@@ -4,7 +4,9 @@ import type { SprintIndexEntry } from '../types/sprint.types'
 import {
   getMasterIndex, saveMasterIndex, STORAGE_KEY,
   DEFAULT_STATE, normalizeState, saveToStorage, upsertSprintInMasterIndex,
+  toggleFavoriteSprint,
 } from '../services/persistence'
+import { importFromJSON } from '../services/exportService'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -28,7 +30,7 @@ function sprintYear(s: SprintIndexEntry): string | null {
 
 interface Filters {
   squad: string
-  status: string
+  status: 'all' | 'active' | 'completed' | 'favorite'
   year: string
 }
 
@@ -41,6 +43,7 @@ export function HomePage() {
   const [newTitle, setNewTitle] = useState('')
   const [newSquad, setNewSquad] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   // Trigger criado pela Topbar via DOM (manter compatibilidade)
   useEffect(() => {
@@ -111,6 +114,26 @@ export function HomePage() {
     reload()
   }
 
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const sprintId = await importFromJSON(file)
+      reload()
+      navigate(`/sprints/${sprintId}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao importar sprint.')
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
+
+  function handleToggleFavorite(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    toggleFavoriteSprint(id)
+    reload()
+  }
+
   // Filter options
   const squads = [...new Set(sprints.map((s) => s.squad || '').filter(Boolean))].sort()
   const years = [...new Set(sprints.map(sprintYear).filter(Boolean) as string[])].sort().reverse()
@@ -118,10 +141,12 @@ export function HomePage() {
   const filtered = sprints.filter((s) => {
     const st = sprintStatus(s)
     if (filters.squad !== 'all' && (s.squad || '') !== filters.squad) return false
-    if (filters.status !== 'all' && st !== filters.status) return false
+    if (filters.status === 'active' && st !== 'active') return false
+    if (filters.status === 'completed' && st !== 'completed') return false
+    if (filters.status === 'favorite' && !s.favorite) return false
     if (filters.year !== 'all' && sprintYear(s) !== filters.year) return false
     return true
-  })
+  }).sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
 
   const hasFilters = filters.squad !== 'all' || filters.status !== 'all' || filters.year !== 'all'
 
@@ -172,11 +197,12 @@ export function HomePage() {
           <FilterGroup
             label="Status"
             value={filters.status}
-            onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+            onChange={(v) => setFilters((f) => ({ ...f, status: v as Filters['status'] }))}
           >
             <option value="all">Todos</option>
             <option value="active">Em Andamento</option>
             <option value="completed">Concluída</option>
+            <option value="favorite">⭐ Favoritas</option>
           </FilterGroup>
 
           {years.length > 0 && (
@@ -350,6 +376,31 @@ export function HomePage() {
                 ⠿
               </span>
 
+              {/* Favorite button */}
+              <button
+                onClick={(e) => handleToggleFavorite(e, sprint.id)}
+                title={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 38,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: 'transparent',
+                  color: sprint.favorite ? '#f59e0b' : 'var(--color-text-3)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14,
+                  transition: 'color 0.15s',
+                }}
+              >
+                {sprint.favorite ? '⭐' : '☆'}
+              </button>
+
               {/* Delete button */}
               <button
                 onClick={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
@@ -444,32 +495,32 @@ export function HomePage() {
                   </div>
                 </div>
 
-                {/* Status badge */}
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: 20,
-                    background:
-                      status === 'completed' ? 'var(--color-green-light)' : 'var(--color-blue-light)',
-                    color:
-                      status === 'completed' ? 'var(--color-green-text)' : 'var(--color-blue-text)',
-                  }}
-                >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  {/* Status badge */}
                   <span
                     style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: 'currentColor',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: 20,
+                      background:
+                        status === 'completed' ? 'var(--color-green-light)' : 'var(--color-blue-light)',
+                      color:
+                        status === 'completed' ? 'var(--color-green-text)' : 'var(--color-blue-text)',
                     }}
-                  />
-                  {status === 'completed' ? 'Concluída' : 'Em Andamento'}
-                </span>
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }} />
+                    {status === 'completed' ? 'Concluída' : 'Em Andamento'}
+                  </span>
+                  {sprint.favorite && (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', padding: '3px 8px', borderRadius: 20 }}>
+                      ⭐ Favorita
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )

@@ -2,22 +2,12 @@ import { useState } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Bug, BugStatus, BugSeverity, BugStack } from '../../types/sprint.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { NewBugModal, emptyDraft, type NewBugDraft } from '@/app/components/NewBugModal'
 
 interface BugFilters {
   status: string
   stack: string
   assignee: string
-}
-
-interface NewBugDraft {
-  desc: string
-  feature: string
-  stack: BugStack
-  severity: BugSeverity
-  assignee: string
-  notes: string
-  status: BugStatus
-  openedAt: string
 }
 
 const SEV_COLOR: Record<string, string> = {
@@ -35,10 +25,6 @@ const STACK_COLOR: Record<string, string> = {
   Infra: '#6b7280',
 }
 
-function emptyDraft(currentDate: string): NewBugDraft {
-  return { desc: '', feature: '', stack: 'Front', severity: 'Média', assignee: '', notes: '', status: 'Aberto', openedAt: currentDate }
-}
-
 export function BugsTab() {
   const state = useSprintStore((s) => s.state)
   const addBugFull = useSprintStore((s) => s.addBugFull)
@@ -49,15 +35,16 @@ export function BugsTab() {
   const [filters, setFilters] = useState<BugFilters>({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })
   const [editingBug, setEditingBug] = useState<number | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
-  const [draft, setDraft] = useState<NewBugDraft>(() => emptyDraft(state.currentDate))
   const [resolveModal, setResolveModal] = useState<{ index: number; date: string } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ index: number; desc: string } | null>(null)
 
   const featureNames = state.features.map((f) => f.name).filter(Boolean)
 
-  const assignees = ['Todos', 'Não Atribuído', ...Array.from(
+  const knownAssignees = Array.from(
     new Set(state.bugs.map((b) => b.assignee?.trim()).filter(Boolean) as string[])
-  )]
+  )
+
+  const assignees = ['Todos', 'Não Atribuído', ...knownAssignees]
 
   const sorted = [...state.bugs]
     .map((b, i) => ({ b, i }))
@@ -72,26 +59,11 @@ export function BugsTab() {
 
   const hasFilters = filters.status !== 'Todos' || filters.stack !== 'Todos' || filters.assignee !== 'Todos'
 
-  function openNewModal() {
-    setDraft(emptyDraft(state.currentDate))
-    setShowNewModal(true)
-  }
-
-  function confirmNewBug() {
-    if (!draft.desc.trim()) return
-    addBugFull(draft)
-    setShowNewModal(false)
-  }
-
   function confirmResolve() {
     if (!resolveModal) return
     updateBug(resolveModal.index, 'status', 'Resolvido')
     updateBug(resolveModal.index, 'resolvedAt', resolveModal.date)
     setResolveModal(null)
-  }
-
-  function set<K extends keyof NewBugDraft>(field: K, value: NewBugDraft[K]) {
-    setDraft((d) => ({ ...d, [field]: value }))
   }
 
   function badge(text: string, color: string) {
@@ -119,7 +91,7 @@ export function BugsTab() {
             </button>
           )}
         </div>
-        <button onClick={openNewModal} style={btnPrimary}>+ Novo Bug</button>
+        <button onClick={() => setShowNewModal(true)} style={btnPrimary}>+ Novo Bug</button>
       </div>
 
       {/* Table */}
@@ -219,101 +191,13 @@ export function BugsTab() {
 
       {/* ── Modal: Novo Bug ───────────────────────────────────────────────── */}
       {showNewModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, width: '100%', maxWidth: 520, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Header */}
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>🐞 Novo Bug</div>
-              <button onClick={() => setShowNewModal(false)} style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-2)', lineHeight: 1 }}>✕</button>
-            </div>
-
-            {/* Body */}
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', maxHeight: '70vh' }}>
-              <Field label="Descrição *">
-                <input
-                  autoFocus
-                  type="text"
-                  value={draft.desc}
-                  onChange={(e) => set('desc', e.target.value)}
-                  placeholder="Descreva o bug encontrado…"
-                  style={inputStyle}
-                />
-              </Field>
-
-              <Field label="Funcionalidade Relacionada">
-                <input
-                  type="text"
-                  list="new-bug-features"
-                  value={draft.feature}
-                  onChange={(e) => set('feature', e.target.value)}
-                  placeholder="Funcionalidade afetada"
-                  style={inputStyle}
-                />
-                <datalist id="new-bug-features">
-                  {featureNames.map((n) => <option key={n} value={n} />)}
-                </datalist>
-              </Field>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Field label="Stack">
-                  <select value={draft.stack} onChange={(e) => set('stack', e.target.value as BugStack)} style={inputStyle}>
-                    {(['Front', 'BFF', 'Back', 'Mobile', 'Infra'] as BugStack[]).map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-                <Field label="Severidade">
-                  <select value={draft.severity} onChange={(e) => set('severity', e.target.value as BugSeverity)} style={inputStyle}>
-                    {(['Crítica', 'Alta', 'Média', 'Baixa'] as BugSeverity[]).map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Field label="Status">
-                  <select value={draft.status} onChange={(e) => set('status', e.target.value as BugStatus)} style={inputStyle}>
-                    {(['Aberto', 'Em Andamento', 'Resolvido'] as BugStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-                <Field label="Responsável">
-                  <input type="text" list="bug-assignees" value={draft.assignee} onChange={(e) => set('assignee', e.target.value)} placeholder="Nome do responsável" style={inputStyle} />
-                  <datalist id="bug-assignees">
-                    {assignees.filter((a) => a !== 'Todos' && a !== 'Não Atribuído').map((a) => <option key={a} value={a} />)}
-                  </datalist>
-                </Field>
-              </div>
-
-              <Field label="Data de Abertura *">
-                <input
-                  type="date"
-                  value={draft.openedAt}
-                  onChange={(e) => set('openedAt', e.target.value)}
-                  style={inputStyle}
-                />
-              </Field>
-
-              <Field label="Notas / Observações">
-                <textarea
-                  value={draft.notes}
-                  onChange={(e) => set('notes', e.target.value)}
-                  placeholder="Contexto adicional, passos para reproduzir…"
-                  rows={3}
-                  style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-family-sans)' }}
-                />
-              </Field>
-            </div>
-
-            {/* Footer */}
-            <div style={{ padding: '14px 24px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowNewModal(false)} style={btnOutline}>Cancelar</button>
-              <button
-                onClick={confirmNewBug}
-                disabled={!draft.desc.trim() || !draft.openedAt}
-                style={{ ...btnPrimary, opacity: draft.desc.trim() && draft.openedAt ? 1 : 0.5, cursor: draft.desc.trim() && draft.openedAt ? 'pointer' : 'not-allowed' }}
-              >
-                Criar Bug
-              </button>
-            </div>
-          </div>
-        </div>
+        <NewBugModal
+          featureNames={featureNames}
+          assignees={knownAssignees}
+          currentDate={state.currentDate}
+          onConfirm={(draft) => { addBugFull(draft); setShowNewModal(false) }}
+          onCancel={() => setShowNewModal(false)}
+        />
       )}
 
       {/* ── Modal: Confirmar Exclusão ─────────────────────────────────────── */}
