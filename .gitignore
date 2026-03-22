@@ -24,3 +24,6 @@ Thumbs.db
 # Build
 dist/
 build/
+
+# Vite build output (gerado por npm run build)
+public/assets/
