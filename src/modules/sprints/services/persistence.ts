@@ -23,6 +23,10 @@ export const DEFAULT_CONFIG: SprintConfig = {
   hsRetest: 2,
   hsBlocked: 10,
   hsDelayed: 2,
+  psCritical: 10,
+  psHigh: 5,
+  psMedium: 3,
+  psLow: 1,
 }
 
 export const DEFAULT_NOTES: Notes = {
@@ -98,6 +102,10 @@ export function normalizeState(rawState: any): SprintState {
   if (s.config.hsRetest === undefined) s.config.hsRetest = 2
   if (s.config.hsBlocked === undefined) s.config.hsBlocked = 10
   if (s.config.hsDelayed === undefined) s.config.hsDelayed = 2
+  if (s.config.psCritical === undefined) s.config.psCritical = 10
+  if (s.config.psHigh === undefined) s.config.psHigh = 5
+  if (s.config.psMedium === undefined) s.config.psMedium = 3
+  if (s.config.psLow === undefined) s.config.psLow = 1
 
   if (!s.notes) s.notes = { ...DEFAULT_NOTES }
   if (!s.reports || typeof s.reports !== 'object') s.reports = {}

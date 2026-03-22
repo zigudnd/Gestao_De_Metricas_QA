@@ -121,6 +121,11 @@
 - Nome salvo em histórico automático (datalist HTML).
 - Nomes de responsáveis usados anteriormente ficam disponíveis como sugestão em novos bugs.
 
+### 5.7 Stack do Bug
+- Stacks padrão: `Front`, `BFF`, `Back`, `Mobile`, `Infra`.
+- O modal de cadastro de bug (`NewBugModal`) permite criar stacks customizadas inline via opção "➕ Nova stack…" no select.
+- Stacks customizadas ficam disponíveis apenas durante a sessão do modal e são re-derivadas a partir dos bugs existentes na sprint.
+
 ---
 
 ## 6. Blockers / Impedimentos
@@ -174,7 +179,34 @@ healthScore = max(0, 100 - penalidades)
 
 ---
 
-## 9. Burndown Chart
+## 9. Defeitos Prevenidos e Impacto Prevenido
+
+### 9.1 Defeitos Prevenidos
+- Contagem total de todos os bugs registrados na sprint, independentemente do status (Aberto, Em Andamento ou Resolvido).
+- Representa o volume bruto de defeitos interceptados pelo QA antes de chegarem à produção.
+- Exibido em verde no dashboard de resumo.
+
+### 9.2 Impacto Prevenido
+- Score ponderado que pondera cada bug pelo seu nível de criticidade.
+- **Fórmula:** `Σ (peso_severidade × qtd_bugs_daquela_severidade)`
+- Pesos padrão: Crítica = 10, Alta = 5, Média = 3, Baixa = 1.
+- Pesos configuráveis individualmente na aba Configurações, seção "Impacto Prevenido — Pesos por Severidade".
+- Campos de configuração: `psCritical`, `psHigh`, `psMedium`, `psLow`.
+- Exibido em verde no dashboard de resumo.
+
+---
+
+## 10. Configuração de Dias da Sprint
+
+### 10.1 Fins de Semana
+- Por padrão, fins de semana são **excluídos** do cálculo de dias úteis da sprint (`excludeWeekends: true`).
+- O usuário pode incluir fins de semana marcando a opção "Incluir fins de semana na duração" na aba Configurações.
+- Impacta: cálculo de dias totais, labels do Burndown Chart, conversão de datas em `D1`/`D2`/... nos casos de teste.
+- Helpers exportados de `persistence.ts`: `countSprintDays`, `sprintDayToDate`, `dateToSprintDayKey`.
+
+---
+
+## 11. Burndown Chart
 
 ### 9.1 Linha Ideal
 - Parte do total de testes no `D0` (início) e chega a 0 no último dia da sprint.
@@ -191,7 +223,7 @@ healthScore = max(0, 100 - penalidades)
 
 ---
 
-## 10. Persistência de Dados
+## 12. Persistência de Dados
 
 ### 10.1 Armazenamento Local
 - Estado completo de cada sprint: `localStorage["qaDashboardData_<sprintId>"]`
@@ -211,7 +243,7 @@ updateField → _commit → computeFields → saveToStorage → upsertMasterInde
 
 ---
 
-## 11. Importação de Casos de Teste
+## 13. Importação de Casos de Teste
 
 ### 11.1 Formatos Suportados
 | Formato | Regra |

@@ -84,27 +84,40 @@ npm start
 
 ## 📁 Estrutura
 
-- `public/index.html`: dashboard principal.
-- `server.js`: API Node.js ultraleve com rotas de salvamento.
-- `data/`: pasta gerada automaticamente para armazenar os backups `dashboard_*.json`.
+```
+src/
+├── app/components/       # Componentes compartilhados (NewBugModal, ConfirmModal)
+├── app/pages/            # DocsPage (documentação integrada)
+├── app/layout/           # AppShell, Sidebar, Topbar, SaveToast
+├── modules/sprints/
+│   ├── components/dashboard/   # Tabs: Overview, Features, Bugs, Config, Notes...
+│   ├── services/persistence.ts # localStorage + computeFields + helpers de dias
+│   ├── store/sprintStore.ts    # Zustand store central
+│   └── types/sprint.types.ts  # Tipos TypeScript
+server.js                 # API Express (sincronização remota opcional)
+```
 
 ## Como funciona
 
-- Ao abrir a página, o front faz `GET /api/dashboard/:projectKey` pedindo os dados da sprint.
-- Ao editar qualquer dado, o front (além do backup salvo no LocalStorage do seu navegador) envia a carga para `PUT /api/dashboard/:projectKey`.
-- O servidor recebe e salva/cria um arquivo JSON local na pasta `data/`.
+- Todo o estado é salvo no **localStorage** do navegador (`qaDashboardData_<sprintId>`).
+- Campos calculados (testes totais, executados, dias de sprint) são recomputados a cada `_commit` via `computeFields`.
+- Opcionalmente, o front sincroniza com a API Express via `PUT /api/dashboard/:sprintId` (debounce 3s).
 
 ## ✨ Principais Funcionalidades e Casos de Uso
 
 O QA Dashboard centraliza em um único ambiente tudo que um Líder ou Analista de Qualidade precisa para gerenciar os testes e reportar o andamento da Sprint.
 
-- **Visão Executiva (C-Level & Gerencial):** Painel principal de alto nível onde stakeholders acompanham o "Pulse" da Sprint. Apresenta KPI’s como *QA Health Score*, meta de execução vs executado, e o avanço diário através de gráficos como o *Burndown Chart*.
-- **Gestão de Casos de Teste Estruturada:** Você pode cadastrar Módulos, Funcionalidades e Casos de Teste em formato Gherkin e acompanhá-los via Checklists (Passou / Falhou / Bloqueado).
-- **Gestão de Impedimentos Dinâmica:** Chega de planilhas paralelas de bugs. Se uma tela está bloqueada, você insere diretamente no card do Teste o Motivo do Bloqueio, que alimentará os gráficos de gargalos da visão executiva e deixará a feature com um visual de Alerta na área operacional.
-- **QA Health Score Personalizável**: Ajuste o peso das penalidades da sua equipe (Retestes, Bugs Críticos, Telas Bloqueadas, etc) direto na aba de Configurações, flexibilizando o dashboard para o nível de rigor do seu projeto.
-- **Armazenamento 100% Local (Secure-by-Design)**: Ignora bancos externos e salva os backups numa pasta local `data/`, atendendo rigidamente regras de compliance contra vazamento de métricas em ambientes corporativos sensíveis.
-- **Premissas e Plano de Ação (Gestão de Risco):** Ambiente dedicado na aba "Visão Executiva" para descrever gatilhos de atraso arquitetural com foco em resolutividade rápida lado a lado.
-- **Exportação One-Click:** Envie status por e-mail no final do dia clicando no botão "📸 Exportar Imagem", que tira um *snapshot* renderizado exato dos seus indicadores do dia.
+- **Visão Executiva (C-Level & Gerencial):** Painel principal de alto nível com 15 KPIs em tempo real, Burndown Chart, gráficos de bugs por stack e MTTR por criticidade.
+- **KPIs de Valor Gerado pelo QA:** *Defeitos Prevenidos* (total de bugs encontrados) e *Impacto Prevenido* (score ponderado pela criticidade — Σ peso × bugs por severidade). Evidenciam o valor do trabalho de QA além da simples contagem.
+- **QA Health Score Personalizável:** Ajuste o peso das penalidades (Bugs Críticos, Retestes, Telas Bloqueadas, Atraso, etc.) diretamente na aba Configurações.
+- **Impacto Prevenido Configurável:** Pesos independentes por severidade (Crítica/Alta/Média/Baixa) para o cálculo do score ponderado de defeitos prevenidos.
+- **Gestão de Casos de Teste Estruturada:** Cadastro de Suites, Funcionalidades e Casos de Teste em formato Gherkin, com Checklists (Concluído / Falhou / Bloqueado) e controle de data de execução por dia de sprint.
+- **Fins de Semana Configuráveis:** Opção para incluir ou excluir fins de semana no cálculo de dias úteis da sprint. Por padrão, fins de semana são excluídos.
+- **Gestão de Bugs com Stacks Customizáveis:** Registro de bugs com severidade, stack (Front, BFF, Back, Mobile, Infra ou stacks personalizadas criadas inline), responsável e rastreamento de MTTR.
+- **Gestão de Impedimentos:** Registro de blockers com data, motivo e horas bloqueadas. Alimenta os KPIs e gráficos de gargalos.
+- **Premissas e Plano de Ação (Gestão de Risco):** Card unificado na aba "Visão Executiva" com Premissas do Ciclo de Testes e Plano de Ação lado a lado.
+- **Armazenamento 100% Local (Secure-by-Design):** Dados salvos exclusivamente no localStorage do navegador. Nenhum dado sensível vaza para a nuvem.
+- **Exportação One-Click:** Snapshot renderizado dos indicadores do dia via "📸 Exportar Imagem".
 
 ## 👨‍💻 Autor
 Desenvolvido por **[Jhonny Robert](https://www.linkedin.com/in/jhonny-robert/)**

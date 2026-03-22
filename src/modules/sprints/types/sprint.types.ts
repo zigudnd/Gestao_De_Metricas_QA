@@ -104,6 +104,11 @@ export interface SprintConfig {
   hsRetest: number
   hsBlocked: number
   hsDelayed: number
+  // Impacto Prevenido weights
+  psCritical: number
+  psHigh: number
+  psMedium: number
+  psLow: number
 }
 
 // ─── Notes ────────────────────────────────────────────────────────────────────

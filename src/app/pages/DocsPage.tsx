@@ -175,6 +175,19 @@ const SECTIONS: DocSection[] = [
           why="Mede a velocidade de resposta do time de desenvolvimento. Um MTTR alto indica gargalos no fluxo de correção."
           how="Média de (Data de Resolução − Data de Abertura) de todos os bugs com status Resolvido."
         />
+        <MetricCard
+          name="Defeitos Prevenidos"
+          icon="🛡️"
+          what="Total de bugs encontrados na sprint, independentemente do status (abertos, em andamento ou resolvidos)."
+          why="Representa o valor gerado pelo QA ao interceptar defeitos antes de chegarem à produção. Quanto maior, melhor."
+        />
+        <MetricCard
+          name="Impacto Prevenido"
+          icon="⭐"
+          what="Score ponderado que mede o valor dos defeitos prevenidos levando em conta a criticidade de cada bug."
+          why="Diferencia uma sprint que encontrou 10 bugs críticos de uma que encontrou 10 bugs baixos — ambas têm o mesmo Defeitos Prevenidos, mas Impacto Prevenidos muito diferentes."
+          how="Σ (peso_severidade × qtd_bugs_daquela_severidade). Pesos configuráveis na aba Configurações de cada sprint."
+        />
       </div>
     ),
   },
@@ -399,6 +412,57 @@ const SECTIONS: DocSection[] = [
           <div style={{ padding: '8px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#15803d' }}>≥ 90% — Excelente</div>
           <div style={{ padding: '8px 14px', background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#a16207' }}>70–89% — Atenção</div>
           <div style={{ padding: '8px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#dc2626' }}>{'< 70% — Crítico'}</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'prevention',
+    icon: '⭐',
+    title: 'Impacto Prevenido',
+    content: (
+      <div>
+        <H2>Impacto Prevenido — Score de Prevenção de Defeitos</H2>
+        <P>
+          O Impacto Prevenido quantifica o <strong>valor gerado pelo QA</strong> ao encontrar bugs durante a sprint,
+          ponderando cada defeito pela sua criticidade. Diferente do simples contador de bugs (Defeitos Prevenidos),
+          o Impacto Prevenido reconhece que interceptar um bug crítico antes da produção tem impacto muito maior
+          do que interceptar um bug de baixa severidade.
+        </P>
+
+        <H3>Fórmula</H3>
+        <div style={{ padding: '12px 16px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, fontFamily: 'monospace', fontSize: 13, color: 'var(--color-text)', marginBottom: 12 }}>
+          Impacto Prevenido = Σ (peso_severidade × qtd_bugs_daquela_severidade)
+        </div>
+        <P>Exemplo: 2 bugs Críticos (×10) + 1 bug Alto (×5) + 3 bugs Médios (×3) + 2 bugs Baixos (×1) = <strong>36 pts</strong></P>
+
+        <H3>Pesos padrão por severidade</H3>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+          {[
+            ['Crítica', '10', '#ef4444'],
+            ['Alta', '5', '#f97316'],
+            ['Média', '3', '#f59e0b'],
+            ['Baixa', '1', '#10b981'],
+          ].map(([sev, peso, color]) => (
+            <div key={sev} style={{ padding: '10px 16px', border: `1px solid ${color}44`, borderRadius: 8, background: `${color}11`, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{sev}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color }}>{peso}</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-3)' }}>pontos</div>
+            </div>
+          ))}
+        </div>
+        <P>Os pesos são configuráveis individualmente na aba <strong>Configurações</strong> de cada sprint, na seção "Impacto Prevenido — Pesos por Severidade".</P>
+
+        <H3>Diferença entre Defeitos Prevenidos e Impacto Prevenido</H3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 6 }}>🛡️ Defeitos Prevenidos</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Contagem simples de todos os bugs encontrados. Sprint A com 10 bugs = Sprint B com 10 bugs.</span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 6 }}>⭐ Impacto Prevenido</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Score ponderado. Sprint A com 10 bugs críticos tem score 100. Sprint B com 10 bugs baixos tem score 10.</span>
+          </div>
         </div>
       </div>
     ),

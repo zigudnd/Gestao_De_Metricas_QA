@@ -149,6 +149,27 @@ export function ConfigTab() {
           </FormGroup>
         </div>
       </Card>
+
+      {/* Impacto Prevenido */}
+      <Card title="Impacto Prevenido — Pesos por Severidade">
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
+          Configura o peso de cada bug pelo nível de criticidade no cálculo do Impacto Prevenido (Σ peso × qtd bugs).
+        </p>
+        <div style={grid4}>
+          <FormGroup label="Bug Crítico">
+            <input type="number" min={0} value={state.config.psCritical} onChange={(e) => updateConfig('psCritical', Number(e.target.value))} style={inputStyle} />
+          </FormGroup>
+          <FormGroup label="Bug Alto">
+            <input type="number" min={0} value={state.config.psHigh} onChange={(e) => updateConfig('psHigh', Number(e.target.value))} style={inputStyle} />
+          </FormGroup>
+          <FormGroup label="Bug Médio">
+            <input type="number" min={0} value={state.config.psMedium} onChange={(e) => updateConfig('psMedium', Number(e.target.value))} style={inputStyle} />
+          </FormGroup>
+          <FormGroup label="Bug Baixo">
+            <input type="number" min={0} value={state.config.psLow} onChange={(e) => updateConfig('psLow', Number(e.target.value))} style={inputStyle} />
+          </FormGroup>
+        </div>
+      </Card>
     </div>
   )
 }

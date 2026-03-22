@@ -51,7 +51,7 @@ src/
 │       │   ├── BlockersTab.tsx    # Registro de impedimentos
 │       │   ├── AlignmentsTab.tsx  # Alinhamentos técnicos
 │       │   ├── NotesTab.tsx       # Notas da sprint
-│       │   ├── ConfigTab.tsx      # Configurações da sprint e Health Score
+│       │   ├── ConfigTab.tsx      # Configurações da sprint, Health Score e Impacto Prevenido
 │       │   └── useSprintMetrics.ts # Hook com métricas derivadas
 │       ├── pages/
 │       │   ├── HomePage.tsx       # Listagem e gestão de sprints
@@ -123,13 +123,16 @@ Borda vermelha no topo. Fechar clicando no backdrop.
 <NewBugModal
   featureNames={string[]}
   assignees={string[]}
+  stacks={string[]}                    // opcional — stacks já usadas na sprint
   currentDate={string}
   initialDraft={Partial<NewBugDraft>}  // opcional
   onConfirm={(draft) => void}
   onCancel={() => void}
 />
 ```
-Reutilizado em `BugsTab` e `FeaturesTab` (via status Falhou no TestCaseCard).
+- Stacks padrão: `Front`, `BFF`, `Back`, `Mobile`, `Infra`.
+- Stacks customizadas criáveis inline via opção "➕ Nova stack…" no select (sentinela `__new__`).
+- Reutilizado em `BugsTab` e `FeaturesTab` (via status Falhou no TestCaseCard).
 
 ---
 
@@ -197,6 +200,47 @@ interface SprintIndexEntry {
   updatedAt: string
   favorite?: boolean
 }
+```
+
+---
+
+## SprintConfig — Campos relevantes
+
+```ts
+interface SprintConfig {
+  sprintDays: number
+  startDate: string
+  endDate: string
+  excludeWeekends: boolean   // true = exclui fins de semana (padrão)
+  // Health Score weights
+  hsCritical: number         // default 15
+  hsHigh: number             // default 10
+  hsMedium: number           // default 5
+  hsLow: number              // default 2
+  hsRetest: number           // default 2
+  hsBlocked: number          // default 10
+  hsDelayed: number          // default 2
+  // Impacto Prevenido weights
+  psCritical: number         // default 10
+  psHigh: number             // default 5
+  psMedium: number           // default 3
+  psLow: number              // default 1
+}
+```
+
+---
+
+## Helpers de Dias Úteis (`persistence.ts`)
+
+```ts
+// Conta dias úteis entre duas datas, respeitando excludeWeekends
+countSprintDays(startDate: string, endDate: string, excludeWeekends: boolean): number
+
+// Converte número de dia de sprint (1-based) em Date
+sprintDayToDate(startDate: string, n: number, excludeWeekends: boolean): Date
+
+// Converte uma data em chave 'D1'/'D2'/... ou null se fora do escopo
+dateToSprintDayKey(dateStr: string, startDate: string, sprintDays: number, excludeWeekends: boolean): string | null
 ```
 
 ---
