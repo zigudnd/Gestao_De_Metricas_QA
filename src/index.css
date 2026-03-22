@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f1ed;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-md: rgba(0, 0, 0, 0.14);
+  --color-text: #1a1a18;
+  --color-text-2: #6b6a65;
+  --color-text-3: #a09f99;
+
+  --color-blue: #185fa5;
+  --color-blue-light: #e6f1fb;
+  --color-blue-text: #0c447c;
+  --color-green: #3b6d11;
+  --color-green-light: #eaf3de;
+  --color-green-mid: #639922;
+  --color-amber: #854f0b;
+  --color-amber-light: #faeeda;
+  --color-amber-mid: #ba7517;
+  --color-yellow: #b45309;
+  --color-yellow-light: #fef3c7;
+  --color-green-text: #3b6d11;
+  --color-red: #a32d2d;
+  --color-red-light: #fcebeb;
+  --color-red-mid: #e24b4a;
+
+  --font-family-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-family-mono: "IBM Plex Mono", monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-md); border-radius: 99px; }
