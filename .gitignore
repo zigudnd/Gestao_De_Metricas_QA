@@ -27,3 +27,7 @@ build/
 
 # Vite build output (gerado por npm run build)
 public/assets/
+
+# Playwright
+test-results/
+playwright-report/

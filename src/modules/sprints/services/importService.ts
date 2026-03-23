@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx'
 import type { Feature, TestCase } from '../types/sprint.types'
 
 // ─── .feature parser ─────────────────────────────────────────────────────────
@@ -115,27 +114,6 @@ export function parseCSVText(text: string, suiteId: number): ImportResult {
   const colComplex = header.findIndex((h) => /complexidade|complexity/.test(h))
 
   return buildFromRows(rows.slice(1), 0, 1, colGherkin, colComplex, suiteId, 'Importado de CSV')
-}
-
-// ─── XLSX parser ──────────────────────────────────────────────────────────────
-
-export function parseXLSXBuffer(arrayBuffer: ArrayBuffer, suiteId: number): ImportResult {
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' })
-  const sheetName = workbook.SheetNames[0]
-  const rawRows: string[][] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' })
-
-  if (rawRows.length < 2) throw new Error('Planilha vazia ou sem dados.')
-  if (rawRows[0].length < 2) throw new Error('A planilha precisa ter pelo menos 2 colunas:\nColuna 1 → Funcionalidade\nColuna 2 → Cenário')
-
-  const headerRow = rawRows[0].map((h: unknown) => String(h).toLowerCase().trim())
-  function findCol(candidates: string[]) {
-    const idx = headerRow.findIndex((h: string) => candidates.some((c) => h.includes(c)))
-    return idx >= 0 ? idx : -1
-  }
-  const colGherkin = findCol(['gherkin', 'passos', 'steps', 'descri'])
-  const colComplex = findCol(['complexidade', 'complexity'])
-
-  return buildFromRows(rawRows.slice(1), 0, 1, colGherkin, colComplex, suiteId, 'Importado de Planilha')
 }
 
 // ─── Shared builder ───────────────────────────────────────────────────────────

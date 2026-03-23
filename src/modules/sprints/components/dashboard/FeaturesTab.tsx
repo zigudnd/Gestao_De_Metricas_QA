@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
-import { parseFeatureText, parseCSVText, parseXLSXBuffer } from '../../services/importService'
+import { parseFeatureText, parseCSVText } from '../../services/importService'
 import { exportCoverage } from '../../services/exportService'
 import { sprintDayToDate, dateToSprintDayKey } from '../../services/persistence'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -163,20 +163,8 @@ function SuiteAccordion({
         }
       }
       reader.readAsText(file, 'UTF-8')
-    } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        try {
-          const result = parseXLSXBuffer(ev.target!.result as ArrayBuffer, suiteId)
-          importFeatures(suiteId, result.features)
-          alert(`✅ Importação de planilha concluída!\n\n${result.totalScenarios} cenário(s) importado(s).`)
-        } catch (err: unknown) {
-          alert(String(err instanceof Error ? err.message : err))
-        }
-      }
-      reader.readAsArrayBuffer(file)
     } else {
-      alert('Formato não suportado. Use: .feature, .csv, .xlsx ou .xls')
+      alert('Formato não suportado. Use: .feature ou .csv')
     }
     if (importInputRef.current) importInputRef.current.value = ''
   }
@@ -286,14 +274,14 @@ function SuiteAccordion({
               + Adicionar Funcionalidade
             </button>
             <label
-              title="Importar .feature, .csv ou .xlsx"
+              title="Importar .feature ou .csv"
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', border: '1px solid var(--color-border-md)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap' }}
             >
               📥 Importar
               <input
                 ref={importInputRef}
                 type="file"
-                accept=".feature,.csv,.xlsx,.xls"
+                accept=".feature,.csv"
                 style={{ display: 'none' }}
                 onChange={handleImport}
               />
@@ -344,6 +332,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   function handleMockupUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { alert('Tipo de arquivo não permitido. Use PNG, JPG, WebP ou GIF.'); return }
     if (file.size > 5 * 1024 * 1024) { alert('Imagem muito grande. Máximo 5MB.'); return }
     const reader = new FileReader()
     reader.onload = (ev) => {
