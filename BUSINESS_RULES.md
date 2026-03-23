@@ -98,10 +98,12 @@
 - **Data de Abertura**
 
 ### 5.2 Status e Transições
-| Transição | Regra |
-|-----------|-------|
-| Qualquer → Resolvido | Exige **data de resolução** via modal |
-| Outras transições | Aplicadas diretamente |
+| Status | Regra |
+|--------|-------|
+| Aberto | Status inicial ao criar o bug |
+| Em Andamento | Aplicado diretamente |
+| Falhou | Aplicado diretamente **e incrementa automaticamente o contador de retestes** |
+| Resolvido | Exige **data de resolução** via modal |
 
 ### 5.3 ID do Bug
 - Gerado automaticamente: `BUG-<6 últimos dígitos do timestamp>`.
@@ -109,8 +111,9 @@
 - Edições são descartadas ao pressionar `Escape`.
 
 ### 5.4 Retestes
-- Contagem manual incrementável por botão `+`.
-- Retestes excessivos penalizam o QA Health Score.
+- Incrementado automaticamente ao setar status **Falhou** (evita trabalho manual do QA).
+- Também editável manualmente via campo numérico na tabela.
+- Retestes excessivos penalizam o QA Health Score e aumentam o Índice de Retrabalho.
 
 ### 5.5 MTTR (Mean Time to Repair)
 - Calculado apenas para bugs com status **Resolvido** e com `openedAt` e `resolvedAt` preenchidos.
@@ -125,6 +128,14 @@
 - Stacks padrão: `Front`, `BFF`, `Back`, `Mobile`, `Infra`.
 - O modal de cadastro de bug (`NewBugModal`) permite criar stacks customizadas inline via opção "➕ Nova stack…" no select.
 - Stacks customizadas ficam disponíveis apenas durante a sessão do modal e são re-derivadas a partir dos bugs existentes na sprint.
+
+### 5.8 Ordenação de Colunas
+- A tabela de bugs suporta ordenação clicável em todas as colunas: ID, Descrição, Funcionalidade, Stack, Severidade, Status e Retestes.
+- Indicadores visuais: ⇅ (sem seleção), ▲ (crescente), ▼ (decrescente).
+- Clicar na mesma coluna inverte a direção; clicar em coluna diferente inicia ordem crescente.
+- Sem ordenação ativa, o comportamento padrão é: **Falhou** primeiro, **Resolvido** por último.
+- Severidade é ordenada por criticidade: Crítica → Alta → Média → Baixa.
+- Status é ordenado por urgência: Falhou → Aberto → Em Andamento → Resolvido.
 
 ---
 
@@ -193,6 +204,19 @@ healthScore = max(0, 100 - penalidades)
 - Pesos configuráveis individualmente na aba Configurações, seção "Impacto Prevenido — Pesos por Severidade".
 - Campos de configuração: `psCritical`, `psHigh`, `psMedium`, `psLow`.
 - Exibido em verde no dashboard de resumo.
+
+### 9.3 Índice de Retrabalho
+- Mede a proporção de esforço de revalidação em relação ao esforço total de bugs.
+- **Fórmula:** `Σ retestes / (total_bugs + Σ retestes) × 100`
+- O denominador inclui retestes para evitar inflação artificial quando não há bugs.
+- Faixas de interpretação:
+  | Faixa | Classificação | Cor |
+  |-------|--------------|-----|
+  | 0–10% | Excelente | Verde |
+  | 10–20% | Normal | Amarelo |
+  | 20–35% | Atenção | Laranja |
+  | 35%+ | Crítico | Vermelho |
+- Substitui o indicador "Total Retestes" no dashboard de resumo.
 
 ---
 

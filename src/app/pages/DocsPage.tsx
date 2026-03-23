@@ -188,6 +188,13 @@ const SECTIONS: DocSection[] = [
           why="Diferencia uma sprint que encontrou 10 bugs críticos de uma que encontrou 10 bugs baixos — ambas têm o mesmo Defeitos Prevenidos, mas Impacto Prevenidos muito diferentes."
           how="Σ (peso_severidade × qtd_bugs_daquela_severidade). Pesos configuráveis na aba Configurações de cada sprint."
         />
+        <MetricCard
+          name="Índice de Retrabalho"
+          icon="🔁"
+          what="Percentual de ciclos de validação que foram retestes — mede o quanto do esforço do QA é consumido revalidando correções que já foram entregues."
+          why="Revela a qualidade das correções entregues pelo time de desenvolvimento. Um índice alto significa que o QA está preso em retrabalho e não consegue avançar em cenários novos."
+          how="Σ retests / (total_bugs + Σ retests) × 100. Interpretação: 0–10% Excelente | 10–20% Normal | 20–35% Atenção | 35%+ Crítico."
+        />
       </div>
     ),
   },
@@ -304,7 +311,7 @@ const SECTIONS: DocSection[] = [
             ['Responsável', 'Dev ou time que irá corrigir'],
             ['Data de Abertura', 'Usada para calcular o MTTR'],
             ['Data de Resolução', 'Registrada ao mudar status para Resolvido'],
-            ['Retestes', 'Contador de quantas vezes o bug precisou ser retestado'],
+            ['Retestes', 'Contador de retestes. Incrementado automaticamente ao marcar status como Falhou, ou manualmente pelo QA.'],
             ['Notas', 'Observações, passos para reproduzir, contexto adicional'],
           ].map(([field, desc]) => (
             <div key={field} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
@@ -316,8 +323,9 @@ const SECTIONS: DocSection[] = [
 
         <H3>Fluxo de Status</H3>
         <P>
-          <Chip label="Aberto" color="var(--color-red)" /> → <Chip label="Em Andamento" color="var(--color-yellow)" /> → <Chip label="Resolvido" color="var(--color-green)" />
+          <Chip label="Aberto" color="var(--color-red)" /> → <Chip label="Em Andamento" color="var(--color-yellow)" /> → <Chip label="Falhou" color="#f97316" /> → <Chip label="Resolvido" color="var(--color-green)" />
         </P>
+        <P>Ao mover para <strong>Falhou</strong>, o sistema incrementa automaticamente o contador de retestes — evitando registro manual e alimentando o Índice de Retrabalho.</P>
         <P>Ao mover para <strong>Resolvido</strong>, o sistema solicita a data de resolução, que é usada no cálculo do MTTR.</P>
       </div>
     ),

@@ -10,6 +10,12 @@ interface BugFilters {
   assignee: string
 }
 
+type SortField = 'id' | 'desc' | 'feature' | 'stack' | 'severity' | 'status' | 'retests' | null
+type SortDir = 'asc' | 'desc'
+
+const SEV_ORDER: Record<string, number> = { Crítica: 0, Alta: 1, Média: 2, Baixa: 3 }
+const STATUS_ORDER: Record<string, number> = { Falhou: 0, Aberto: 1, 'Em Andamento': 2, Resolvido: 3 }
+
 const SEV_COLOR: Record<string, string> = {
   Crítica: '#ef4444',
   Alta: '#f97316',
@@ -33,7 +39,14 @@ export function BugsTab() {
   const duplicateBug = useSprintStore((s) => s.duplicateBug)
 
   const [filters, setFilters] = useState<BugFilters>({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })
+  const [sortField, setSortField] = useState<SortField>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [editingBug, setEditingBug] = useState<number | null>(null)
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
   const [showNewModal, setShowNewModal] = useState(false)
   const [resolveModal, setResolveModal] = useState<{ index: number; date: string } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ index: number; desc: string } | null>(null)
@@ -52,7 +65,20 @@ export function BugsTab() {
 
   const sorted = [...state.bugs]
     .map((b, i) => ({ b, i }))
-    .sort((a, z) => (a.b.status === 'Resolvido' ? 1 : 0) - (z.b.status === 'Resolvido' ? 1 : 0))
+    .sort((a, z) => {
+      if (sortField) {
+        const dir = sortDir === 'asc' ? 1 : -1
+        if (sortField === 'id') return dir * a.b.id.localeCompare(z.b.id)
+        if (sortField === 'desc') return dir * (a.b.desc || '').localeCompare(z.b.desc || '')
+        if (sortField === 'feature') return dir * (a.b.feature || '').localeCompare(z.b.feature || '')
+        if (sortField === 'stack') return dir * (a.b.stack || '').localeCompare(z.b.stack || '')
+        if (sortField === 'severity') return dir * ((SEV_ORDER[a.b.severity] ?? 9) - (SEV_ORDER[z.b.severity] ?? 9))
+        if (sortField === 'status') return dir * ((STATUS_ORDER[a.b.status] ?? 9) - (STATUS_ORDER[z.b.status] ?? 9))
+        if (sortField === 'retests') return dir * ((a.b.retests ?? 0) - (z.b.retests ?? 0))
+      }
+      // default: Falhou primeiro, Resolvido por último
+      return (a.b.status === 'Resolvido' ? 1 : 0) - (z.b.status === 'Resolvido' ? 1 : 0) || (a.b.status === 'Falhou' ? -1 : 0) - (z.b.status === 'Falhou' ? -1 : 0)
+    })
     .filter(({ b }) => {
       if (filters.status !== 'Todos' && b.status !== filters.status) return false
       if (filters.stack !== 'Todos' && b.stack !== filters.stack) return false
@@ -82,7 +108,7 @@ export function BugsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Filter Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
-        <FilterGroup label="Status" field="status" value={filters.status} options={['Todos', 'Aberto', 'Em Andamento', 'Resolvido']} onChange={(v) => setFilters((f) => ({ ...f, status: v }))} />
+        <FilterGroup label="Status" field="status" value={filters.status} options={['Todos', 'Aberto', 'Em Andamento', 'Falhou', 'Resolvido']} onChange={(v) => setFilters((f) => ({ ...f, status: v }))} />
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
         <FilterGroup label="Stack" field="stack" value={filters.stack} options={['Todos', 'Front', 'BFF', 'Back', 'Mobile', 'Infra']} onChange={(v) => setFilters((f) => ({ ...f, stack: v }))} />
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
@@ -103,19 +129,20 @@ export function BugsTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-bg)' }}>
-              <Th>ID</Th>
-              <Th>Descrição / Funcionalidade</Th>
-              <Th>Stack</Th>
-              <Th>Severidade</Th>
-              <Th>Status</Th>
-              <Th>Retestes</Th>
+              <ThSort field="id" current={sortField} dir={sortDir} onSort={toggleSort}>ID</ThSort>
+              <ThSort field="desc" current={sortField} dir={sortDir} onSort={toggleSort}>Descrição</ThSort>
+              <ThSort field="feature" current={sortField} dir={sortDir} onSort={toggleSort}>Funcionalidade</ThSort>
+              <ThSort field="stack" current={sortField} dir={sortDir} onSort={toggleSort}>Stack</ThSort>
+              <ThSort field="severity" current={sortField} dir={sortDir} onSort={toggleSort}>Severidade</ThSort>
+              <ThSort field="status" current={sortField} dir={sortDir} onSort={toggleSort}>Status</ThSort>
+              <ThSort field="retests" current={sortField} dir={sortDir} onSort={toggleSort}>Retestes</ThSort>
               <Th>Ações</Th>
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--color-text-2)', fontSize: 14 }}>
+                <td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--color-text-2)', fontSize: 14 }}>
                   {state.bugs.length === 0 ? 'Nenhum bug registrado.' : 'Nenhum bug corresponde aos filtros.'}
                 </td>
               </tr>
@@ -124,21 +151,23 @@ export function BugsTab() {
                 const isResolved = b.status === 'Resolvido'
                 const sevColor = SEV_COLOR[b.severity] ?? '#64748b'
                 const stackColor = STACK_COLOR[b.stack] ?? '#64748b'
-                const statusColor = isResolved ? 'var(--color-green)' : b.status === 'Em Andamento' ? 'var(--color-yellow)' : 'var(--color-red)'
+                const statusColor = isResolved ? 'var(--color-green)' : b.status === 'Em Andamento' ? 'var(--color-yellow)' : b.status === 'Falhou' ? '#f97316' : 'var(--color-red)'
 
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: isResolved ? '#f0fdf4' : 'var(--color-surface)', opacity: isResolved ? 0.85 : 1 }}>
                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                       <BugIdInput id={b.id} onCommit={(val) => updateBug(i, 'id', val)} />
                     </td>
-                    <td style={{ padding: '10px 12px', maxWidth: 280 }}>
+                    <td style={{ padding: '10px 12px', maxWidth: 260 }}>
                       {editingBug === i ? (
                         <BugEditInline bug={b} index={i} onDone={() => setEditingBug(null)} />
                       ) : (
-                        <>
-                          <div style={{ fontWeight: 600, color: 'var(--color-text)', marginBottom: 2, lineHeight: 1.3 }}>{b.desc || 'Sem descrição'}</div>
-                          <div style={{ fontSize: 11, color: 'var(--color-text-2)' }}>{b.feature || 'Funcionalidade não informada'}</div>
-                        </>
+                        <div style={{ fontWeight: 600, color: 'var(--color-text)', lineHeight: 1.3 }}>{b.desc || 'Sem descrição'}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '10px 12px', maxWidth: 180 }}>
+                      {editingBug !== i && (
+                        <div style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{b.feature || '—'}</div>
                       )}
                     </td>
                     <td style={{ padding: '10px 12px', textAlign: 'center' }}>{badge(b.stack || '—', stackColor)}</td>
@@ -150,6 +179,9 @@ export function BugsTab() {
                           const newStatus = e.target.value as BugStatus
                           if (newStatus === 'Resolvido') {
                             setResolveModal({ index: i, date: state.currentDate })
+                          } else if (newStatus === 'Falhou') {
+                            updateBug(i, 'status', newStatus)
+                            updateBug(i, 'retests', (b.retests ?? 0) + 1)
                           } else {
                             updateBug(i, 'status', newStatus)
                           }
@@ -168,6 +200,7 @@ export function BugsTab() {
                       >
                         <option value="Aberto">Aberto</option>
                         <option value="Em Andamento">Em Andamento</option>
+                        <option value="Falhou">Falhou</option>
                         <option value="Resolvido">Resolvido</option>
                       </select>
                     </td>
@@ -352,6 +385,18 @@ function Th({ children }: { children: React.ReactNode }) {
   return (
     <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
       {children}
+    </th>
+  )
+}
+
+function ThSort({ children, field, current, dir, onSort }: { children: React.ReactNode; field: SortField; current: SortField; dir: SortDir; onSort: (f: SortField) => void }) {
+  const active = current === field
+  return (
+    <th
+      onClick={() => onSort(field)}
+      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: active ? 'var(--color-blue)' : 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+    >
+      {children}{active ? (dir === 'asc' ? ' ▲' : ' ▼') : ' ⇅'}
     </th>
   )
 }

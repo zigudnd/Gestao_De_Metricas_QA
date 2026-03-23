@@ -42,7 +42,7 @@ export interface Suite {
 
 // ─── Bug ──────────────────────────────────────────────────────────────────────
 
-export type BugStatus = 'Aberto' | 'Em Andamento' | 'Resolvido'
+export type BugStatus = 'Aberto' | 'Em Andamento' | 'Falhou' | 'Resolvido'
 export type BugSeverity = 'Crítica' | 'Alta' | 'Média' | 'Baixa'
 export type BugStack = 'Front' | 'BFF' | 'Back' | 'Mobile' | 'Infra' | string
 

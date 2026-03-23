@@ -53,6 +53,11 @@ export function useSprintMetrics() {
   if (atrasoCasos > 0) healthScore -= atrasoCasos * hsDelayed
   healthScore = Math.min(100, Math.max(0, Math.round(healthScore)))
 
+  const totalBugs = state.bugs.length
+  const retestIndex = totalBugs + totalRetests > 0
+    ? Math.round((totalRetests / (totalBugs + totalRetests)) * 100)
+    : 0
+
   let ritmoStatus: 'ok' | 'warning' | 'danger' = 'ok'
   if (atrasoCasos > 5) ritmoStatus = 'danger'
   else if (atrasoCasos > 0) ritmoStatus = 'warning'
@@ -70,6 +75,7 @@ export function useSprintMetrics() {
     atrasoCasos,
     healthScore,
     totalRetests,
+    retestIndex,
     blockedFeatureCount,
     ritmoStatus,
   }

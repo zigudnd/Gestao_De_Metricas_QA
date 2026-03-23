@@ -37,7 +37,7 @@ export function OverviewTab() {
   const {
     totalTests, totalExec, remaining, metaPerDay,
     totalBlockedHours, openBugs, atrasoCasos, healthScore,
-    totalRetests, blockedFeatureCount, ritmoStatus, sprintDays,
+    totalRetests, retestIndex, blockedFeatureCount, ritmoStatus, sprintDays,
     activeFeatures,
   } = useSprintMetrics()
 
@@ -167,6 +167,8 @@ export function OverviewTab() {
   const ritmoColor = ritmoStatus === 'ok' ? 'var(--color-green)' : ritmoStatus === 'warning' ? 'var(--color-yellow)' : 'var(--color-red)'
   const atrasoPercent = totalTests > 0 ? Math.round((atrasoCasos / totalTests) * 100) : 0
   const atrasoPercentColor = atrasoPercent === 0 ? 'var(--color-green)' : atrasoPercent < 20 ? 'var(--color-yellow)' : 'var(--color-red)'
+  const retestIndexColor = retestIndex <= 10 ? 'var(--color-green)' : retestIndex <= 20 ? 'var(--color-yellow)' : retestIndex <= 35 ? '#f97316' : 'var(--color-red)'
+  const retestIndexLabel = retestIndex <= 10 ? 'Excelente' : retestIndex <= 20 ? 'Normal' : retestIndex <= 35 ? 'Atenção' : 'Crítico'
   const todayReport = state.reports?.[state.currentDate] ?? ''
 
   return (
@@ -222,7 +224,7 @@ export function OverviewTab() {
         <KpiCard label="Telas Bloqueadas" value={blockedFeatureCount} />
         <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} />
         <KpiCard label="MTTR Global" value={mttrGlobal !== null ? `${mttrGlobal}d` : '—'} valueColor="#8b5cf6" borderColor="#8b5cf6" />
-        <KpiCard label="Total Retestes" value={totalRetests} />
+        <KpiCard label="Índice de Retrabalho" value={`${retestIndex}%`} sub={retestIndexLabel} valueColor={retestIndexColor} borderColor={retestIndexColor} />
       </div>
 
       {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}

@@ -141,7 +141,7 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Status">
               <select value={draft.status} onChange={(e) => set('status', e.target.value as BugStatus)} style={inputStyle}>
-                {(['Aberto', 'Em Andamento', 'Resolvido'] as BugStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
+                {(['Aberto', 'Em Andamento', 'Falhou', 'Resolvido'] as BugStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Responsável">
