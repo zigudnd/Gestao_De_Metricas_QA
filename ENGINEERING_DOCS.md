@@ -19,7 +19,7 @@
 | Chart Labels | chartjs-plugin-datalabels | 2.x |
 | Backend | Node.js + Express | 4.x |
 | Cloud DB | Supabase (opcional) | 2.x |
-| Export | html2canvas + xlsx | — |
+| Export | html2canvas | — |
 | CSS | CSS Variables + inline styles | — |
 
 ---
@@ -59,7 +59,7 @@ src/
 │       ├── services/
 │       │   ├── persistence.ts     # localStorage + API REST + computeFields
 │       │   ├── exportService.ts   # Exportação de imagem/PDF
-│       │   └── importService.ts   # Parser .feature / .csv / .xlsx
+│       │   └── importService.ts   # Parser .feature / .csv
 │       ├── store/
 │       │   └── sprintStore.ts     # Zustand store central
 │       └── types/
@@ -179,11 +179,20 @@ interface Bug {
   stack: 'Front' | 'BFF' | 'Back' | 'Mobile' | 'Infra' | string
   severity: 'Crítica' | 'Alta' | 'Média' | 'Baixa'
   assignee: string
-  status: 'Aberto' | 'Em Andamento' | 'Resolvido'
+  status: 'Aberto' | 'Em Andamento' | 'Falhou' | 'Resolvido'
   retests: number
   openedAt?: string
   resolvedAt?: string
   notes?: string
+}
+```
+
+### Notes
+```ts
+interface Notes {
+  premises: string          // Premissas do ciclo de testes
+  actionPlan: string        // Plano de ação / gestão de risco
+  operationalNotes: string  // Notas operacionais livres (massas, anotações, links)
 }
 ```
 
@@ -344,6 +353,31 @@ npm run dev:client   # Vite dev server
 npm run dev          # Node.js + Express
 npm run build        # tsc --noEmit && vite build
 npm run typecheck    # tsc --noEmit
+```
+
+---
+
+## useSprintMetrics
+
+Hook (`src/modules/sprints/components/dashboard/useSprintMetrics.ts`) que deriva todos os KPIs do estado Zustand. Principais exports:
+
+```ts
+// Execução
+totalTests, totalExec, remaining, execPercent
+// Capacidade
+testesComprometidos  // testes de features Bloqueadas
+testesExecutaveis    // totalTests - testesComprometidos
+capacidadeReal       // % de testes disponíveis para execução (0-100)
+// Bugs
+openBugs, resolvedBugs, inProgressBugs
+mttrGlobal           // tempo médio de resolução (horas) de bugs Resolvidos
+retestIndex          // % de bugs com retestes (Índice de Retrabalho)
+defeitsPrevenidos    // total de bugs registrados
+impactoPrevenido     // score ponderado: Σ(peso_severidade × qtd_bugs)
+// Sprint
+healthScore          // QA Health Score (0-100, penalidades configuráveis)
+horasBloqueadas      // soma de blockers[].hours
+metaPorDia           // remaining / diasRestantes
 ```
 
 ---

@@ -32,6 +32,7 @@ export const DEFAULT_CONFIG: SprintConfig = {
 export const DEFAULT_NOTES: Notes = {
   premises: '',
   actionPlan: '',
+  operationalNotes: '',
 }
 
 export const DEFAULT_STATE: SprintState = {
@@ -108,6 +109,7 @@ export function normalizeState(rawState: any): SprintState {
   if (s.config.psLow === undefined) s.config.psLow = 1
 
   if (!s.notes) s.notes = { ...DEFAULT_NOTES }
+  if (s.notes.operationalNotes === undefined) s.notes.operationalNotes = ''
   if (!s.reports || typeof s.reports !== 'object') s.reports = {}
   if (!Array.isArray(s.alignments)) s.alignments = []
   if (!Array.isArray(s.features)) s.features = JSON.parse(JSON.stringify(DEFAULT_STATE.features))

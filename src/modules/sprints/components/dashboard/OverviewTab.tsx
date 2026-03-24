@@ -38,7 +38,7 @@ export function OverviewTab() {
     totalTests, totalExec, remaining, metaPerDay,
     totalBlockedHours, openBugs, atrasoCasos, healthScore,
     totalRetests, retestIndex, blockedFeatureCount, ritmoStatus, sprintDays,
-    activeFeatures,
+    activeFeatures, testesComprometidos, testesExecutaveis, capacidadeReal,
   } = useSprintMetrics()
 
   const suites = state.suites ?? []
@@ -169,66 +169,119 @@ export function OverviewTab() {
   const atrasoPercentColor = atrasoPercent === 0 ? 'var(--color-green)' : atrasoPercent < 20 ? 'var(--color-yellow)' : 'var(--color-red)'
   const retestIndexColor = retestIndex <= 10 ? 'var(--color-green)' : retestIndex <= 20 ? 'var(--color-yellow)' : retestIndex <= 35 ? '#f97316' : 'var(--color-red)'
   const retestIndexLabel = retestIndex <= 10 ? 'Excelente' : retestIndex <= 20 ? 'Normal' : retestIndex <= 35 ? 'Atenção' : 'Crítico'
+  const capacidadeRealColor = capacidadeReal >= 90 ? 'var(--color-green)' : capacidadeReal >= 70 ? 'var(--color-yellow)' : 'var(--color-red)'
   const todayReport = state.reports?.[state.currentDate] ?? ''
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* ── Suite Filter ───────────────────────────────────────────────────── */}
-      {suites.length >= 2 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>
-            Filtrar Suites:
+      {/* ── Status Bar ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          {ritmoStatus !== 'ok' && (
+            <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: '#fef2f2', color: '#E24B4A', border: '0.5px solid #fecaca', letterSpacing: '0.5px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              EM ATRASO
+            </span>
+          )}
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {state.config.title || 'Sprint atual'}
           </span>
-          {suites.map((suite) => {
-            const active = filter.size === 0 || filter.has(String(suite.id))
-            const cnt = state.features.filter((f) => String(f.suiteId) === String(suite.id)).length
-            return (
-              <button
-                key={suite.id}
-                onClick={() => toggleSuiteFilter(String(suite.id))}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '5px 12px', borderRadius: 20,
-                  border: `2px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
-                  background: active ? 'var(--color-blue)' : 'var(--color-bg)',
-                  color: active ? '#fff' : 'var(--color-text-2)',
-                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                }}
-              >
-                {suite.name || 'Suite'} <span style={{ fontSize: 10, opacity: 0.8 }}>{cnt}f</span>
-              </button>
-            )
-          })}
-          {filter.size > 0 && (
-            <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 10, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer' }}>
-              ✕ Ver todas
-            </button>
+          {atrasoCasos > 0 && (
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {atrasoPercent}% de atraso · {atrasoCasos} casos
+            </span>
           )}
         </div>
-      )}
+        {suites.length >= 2 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {suites.map((suite) => {
+              const active = filter.size === 0 || filter.has(String(suite.id))
+              const cnt = state.features.filter((f) => String(f.suiteId) === String(suite.id)).length
+              return (
+                <button key={suite.id} onClick={() => toggleSuiteFilter(String(suite.id))} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, border: `0.5px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`, background: active ? 'var(--color-blue)' : 'transparent', color: active ? '#fff' : 'var(--color-text-2)', fontWeight: 600, fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
+                  {suite.name || 'Suite'} <span style={{ opacity: 0.75 }}>{cnt}f</span>
+                </button>
+              )
+            })}
+            {filter.size > 0 && (
+              <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '0.5px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
+                ✕ Todas
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#BA7517' : '#E24B4A'} />
+        <HeroCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" barColor={testesExecutaveis === totalTests ? '#639922' : testesExecutaveis > 0 ? '#BA7517' : '#E24B4A'} />
+        <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? '#E24B4A' : '#639922'} barColor={openBugs > 0 ? '#E24B4A' : '#639922'} highlight={openBugs > 0} />
+        <HeroCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" valueColor={capacidadeRealColor} barColor={capacidadeReal >= 90 ? '#639922' : capacidadeReal >= 70 ? '#BA7517' : '#E24B4A'} />
+      </div>
+
+      {/* ── Alert Strips ───────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ background: '#EAF3DE', border: '0.5px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#639922', flexShrink: 0, marginTop: 3 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#166534' }}>
+              {validBugs.length} defeito{validBugs.length !== 1 ? 's' : ''} prevenido{validBugs.length !== 1 ? 's' : ''}
+            </div>
+            <div style={{ fontSize: 12, color: '#166534', opacity: 0.75, marginTop: 2 }}>
+              Impacto prevenido: {preventionScore} pts
+            </div>
+          </div>
+        </div>
+        <div style={{ background: '#FCEBEB', border: '0.5px solid #fecaca', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, marginTop: 3 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b' }}>
+              {testesComprometidos > 0 ? `${testesComprometidos} testes bloqueados` : 'Sem testes bloqueados'}
+            </div>
+            <div style={{ fontSize: 12, color: '#991b1b', opacity: 0.75, marginTop: 2 }}>
+              {testesComprometidos > 0 ? `${blockedFeatureCount} funcionalidade${blockedFeatureCount !== 1 ? 's' : ''} impedindo a execução` : 'Todos os testes estão liberados para execução'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Faixas Qualitativas ────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#8b5cf6', flexShrink: 0, marginTop: 3 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+              MTTR Global — {mttrGlobal !== null ? `${mttrGlobal}d` : '—'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
+              tempo médio de resolução de bugs
+            </div>
+          </div>
+        </div>
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: retestIndexColor, flexShrink: 0, marginTop: 3 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+              Índice de Retrabalho — {retestIndex}%
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
+              {retestIndexLabel} · proporção de revalidações
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-        <KpiCard label="QA Health Score" value={`${healthScore}%`} valueColor={hsColor} borderColor={hsColor} />
-        <KpiCard label="Status da Sprint" value={ritmoLabel} valueColor={ritmoColor} borderColor={ritmoColor} />
-        <KpiCard label="Defeitos Prevenidos" value={validBugs.length} valueColor="var(--color-green)" borderColor="var(--color-green)" />
-        <KpiCard label="Impacto Prevenido" value={preventionScore} valueColor="var(--color-green)" borderColor="var(--color-green)" />
-        <KpiCard label="Total de Testes" value={totalTests} />
-        <KpiCard label="Executados" value={totalExec} />
-        <KpiCard label="Restantes" value={remaining} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <KpiCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" />
+        <KpiCard label="Executados" value={totalExec} sub="casos concluídos" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
-        <KpiCard label="Bugs Abertos" value={openBugs} valueColor={openBugs > 0 ? 'var(--color-red)' : undefined} borderColor={openBugs > 0 ? 'var(--color-red)' : undefined} />
-        <KpiCard label="Atraso %" value={`${atrasoPercent}%`} valueColor={atrasoPercentColor} />
-        <KpiCard label="Atraso em Casos" value={atrasoCasos} />
-        <KpiCard label="Telas Bloqueadas" value={blockedFeatureCount} />
-        <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} />
-        <KpiCard label="MTTR Global" value={mttrGlobal !== null ? `${mttrGlobal}d` : '—'} valueColor="#8b5cf6" borderColor="#8b5cf6" />
-        <KpiCard label="Índice de Retrabalho" value={`${retestIndex}%`} sub={retestIndexLabel} valueColor={retestIndexColor} borderColor={retestIndexColor} />
+        <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} sub="perdidas por impedimentos" />
       </div>
 
       {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
         <Card title="📋 Report do Dia">
           {todayReport
             ? <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{todayReport}</div>
@@ -474,9 +527,9 @@ export function OverviewTab() {
       </div>
 
 
-      {/* ── Impedimentos + Falhas ─────────────────────────────────────────── */}
+      {/* ── Bloqueios de Execução + Falhas ────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Section title="Impedimentos" icon="🛑" count={blockedFeatures.length}>
+        <Section title="Bloqueios de Execução" icon="⛔" count={blockedFeatures.length}>
           {blockedFeatures.length === 0 ? <EmptyOk label="Nenhum impedimento no momento." /> : (
             blockedFeatures.map((f) => (
               <div key={f.id} style={alertCard('#fef2f2', '#fecaca', '#ef4444')}>
@@ -563,6 +616,26 @@ export function OverviewTab() {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
+  label: string; value: string | number; sub?: string; valueColor?: string; barColor?: string; highlight?: boolean
+}) {
+  return (
+    <div style={{
+      background: highlight ? '#fef2f2' : 'var(--color-surface)',
+      border: `${highlight ? '1.5px' : '0.5px'} solid ${highlight ? '#fecaca' : 'var(--color-border)'}`,
+      borderRadius: 10,
+      padding: '16px 18px 18px',
+      display: 'flex', flexDirection: 'column', gap: 6,
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: highlight ? 40 : 32, fontWeight: 700, color: valueColor ?? 'var(--color-text)', lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginBottom: 4 }}>{sub}</div>}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: barColor ?? '#6b7280' }} />
+    </div>
+  )
+}
 
 function KpiCard({ label, value, sub, valueColor, borderColor }: {
   label: string; value: string | number; sub?: string; valueColor?: string; borderColor?: string

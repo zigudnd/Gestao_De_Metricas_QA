@@ -116,6 +116,7 @@ export interface SprintConfig {
 export interface Notes {
   premises: string
   actionPlan: string
+  operationalNotes: string
 }
 
 // ─── SprintState ──────────────────────────────────────────────────────────────

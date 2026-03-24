@@ -152,7 +152,33 @@
 
 ---
 
-## 7. Alinhamentos Técnicos
+## 7. Notas
+
+### 7.1 Notas Operacionais
+- Campo de texto livre disponível na aba **Notas**, acima das demais seções.
+- Ocupa a largura total da tela — ideal para digitação contínua.
+- Uso recomendado: massas de dados, cenários manuais, anotações diárias, links úteis, comandos de teste.
+- Fonte monoespaçada para facilitar leitura de dados estruturados.
+- Altura mínima de 10 linhas; expansível verticalmente pelo usuário (`resize: vertical`).
+- Persistido em `state.notes.operationalNotes`.
+
+### 7.2 Premissas do Ciclo de Testes
+- Texto livre para registrar premissas acordadas para o ciclo de testes.
+- Exibido em leitura na aba Overview (seção Premissas e Plano de Ação).
+- Persistido em `state.notes.premises`.
+
+### 7.3 Plano de Ação
+- Texto livre para descrever riscos, gatilhos e ações corretivas.
+- Exibido em leitura na aba Overview ao lado das Premissas.
+- Persistido em `state.notes.actionPlan`.
+
+### 7.4 Layout da Aba Notas
+- Notas Operacionais: largura total, acima.
+- Premissas e Plano de Ação: grid de 2 colunas iguais, abaixo.
+
+---
+
+## 8. Alinhamentos Técnicos
 
 ### 7.1 Criação
 - Manual: botão "+ Adicionar Alinhamento" na aba Alinhamentos
@@ -218,6 +244,30 @@ healthScore = max(0, 100 - penalidades)
   | 35%+ | Crítico | Vermelho |
 - Substitui o indicador "Total Retestes" no dashboard de resumo.
 
+### 9.4 Capacidade Real
+Trio de KPIs que expõe o impacto real dos bloqueios sobre o escopo executável.
+
+#### Testes Comprometidos
+- Soma de `feature.tests` de todas as features com `status === 'Bloqueada'` (exceto canceladas).
+- Exibido em vermelho quando > 0, neutro quando = 0.
+- Subtítulo: "parados por bloqueio".
+
+#### Testes Executáveis
+- **Fórmula:** `totalTests - testesComprometidos`
+- Representa o universo de testes que podem ser executados agora.
+- Subtítulo: "possíveis agora".
+
+#### Capacidade Real
+- **Fórmula:** `Math.round((testesExecutaveis / totalTests) × 100)`. Se `totalTests === 0`, exibe 100%.
+- Interpretação por cor:
+  | Faixa | Cor |
+  |-------|-----|
+  | ≥ 90% | Verde |
+  | 70–89% | Amarelo |
+  | < 70% | Vermelho |
+- Subtítulo: "do escopo acessível".
+- Exibidos na seção superior da aba Overview junto aos Hero Cards.
+
 ---
 
 ## 10. Configuração de Dias da Sprint
@@ -274,11 +324,40 @@ updateField → _commit → computeFields → saveToStorage → upsertMasterInde
 |---------|-------|
 | `.feature` | Parser de Gherkin — extrai Features e Scenarios/Scenario Outline |
 | `.csv` | Formato: `feature;scenario;complexity;status` |
-| `.xlsx` / `.xls` | Mesma estrutura do CSV, via SheetJS |
+| ~~`.xlsx` / `.xls`~~ | Removido (vulnerabilidade de segurança na dependência xlsx) |
 
 ### 11.2 Comportamento
 - Funcionalidades importadas são **adicionadas** às existentes na suite (não substituem).
 - Casos de teste importados herdam `status: 'Pendente'` e `executionDay: ''`.
+
+---
+
+## 14. Layout da Aba Overview
+
+### 14.1 Seção Superior — Hierarquia Visual
+A aba Overview exibe os indicadores em camadas de prioridade decrescente:
+
+| Camada | Componente | Conteúdo |
+|--------|-----------|----------|
+| 1 | **Status Bar** | Badge "EM ATRASO" (quando aplicável) · nome da sprint · atraso % e casos · pills de suites |
+| 2 | **Faixas Qualitativas** | MTTR Global · Índice de Retrabalho (com dot colorido e classificação) |
+| 3 | **Hero Cards** (4 colunas) | QA Health Score · Testes Executáveis · 🐞 Bugs Abertos · Capacidade Real |
+| 4 | **Alert Strips** (2 colunas) | Defeitos Prevenidos (verde) · Testes Bloqueados (vermelho) |
+| 5 | **KPI Cards** (4 colunas) | Total de Testes · Executados · Meta por Dia · Horas Bloqueadas |
+
+### 14.2 Hero Cards
+- Fonte de valor: 32px (padrão) ou 40px (Bugs Abertos quando > 0).
+- Barra de cor (3px) na base indica status: verde (#639922), amarelo (#BA7517), vermelho (#E24B4A).
+- Bugs Abertos com fundo vermelho suave e borda 1.5px quando há bugs abertos.
+
+### 14.3 Alert Strips
+- **Defeitos Prevenidos** (esquerda, #EAF3DE): total de bugs registrados + impacto prevenido em pts.
+- **Testes Bloqueados** (direita, #FCEBEB): testes comprometidos por funcionalidades bloqueadas.
+
+### 14.4 Faixas Qualitativas
+- Dot colorido + valor + descrição interpretativa.
+- MTTR: dot roxo (#8b5cf6).
+- Índice de Retrabalho: dot na cor da faixa (verde/amarelo/laranja/vermelho).
 
 ---
 

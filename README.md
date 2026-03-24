@@ -107,15 +107,18 @@ server.js                 # API Express (sincronização remota opcional)
 
 O QA Dashboard centraliza em um único ambiente tudo que um Líder ou Analista de Qualidade precisa para gerenciar os testes e reportar o andamento da Sprint.
 
-- **Visão Executiva (C-Level & Gerencial):** Painel principal de alto nível com 15 KPIs em tempo real, Burndown Chart, gráficos de bugs por stack e MTTR por criticidade.
+- **Visão Executiva (C-Level & Gerencial):** Painel principal de alto nível com KPIs em tempo real (QA Health Score, Testes Executáveis, Capacidade Real, Bugs Abertos, Defeitos Prevenidos, MTTR, Índice de Retrabalho e mais), Burndown Chart e gráficos de bugs por stack.
 - **KPIs de Valor Gerado pelo QA:** *Defeitos Prevenidos* (total de bugs encontrados) e *Impacto Prevenido* (score ponderado pela criticidade — Σ peso × bugs por severidade). Evidenciam o valor do trabalho de QA além da simples contagem.
-- **QA Health Score Personalizável:** Ajuste o peso das penalidades (Bugs Críticos, Retestes, Telas Bloqueadas, Atraso, etc.) diretamente na aba Configurações.
+- **Capacidade Real:** Percentual de testes disponíveis para execução, descontando features bloqueadas. Indicador de saúde operacional do ciclo.
+- **QA Health Score Personalizável:** Ajuste o peso das penalidades (Bugs Críticos, Retestes, Bloqueios, Atraso, etc.) diretamente na aba Configurações.
 - **Impacto Prevenido Configurável:** Pesos independentes por severidade (Crítica/Alta/Média/Baixa) para o cálculo do score ponderado de defeitos prevenidos.
 - **Gestão de Casos de Teste Estruturada:** Cadastro de Suites, Funcionalidades e Casos de Teste em formato Gherkin, com Checklists (Concluído / Falhou / Bloqueado) e controle de data de execução por dia de sprint.
 - **Fins de Semana Configuráveis:** Opção para incluir ou excluir fins de semana no cálculo de dias úteis da sprint. Por padrão, fins de semana são excluídos.
-- **Gestão de Bugs com Stacks Customizáveis:** Registro de bugs com severidade, stack (Front, BFF, Back, Mobile, Infra ou stacks personalizadas criadas inline), responsável e rastreamento de MTTR.
-- **Gestão de Impedimentos:** Registro de blockers com data, motivo e horas bloqueadas. Alimenta os KPIs e gráficos de gargalos.
-- **Premissas e Plano de Ação (Gestão de Risco):** Card unificado na aba "Visão Executiva" com Premissas do Ciclo de Testes e Plano de Ação lado a lado.
+- **Gestão de Bugs com Stacks Customizáveis:** Registro de bugs com severidade, stack (Front, BFF, Back, Mobile, Infra ou stacks personalizadas criadas inline), responsável e rastreamento de MTTR. Status *Falhou* auto-incrementa o contador de retestes. Colunas ordenáveis por severidade, status e data.
+- **Índice de Retrabalho:** Percentual de bugs que passaram por reteste — faixa qualitativa exibida na aba Overview.
+- **⛔ Bloqueios de Execução:** Registro de blockers com data, motivo e horas bloqueadas. Alimenta os KPIs e gráficos de gargalos.
+- **Notas Operacionais:** Campo livre (aba Notas) para massas de dados, cenários manuais, observações do dia e links úteis — fonte monoespaçada, redimensionável.
+- **Premissas e Plano de Ação (Gestão de Risco):** Na aba Notas, Premissas do Ciclo de Testes e Plano de Ação lado a lado.
 - **Armazenamento 100% Local (Secure-by-Design):** Dados salvos exclusivamente no localStorage do navegador. Nenhum dado sensível vaza para a nuvem.
 - **Exportação One-Click:** Snapshot renderizado dos indicadores do dia via "📸 Exportar Imagem".
 

@@ -13,6 +13,15 @@ export function useSprintMetrics() {
   const remaining = Math.max(0, totalTests - totalExec)
   const metaPerDay = totalTests > 0 ? Math.ceil(totalTests / sprintDays) : 0
 
+  // ── Capacidade Real ───────────────────────────────────────────────────────
+  const testesComprometidos = activeFeatures
+    .filter((f) => f.status === 'Bloqueada')
+    .reduce((a, f) => a + (f.tests || 0), 0)
+  const testesExecutaveis = totalTests - testesComprometidos
+  const capacidadeReal = totalTests === 0
+    ? 100
+    : Math.round((testesExecutaveis / totalTests) * 100)
+
   const totalBlockedHours = state.blockers.reduce((a, b) => a + (b.hours || 0), 0)
   const openBugs = state.bugs.filter((b) => b.status !== 'Resolvido').length
 
@@ -78,5 +87,8 @@ export function useSprintMetrics() {
     retestIndex,
     blockedFeatureCount,
     ritmoStatus,
+    testesComprometidos,
+    testesExecutaveis,
+    capacidadeReal,
   }
 }

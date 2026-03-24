@@ -6,7 +6,38 @@ export function NotesTab() {
   const updateNotes = useSprintStore((s) => s.updateNotes)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderLeft: '4px solid var(--color-blue)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>🗒️ Notas Operacionais</span>
+          <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>massas de teste · anotações diárias · observações pessoais</span>
+        </div>
+        <div style={{ padding: '12px 16px' }}>
+          <textarea
+            value={state.notes.operationalNotes}
+            onChange={(e) => updateNotes('operationalNotes', e.target.value)}
+            placeholder="Use este espaço livremente: massas de dados, cenários manuais, observações do dia, links úteis, comandos de teste…"
+            rows={10}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid var(--color-border-md)',
+              borderRadius: 8,
+              fontSize: 13,
+              lineHeight: 1.7,
+              color: 'var(--color-text)',
+              background: 'var(--color-bg)',
+              fontFamily: 'var(--font-family-mono)',
+              resize: 'vertical',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-blue)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border-md)')}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
       <NoteArea
         label="Premissas do Ciclo de Testes"
         field="premises"
@@ -27,6 +58,7 @@ export function NotesTab() {
         borderColor="#fecaca"
         textColor="#991b1b"
       />
+      </div>
     </div>
   )
 }
