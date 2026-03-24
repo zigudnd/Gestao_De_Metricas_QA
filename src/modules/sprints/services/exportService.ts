@@ -2,8 +2,8 @@ import type { SprintState } from '../types/sprint.types'
 import { normalizeState, saveToStorage, upsertSprintInMasterIndex } from './persistence'
 
 export async function exportToImage(): Promise<void> {
-  const el = document.getElementById('sprint-dashboard')
-  if (!el) { alert('Elemento do dashboard não encontrado.'); return }
+  const el = document.getElementById('overview-tab-content')
+  if (!el) { alert('Dashboard executivo não encontrado.'); return }
 
   try {
     const html2canvas = (await import('html2canvas')).default

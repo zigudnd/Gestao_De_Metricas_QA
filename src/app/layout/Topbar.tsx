@@ -70,7 +70,7 @@ export function Topbar() {
               onClick={() => { exportToImage() }}
               style={btnOutline}
             >
-              📸 Exportar PNG
+              📸 Exportar Dashboard
             </button>
             <button
               onClick={() => sprintState && exportJSON(sprintState)}
