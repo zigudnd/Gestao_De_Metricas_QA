@@ -35,7 +35,7 @@ export function OverviewTab() {
   const toggleSuiteFilter = useSprintStore((s) => s.toggleSuiteFilter)
   const clearSuiteFilter = useSprintStore((s) => s.clearSuiteFilter)
   const {
-    totalTests, totalExec, remaining, metaPerDay,
+    totalTests, totalExec, execPercent, remaining, metaPerDay,
     totalBlockedHours, openBugs, atrasoCasos, healthScore,
     totalRetests, retestIndex, blockedFeatureCount, ritmoStatus, sprintDays,
     activeFeatures, testesComprometidos, testesExecutaveis, capacidadeReal,
@@ -215,9 +215,9 @@ export function OverviewTab() {
       {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#BA7517' : '#E24B4A'} />
-        <HeroCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" barColor={testesExecutaveis === totalTests ? '#639922' : testesExecutaveis > 0 ? '#BA7517' : '#E24B4A'} />
+        <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${totalTests} casos`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#BA7517' : '#6b7280'} />
         <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? '#E24B4A' : '#639922'} barColor={openBugs > 0 ? '#E24B4A' : '#639922'} highlight={openBugs > 0} />
-        <HeroCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" valueColor={capacidadeRealColor} barColor={capacidadeReal >= 90 ? '#639922' : capacidadeReal >= 70 ? '#BA7517' : '#E24B4A'} />
       </div>
 
       {/* ── Alert Strips ───────────────────────────────────────────────────── */}
@@ -274,8 +274,8 @@ export function OverviewTab() {
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <KpiCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" />
-        <KpiCard label="Executados" value={totalExec} sub="casos concluídos" />
+        <KpiCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" />
+        <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
         <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} sub="perdidas por impedimentos" />
       </div>

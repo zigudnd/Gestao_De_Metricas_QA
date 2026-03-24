@@ -11,6 +11,7 @@ export function useSprintMetrics() {
   const totalTests = activeFeatures.reduce((a, f) => a + (f.tests || 0), 0)
   const totalExec = activeFeatures.reduce((a, f) => a + (f.exec || 0), 0)
   const remaining = Math.max(0, totalTests - totalExec)
+  const execPercent = totalTests === 0 ? 0 : Math.round((totalExec / totalTests) * 100)
   const metaPerDay = totalTests > 0 ? Math.ceil(totalTests / sprintDays) : 0
 
   // ── Capacidade Real ───────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ export function useSprintMetrics() {
     activeFeatures,
     totalTests,
     totalExec,
+    execPercent,
     remaining,
     metaPerDay,
     totalBlockedHours,
