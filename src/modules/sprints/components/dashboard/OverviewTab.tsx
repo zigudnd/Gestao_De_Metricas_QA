@@ -35,7 +35,7 @@ export function OverviewTab() {
   const toggleSuiteFilter = useSprintStore((s) => s.toggleSuiteFilter)
   const clearSuiteFilter = useSprintStore((s) => s.clearSuiteFilter)
   const {
-    totalTests, totalExec, execPercent, remaining, metaPerDay,
+    totalTests, totalExec, execPercent, remaining, metaPerDay, exactMeta,
     totalBlockedHours, openBugs, atrasoCasos, healthScore,
     totalRetests, retestIndex, blockedFeatureCount, ritmoStatus, sprintDays,
     activeFeatures, testesComprometidos, testesExecutaveis, capacidadeReal,
@@ -67,11 +67,10 @@ export function OverviewTab() {
     return `D${i + 1}`
   })
 
-  const exactMeta = totalTests > 0 ? totalTests / sprintDays : 0
-  const idealLine = Array.from({ length: sprintDays + 1 }, (_, i) => Math.max(0, totalTests - exactMeta * i))
+  const idealLine = Array.from({ length: sprintDays + 1 }, (_, i) => Math.max(0, testesExecutaveis - exactMeta * i))
 
-  const realLine: (number | null)[] = [totalTests]
-  let cumBurn = totalTests
+  const realLine: (number | null)[] = [testesExecutaveis]
+  let cumBurn = testesExecutaveis
   for (let i = 1; i <= sprintDays; i++) {
     if (i <= maxDay) { cumBurn -= globalExec[`D${i}`] || 0; realLine.push(cumBurn) }
     else realLine.push(null)
@@ -165,7 +164,7 @@ export function OverviewTab() {
   const hsColor = healthScore >= 90 ? 'var(--color-green)' : healthScore >= 70 ? 'var(--color-yellow)' : 'var(--color-red)'
   const ritmoLabel = ritmoStatus === 'ok' ? 'No Ritmo' : ritmoStatus === 'warning' ? 'Atenção' : 'Em Atraso'
   const ritmoColor = ritmoStatus === 'ok' ? 'var(--color-green)' : ritmoStatus === 'warning' ? 'var(--color-yellow)' : 'var(--color-red)'
-  const atrasoPercent = totalTests > 0 ? Math.round((atrasoCasos / totalTests) * 100) : 0
+  const atrasoPercent = testesExecutaveis > 0 ? Math.round((atrasoCasos / testesExecutaveis) * 100) : 0
   const atrasoPercentColor = atrasoPercent === 0 ? 'var(--color-green)' : atrasoPercent < 20 ? 'var(--color-yellow)' : 'var(--color-red)'
   const retestIndexColor = retestIndex <= 10 ? 'var(--color-green)' : retestIndex <= 20 ? 'var(--color-yellow)' : retestIndex <= 35 ? '#f97316' : 'var(--color-red)'
   const retestIndexLabel = retestIndex <= 10 ? 'Excelente' : retestIndex <= 20 ? 'Normal' : retestIndex <= 35 ? 'Atenção' : 'Crítico'
@@ -216,7 +215,7 @@ export function OverviewTab() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#BA7517' : '#E24B4A'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
-        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${totalTests} casos`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#BA7517' : '#6b7280'} />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#BA7517' : '#6b7280'} />
         <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? '#E24B4A' : '#639922'} barColor={openBugs > 0 ? '#E24B4A' : '#639922'} highlight={openBugs > 0} />
       </div>
 

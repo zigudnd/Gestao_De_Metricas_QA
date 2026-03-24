@@ -1,4 +1,5 @@
 import { useSprintStore, getFilteredFeatures } from '../../store/sprintStore'
+import { countSprintDays } from '../../services/persistence'
 
 export function useSprintMetrics() {
   const state = useSprintStore((s) => s.state)
@@ -11,34 +12,46 @@ export function useSprintMetrics() {
   const totalTests = activeFeatures.reduce((a, f) => a + (f.tests || 0), 0)
   const totalExec = activeFeatures.reduce((a, f) => a + (f.exec || 0), 0)
   const remaining = Math.max(0, totalTests - totalExec)
-  const execPercent = totalTests === 0 ? 0 : Math.round((totalExec / totalTests) * 100)
-  const metaPerDay = totalTests > 0 ? Math.ceil(totalTests / sprintDays) : 0
 
   // ── Capacidade Real ───────────────────────────────────────────────────────
-  const testesComprometidos = activeFeatures
-    .filter((f) => f.status === 'Bloqueada')
-    .reduce((a, f) => a + (f.tests || 0), 0)
-  const testesExecutaveis = totalTests - testesComprometidos
+  // Comprometidos = todos os testes de features Bloqueadas
+  //               + casos individuais com status 'Bloqueado' em features ativas
+  const testesComprometidos = activeFeatures.reduce((a, f) => {
+    if (f.status === 'Bloqueada') return a + (f.tests || 0)
+    return a + (f.cases ?? []).filter((c) => c.status === 'Bloqueado').length
+  }, 0)
+  const testesExecutaveis = Math.max(0, totalTests - testesComprometidos)
   const capacidadeReal = totalTests === 0
-    ? 100
+    ? 0
     : Math.round((testesExecutaveis / totalTests) * 100)
+
+  // Features com ao menos um impedimento (feature Bloqueada ou caso Bloqueado)
+  const blockedFeatureCount = activeFeatures.filter(
+    (f) => f.status === 'Bloqueada' || (f.cases ?? []).some((c) => c.status === 'Bloqueado'),
+  ).length
+
+  // execPercent: base em testesExecutaveis (bloqueados não entram na meta)
+  const execPercent = testesExecutaveis === 0 ? 0 : Math.min(100, Math.round((totalExec / testesExecutaveis) * 100))
+  const metaPerDay = testesExecutaveis > 0 ? Math.ceil(testesExecutaveis / sprintDays) : 0
 
   const totalBlockedHours = state.blockers.reduce((a, b) => a + (b.hours || 0), 0)
   const openBugs = state.bugs.filter((b) => b.status !== 'Resolvido').length
 
-  // Delay calc: latest day with any execution
-  let maxDay = 1
-  activeFeatures.forEach((f) => {
-    Object.keys(f.execution ?? {}).forEach((k) => {
-      const v = f.execution[k]
-      if (v > 0) {
-        const n = parseInt(k.replace('D', ''))
-        if (n > maxDay) maxDay = n
-      }
-    })
-  })
-  const exactMeta = totalTests > 0 ? totalTests / sprintDays : 0
-  const idealToday = exactMeta * maxDay
+  // Delay calc: dias decorridos até hoje (currentDate), capped no fim da sprint
+  const excludeWeekends = state.config.excludeWeekends ?? true
+  let currentDay = 0
+  if (state.config.startDate) {
+    const refDate = state.config.endDate && state.currentDate > state.config.endDate
+      ? state.config.endDate
+      : state.currentDate
+    currentDay = Math.min(
+      countSprintDays(state.config.startDate, refDate, excludeWeekends),
+      sprintDays,
+    )
+  }
+  // Meta baseada em testesExecutaveis — bloqueados não entram na meta diária
+  const exactMeta = testesExecutaveis > 0 ? testesExecutaveis / sprintDays : 0
+  const idealToday = exactMeta * currentDay
   const atrasoCasos = Math.max(0, Math.round(idealToday - totalExec))
 
   // Health Score
@@ -58,8 +71,9 @@ export function useSprintMetrics() {
     }
   })
 
-  const blockedFeatureCount = activeFeatures.filter((f) => f.status === 'Bloqueada').length
-  healthScore -= blockedFeatureCount * hsBlocked
+  // Health Score penaliza apenas features inteiramente bloqueadas (não casos individuais)
+  const blockedFeaturesOnly = activeFeatures.filter((f) => f.status === 'Bloqueada').length
+  healthScore -= blockedFeaturesOnly * hsBlocked
   if (atrasoCasos > 0) healthScore -= atrasoCasos * hsDelayed
   healthScore = Math.min(100, Math.max(0, Math.round(healthScore)))
 
@@ -81,6 +95,7 @@ export function useSprintMetrics() {
     execPercent,
     remaining,
     metaPerDay,
+    exactMeta,
     totalBlockedHours,
     openBugs,
     atrasoCasos,
