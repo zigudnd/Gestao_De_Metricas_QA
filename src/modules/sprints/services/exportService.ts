@@ -97,6 +97,30 @@ export function exportCoverage(state: SprintState): void {
   URL.revokeObjectURL(url)
 }
 
+export function exportSuiteAsCSV(suiteName: string, features: SprintState['features']): void {
+  const rows: string[][] = [['Funcionalidade', 'Cenário', 'Complexidade', 'Gherkin']]
+
+  for (const feat of features) {
+    for (const c of feat.cases ?? []) {
+      rows.push([feat.name, c.name, c.complexity ?? 'Baixa', c.gherkin ?? ''])
+    }
+  }
+
+  if (rows.length === 1) {
+    alert('Nenhum caso de teste encontrado nesta suite.')
+    return
+  }
+
+  const csv = rows.map((r) => r.map((v) => `"${(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `suite-${suiteName.replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function exportJSON(state: SprintState): void {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)

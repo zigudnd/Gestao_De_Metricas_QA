@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
 import { parseFeatureText, parseCSVText } from '../../services/importService'
-import { exportCoverage } from '../../services/exportService'
+import { exportCoverage, exportSuiteAsCSV } from '../../services/exportService'
 import { sprintDayToDate, dateToSprintDayKey } from '../../services/persistence'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { NewBugModal } from '@/app/components/NewBugModal'
@@ -38,6 +38,7 @@ export function FeaturesTab() {
   const addSuite = useSprintStore((s) => s.addSuite)
   const updateSuite = useSprintStore((s) => s.updateSuite)
   const removeSuite = useSprintStore((s) => s.removeSuite)
+  const duplicateSuite = useSprintStore((s) => s.duplicateSuite)
   const addFeature = useSprintStore((s) => s.addFeature)
 
   const suites = state.suites ?? []
@@ -96,6 +97,7 @@ export function FeaturesTab() {
           suiteIndex={sIndex}
           onRename={(name) => updateSuite(sIndex, 'name', name)}
           onRemove={() => removeSuite(sIndex)}
+          onDuplicate={() => duplicateSuite(sIndex)}
           onAddFeature={() => addFeature(suite.id)}
         />
       ))}
@@ -106,13 +108,14 @@ export function FeaturesTab() {
 // ─── SuiteAccordion ───────────────────────────────────────────────────────────
 
 function SuiteAccordion({
-  suiteId, suiteName, suiteIndex, onRename, onRemove, onAddFeature,
+  suiteId, suiteName, suiteIndex, onRename, onRemove, onDuplicate, onAddFeature,
 }: {
   suiteId: number
   suiteName: string
   suiteIndex: number
   onRename: (name: string) => void
   onRemove: () => void
+  onDuplicate: () => void
   onAddFeature: () => void
 }) {
   const [open, setOpen] = useState(true)
@@ -216,6 +219,14 @@ function SuiteAccordion({
 
         <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
           <button
+            onClick={() => {
+              const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId))
+              exportSuiteAsCSV(suiteName, sFeatures)
+            }}
+            style={iconBtn}
+            title="Exportar casos desta suite para reimportação (CSV)"
+          >📄</button>
+          <button
             onClick={() => exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })}
             style={iconBtn}
             title="Exportar cobertura desta suite (CSV)"
@@ -225,6 +236,11 @@ function SuiteAccordion({
             style={iconBtn}
             title="Renomear suite"
           >✏️</button>
+          <button
+            onClick={onDuplicate}
+            style={iconBtn}
+            title="Duplicar suite (com todas as funcionalidades)"
+          >⧉</button>
           <button onClick={() => setConfirmRemove(true)} style={{ ...iconBtn, color: 'var(--color-red)' }} title="Excluir suite">
             🗑
           </button>
