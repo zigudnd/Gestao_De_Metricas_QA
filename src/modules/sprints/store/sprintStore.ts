@@ -64,6 +64,7 @@ interface SprintStore {
   addSuite: () => void
   updateSuite: (index: number, field: keyof Suite, value: string) => void
   removeSuite: (index: number) => void
+  duplicateSuite: (index: number) => void
 
   // Features
   addFeature: (suiteId: number) => void
@@ -179,6 +180,27 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const suites = state.suites.filter((_, i) => i !== index)
     const features = state.features.filter((f) => String(f.suiteId) !== String(suite.id))
     _commit({ ...state, suites, features })
+  },
+
+  duplicateSuite: (index) => {
+    const { state, _commit } = get()
+    const suite = state.suites[index]
+    if (!suite) return
+    const newSuiteId = Date.now()
+    const newSuite = { id: newSuiteId, name: `${suite.name} (cópia)` }
+    const suites = [
+      ...state.suites.slice(0, index + 1),
+      newSuite,
+      ...state.suites.slice(index + 1),
+    ]
+    const suiteFeatures = state.features.filter((f) => String(f.suiteId) === String(suite.id))
+    const now = Date.now()
+    const copiedFeatures = suiteFeatures.map((f, i) => ({
+      ...JSON.parse(JSON.stringify(f)),
+      id: now + i + 1,
+      suiteId: newSuiteId,
+    }))
+    _commit({ ...state, suites, features: [...state.features, ...copiedFeatures] })
   },
 
   // ── Features ───────────────────────────────────────────────────────────────

@@ -146,4 +146,5 @@ export interface SprintIndexEntry {
   totalExec: number
   updatedAt: string
   favorite?: boolean
+  status?: 'ativa' | 'concluida'
 }

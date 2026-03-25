@@ -356,3 +356,19 @@ export async function persistToServer(sprintId: string, state: SprintState): Pro
     body: JSON.stringify({ payload: state }),
   })
 }
+
+export function concludeSprint(sprintId: string): void {
+  const index = getMasterIndex()
+  const idx = index.findIndex((s) => s.id === sprintId)
+  if (idx === -1) return
+  index[idx] = { ...index[idx], status: 'concluida' }
+  saveMasterIndex(index)
+}
+
+export function reactivateSprint(sprintId: string): void {
+  const index = getMasterIndex()
+  const idx = index.findIndex((s) => s.id === sprintId)
+  if (idx === -1) return
+  index[idx] = { ...index[idx], status: 'ativa' }
+  saveMasterIndex(index)
+}
