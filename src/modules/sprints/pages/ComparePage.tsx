@@ -4,41 +4,40 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  RadialLinearScale,
   PointElement,
   LineElement,
   BarElement,
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js'
-import { Line, Bar } from 'react-chartjs-2'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
+import { Line, Bar, Radar } from 'react-chartjs-2'
 import { loadSprintsForComparison, type SprintKPIs } from '../services/compareService'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale, LinearScale, RadialLinearScale,
+  PointElement, LineElement, BarElement,
+  Title, Tooltip, Legend, Filler,
+  ChartDataLabels,
+)
+
+// ─── Palette ──────────────────────────────────────────────────────────────────
+
+const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
+const PALETTE_BG = PALETTE.map((c) => c + '33')
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
-function colorHealth(v: number): string {
-  return v >= 80 ? 'var(--color-green)' : v >= 60 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorExec(v: number): string {
-  return v >= 80 ? 'var(--color-green)' : v >= 50 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorCapacidade(v: number): string {
-  return v >= 90 ? 'var(--color-green)' : v >= 70 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorInverted(v: number): string {
-  return v === 0 ? 'var(--color-green)' : v <= 3 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorMttr(v: number): string {
-  return v === 0 ? 'var(--color-green)' : v <= 24 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorRetest(v: number): string {
-  return v === 0 ? 'var(--color-green)' : v <= 20 ? '#f59e0b' : 'var(--color-red)'
-}
-function colorBlocked(v: number): string {
-  return v === 0 ? 'var(--color-green)' : v <= 8 ? '#f59e0b' : 'var(--color-red)'
-}
+function colorHealth(v: number)    { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
+function colorExec(v: number)      { return v >= 80 ? '#10b981' : v >= 50 ? '#f59e0b' : '#ef4444' }
+function colorCapacidade(v: number){ return v >= 90 ? '#10b981' : v >= 70 ? '#f59e0b' : '#ef4444' }
+function colorInverted(v: number)  { return v === 0 ? '#10b981' : v <= 3  ? '#f59e0b' : '#ef4444' }
+function colorMttr(v: number)      { return v === 0 ? '#10b981' : v <= 24 ? '#f59e0b' : '#ef4444' }
+function colorRetest(v: number)    { return v === 0 ? '#10b981' : v <= 20 ? '#f59e0b' : '#ef4444' }
+function colorBlocked(v: number)   { return v === 0 ? '#10b981' : v <= 8  ? '#f59e0b' : '#ef4444' }
 
 // ─── KPI row definitions ──────────────────────────────────────────────────────
 
@@ -52,30 +51,43 @@ interface KPIRowDef {
 const KPI_ROWS: KPIRowDef[] = [
   { label: 'QA Health Score',      key: 'healthScore',       unit: '%', colorFn: colorHealth },
   { label: 'Executados',           key: 'execPercent',       unit: '%', colorFn: colorExec },
-  { label: 'Total de Testes',      key: 'totalTests',        unit: '',  colorFn: () => 'var(--color-text)' },
-  { label: 'Testes Executáveis',   key: 'testesExecutaveis', unit: '',  colorFn: () => 'var(--color-text)' },
+  { label: 'Total de Testes',      key: 'totalTests',        unit: '',  colorFn: () => '#374151' },
+  { label: 'Testes Executáveis',   key: 'testesExecutaveis', unit: '',  colorFn: () => '#374151' },
   { label: 'Capacidade Real',      key: 'capacidadeReal',    unit: '%', colorFn: colorCapacidade },
   { label: 'Bugs Abertos',         key: 'openBugs',          unit: '',  colorFn: colorInverted },
-  { label: 'Bugs Resolvidos',      key: 'resolvedBugs',      unit: '',  colorFn: () => 'var(--color-text)' },
+  { label: 'Bugs Resolvidos',      key: 'resolvedBugs',      unit: '',  colorFn: () => '#374151' },
   { label: 'MTTR Global',          key: 'mttrGlobal',        unit: 'h', colorFn: colorMttr },
   { label: 'Índice de Retrabalho', key: 'retestIndex',       unit: '%', colorFn: colorRetest },
   { label: 'Horas Bloqueadas',     key: 'totalBlockedHours', unit: 'h', colorFn: colorBlocked },
+  { label: 'Atraso (casos)',       key: 'atrasoCasos',       unit: '',  colorFn: colorInverted },
 ]
 
-// ─── Chart palette ────────────────────────────────────────────────────────────
+// ─── Chart options helpers ────────────────────────────────────────────────────
 
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
+const BASE_DATALABEL = {
+  display: true,
+  font: { size: 11, weight: 700 as const },
+  padding: 3,
+  borderRadius: 4,
+}
 
-// ─── Chart helpers ────────────────────────────────────────────────────────────
-
-function lineOptions(title: string, maxY?: number) {
+function lineOptions(title: string, maxY?: number, unit = '') {
   return {
     responsive: true,
     plugins: {
       legend: { position: 'top' as const, labels: { font: { size: 11 }, boxWidth: 12 } },
       title: { display: false },
-      datalabels: { display: false },
       tooltip: { mode: 'index' as const, intersect: false },
+      datalabels: {
+        ...BASE_DATALABEL,
+        align: 'top' as const,
+        anchor: 'center' as const,
+        color: (ctx: any) => ctx.dataset.borderColor as string,
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderColor: (ctx: any) => ctx.dataset.borderColor as string,
+        borderWidth: 1,
+        formatter: (v: number) => `${v}${unit}`,
+      },
     },
     scales: {
       y: {
@@ -92,21 +104,32 @@ function lineOptions(title: string, maxY?: number) {
   }
 }
 
-function barOptions(title: string) {
+function barOptions(title: string, unit = '', stacked = false) {
   return {
     responsive: true,
     plugins: {
       legend: { position: 'top' as const, labels: { font: { size: 11 }, boxWidth: 12 } },
-      datalabels: { display: false },
       tooltip: { mode: 'index' as const, intersect: false },
+      datalabels: {
+        ...BASE_DATALABEL,
+        align: 'end' as const,
+        anchor: 'end' as const,
+        color: '#374151',
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderColor: 'rgba(0,0,0,0.08)',
+        borderWidth: 1,
+        formatter: (v: number) => `${v}${unit}`,
+      },
     },
     scales: {
       y: {
         min: 0,
+        stacked,
         ticks: { color: '#9ca3af', font: { size: 11 } },
         grid: { color: 'rgba(0,0,0,0.06)' },
       },
       x: {
+        stacked,
         ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 30 },
         grid: { display: false },
       },
@@ -114,32 +137,37 @@ function barOptions(title: string) {
   }
 }
 
-function singleLineData(labels: string[], values: number[], label: string, color: string, fill = false) {
+function radarOptions(title: string) {
   return {
-    labels,
-    datasets: [{
-      label,
-      data: values,
-      borderColor: color,
-      backgroundColor: fill ? color + '22' : 'transparent',
-      pointBackgroundColor: color,
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      tension: 0.35,
-      fill,
-    }],
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const, labels: { font: { size: 11 }, boxWidth: 12 } },
+      datalabels: { display: false as const },
+      tooltip: { mode: 'index' as const, intersect: false },
+    },
+    scales: {
+      r: {
+        beginAtZero: true,
+        min: 0,
+        max: 100,
+        ticks: { stepSize: 20, font: { size: 10 }, color: '#9ca3af', backdropColor: 'transparent' },
+        grid: { color: 'rgba(0,0,0,0.08)' },
+        pointLabels: { font: { size: 11 }, color: '#374151' },
+      },
+    },
   }
 }
 
 // ─── ChartCard ────────────────────────────────────────────────────────────────
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
     <div style={{
       background: 'var(--color-surface)',
       border: '1px solid var(--color-border)',
       borderRadius: 12,
       padding: '18px 20px 20px',
+      gridColumn: fullWidth ? '1 / -1' : undefined,
     }}>
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>{title}</div>
       {children}
@@ -188,7 +216,8 @@ export function ComparePage() {
     return t.length > 18 ? t.slice(0, 18) + '…' : t
   })
 
-  // Delta helpers
+  // ── Delta helpers ──────────────────────────────────────────────────────────
+
   const INVERTED_KEYS: Array<keyof SprintKPIs> = ['openBugs', 'mttrGlobal', 'retestIndex', 'totalBlockedHours', 'atrasoCasos']
 
   function deltaRow(key: keyof SprintKPIs): string {
@@ -202,50 +231,118 @@ export function ComparePage() {
     const diff = (items[items.length - 1].kpis[key] as number) - (items[0].kpis[key] as number)
     if (diff === 0) return 'var(--color-text-2)'
     const inv = INVERTED_KEYS.includes(key)
-    return inv ? (diff < 0 ? 'var(--color-green)' : 'var(--color-red)') : (diff > 0 ? 'var(--color-green)' : 'var(--color-red)')
+    return inv ? (diff < 0 ? '#10b981' : '#ef4444') : (diff > 0 ? '#10b981' : '#ef4444')
   }
 
-  // Chart datasets
+  // ── Data helpers ───────────────────────────────────────────────────────────
+
   const kpi = (key: keyof SprintKPIs) => items.map((it) => it.kpis[key] as number)
 
-  const bugsData = {
+  // Grouped bar: uma barra por sprint, para comparar múltiplos KPIs
+  function groupedBarData(keys: Array<keyof SprintKPIs>, keyLabels: string[]) {
+    return {
+      labels,
+      datasets: keys.map((key, ki) => ({
+        label: keyLabels[ki],
+        data: kpi(key),
+        backgroundColor: PALETTE[ki % PALETTE.length] + 'cc',
+        borderColor: PALETTE[ki % PALETTE.length],
+        borderWidth: 1.5,
+        borderRadius: 6,
+      })),
+    }
+  }
+
+  // Single KPI bar (uma cor por sprint)
+  function singleBarData(key: keyof SprintKPIs, label: string, colorFn?: (v: number) => string) {
+    const values = kpi(key)
+    return {
+      labels,
+      datasets: [{
+        label,
+        data: values,
+        backgroundColor: colorFn
+          ? values.map((v) => colorFn(v) + 'aa')
+          : PALETTE.map((c) => c + 'cc'),
+        borderColor: colorFn
+          ? values.map((v) => colorFn(v))
+          : PALETTE,
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }],
+    }
+  }
+
+  // Line trend (pontos por sprint no eixo X)
+  function trendLineData(key: keyof SprintKPIs, label: string, color: string, fill = false) {
+    const values = kpi(key)
+    return {
+      labels,
+      datasets: [{
+        label,
+        data: values,
+        borderColor: color,
+        backgroundColor: fill ? color + '22' : 'transparent',
+        pointBackgroundColor: values.map((v, i) => {
+          const isLast = i === values.length - 1
+          return isLast ? color : color + 'aa'
+        }),
+        pointRadius: values.map((_, i) => (i === values.length - 1 ? 7 : 5)),
+        pointHoverRadius: 9,
+        tension: 0.35,
+        fill,
+      }],
+    }
+  }
+
+  // Radar: perfil de qualidade por sprint
+  const radarData = {
+    labels: ['Health Score', 'Executados %', 'Capacidade Real', 'Sem Atraso', 'Sem Bugs', 'Sem Bloqueios'],
+    datasets: items.map((item, i) => {
+      const k = item.kpis
+      return {
+        label: item.entry.title.length > 20 ? item.entry.title.slice(0, 20) + '…' : item.entry.title,
+        data: [
+          k.healthScore,
+          k.execPercent,
+          k.capacidadeReal,
+          Math.max(0, 100 - Math.min(100, k.atrasoCasos * 5)),
+          Math.max(0, 100 - Math.min(100, k.openBugs * 10)),
+          Math.max(0, 100 - Math.min(100, k.totalBlockedHours * 5)),
+        ],
+        borderColor: PALETTE[i % PALETTE.length],
+        backgroundColor: PALETTE_BG[i % PALETTE.length],
+        pointBackgroundColor: PALETTE[i % PALETTE.length],
+        pointRadius: 4,
+      }
+    }),
+  }
+
+  // Bugs stacked: abertos + resolvidos
+  const bugsStackedData = {
     labels,
     datasets: [
       {
         label: 'Bugs Abertos',
         data: kpi('openBugs'),
+        backgroundColor: '#ef444499',
         borderColor: '#ef4444',
-        backgroundColor: '#ef444422',
-        pointBackgroundColor: '#ef4444',
-        pointRadius: 5, pointHoverRadius: 7, tension: 0.35, fill: true,
+        borderWidth: 1.5,
+        borderRadius: 4,
       },
       {
         label: 'Bugs Resolvidos',
         data: kpi('resolvedBugs'),
+        backgroundColor: '#10b98199',
         borderColor: '#10b981',
-        backgroundColor: '#10b98122',
-        pointBackgroundColor: '#10b981',
-        pointRadius: 5, pointHoverRadius: 7, tension: 0.35, fill: true,
-      },
-    ],
-  }
-
-  const testesData = {
-    labels,
-    datasets: [
-      {
-        label: 'Total de Testes',
-        data: kpi('totalTests'),
-        backgroundColor: PALETTE.map((c) => c + 'cc'),
-        borderColor: PALETTE,
         borderWidth: 1.5,
-        borderRadius: 6,
+        borderRadius: 4,
       },
     ],
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 0 40px' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 0 48px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -260,13 +357,14 @@ export function ComparePage() {
         <button onClick={handleExport} style={btnPrimary}>📸 Exportar PNG</button>
       </div>
 
-      {/* Conteúdo exportável */}
+      {/* Exportável */}
       <div ref={contentRef}>
-        {/* Legenda das sprints */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+
+        {/* Legenda */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
           {items.map((item, i) => (
-            <div key={item.entry.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '6px 12px' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: PALETTE[i % PALETTE.length], flexShrink: 0 }} />
+            <div key={item.entry.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-surface)', border: `2px solid ${PALETTE[i % PALETTE.length]}33`, borderRadius: 10, padding: '7px 14px' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: PALETTE[i % PALETTE.length], flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>{item.entry.title}</div>
                 {item.entry.startDate && (
@@ -303,25 +401,27 @@ export function ComparePage() {
                       )}
                     </th>
                   ))}
-                  {items.length >= 2 && <th style={{ ...thStyle, color: 'var(--color-text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Δ</th>}
+                  {items.length >= 2 && (
+                    <th style={{ ...thStyle, color: 'var(--color-text-3)', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>Δ</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {KPI_ROWS.map((row, rowIdx) => (
                   <tr key={row.key} style={{ background: rowIdx % 2 === 0 ? 'transparent' : 'var(--color-bg)' }}>
-                    <td style={{ padding: '9px 16px', fontWeight: 600, color: 'var(--color-text-2)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '9px 16px', fontWeight: 600, color: 'var(--color-text-2)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' as const }}>
                       {row.label}
                     </td>
                     {items.map((item) => {
                       const val = item.kpis[row.key] as number
                       return (
-                        <td key={item.entry.id} style={{ padding: '9px 14px', textAlign: 'center', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: row.colorFn(val), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)' }}>
+                        <td key={item.entry.id} style={{ padding: '9px 14px', textAlign: 'center' as const, fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: row.colorFn(val), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)' }}>
                           {val}{row.unit}
                         </td>
                       )
                     })}
                     {items.length >= 2 && (
-                      <td style={{ padding: '9px 14px', textAlign: 'center', fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: deltaColor(row.key), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)', fontSize: 12 }}>
+                      <td style={{ padding: '9px 14px', textAlign: 'center' as const, fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: deltaColor(row.key), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)', fontSize: 12 }}>
                         {deltaRow(row.key)}{row.unit}
                       </td>
                     )}
@@ -334,50 +434,76 @@ export function ComparePage() {
 
         {/* Charts Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
-          <ChartCard title="📈 QA Health Score (%)">
-            <Line data={singleLineData(labels, kpi('healthScore'), 'Health Score', '#3b82f6', true)} options={lineOptions('Health Score', 100)} />
+
+          {/* 1. Radar: perfil de qualidade */}
+          <ChartCard title="🕸 Perfil de Qualidade (Radar)">
+            <Radar data={radarData} options={radarOptions('Qualidade')} />
           </ChartCard>
 
-          <ChartCard title="✅ % Executados (sobre executáveis)">
-            <Line data={singleLineData(labels, kpi('execPercent'), '% Executados', '#10b981', true)} options={lineOptions('Executados', 100)} />
-          </ChartCard>
-
-          <ChartCard title="🐞 Bugs Abertos × Resolvidos">
-            <Line data={bugsData} options={lineOptions('Bugs')} />
-          </ChartCard>
-
-          <ChartCard title="⏱ MTTR Global (horas)">
-            <Line data={singleLineData(labels, kpi('mttrGlobal'), 'MTTR (h)', '#f97316')} options={lineOptions('MTTR')} />
-          </ChartCard>
-
-          <ChartCard title="🔁 Índice de Retrabalho (%)">
-            <Line data={singleLineData(labels, kpi('retestIndex'), 'Retrabalho %', '#8b5cf6')} options={lineOptions('Retrabalho', 100)} />
-          </ChartCard>
-
-          <ChartCard title="⚡ Capacidade Real (%)">
-            <Line data={singleLineData(labels, kpi('capacidadeReal'), 'Capacidade Real', '#06b6d4', true)} options={lineOptions('Capacidade', 100)} />
-          </ChartCard>
-
-          <ChartCard title="🧪 Cobertura de Testes (Total)">
-            <Bar data={testesData} options={barOptions('Total de Testes')} />
-          </ChartCard>
-
-          <ChartCard title="🚧 Horas Bloqueadas por Sprint">
+          {/* 2. Health Score — barras com valor */}
+          <ChartCard title="❤️ QA Health Score por Sprint">
             <Bar
-              data={{
-                labels,
-                datasets: [{
-                  label: 'Horas Bloqueadas',
-                  data: kpi('totalBlockedHours'),
-                  backgroundColor: kpi('totalBlockedHours').map((v) => v === 0 ? '#10b98166' : v <= 8 ? '#f59e0b66' : '#ef444466'),
-                  borderColor: kpi('totalBlockedHours').map((v) => v === 0 ? '#10b981' : v <= 8 ? '#f59e0b' : '#ef4444'),
-                  borderWidth: 1.5,
-                  borderRadius: 6,
-                }],
-              }}
-              options={barOptions('Horas Bloqueadas')}
+              data={singleBarData('healthScore', 'Health Score %', colorHealth)}
+              options={barOptions('Health Score', '%')}
             />
           </ChartCard>
+
+          {/* 3. % Executados — linha de tendência */}
+          <ChartCard title="✅ Evolução: % Testes Executados">
+            <Line
+              data={trendLineData('execPercent', '% Executados', '#10b981', true)}
+              options={lineOptions('Executados', 100, '%')}
+            />
+          </ChartCard>
+
+          {/* 4. Capacidade Real — linha de tendência */}
+          <ChartCard title="⚡ Evolução: Capacidade Real">
+            <Line
+              data={trendLineData('capacidadeReal', 'Capacidade Real %', '#06b6d4', true)}
+              options={lineOptions('Capacidade Real', 100, '%')}
+            />
+          </ChartCard>
+
+          {/* 5. Bugs: agrupado abertos vs resolvidos */}
+          <ChartCard title="🐞 Bugs Abertos × Resolvidos por Sprint">
+            <Bar data={bugsStackedData} options={barOptions('Bugs')} />
+          </ChartCard>
+
+          {/* 6. MTTR + Horas Bloqueadas agrupado */}
+          <ChartCard title="⏱ MTTR Global (h) por Sprint">
+            <Bar
+              data={singleBarData('mttrGlobal', 'MTTR (h)', colorMttr)}
+              options={barOptions('MTTR', 'h')}
+            />
+          </ChartCard>
+
+          {/* 7. Retrabalho — barras */}
+          <ChartCard title="🔁 Índice de Retrabalho (%)">
+            <Bar
+              data={singleBarData('retestIndex', 'Retrabalho %', colorRetest)}
+              options={barOptions('Retrabalho', '%')}
+            />
+          </ChartCard>
+
+          {/* 8. Horas bloqueadas */}
+          <ChartCard title="🚧 Horas Bloqueadas por Sprint">
+            <Bar
+              data={singleBarData('totalBlockedHours', 'Horas Bloqueadas', colorBlocked)}
+              options={barOptions('Bloqueadas', 'h')}
+            />
+          </ChartCard>
+
+          {/* 9. Total de testes + executáveis — grouped */}
+          <ChartCard title="🧪 Volume de Testes por Sprint" fullWidth>
+            <Bar
+              data={groupedBarData(
+                ['totalTests', 'testesExecutaveis', 'totalExec'],
+                ['Total de Testes', 'Executáveis', 'Executados'],
+              )}
+              options={barOptions('Volume de Testes')}
+            />
+          </ChartCard>
+
         </div>
       </div>
     </div>
