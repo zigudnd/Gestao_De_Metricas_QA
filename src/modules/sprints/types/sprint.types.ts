@@ -140,6 +140,7 @@ export interface SprintIndexEntry {
   id: string
   title: string
   squad: string
+  squadId?: string   // UUID da Squad no Supabase (null = sprint pessoal/legada)
   startDate: string
   endDate: string
   totalTests: number

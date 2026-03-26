@@ -304,15 +304,21 @@ export function saveMasterIndex(index: SprintIndexEntry[]): void {
   }
 }
 
-export function upsertSprintInMasterIndex(sprintId: string, state: SprintState): void {
+export function upsertSprintInMasterIndex(
+  sprintId: string,
+  state: SprintState,
+  squadId?: string,
+): void {
   const index = getMasterIndex()
   const totalTests = state.features.reduce((a, f) => a + (f.tests || 0), 0)
   const totalExec = state.features.reduce((a, f) => a + (f.exec || 0), 0)
 
+  const existing = index.find((s) => s.id === sprintId)
   const entry: SprintIndexEntry = {
     id: sprintId,
     title: state.config.title || 'S/ Título',
     squad: state.config.squad || '',
+    squadId: squadId ?? existing?.squadId,
     startDate: state.config.startDate || '',
     endDate: state.config.endDate || '',
     totalTests,
@@ -360,11 +366,14 @@ export async function loadFromServer(sprintId: string): Promise<SprintState | nu
  * Salva uma sprint no Supabase (upsert). Chamado pelo sprintStore a cada _commit.
  */
 export async function persistToServer(sprintId: string, state: SprintState): Promise<void> {
-  const status = getMasterIndex().find((s) => s.id === sprintId)?.status ?? 'ativa'
+  const entry = getMasterIndex().find((s) => s.id === sprintId)
+  const status = entry?.status ?? 'ativa'
+  const squad_id = entry?.squadId ?? null
   await supabase.from('sprints').upsert({
     id: sprintId,
     data: state,
     status,
+    squad_id,
     updated_at: new Date().toISOString(),
   })
 }
@@ -377,7 +386,7 @@ export async function syncAllFromSupabase(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('sprints')
-      .select('id, data, status, updated_at')
+      .select('id, data, status, squad_id, updated_at')
     if (error || !data) return
 
     const remoteIndex: SprintIndexEntry[] = data.map((row) => {
@@ -389,6 +398,7 @@ export async function syncAllFromSupabase(): Promise<void> {
         id: row.id,
         title: state.config.title || 'S/ Título',
         squad: state.config.squad || '',
+        squadId: row.squad_id ?? undefined,
         startDate: state.config.startDate || '',
         endDate: state.config.endDate || '',
         totalTests,

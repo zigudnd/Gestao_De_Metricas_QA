@@ -7,6 +7,7 @@ import {
   toggleFavoriteSprint, deleteSprintFromSupabase,
 } from '../services/persistence'
 import { importFromJSON } from '../services/exportService'
+import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ export function HomePage() {
   const [deleteTarget, setDeleteTarget] = useState<SprintIndexEntry | null>(null)
   const [newTitle, setNewTitle] = useState('')
   const [newSquad, setNewSquad] = useState('')
+  const [newSquadId, setNewSquadId] = useState('')
+  const [availableSquads, setAvailableSquads] = useState<Squad[]>([])
   const titleInputRef = useRef<HTMLInputElement>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const [compareMode, setCompareMode] = useState(false)
@@ -59,6 +62,7 @@ export function HomePage() {
 
   useEffect(() => {
     setSprints(getMasterIndex())
+    listMySquads().then(setAvailableSquads).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -76,12 +80,15 @@ export function HomePage() {
     const sprintId = 'sprint_' + Date.now()
     const newState = JSON.parse(JSON.stringify(DEFAULT_STATE))
     newState.config.title = title
-    newState.config.squad = newSquad.trim()
+    // Se selecionou um squad, usa o nome dele como texto; senão usa campo livre
+    const selectedSquad = availableSquads.find((s) => s.id === newSquadId)
+    newState.config.squad = selectedSquad ? selectedSquad.name : newSquad.trim()
     const normalized = normalizeState(newState)
     saveToStorage(sprintId, normalized)
-    upsertSprintInMasterIndex(sprintId, normalized)
+    upsertSprintInMasterIndex(sprintId, normalized, newSquadId || undefined)
     setNewTitle('')
     setNewSquad('')
+    setNewSquadId('')
     setShowCreate(false)
     navigate(`/sprints/${sprintId}`)
   }
@@ -564,14 +571,32 @@ export function HomePage() {
               />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Squad / Time (opcional)</label>
-              <input
-                type="text"
-                value={newSquad}
-                onChange={(e) => setNewSquad(e.target.value)}
-                placeholder="Ex: Checkout, Pagamentos…"
-                style={inputStyle}
-              />
+              <label style={labelStyle}>Squad</label>
+              {availableSquads.length > 0 ? (
+                <select
+                  value={newSquadId}
+                  onChange={(e) => setNewSquadId(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="">— Sem squad (pessoal) —</option>
+                  {availableSquads.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={newSquad}
+                  onChange={(e) => setNewSquad(e.target.value)}
+                  placeholder="Ex: Checkout, Pagamentos…"
+                  style={inputStyle}
+                />
+              )}
+              {availableSquads.length === 0 && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
+                  Crie um squad em Squads para vincular sprints a equipes.
+                </p>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" onClick={() => setShowCreate(false)} style={btnOutline}>

@@ -1,4 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/modules/auth/store/authStore'
+
+// ─── NavItem ──────────────────────────────────────────────────────────────────
 
 const NavItem = ({
   icon,
@@ -36,10 +39,45 @@ const NavItem = ({
   </button>
 )
 
+// ─── UserAvatar ───────────────────────────────────────────────────────────────
+
+function UserAvatar() {
+  const { profile, signOut } = useAuthStore()
+  const initial = (profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()
+
+  return (
+    <button
+      title={`${profile?.display_name ?? profile?.email ?? ''}\nClique para sair`}
+      onClick={signOut}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        background: '#E6F1FB',
+        color: '#185FA5',
+        border: '1.5px solid #B5D4F4',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: 'pointer',
+        flexShrink: 0,
+        letterSpacing: '-0.5px',
+      }}
+    >
+      {initial}
+    </button>
+  )
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const isSprints = location.pathname.startsWith('/sprints')
+  const isSquads  = location.pathname.startsWith('/squads')
 
   return (
     <aside
@@ -77,13 +115,16 @@ export function Sidebar() {
       </div>
 
       <NavItem icon="⊞" label="Sprints" active={isSprints} onClick={() => navigate('/sprints')} />
+      <NavItem icon="👥" label="Squads" active={isSquads} onClick={() => navigate('/squads')} />
       <NavItem icon="📄" label="Relatórios" disabled />
-      <NavItem icon="👥" label="Equipes" disabled />
 
       <div style={{ flex: 1 }} />
       <div style={{ width: 28, height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
       <NavItem icon="📖" label="Documentação" active={location.pathname === '/docs'} onClick={() => navigate('/docs')} />
-      <NavItem icon="⚙" label="Configurações" disabled />
+      <div style={{ width: 28, height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
+
+      {/* Avatar + Logout */}
+      <UserAvatar />
     </aside>
   )
 }
