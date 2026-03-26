@@ -427,13 +427,33 @@ export function SquadsPage() {
             {/* Invite (apenas qa_lead) */}
             {myRole === 'qa_lead' && (
               <section>
-                <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)' }}>
-                  Convidar membro
+                <h3 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)' }}>
+                  Adicionar membro
                 </h3>
+
+                {/* Instruções */}
+                <div style={{
+                  marginBottom: 16,
+                  padding: '10px 14px',
+                  background: '#E6F1FB',
+                  border: '1px solid #B5D4F4',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  color: '#185FA5',
+                  lineHeight: 1.6,
+                }}>
+                  <strong>Como funciona:</strong>
+                  <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                    <li>O novo membro acessa <strong>{window.location.origin}{window.location.pathname.split('#')[0]}#/login</strong> e cria uma conta.</li>
+                    <li>Você digita o e-mail cadastrado abaixo e clica em Adicionar.</li>
+                    <li>Na próxima vez que o membro fizer login, o squad aparecerá automaticamente.</li>
+                  </ol>
+                </div>
+
                 <form onSubmit={handleInvite} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em', marginBottom: 5, textTransform: 'uppercase' }}>
-                      E-mail
+                      E-mail da conta
                     </label>
                     <input
                       type="email"
@@ -462,15 +482,14 @@ export function SquadsPage() {
                     disabled={inviting || !inviteEmail.trim()}
                     style={{ ...btnPrimary, padding: '9px 16px', flexShrink: 0 }}
                   >
-                    {inviting ? 'Convidando...' : 'Convidar'}
+                    {inviting ? 'Adicionando...' : 'Adicionar'}
                   </button>
                 </form>
                 {inviteError && (
-                  <p style={{ margin: '8px 0 0', fontSize: 13, color: '#E24B4A' }}>{inviteError}</p>
+                  <p style={{ margin: '8px 0 0', fontSize: 13, color: '#E24B4A', background: '#FCEBEB', border: '1px solid #F7C1C1', borderRadius: 6, padding: '8px 12px' }}>
+                    {inviteError}
+                  </p>
                 )}
-                <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
-                  O usuário precisa ter criado uma conta antes de ser convidado.
-                </p>
               </section>
             )}
           </>
