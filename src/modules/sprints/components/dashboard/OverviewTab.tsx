@@ -20,6 +20,44 @@ ChartJS.register(
 const BASE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 function getColors(n: number) { return Array.from({ length: n }, (_, i) => BASE_COLORS[i % BASE_COLORS.length]) }
 
+const DONUT_PALETTE = ['#E24B4A', '#378ADD', '#639922', '#EAB308', '#888780', '#B4B2A9', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
+const BLOCKER_COLOR_MAP: Record<string, string> = {
+  'Ambiente indisponível': '#639922',
+  'Erro no login': '#E24B4A',
+  'Erro no Back-End': '#EAB308',
+  'Testes bloqueados': '#378ADD',
+  'Bloqueio de dependência externa': '#888780',
+  'Bloqueio dependência': '#888780',
+  'Bug crítico impedindo testes': '#E24B4A',
+  'Falta de requisitos/documentação': '#EAB308',
+  'Indisponibilidade de recurso humano': '#888780',
+  'Aguardando aprovação de deploy': '#378ADD',
+}
+const STACK_COLOR_MAP: Record<string, string> = {
+  IOS: '#2C2C2A', iOS: '#2C2C2A',
+  BFF: '#639922',
+  Front: '#378ADD', front: '#378ADD',
+  Back: '#2C2C2A', back: '#2C2C2A',
+}
+function uniqueColors(labels: string[], preferredMap: Record<string, string>) {
+  const used = new Set<string>()
+  return labels.map((l) => {
+    const pref = preferredMap[l]
+    if (pref && !used.has(pref)) { used.add(pref); return pref }
+    for (const c of DONUT_PALETTE) {
+      if (!used.has(c)) { used.add(c); return c }
+    }
+    return '#888780'
+  })
+}
+function blockerColors(labels: string[]) { return uniqueColors(labels, BLOCKER_COLOR_MAP) }
+function stackColors(labels: string[]) { return uniqueColors(labels, STACK_COLOR_MAP) }
+
+const LEGEND_LABELS = {
+  boxWidth: 8, boxHeight: 8, borderRadius: 4, useBorderRadius: true,
+  font: { size: 11 }, color: '#888780', padding: 12,
+}
+
 function calcMTTR(bug: Bug): number | null {
   if (!bug.openedAt || !bug.resolvedAt) return null
   const ms = new Date(bug.resolvedAt + 'T00:00:00').getTime() - new Date(bug.openedAt + 'T00:00:00').getTime()
@@ -137,7 +175,7 @@ export function OverviewTab() {
   const mttrDays = resolvedBugs.map(calcMTTR).filter((d): d is number => d !== null)
   const mttrGlobal = mttrDays.length ? (mttrDays.reduce((a, b) => a + b, 0) / mttrDays.length).toFixed(1) : null
   const STACKS = ['Front', 'BFF', 'Back']
-  const SEV_COLORS: Record<string, string> = { Baixa: '#10b981', Média: '#f59e0b', Alta: '#f97316', Crítica: '#ef4444' }
+  const SEV_COLORS: Record<string, string> = { Baixa: '#639922', Média: '#378ADD', Alta: '#EAB308', Crítica: '#E24B4A' }
   const mttrDatasets = (['Baixa', 'Média', 'Alta', 'Crítica'] as const).map((sev) => ({
     label: sev,
     backgroundColor: SEV_COLORS[sev],
@@ -225,9 +263,9 @@ export function OverviewTab() {
 
       {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#BA7517' : '#E24B4A'} />
+        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#EAB308' : '#E24B4A'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
-        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#BA7517' : '#6b7280'} />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#EAB308' : '#6b7280'} />
         <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? '#E24B4A' : '#639922'} barColor={openBugs > 0 ? '#E24B4A' : '#639922'} highlight={openBugs > 0} />
       </div>
 
@@ -293,27 +331,39 @@ export function OverviewTab() {
 
       {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
-        <Card title="📋 Report do Dia">
+        <Card
+          title="Report do Dia"
+          icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="3" y="1.5" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+        >
           {todayReport
             ? <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{todayReport}</div>
-            : <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum report registrado para hoje.</div>
+            : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 100, gap: 8 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="var(--color-text-3)" strokeWidth="1.2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="var(--color-text-3)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Nenhum reporte registrado hoje</span>
+              </div>
+            )
           }
         </Card>
-        <Card title={`🔴 Bloqueios por Motivo (Hoje) — ${totalHorasHoje}h`}>
+        <Card
+          title="Bloqueios por Motivo (Hoje)"
+          pill={`${totalHorasHoje}h`}
+          icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.2"/><circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" strokeWidth="1.2"/><path d="M7.5 1.5V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+        >
           <div style={{ height: 200 }}>
             <Doughnut
               data={{
                 labels: Object.keys(blockersToday).length ? Object.keys(blockersToday) : ['Nenhum'],
-                datasets: [{ data: Object.values(blockersToday).length ? Object.values(blockersToday) : [0], backgroundColor: getColors(Math.max(Object.keys(blockersToday).length, 1)), borderWidth: 1 }],
+                datasets: [{ data: Object.values(blockersToday).length ? Object.values(blockersToday) : [0], backgroundColor: blockerColors(Object.keys(blockersToday).length ? Object.keys(blockersToday) : ['Nenhum']), borderWidth: 0 }],
               }}
-              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: LEGEND_LABELS }, datalabels: { display: true, color: '#fff', font: { weight: 'bold' as const, size: 12 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
             />
           </div>
         </Card>
       </div>
 
       {/* ── Burndown Chart ────────────────────────────────────────────────── */}
-      <Card title="📉 Burndown Chart">
+      <Card title="Burndown Chart" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 2.5L5.5 7l3-2.5 5.5 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M11 11.5h3v-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
         <div style={{ height: 280 }}>
           <Line
             data={{
@@ -338,19 +388,27 @@ export function OverviewTab() {
                 y: { beginAtZero: true, title: { display: true, text: 'Testes Restantes' } },
                 x: { ticks: { maxRotation: 45, autoSkip: false } },
               },
-              plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+              plugins: {
+                legend: { position: 'top' as const, labels: LEGEND_LABELS },
+                datalabels: {
+                  display: (ctx: any) => ctx.datasetIndex === 1 && ctx.dataset.data[ctx.dataIndex] !== null,
+                  anchor: 'end' as const, align: 'top' as const, offset: 2,
+                  color: '#378ADD', font: { size: 9, weight: 'bold' as const },
+                  formatter: (v: number | null) => v !== null && v >= 0 ? v : '',
+                },
+              },
             } as object}
           />
         </div>
       </Card>
 
       {/* ── Bugs Abertos — tabela compacta (largura total) ───────────────── */}
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>🐞</span>
           <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>Bugs Abertos</span>
-          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-2)', background: 'var(--color-border)', borderRadius: 20, padding: '2px 7px', fontWeight: 600 }}>
-            {openBugsList.length}
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-2)', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', fontWeight: 500 }}>
+            {openBugsList.length} bug{openBugsList.length !== 1 ? 's' : ''}
           </span>
         </div>
         {openBugsList.length === 0 ? (
@@ -360,24 +418,28 @@ export function OverviewTab() {
             <thead>
               <tr style={{ background: 'var(--color-bg)' }}>
                 {['ID', 'Status', 'Responsável', 'Descrição'].map((h) => (
-                  <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                  <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '0.5px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {openBugsList.map((b, i) => {
-                const sevColor = b.severity === 'Crítica' ? '#dc2626' : b.severity === 'Alta' ? '#ea580c' : b.severity === 'Média' ? '#d97706' : '#64748b'
-                const statusColor = b.status === 'Aberto' ? '#dc2626' : '#d97706'
+              {openBugsList.map((b) => {
+                const stripeColor = b.status === 'Aberto' || b.status === 'Em Andamento' ? '#E24B4A' : b.status === 'Falhou' ? '#EAB308' : '#639922'
+                const badgeStyle: React.CSSProperties = b.status === 'Aberto' || b.status === 'Em Andamento'
+                  ? { background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' }
+                  : b.status === 'Falhou'
+                  ? { background: '#FAEEDA', color: '#854F0B', border: '0.5px solid #FAC775' }
+                  : { background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' }
                 return (
-                  <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: i % 2 === 0 ? 'transparent' : 'var(--color-bg)' }}>
-                    <td style={{ padding: '5px 8px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: sevColor, background: `${sevColor}18`, padding: '2px 5px', borderRadius: 4 }}>{b.id}</span>
+                  <tr key={b.id} style={{ borderBottom: '0.5px solid var(--color-border)' }}>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', borderLeft: `3px solid ${stripeColor}` }}>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>{b.id}</span>
                     </td>
-                    <td style={{ padding: '5px 8px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: statusColor }}>{b.status}</span>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 10, fontWeight: 500, borderRadius: 10, padding: '2px 8px', ...badgeStyle }}>{b.status}</span>
                     </td>
-                    <td style={{ padding: '5px 8px', color: 'var(--color-text-2)', whiteSpace: 'nowrap' }}>{b.assignee || '—'}</td>
-                    <td style={{ padding: '5px 8px', color: 'var(--color-text)' }}>{b.desc || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text-2)', whiteSpace: 'nowrap' }}>{b.assignee || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text)' }}>{b.desc || '—'}</td>
                   </tr>
                 )
               })}
@@ -387,65 +449,63 @@ export function OverviewTab() {
       </div>
 
       {/* ── Progresso por Funcionalidade (largura total) ──────────────────── */}
-      <Card title="🧪 Progresso de Testes por Funcionalidade">
+      <Card title="Progresso de Testes por Funcionalidade" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M5.5 1.5h4M6.5 1.5v4.5L3.5 13h8l-3-7V1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
         {featsBySuite.length === 0 ? (
           <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic', padding: '20px 0', textAlign: 'center' }}>
             Nenhuma funcionalidade ativa.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {featsBySuite.map(({ suite, features }, suiteIdx) => {
-              const labels     = features.map((f) => f.name || 'Sem Nome')
-              const concluido  = features.map((f) => (f.cases ?? []).filter((c) => c.status === 'Concluído').length)
-              const falhou     = features.map((f) => (f.cases ?? []).filter((c) => c.status === 'Falhou').length)
-              const bloqueado  = features.map((f) => (f.cases ?? []).filter((c) => c.status === 'Bloqueado').length)
-              const pendente   = features.map((f) => (f.cases ?? []).filter((c) => c.status === 'Pendente').length)
-              const total      = features.reduce((a, f) => a + (f.cases ?? []).length, 0)
-              const done       = features.reduce((a, f) => a + (f.cases ?? []).filter((c) => c.status === 'Concluído' || c.status === 'Falhou').length, 0)
-              return (
-                <div key={suite.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {suite.name || 'Suite'}
-                    </span>
-                    <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>
-                      {done}/{total} casos executados
-                    </span>
-                  </div>
-                  <div style={{ height: Math.max(120, features.length * 42) }}>
-                    <Bar
-                      data={{
-                        labels,
-                        datasets: [
-                          { label: 'Concluído', data: concluido, backgroundColor: '#10b981', borderRadius: 4 },
-                          { label: 'Falhou',    data: falhou,    backgroundColor: '#ef4444', borderRadius: 4 },
-                          { label: 'Bloqueado', data: bloqueado, backgroundColor: '#f59e0b', borderRadius: 4 },
-                          { label: 'Pendente',  data: pendente,  backgroundColor: '#e2e8f0', borderRadius: 4 },
-                        ],
-                      }}
-                      options={{
-                        indexAxis: 'y' as const,
-                        maintainAspectRatio: false,
-                        scales: { x: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }, y: { stacked: true } },
-                        plugins: {
-                          legend: suiteIdx === 0
-                            ? { position: 'top' as const }
-                            : { display: false },
-                          datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' },
-                        },
-                      } as object}
-                    />
-                  </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Legenda global */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              {([['#639922','Concluído'],['#E24B4A','Falha'],['#EAB308','Bloqueado'],['var(--color-bg)','Pendente']] as [string,string][]).map(([color, label]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: color, border: color === 'var(--color-bg)' ? '0.5px solid var(--color-border)' : 'none', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: 'var(--color-text-2)' }}>{label}</span>
                 </div>
-              )
-            })}
+              ))}
+            </div>
+            {featsBySuite.map(({ suite, features }, suiteIdx) => (
+              <div key={suite.id} style={{ marginTop: suiteIdx > 0 ? 16 : 0 }}>
+                {/* Suite label */}
+                <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, marginTop: suiteIdx > 0 ? 12 : 0 }}>
+                  {suite.name || 'Suite'}
+                </div>
+                {/* Feature rows */}
+                {features.map((f) => {
+                  const cases = f.cases ?? []
+                  const total = cases.length
+                  const concluido = cases.filter((c) => c.status === 'Concluído').length
+                  const falhou    = cases.filter((c) => c.status === 'Falhou').length
+                  const bloqueado = cases.filter((c) => c.status === 'Bloqueado').length
+                  const pendente  = cases.filter((c) => c.status === 'Pendente').length
+                  return (
+                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-2)', flex: '0 0 150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.name || ''}>
+                        {f.name || 'Sem nome'}
+                      </span>
+                      <div style={{ flex: 1, height: 20, borderRadius: 4, overflow: 'hidden', display: 'flex', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)' }}>
+                        {total === 0 && <div style={{ flex: 1 }} />}
+                        {concluido > 0 && <div style={{ flex: concluido, background: '#639922', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{concluido}</span></div>}
+                        {falhou    > 0 && <div style={{ flex: falhou,    background: '#E24B4A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{falhou}</span></div>}
+                        {bloqueado > 0 && <div style={{ flex: bloqueado, background: '#EAB308', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{bloqueado}</span></div>}
+                        {pendente  > 0 && <div style={{ flex: pendente }} />}
+                      </div>
+                      <span style={{ fontSize: 11, color: 'var(--color-text-3)', flex: '0 0 44px', textAlign: 'right', fontFamily: 'var(--font-family-mono)' }}>
+                        {concluido + falhou}/{total}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         )}
       </Card>
 
       {/* ── Execução por Dia + MTTR ───────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Card title="📊 Execução por Dia">
+        <Card title="Execução por Dia" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 13V8.5M5.5 13V5.5M9.5 13V2.5M13.5 13V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{
@@ -454,7 +514,7 @@ export function OverviewTab() {
                   label: 'Executados',
                   data: execPerDay,
                   backgroundColor: execPerDay.map((v, i) =>
-                    i + 1 <= maxDay && v === 0 ? '#ef4444' : v > 0 ? '#2563eb' : '#e2e8f0'
+                    i + 1 <= maxDay && v === 0 ? '#E24B4A' : v > 0 ? '#378ADD' : '#e2e8f0'
                   ),
                   borderRadius: 4,
                 }],
@@ -462,16 +522,16 @@ export function OverviewTab() {
               options={{
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#64748b', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } },
+                plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center' as const, align: 'center' as const, color: '#fff', font: { weight: 'bold' as const, size: 11 }, formatter: (v: number) => v > 0 ? v : '' } },
               } as object}
             />
           </div>
         </Card>
-        <Card title="⏱️ MTTR — Tempo Médio de Resolução por Stack e Criticidade (dias)">
+        <Card title="MTTR — Tempo Médio de Resolução por Stack (dias)" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.2"/><path d="M7.5 4.5V7.5L9.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{ labels: STACKS, datasets: mttrDatasets }}
-              options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Dias (média)' } } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'end', align: 'top', color: '#64748b', font: { weight: 'bold', size: 10 }, formatter: (v: number | null) => v && v > 0 ? `${v}d` : '' } } } as object}
+              options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Dias (média)' } } }, plugins: { legend: { position: 'top' as const, labels: LEGEND_LABELS }, datalabels: { display: true, anchor: 'end' as const, align: 'top' as const, color: '#64748b', font: { weight: 'bold' as const, size: 10 }, formatter: (v: number | null) => v && v > 0 ? `${v}d` : '' } } } as object}
             />
           </div>
         </Card>
@@ -479,25 +539,25 @@ export function OverviewTab() {
 
       {/* ── Bloqueios Geral + Origem dos Bugs ────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Card title={`🚧 Bloqueios Externos (Geral Acumulado) — ${totalHorasGeral}h`}>
+        <Card title="Bloqueios Externos (Geral Acumulado)" pill={`${totalHorasGeral}h`} icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="3" y="7" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Doughnut
               data={{
                 labels: Object.keys(blockersAll).length ? Object.keys(blockersAll) : ['Nenhum'],
-                datasets: [{ data: Object.values(blockersAll).length ? Object.values(blockersAll) : [0], backgroundColor: getColors(Math.max(Object.keys(blockersAll).length, 1)), borderWidth: 1 }],
+                datasets: [{ data: Object.values(blockersAll).length ? Object.values(blockersAll) : [0], backgroundColor: blockerColors(Object.keys(blockersAll).length ? Object.keys(blockersAll) : ['Nenhum']), borderWidth: 0 }],
               }}
-              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: LEGEND_LABELS }, datalabels: { display: true, color: '#fff', font: { weight: 'bold' as const, size: 12 }, formatter: (v: number) => v > 0 ? `${v}h` : '' } } } as object}
             />
           </div>
         </Card>
-        <Card title="🐛 Origem dos Bugs (Stack)">
+        <Card title="Origem dos Bugs (Stack)" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M5.5 3a2 2 0 014 0M3 6h9M4.5 6v5a3 3 0 006 0V6M2 8.5h2.5M10.5 8.5H13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Pie
               data={{
                 labels: Object.keys(bugsGrouped).length ? Object.keys(bugsGrouped) : ['Nenhum'],
-                datasets: [{ data: Object.values(bugsGrouped).length ? Object.values(bugsGrouped) : [0], backgroundColor: ['#3b82f6', '#10b981', '#0f172a', '#f59e0b'], borderWidth: 1 }],
+                datasets: [{ data: Object.values(bugsGrouped).length ? Object.values(bugsGrouped) : [0], backgroundColor: stackColors(Object.keys(bugsGrouped).length ? Object.keys(bugsGrouped) : ['Nenhum']), borderWidth: 0 }],
               }}
-              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+              options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: LEGEND_LABELS }, datalabels: { display: true, color: '#fff', font: { weight: 'bold' as const, size: 12 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
             />
           </div>
         </Card>
@@ -505,33 +565,33 @@ export function OverviewTab() {
 
       {/* ── Status Bugs/Stack + Bugs/Feature/Stack ────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Card title="📋 Status dos Bugs por Stack">
+        <Card title="Status dos Bugs por Stack" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 5L7.5 2l6 3-6 3-6-3zM1.5 8.5l6 3 6-3M1.5 11.5l6 3 6-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{
                 labels: uniqueStacks,
                 datasets: [
-                  { label: 'Aberto',       data: abertoData,    backgroundColor: '#ef4444', borderRadius: 2 },
-                  { label: 'Em Andamento', data: andamentoData, backgroundColor: '#f59e0b', borderRadius: 2 },
-                  { label: 'Resolvido',    data: resolvidoData, backgroundColor: '#10b981', borderRadius: 2 },
+                  { label: 'Aberto',       data: abertoData,    backgroundColor: '#E24B4A', borderRadius: 2 },
+                  { label: 'Em Andamento', data: andamentoData, backgroundColor: '#EAB308', borderRadius: 2 },
+                  { label: 'Resolvido',    data: resolvidoData, backgroundColor: '#639922', borderRadius: 2 },
                 ],
               }}
-              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' as const, labels: LEGEND_LABELS }, datalabels: { display: true, anchor: 'center' as const, align: 'center' as const, color: '#fff', font: { weight: 'bold' as const, size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
             />
           </div>
         </Card>
-        <Card title="🔍 Bugs por Funcionalidade e Stack">
+        <Card title="Bugs por Funcionalidade e Stack" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1.5" y="8.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8.5" y="8.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{
                 labels: uniqueFeatBugs,
                 datasets: [
-                  { label: 'Front', data: bugFront, backgroundColor: '#3b82f6', borderRadius: 2 },
-                  { label: 'BFF',   data: bugBff,   backgroundColor: '#10b981', borderRadius: 2 },
-                  { label: 'Back',  data: bugBack,  backgroundColor: '#0f172a', borderRadius: 2 },
+                  { label: 'Front', data: bugFront, backgroundColor: '#378ADD', borderRadius: 2 },
+                  { label: 'BFF',   data: bugBff,   backgroundColor: '#639922', borderRadius: 2 },
+                  { label: 'Back',  data: bugBack,  backgroundColor: '#2C2C2A', borderRadius: 2 },
                 ],
               }}
-              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' }, datalabels: { anchor: 'center', align: 'center', color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
+              options={{ maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top' as const, labels: LEGEND_LABELS }, datalabels: { display: true, anchor: 'center' as const, align: 'center' as const, color: '#fff', font: { weight: 'bold' as const, size: 11 }, formatter: (v: number) => v > 0 ? v : '' } } } as object}
             />
           </div>
         </Card>
@@ -563,7 +623,7 @@ export function OverviewTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {blockedItems.map((item) => {
                 const suiteName = suites.find((s) => String(s.id) === String(item.suiteId))?.name
-                const stripeColor = item.stripe === 'blocked' ? '#E24B4A' : '#BA7517'
+                const stripeColor = item.stripe === 'blocked' ? '#E24B4A' : '#EAB308'
                 return (
                   <div key={`${item.stripe}-${item.id}`} style={{ display: 'flex', border: '0.5px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
                     <div style={{ width: 3, flexShrink: 0, background: stripeColor, alignSelf: 'stretch' }} />
@@ -589,41 +649,59 @@ export function OverviewTab() {
           )}
         </div>
 
-        <Section title="Cenários com Falha" icon="❌" count={failedScenarios.length}>
-          {failedScenarios.length === 0 ? <EmptyOk label="Nenhum cenário com falha!" /> : (
+        {/* Cenários com Falha — novo padrão visual */}
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '18px 20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <circle cx="7.5" cy="7.5" r="6.5" stroke="#E24B4A" strokeWidth="1.2" />
+                <path d="M5 5l5 5M10 5l-5 5" stroke="#E24B4A" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Cenários com falha</span>
+            </div>
+            <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)' }}>
+              {failedScenarios.length} cenário{failedScenarios.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Tabela */}
+          {failedScenarios.length === 0 ? (
+            <EmptyOk label="Nenhum cenário com falha!" />
+          ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
                 <tr style={{ background: 'var(--color-bg)' }}>
                   {['Funcionalidade', 'Cenário'].map((h) => (
-                    <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                    <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '0.5px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {failedScenarios.map((item, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border)', background: i % 2 === 0 ? 'transparent' : 'var(--color-bg)' }}>
-                    <td style={{ padding: '5px 8px', whiteSpace: 'nowrap', color: 'var(--color-text-2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.featureName}>{item.featureName || '—'}</td>
-                    <td style={{ padding: '5px 8px', color: 'var(--color-text)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.scenarioName}>{item.scenarioName || '—'}</td>
+                  <tr key={i} style={{ borderBottom: '0.5px solid var(--color-border)' }}>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', color: 'var(--color-text-2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', borderLeft: '3px solid #E24B4A' }} title={item.featureName}>{item.featureName || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.scenarioName}>{item.scenarioName || '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-        </Section>
+        </div>
       </div>
 
       {/* ── Alinhamentos Técnicos e de Produto ───────────────────────────── */}
-      <Card title="🤝 Alinhamentos Técnicos e de Produto" borderLeftColor="var(--color-blue)">
+      <Card title="Alinhamentos Técnicos e de Produto" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><circle cx="10" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M1 13c0-2.2 1.8-4 4-4h5c2.2 0 4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
         {state.alignments.length === 0 ? (
           <div style={{ color: 'var(--color-text-2)', fontSize: 13, fontStyle: 'italic' }}>
             Nenhum alinhamento ou débito técnico registrado no momento.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {state.alignments.map((a, i) => (
-              <div key={a.id} style={{ display: 'flex', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderLeft: '4px solid var(--color-blue)', borderRadius: 6, fontSize: 13, color: 'var(--color-text)', lineHeight: 1.5 }}>
-                <span style={{ color: 'var(--color-blue)', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                <span>{a.text || 'Não descrito'}</span>
+              <div key={a.id} style={{ display: 'flex', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderLeft: '3px solid var(--color-border)', borderRadius: 6, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', flexShrink: 0, paddingTop: 1 }}>{i + 1}.</span>
+                <span style={{ fontSize: 13, color: 'var(--color-text)' }}>{a.text || 'Não descrito'}</span>
               </div>
             ))}
           </div>
@@ -631,24 +709,32 @@ export function OverviewTab() {
       </Card>
 
       {/* ── Premissas + Plano de Ação ─────────────────────────────────────── */}
-      <Card title="📌 Premissas e Plano de Ação" borderLeftColor="var(--color-amber)">
+      <Card title="Premissas e Plano de Ação" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5v5M4.5 6.5h6M5 7v1.5a2.5 2.5 0 005 0V7M7.5 9.5V13.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
               Premissas do Ciclo de Testes
             </div>
             {state.notes.premises ? (
-              <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.premises}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {state.notes.premises.split('\n').filter(Boolean).map((line, i) => (
+                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid #E24B4A', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
+                ))}
+              </div>
             ) : (
               <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
             )}
           </div>
-          <div style={{ borderLeft: '1px solid var(--color-border)', paddingLeft: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
               Plano de Ação e Gatilhos
             </div>
             {state.notes.actionPlan ? (
-              <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{state.notes.actionPlan}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {state.notes.actionPlan.split('\n').filter(Boolean).map((line, i) => (
+                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid #378ADD', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
+                ))}
+              </div>
             ) : (
               <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum plano de ação registrado.</div>
             )}
@@ -693,10 +779,20 @@ function KpiCard({ label, value, sub, valueColor, borderColor }: {
   )
 }
 
-function Card({ title, children, borderLeftColor }: { title: string; children: React.ReactNode; borderLeftColor?: string }) {
+function Card({ title, icon, pill, children }: { title: string; icon?: React.ReactNode; pill?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderLeft: borderLeftColor ? `4px solid ${borderLeftColor}` : undefined, borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)', fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>{title}</div>
+    <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {icon && <span style={{ color: 'var(--color-text-2)', display: 'flex', flexShrink: 0 }}>{icon}</span>}
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{title}</span>
+        </div>
+        {pill && (
+          <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)', flexShrink: 0 }}>
+            {pill}
+          </span>
+        )}
+      </div>
       <div style={{ padding: '12px 16px' }}>{children}</div>
     </div>
   )
