@@ -16,19 +16,18 @@ type SortDir = 'asc' | 'desc'
 const SEV_ORDER: Record<string, number> = { Crítica: 0, Alta: 1, Média: 2, Baixa: 3 }
 const STATUS_ORDER: Record<string, number> = { Falhou: 0, Aberto: 1, 'Em Andamento': 2, Resolvido: 3 }
 
-const SEV_COLOR: Record<string, string> = {
-  Crítica: '#ef4444',
-  Alta: '#f97316',
-  Média: '#f59e0b',
-  Baixa: '#10b981',
+const SEV_STYLE: Record<string, { bg: string; color: string; border: string }> = {
+  Baixa:   { bg: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' },
+  Média:   { bg: '#FAEEDA', color: '#854F0B', border: '0.5px solid #FAC775' },
+  Alta:    { bg: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' },
+  Crítica: { bg: '#A32D2D', color: '#fff',    border: 'none' },
 }
 
-const STACK_COLOR: Record<string, string> = {
-  Front: '#3b82f6',
-  BFF: '#8b5cf6',
-  Back: '#10b981',
-  Mobile: '#f59e0b',
-  Infra: '#6b7280',
+const STATUS_TEXT_COLOR: Record<string, string> = {
+  Aberto:        '#A32D2D',
+  'Em Andamento': '#854F0B',
+  Falhou:        '#A32D2D',
+  Resolvido:     '#3B6D11',
 }
 
 export function BugsTab() {
@@ -96,10 +95,19 @@ export function BugsTab() {
     setResolveModal(null)
   }
 
-  function badge(text: string, color: string) {
+  function sevBadge(severity: string) {
+    const s = SEV_STYLE[severity] ?? { bg: 'var(--color-bg)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
     return (
-      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: `${color}22`, color, border: `1px solid ${color}44`, whiteSpace: 'nowrap' }}>
-        {text}
+      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 500, background: s.bg, color: s.color, border: s.border, whiteSpace: 'nowrap' }}>
+        {severity || '—'}
+      </span>
+    )
+  }
+
+  function stackBadge(stack: string) {
+    return (
+      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 500, background: 'var(--color-bg)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)', whiteSpace: 'nowrap' }}>
+        {stack || '—'}
       </span>
     )
   }
@@ -114,7 +122,7 @@ export function BugsTab() {
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
         <FilterGroup label="Atribuição" field="assignee" value={filters.assignee} options={assignees} onChange={(v) => setFilters((f) => ({ ...f, assignee: v }))} />
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
+          <span style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 400 }}>{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
           {hasFilters && (
             <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: '#fee2e2', color: 'var(--color-red)', cursor: 'pointer' }}>
               ✕ Limpar
@@ -149,9 +157,6 @@ export function BugsTab() {
             ) : (
               sorted.map(({ b, i }) => {
                 const isResolved = b.status === 'Resolvido'
-                const sevColor = SEV_COLOR[b.severity] ?? '#64748b'
-                const stackColor = STACK_COLOR[b.stack] ?? '#64748b'
-                const statusColor = isResolved ? 'var(--color-green)' : b.status === 'Em Andamento' ? 'var(--color-yellow)' : b.status === 'Falhou' ? '#f97316' : 'var(--color-red)'
 
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: isResolved ? '#f0fdf4' : 'var(--color-surface)', opacity: isResolved ? 0.85 : 1 }}>
@@ -170,8 +175,8 @@ export function BugsTab() {
                         <div style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{b.feature || '—'}</div>
                       )}
                     </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{badge(b.stack || '—', stackColor)}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{badge(b.severity || '—', sevColor)}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{stackBadge(b.stack || '—')}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{sevBadge(b.severity)}</td>
                     <td style={{ padding: '10px 12px' }}>
                       <select
                         value={b.status}
@@ -188,14 +193,15 @@ export function BugsTab() {
                         }}
                         style={{
                           fontSize: 12,
-                          fontWeight: 700,
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          border: `1px solid ${statusColor}44`,
-                          background: `${statusColor}11`,
-                          color: statusColor,
+                          fontWeight: 500,
+                          padding: '4px 10px',
+                          borderRadius: 8,
+                          border: '0.5px solid var(--color-border)',
+                          background: 'var(--color-surface)',
+                          color: STATUS_TEXT_COLOR[b.status] ?? 'var(--color-text-2)',
                           cursor: 'pointer',
                           fontFamily: 'var(--font-family-sans)',
+                          width: 138,
                         }}
                       >
                         <option value="Aberto">Aberto</option>
@@ -214,9 +220,9 @@ export function BugsTab() {
                       />
                     </td>
                     <td style={{ padding: '10px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setEditingBug(editingBug === i ? null : i)} style={iconBtn} title="Editar">✏️</button>
-                      <button onClick={() => duplicateBug(i)} style={{ ...iconBtn, marginLeft: 4 }} title="Duplicar">📑</button>
-                      <button onClick={() => setDeleteTarget({ index: i, desc: b.desc || 'Sem descrição' })} style={{ ...iconBtn, marginLeft: 4, color: 'var(--color-red)' }} title="Remover">🗑️</button>
+                      <BugActionBtn onClick={() => setEditingBug(editingBug === i ? null : i)} title="Editar"><IcoEdit /></BugActionBtn>
+                      <BugActionBtn onClick={() => duplicateBug(i)} title="Duplicar"><IcoDuplicate /></BugActionBtn>
+                      <BugActionBtn onClick={() => setDeleteTarget({ index: i, desc: b.desc || 'Sem descrição' })} title="Remover" danger><IcoTrash /></BugActionBtn>
                     </td>
                   </tr>
                 )
@@ -381,9 +387,56 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
+// ─── SVG icons ────────────────────────────────────────────────────────────────
+
+function IcoEdit() {
+  return <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.5 2.5l2 2L5 12H3v-2L10.5 2.5z"/></svg>
+}
+function IcoDuplicate() {
+  return <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 10H2a1 1 0 01-1-1V2a1 1 0 011-1h7a1 1 0 011 1v1"/></svg>
+}
+function IcoTrash() {
+  return <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/></svg>
+}
+function IcoSort() {
+  return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><path d="M3 4l2-2 2 2M3 6l2 2 2-2"/></svg>
+}
+function IcoSortAsc() {
+  return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><path d="M5 8V2M2 5l3-3 3 3"/></svg>
+}
+function IcoSortDesc() {
+  return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, verticalAlign: 'middle' }}><path d="M5 2v6M2 5l3 3 3-3"/></svg>
+}
+
+function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov ? (danger ? '#FCEBEB' : 'var(--color-bg)') : 'none',
+        border: 'none',
+        padding: 6,
+        borderRadius: 6,
+        cursor: 'pointer',
+        color: hov && danger ? '#A32D2D' : 'var(--color-text-2)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
       {children}
     </th>
   )
@@ -394,9 +447,10 @@ function ThSort({ children, field, current, dir, onSort }: { children: React.Rea
   return (
     <th
       onClick={() => onSort(field)}
-      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: active ? 'var(--color-blue)' : 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? '#185FA5' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
     >
-      {children}{active ? (dir === 'asc' ? ' ▲' : ' ▼') : ' ⇅'}
+      {children}
+      {active ? (dir === 'asc' ? <IcoSortAsc /> : <IcoSortDesc />) : <IcoSort />}
     </th>
   )
 }
@@ -404,23 +458,23 @@ function ThSort({ children, field, current, dir, onSort }: { children: React.Rea
 function FilterGroup({ label, value, options, onChange }: { label: string; field: string; value: string; options: string[]; onChange: (v: string) => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{label}</span>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {options.map((opt) => (
           <button
             key={opt}
             onClick={() => onChange(opt)}
             style={{
-              fontSize: 12,
-              fontWeight: 600,
+              fontSize: 11,
+              fontWeight: 500,
               padding: '3px 10px',
               borderRadius: 20,
-              border: '1px solid',
+              border: value === opt ? '0.5px solid #B5D4F4' : '0.5px solid var(--color-border)',
               cursor: 'pointer',
-              borderColor: value === opt ? 'var(--color-blue)' : 'var(--color-border-md)',
-              background: value === opt ? 'var(--color-blue)' : 'transparent',
-              color: value === opt ? '#fff' : 'var(--color-text-2)',
+              background: value === opt ? '#E6F1FB' : 'var(--color-bg)',
+              color: value === opt ? '#185FA5' : 'var(--color-text-2)',
               fontFamily: 'var(--font-family-sans)',
+              transition: 'background 0.15s',
             }}
           >
             {opt}
@@ -432,12 +486,12 @@ function FilterGroup({ label, value, options, onChange }: { label: string; field
 }
 
 const btnPrimary: React.CSSProperties = {
-  padding: '7px 18px',
-  background: 'var(--color-blue)',
+  padding: '7px 16px',
+  background: '#185FA5',
   color: '#fff',
   border: 'none',
   borderRadius: 8,
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
@@ -468,16 +522,6 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const iconBtn: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 6,
-  padding: '4px 8px',
-  fontSize: 13,
-  cursor: 'pointer',
-  color: 'var(--color-text-2)',
-  fontFamily: 'var(--font-family-sans)',
-}
 
 const inputSm: React.CSSProperties = {
   width: '100%',

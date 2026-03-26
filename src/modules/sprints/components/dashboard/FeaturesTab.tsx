@@ -22,10 +22,109 @@ function dateToDayKey(dateStr: string, startDate: string, sprintDays: number, ex
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  Pendente: 'var(--color-blue)',
-  Concluído: 'var(--color-green)',
-  Falhou: 'var(--color-red)',
-  Bloqueado: 'var(--color-yellow)',
+  Pendente: '#B4B2A9',
+  Concluído: '#639922',
+  Falhou: '#E24B4A',
+  Bloqueado: '#BA7517',
+}
+
+const STATUS_TEXT_COLORS: Record<string, string> = {
+  Pendente: 'var(--color-text-2)',
+  Concluído: '#3B6D11',
+  Falhou: '#A32D2D',
+  Bloqueado: '#854F0B',
+}
+
+const COMPLEXITY_COLORS: Record<string, string> = {
+  Baixa: '#639922',
+  Moderada: '#BA7517',
+  Alta: '#E24B4A',
+}
+
+// ─── SVG icon components ──────────────────────────────────────────────────────
+
+function IconExportCSV() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 11v1.5A1.5 1.5 0 003.5 14h8A1.5 1.5 0 0013 12.5V11"/><path d="M7.5 1v8m0 0L5 6.5m2.5 2.5L10 6.5"/>
+    </svg>
+  )
+}
+
+function IconChart() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="8" width="3" height="6" rx="1"/><rect x="6" y="4" width="3" height="10" rx="1"/><rect x="11" y="1" width="3" height="13" rx="1"/>
+    </svg>
+  )
+}
+
+function IconEdit() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.5 2.5l2 2L5 12H3v-2L10.5 2.5z"/>
+    </svg>
+  )
+}
+
+function IconDuplicate() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 10H2a1 1 0 01-1-1V2a1 1 0 011-1h7a1 1 0 011 1v1"/>
+    </svg>
+  )
+}
+
+function IconTrash() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
+    </svg>
+  )
+}
+
+function IconClone() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="4" width="9" height="9" rx="1.5"/><path d="M3 10H2a1 1 0 01-1-1V2a1 1 0 011-1h7a1 1 0 011 1v1"/>
+    </svg>
+  )
+}
+
+function IconAttach() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 6.5L6.5 12A3.5 3.5 0 011.5 7L7 1.5A2 2 0 0110 4.5L5 9.5A.5.5 0 014 9l4.5-4.5"/>
+    </svg>
+  )
+}
+
+// Ghost action button with hover
+function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov ? (danger ? '#FCEBEB' : 'var(--color-bg)') : 'none',
+        border: 'none',
+        padding: 6,
+        borderRadius: 6,
+        cursor: 'pointer',
+        color: hov && danger ? '#A32D2D' : 'var(--color-text-2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </button>
+  )
 }
 
 // ─── FeaturesTab ─────────────────────────────────────────────────────────────
@@ -60,16 +159,18 @@ export function FeaturesTab() {
                 key={suite.id}
                 onClick={() => toggleSuiteFilter(String(suite.id))}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '5px 12px', borderRadius: 20,
-                  border: `2px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
-                  background: active ? 'var(--color-blue)' : 'var(--color-bg)',
-                  color: active ? '#fff' : 'var(--color-text-2)',
-                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '3px 10px', borderRadius: 20,
+                  border: active ? '0.5px solid #B5D4F4' : '0.5px solid var(--color-border)',
+                  background: active ? '#E6F1FB' : 'var(--color-bg)',
+                  color: active ? '#185FA5' : 'var(--color-text-2)',
+                  fontWeight: 500, fontSize: 11, cursor: 'pointer',
+                  transition: 'background 0.15s',
+                  fontFamily: 'var(--font-family-sans)',
                 }}
               >
                 {suite.name || 'Suite'}
-                <span style={{ fontSize: 10, opacity: 0.8 }}>{count}f</span>
+                <span style={{ fontSize: 11 }}>{count}f</span>
               </button>
             )
           })}
@@ -208,8 +309,8 @@ function SuiteAccordion({
         )}
 
         {blockedCount > 0 && (
-          <span style={{ fontSize: 11, background: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
-            🛑 {blockedCount} bloqueada(s)
+          <span style={{ fontSize: 10, fontWeight: 500, background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1', padding: '2px 8px', borderRadius: 10 }}>
+            {blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
           </span>
         )}
 
@@ -217,33 +318,25 @@ function SuiteAccordion({
           {suiteFeatures.length} func. · {totalTests} testes · {totalExec} executados
         </span>
 
-        <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => {
-              const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId))
-              exportSuiteAsCSV(suiteName, sFeatures)
-            }}
-            style={iconBtn}
+        <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
+          <ActionBtn
+            onClick={() => { const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId)); exportSuiteAsCSV(suiteName, sFeatures) }}
             title="Exportar casos desta suite para reimportação (CSV)"
-          >📄</button>
-          <button
+          ><IconExportCSV /></ActionBtn>
+          <ActionBtn
             onClick={() => exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })}
-            style={iconBtn}
             title="Exportar cobertura desta suite (CSV)"
-          >📊</button>
-          <button
+          ><IconChart /></ActionBtn>
+          <ActionBtn
             onClick={() => { setNameVal(suiteName); setEditingName(true) }}
-            style={iconBtn}
             title="Renomear suite"
-          >✏️</button>
-          <button
-            onClick={onDuplicate}
-            style={iconBtn}
-            title="Duplicar suite (com todas as funcionalidades)"
-          >⧉</button>
-          <button onClick={() => setConfirmRemove(true)} style={{ ...iconBtn, color: 'var(--color-red)' }} title="Excluir suite">
-            🗑
-          </button>
+          ><IconEdit /></ActionBtn>
+          <ActionBtn onClick={onDuplicate} title="Duplicar suite (com todas as funcionalidades)">
+            <IconDuplicate />
+          </ActionBtn>
+          <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir suite" danger>
+            <IconTrash />
+          </ActionBtn>
         </div>
       </div>
 
@@ -397,7 +490,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
           >
             {feature.name || 'Funcionalidade sem nome'}
           </span>
-          {isBlocked && <span>🛑</span>}
+          {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, display: 'inline-block' }} />}
           {isCancelled && <span style={{ fontSize: 11, background: '#e5e7eb', color: '#6b7280', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
         </span>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
@@ -417,16 +510,6 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 value={feature.name}
                 onChange={(e) => updateFeature(featureIndex, 'name', e.target.value)}
                 placeholder="Ex: Tela de Login"
-                style={inputSm}
-              />
-            </div>
-            <div style={{ width: 150 }}>
-              <label style={labelSm}>Carga Massiva (Qtd)</label>
-              <input
-                type="number"
-                min={0}
-                value={feature.manualTests || 0}
-                onChange={(e) => updateFeature(featureIndex, 'manualTests', Number(e.target.value))}
                 style={inputSm}
               />
             </div>
@@ -453,9 +536,9 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   color: isBlocked ? 'var(--color-red)' : isCancelled ? 'var(--color-text-2)' : 'var(--color-green)',
                 }}
               >
-                <option value="Ativa">🟢 Ativa</option>
-                <option value="Bloqueada">🔴 Bloqueada</option>
-                <option value="Cancelada">⛔ Cancelada</option>
+                <option value="Ativa">Ativa</option>
+                <option value="Bloqueada">Bloqueada</option>
+                <option value="Cancelada">Cancelada</option>
               </select>
             </div>
             {(isBlocked || isCancelled) && (
@@ -470,14 +553,14 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 />
               </div>
             )}
-            <button onClick={() => setConfirmRemove(true)} style={{ ...iconBtn, color: 'var(--color-red)', height: 36 }}>
-              🗑 Excluir
-            </button>
+            <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir funcionalidade" danger>
+              <IconTrash />
+            </ActionBtn>
           </div>
 
           {/* Mockup */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
-            <label style={{ ...labelSm, flexShrink: 0, margin: 0 }}>📎 Imagem de Referência</label>
+            <label style={{ ...labelSm, flexShrink: 0, margin: 0 }}>Imagem de Referência</label>
             {feature.mockupImage ? (
               <>
                 <img
@@ -494,8 +577,9 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 </button>
               </>
             ) : (
-              <label style={{ fontSize: 12, color: 'var(--color-blue)', cursor: 'pointer', fontWeight: 600, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '4px 12px', borderRadius: 6 }}>
-                📸 Anexar Mockup
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--color-text-2)', cursor: 'pointer', fontWeight: 500, background: 'none', border: '0.5px solid var(--color-border)', padding: '5px 12px', borderRadius: 8, fontFamily: 'var(--font-family-sans)', transition: 'background 0.15s' }}>
+                <IconAttach />
+                Anexar Mockup
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleMockupUpload} />
               </label>
             )}
@@ -514,11 +598,11 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
               onChange={(e) => updateFeature(featureIndex, 'activeFilter', e.target.value)}
               style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', background: 'var(--color-bg)', color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)' }}
             >
-              <option value="Todos">👀 Todos</option>
-              <option value="Pendente">⏳ Pendentes</option>
-              <option value="Concluído">✅ Concluídos</option>
-              <option value="Falhou">❌ Falharam</option>
-              <option value="Bloqueado">🚧 Bloqueados</option>
+              <option value="Todos">Todos</option>
+              <option value="Pendente">Pendentes</option>
+              <option value="Concluído">Concluídos</option>
+              <option value="Falhou">Falharam</option>
+              <option value="Bloqueado">Bloqueados</option>
             </select>
           </div>
         </div>
@@ -744,11 +828,19 @@ function TestCaseCard({
         <select
           value={testCase.complexity}
           onChange={(e) => updateTestCase(featureIndex, caseIndex, 'complexity', e.target.value as TestCaseComplexity)}
-          style={{ ...inputSm, width: 130 }}
+          style={{
+            ...inputSm,
+            width: 130,
+            color: COMPLEXITY_COLORS[testCase.complexity] ?? 'var(--color-text-2)',
+            fontWeight: 500,
+            fontSize: 12,
+            border: '0.5px solid var(--color-border)',
+            padding: '4px 10px',
+          }}
         >
-          <option value="Baixa">🟢 Baixa</option>
-          <option value="Moderada">🟡 Moderada</option>
-          <option value="Alta">🔴 Alta</option>
+          <option value="Baixa">Baixa</option>
+          <option value="Moderada">Moderada</option>
+          <option value="Alta">Alta</option>
         </select>
         <select
           value={testCase.status}
@@ -756,14 +848,17 @@ function TestCaseCard({
           style={{
             ...inputSm,
             width: 140,
-            color: STATUS_COLORS[testCase.status] ?? 'var(--color-text)',
-            fontWeight: 700,
+            color: STATUS_TEXT_COLORS[testCase.status] ?? 'var(--color-text-2)',
+            fontWeight: 500,
+            fontSize: 12,
+            border: '0.5px solid var(--color-border)',
+            padding: '4px 10px',
           }}
         >
-          <option value="Pendente">⏳ Pendente</option>
-          <option value="Concluído">✅ Concluído</option>
-          <option value="Falhou">❌ Falhou</option>
-          <option value="Bloqueado">🚧 Bloqueado</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Concluído">Concluído</option>
+          <option value="Falhou">Falhou</option>
+          <option value="Bloqueado">Bloqueado</option>
         </select>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <input
@@ -781,9 +876,9 @@ function TestCaseCard({
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <button onClick={() => duplicateTestCase(featureIndex, caseIndex)} style={iconBtn} title="Clonar">🔁</button>
-          <button onClick={() => setConfirmRemove(true)} style={{ ...iconBtn, color: 'var(--color-red)' }} title="Remover">🗑️</button>
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <ActionBtn onClick={() => duplicateTestCase(featureIndex, caseIndex)} title="Clonar caso de teste"><IconClone /></ActionBtn>
+          <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger><IconTrash /></ActionBtn>
         </div>
       </div>
 
@@ -883,11 +978,11 @@ function TestCaseCard({
 const labelSm: React.CSSProperties = {
   display: 'block',
   fontSize: 11,
-  fontWeight: 700,
-  color: 'var(--color-text-3)',
+  fontWeight: 500,
+  color: 'var(--color-text-2)',
   textTransform: 'uppercase',
-  letterSpacing: '0.4px',
-  marginBottom: 4,
+  letterSpacing: '0.06em',
+  marginBottom: 6,
 }
 
 const inputSm: React.CSSProperties = {
@@ -915,12 +1010,13 @@ const btnOutline: React.CSSProperties = {
 }
 
 const iconBtn: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid var(--color-border-md)',
+  background: 'none',
+  border: 'none',
+  padding: 6,
   borderRadius: 6,
-  padding: '4px 8px',
-  fontSize: 13,
   cursor: 'pointer',
   color: 'var(--color-text-2)',
-  fontFamily: 'var(--font-family-sans)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }
