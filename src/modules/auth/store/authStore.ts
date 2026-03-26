@@ -8,6 +8,7 @@ export interface Profile {
   id: string
   email: string
   display_name: string
+  global_role: 'admin' | 'user'
 }
 
 interface AuthState {
@@ -49,7 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 async function loadProfile(userId: string) {
   const { data } = await supabase
     .from('profiles')
-    .select('id, email, display_name')
+    .select('id, email, display_name, global_role')
     .eq('id', userId)
     .single()
   if (data) {
