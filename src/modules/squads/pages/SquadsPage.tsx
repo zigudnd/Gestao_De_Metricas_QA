@@ -1,4 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (e && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message)
+  return String(e)
+}
 import {
   listMySquads,
   createSquad,
@@ -69,7 +75,7 @@ export function SquadsPage() {
         setActiveSquad(data[0])
       }
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     } finally {
       setLoading(false)
     }
@@ -105,7 +111,7 @@ export function SquadsPage() {
       setNewName('')
       setShowCreate(false)
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     } finally {
       setCreating(false)
     }
@@ -126,7 +132,7 @@ export function SquadsPage() {
       }
       setEditingSquad(null)
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     }
   }
 
@@ -142,7 +148,7 @@ export function SquadsPage() {
         setActiveSquad(updated[0] ?? null)
       }
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     } finally {
       setDeleteSquadTarget(null)
     }
@@ -176,7 +182,7 @@ export function SquadsPage() {
         prev.map((m) => m.id === member.id ? { ...m, role } : m)
       )
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     }
   }
 
@@ -188,7 +194,7 @@ export function SquadsPage() {
       await removeMember(deleteMemberTarget.id)
       setMembers((prev) => prev.filter((m) => m.id !== deleteMemberTarget.id))
     } catch (e) {
-      setError(String(e))
+      setError(errMsg(e))
     } finally {
       setDeleteMemberTarget(null)
     }

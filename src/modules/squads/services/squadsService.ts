@@ -38,21 +38,14 @@ export async function createSquad(name: string): Promise<Squad> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Não autenticado')
 
-  const { data, error } = await supabase
-    .from('squads')
-    .insert({ name, created_by: user.id })
-    .select()
-    .single()
-  if (error) throw error
-
-  // Criador entra automaticamente como qa_lead
-  await supabase.from('squad_members').insert({
-    squad_id: data.id,
-    user_id: user.id,
-    role: 'qa_lead',
+  // Usa RPC para inserir squad + membro atomicamente no servidor,
+  // evitando problema de RLS no RETURNING antes de o membro existir.
+  const { data, error } = await supabase.rpc('create_squad_with_lead', {
+    squad_name: name,
+    owner_id: user.id,
   })
-
-  return data
+  if (error) throw new Error(error.message)
+  return data as Squad
 }
 
 export async function updateSquadName(squadId: string, name: string): Promise<void> {
