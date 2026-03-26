@@ -52,18 +52,7 @@ export function Topbar() {
   const isDashboard = location.pathname.startsWith('/sprints/') && !!params.sprintId
 
   return (
-    <header
-      style={{
-        height: 48,
-        background: 'var(--color-surface)',
-        borderBottom: '1px solid var(--color-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        flexShrink: 0,
-      }}
-    >
+    <header style={headerStyle}>
       {/* Breadcrumb */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-2)' }}>
         <span
@@ -76,87 +65,90 @@ export function Topbar() {
         </span>
         {isDashboard && sprintTitle && (
           <>
-            <span style={{ opacity: 0.4 }}>/</span>
-            <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{sprintTitle}</span>
+            <span style={{ opacity: 0.35 }}>/</span>
+            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{sprintTitle}</span>
           </>
         )}
       </nav>
 
       {/* Ações contextuais */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {isDashboard && (
-          <>
-            <button onClick={() => navigate('/sprints')} style={btnOutline}>
-              ← Voltar
-            </button>
-            <button
-              onClick={() => { exportToImage() }}
-              style={btnOutline}
-            >
-              📸 Exportar Dashboard
-            </button>
-            <button
+      {isDashboard && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+
+          {/* 1. Voltar — ghost */}
+          <BtnGhost onClick={() => navigate('/sprints')}>← Voltar</BtnGhost>
+
+          {/* Separador */}
+          <div style={{ width: 1, height: 20, background: 'var(--color-border)', opacity: 0.5, margin: '0 4px' }} />
+
+          {/* 2. Exportar dashboard — filled-secondary */}
+          <BtnSecondary onClick={() => exportToImage()}>↑ Gerar relatório da sprint</BtnSecondary>
+
+          {/* 3. JSON btn-group */}
+          <div style={btnGroupWrapper}>
+            <BtnGroupItem
               onClick={() => sprintState && exportJSON(sprintState)}
-              style={btnOutline}
+              title="Exportar JSON"
+              position="left"
             >
-              💾 Exportar JSON
-            </button>
-            <label title="Importar sprint de arquivo JSON" style={{ ...btnOutline, display: 'inline-flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
-              📥 Importar JSON
-              <input ref={importInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
-            </label>
+              ↑ Exportar
+            </BtnGroupItem>
+            <BtnGroupItem
+              as="label"
+              title="Importar JSON"
+              position="right"
+            >
+              ↓ Importar
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={handleImport}
+              />
+            </BtnGroupItem>
+          </div>
 
-            {isConcluida ? (
-              <button
-                onClick={handleReativar}
-                style={btnOutline}
-                title="Reativar esta sprint"
-              >
-                ↩ Reativar Sprint
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowConfirmConcluir(true)}
-                style={btnGreen}
-                title="Marcar esta sprint como concluída"
-              >
-                ✅ Concluir Sprint
-              </button>
-            )}
+          {/* 4. Termo de conclusão — outline discreto */}
+          <BtnOutlineSubtle onClick={() => setShowTermo(true)}>
+            📋 Termo de conclusão
+          </BtnOutlineSubtle>
 
-            <button onClick={() => setShowTermo(true)} style={btnPrimary}>
-              📋 Termo de Conclusão
-            </button>
-          </>
-        )}
-      </div>
+          {/* 5. Concluir / Reativar */}
+          {isConcluida ? (
+            <BtnOutlineSubtle onClick={handleReativar} title="Reativar esta sprint">
+              ↩ Reativar sprint
+            </BtnOutlineSubtle>
+          ) : (
+            <BtnFilledPrimary onClick={() => setShowConfirmConcluir(true)} title="Marcar esta sprint como concluída">
+              ✓ Concluir sprint
+            </BtnFilledPrimary>
+          )}
+
+        </div>
+      )}
 
       {showTermo && <TermoConclusaoModal onClose={() => setShowTermo(false)} />}
 
-      {/* Modal inline: confirmar conclusão */}
+      {/* Modal: confirmar conclusão */}
       {showConfirmConcluir && (
         <div
           onClick={(e) => e.target === e.currentTarget && setShowConfirmConcluir(false)}
           style={{
-            position: 'fixed',
-            inset: 0,
+            position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 1000,
           }}
         >
-          <div
-            style={{
-              background: 'var(--color-surface)',
-              borderRadius: 14,
-              padding: 24,
-              width: '100%',
-              maxWidth: 420,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-          >
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: 14,
+            padding: 24,
+            width: '100%',
+            maxWidth: 420,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
                 Concluir Sprint
@@ -174,26 +166,13 @@ export function Topbar() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button
                 onClick={() => setShowConfirmConcluir(false)}
-                style={{
-                  padding: '7px 16px',
-                  background: 'transparent',
-                  color: 'var(--color-text)',
-                  border: '1px solid var(--color-border-md)',
-                  borderRadius: 8,
-                  fontWeight: 500,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-family-sans)',
-                }}
+                style={modalBtnCancel}
               >
                 Cancelar
               </button>
-              <button
-                onClick={handleConcluir}
-                style={btnGreen}
-              >
-                ✅ Confirmar Conclusão
-              </button>
+              <BtnFilledPrimary onClick={handleConcluir}>
+                ✓ Confirmar conclusão
+              </BtnFilledPrimary>
             </div>
           </div>
         </div>
@@ -202,37 +181,162 @@ export function Topbar() {
   )
 }
 
-const btnPrimary: React.CSSProperties = {
-  padding: '6px 14px',
-  background: 'var(--color-blue)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 7,
-  fontWeight: 600,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
+// ─── Micro-components ─────────────────────────────────────────────────────────
+
+function BtnGhost({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...btnBase,
+        background: hovered ? 'var(--color-bg)' : 'transparent',
+        color: 'var(--color-text-2)',
+        border: 'none',
+      }}
+    >
+      {children}
+    </button>
+  )
 }
 
-const btnOutline: React.CSSProperties = {
-  padding: '6px 14px',
+function BtnSecondary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...btnBase,
+        background: hovered ? 'var(--color-border)' : 'var(--color-bg)',
+        color: 'var(--color-text)',
+        border: '0.5px solid var(--color-border)',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function BtnOutlineSubtle({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...btnBase,
+        background: hovered ? 'var(--color-bg)' : 'transparent',
+        color: 'var(--color-text-2)',
+        border: '0.5px solid var(--color-border)',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function BtnFilledPrimary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...btnBase,
+        background: hovered ? '#1a6bbf' : '#185FA5',
+        color: '#fff',
+        border: 'none',
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+type BtnGroupItemProps = React.PropsWithChildren<{
+  onClick?: () => void
+  title?: string
+  position: 'left' | 'right'
+  as?: 'button' | 'label'
+}>
+
+function BtnGroupItem({ children, onClick, title, position, as: Tag = 'button' }: BtnGroupItemProps) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <Tag
+      onClick={onClick}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...btnBase,
+        background: hovered ? 'var(--color-border)' : 'var(--color-bg)',
+        color: 'var(--color-text)',
+        border: 'none',
+        ...(position === 'left'
+          ? { borderRadius: '8px 0 0 8px', borderRight: '0.5px solid var(--color-border)' }
+          : { borderRadius: '0 8px 8px 0' }),
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        userSelect: 'none' as const,
+      }}
+    >
+      {children}
+    </Tag>
+  )
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const headerStyle: React.CSSProperties = {
+  height: 52,
   background: 'var(--color-surface)',
+  borderBottom: '1px solid var(--color-border)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0 24px',
+  flexShrink: 0,
+}
+
+const btnBase: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 8,
+  fontSize: 13,
+  fontWeight: 500,
+  fontFamily: 'var(--font-family-sans)',
+  cursor: 'pointer',
+  lineHeight: 1.4,
+  whiteSpace: 'nowrap',
+  transition: 'background 0.12s',
+}
+
+const btnGroupWrapper: React.CSSProperties = {
+  display: 'inline-flex',
+  border: '0.5px solid var(--color-border)',
+  borderRadius: 8,
+  overflow: 'hidden',
+}
+
+const modalBtnCancel: React.CSSProperties = {
+  padding: '7px 16px',
+  background: 'transparent',
   color: 'var(--color-text)',
   border: '1px solid var(--color-border-md)',
-  borderRadius: 7,
+  borderRadius: 8,
   fontWeight: 500,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-}
-
-const btnGreen: React.CSSProperties = {
-  padding: '6px 14px',
-  background: 'var(--color-green)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 7,
-  fontWeight: 600,
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',

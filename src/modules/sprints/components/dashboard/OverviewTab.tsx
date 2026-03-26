@@ -151,6 +151,18 @@ export function OverviewTab() {
   }))
 
   // ── Lists ─────────────────────────────────────────────────────────────────
+  type BlockedItem = { id: number; name: string; suiteId: number; blockReason: string; stripe: 'blocked' | 'pending' }
+  const blockedItems: BlockedItem[] = [
+    ...filtered
+      .filter((f) => f.status === 'Bloqueada')
+      .map((f): BlockedItem => ({ id: f.id, name: f.name, suiteId: f.suiteId, blockReason: f.blockReason, stripe: 'blocked' })),
+    ...filtered
+      .filter((f) => f.status !== 'Bloqueada' && (f.cases ?? []).some((c) => c.status === 'Bloqueado'))
+      .map((f): BlockedItem => {
+        const n = (f.cases ?? []).filter((c) => c.status === 'Bloqueado').length
+        return { id: f.id, name: f.name, suiteId: f.suiteId, blockReason: `${n} caso${n > 1 ? 's' : ''} bloqueado${n > 1 ? 's' : ''}`, stripe: 'pending' }
+      }),
+  ]
   const blockedFeatures = filtered.filter((f) => f.status === 'Bloqueada')
   const failedScenarios: { featureName: string; scenarioName: string }[] = []
   filtered.forEach((f) => {
@@ -528,21 +540,54 @@ export function OverviewTab() {
 
       {/* ── Bloqueios de Execução + Falhas ────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <Section title="Bloqueios de Execução" icon="⛔" count={blockedFeatures.length}>
-          {blockedFeatures.length === 0 ? <EmptyOk label="Nenhum impedimento no momento." /> : (
-            blockedFeatures.map((f) => (
-              <div key={f.id} style={alertCard('#fef2f2', '#fecaca', '#ef4444')}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <strong style={{ color: '#991b1b', fontSize: 14 }}>🖥️ {f.name || 'Sem nome'}</strong>
-                  <Badge label="Bloqueada" color="#ef4444" />
-                </div>
-                <p style={{ fontSize: 13, color: '#7f1d1d', background: '#fee2e2', padding: '8px 10px', borderRadius: 6, margin: 0, lineHeight: 1.5 }}>
-                  📌 <strong>Motivo:</strong> {f.blockReason || 'Não informado.'}
-                </p>
-              </div>
-            ))
+        {/* Bloqueios de Execução — novo padrão visual */}
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '18px 20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" stroke="#E24B4A" strokeWidth="1.5" />
+                <text x="8" y="12" textAnchor="middle" fontSize="10" fontWeight="700" fill="#E24B4A">!</text>
+              </svg>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Bloqueios de execução</span>
+            </div>
+            <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)' }}>
+              {blockedItems.length} bloqueio{blockedItems.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Items */}
+          {blockedItems.length === 0 ? (
+            <EmptyOk label="Nenhum impedimento no momento." />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {blockedItems.map((item) => {
+                const suiteName = suites.find((s) => String(s.id) === String(item.suiteId))?.name
+                const stripeColor = item.stripe === 'blocked' ? '#E24B4A' : '#BA7517'
+                return (
+                  <div key={`${item.stripe}-${item.id}`} style={{ display: 'flex', border: '0.5px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+                    <div style={{ width: 3, flexShrink: 0, background: stripeColor, alignSelf: 'stretch' }} />
+                    <div style={{ flex: 1, padding: '11px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>
+                          {item.name || 'Sem nome'}
+                        </span>
+                        {suiteName && (
+                          <span style={{ fontSize: 10, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, padding: '1px 7px', color: 'var(--color-text-2)', flexShrink: 0 }}>
+                            {suiteName}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: item.blockReason ? 'var(--color-text-2)' : 'var(--color-text-3)', marginTop: 3, fontStyle: item.blockReason ? 'normal' : 'italic' }}>
+                        {item.blockReason || 'Motivo não informado'}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
-        </Section>
+        </div>
 
         <Section title="Cenários com Falha" icon="❌" count={failedScenarios.length}>
           {failedScenarios.length === 0 ? <EmptyOk label="Nenhum cenário com falha!" /> : (
