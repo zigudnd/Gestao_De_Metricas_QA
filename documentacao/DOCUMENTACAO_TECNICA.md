@@ -1,5 +1,16 @@
-# Documentação Técnica — QA Dashboard
-**Versão:** 2.1 | **Atualizado em:** 2026-03-15
+# Documentação Técnica — QA Dashboard (Versão Legada)
+
+> **ATENÇÃO — DOCUMENTO LEGADO**
+> Este arquivo descreve a versão anterior do sistema, construída em HTML/CSS/JavaScript Vanilla com `model.js`, `view.js` e `controller.js`.
+> A versão atual utiliza **React 19 + TypeScript + Vite + Supabase**.
+> Para a documentação atualizada, consulte:
+> - `README.md` — instalação e execução
+> - `ENGINEERING_DOCS.md` — arquitetura técnica atual
+> - `BUSINESS_RULES.md` — regras de negócio
+
+---
+
+**Versão:** 2.1 (legada) | **Atualizado em:** 2026-03-15
 
 ---
 

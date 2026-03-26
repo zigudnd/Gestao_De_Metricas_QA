@@ -1,6 +1,6 @@
 # Engineering Documentation — ToStatos QA Dashboard
 
-> **Versão:** 3.0 — React Migration
+> **Versão:** 3.1 — Supabase Integration
 > **Última atualização:** Março 2026
 > **Tipo de sistema:** Single Page Application (SPA) — React 19 + TypeScript + Vite
 
@@ -17,8 +17,10 @@
 | Routing | React Router DOM | 7.x |
 | Charts | Chart.js + react-chartjs-2 | 4.x / 5.x |
 | Chart Labels | chartjs-plugin-datalabels | 2.x |
-| Backend | Node.js + Express | 4.x |
-| Cloud DB | Supabase (opcional) | 2.x |
+| Persistência Local | localStorage (cache síncrono) | — |
+| Banco de Dados | Supabase (PostgreSQL) | 2.x |
+| Realtime | Supabase Realtime (WebSocket) | 2.x |
+| Client Supabase | @supabase/supabase-js | 2.x |
 | Export | html2canvas | — |
 | CSS | CSS Variables + inline styles | — |
 
@@ -28,14 +30,17 @@
 
 ```
 src/
+├── lib/
+│   └── supabase.ts                # Cliente Supabase singleton (createClient)
 ├── app/
 │   ├── components/
 │   │   ├── ConfirmModal.tsx       # Modal de confirmação reutilizável
-│   │   └── NewBugModal.tsx        # Modal de criação de bug reutilizável
+│   │   ├── NewBugModal.tsx        # Modal de criação de bug reutilizável
+│   │   └── TermoConclusaoModal.tsx # Modal de termo de conclusão de sprint
 │   ├── layout/
-│   │   ├── AppShell.tsx           # Layout raiz (Sidebar + Topbar + Outlet)
+│   │   ├── AppShell.tsx           # Layout raiz — inicia syncAllFromSupabase no mount
 │   │   ├── Sidebar.tsx            # Navegação lateral com ícones
-│   │   ├── Topbar.tsx             # Barra superior
+│   │   ├── Topbar.tsx             # Barra superior com ações contextuais
 │   │   └── SaveToast.tsx          # Toast de "Salvo" (observa lastSaved)
 │   ├── pages/
 │   │   └── DocsPage.tsx           # Página de documentação do sistema
@@ -55,13 +60,15 @@ src/
 │       │   └── useSprintMetrics.ts # Hook com métricas derivadas
 │       ├── pages/
 │       │   ├── HomePage.tsx       # Listagem e gestão de sprints
-│       │   └── SprintDashboard.tsx # Dashboard individual com tabs
+│       │   ├── SprintDashboard.tsx # Dashboard individual com tabs
+│       │   └── ComparePage.tsx    # Comparação entre sprints (9 gráficos)
 │       ├── services/
-│       │   ├── persistence.ts     # localStorage + API REST + computeFields
-│       │   ├── exportService.ts   # Exportação de imagem/PDF
+│       │   ├── persistence.ts     # localStorage (cache) + Supabase (primário) + computeFields
+│       │   ├── compareService.ts  # KPIs para comparação entre sprints
+│       │   ├── exportService.ts   # Exportação PNG e JSON
 │       │   └── importService.ts   # Parser .feature / .csv
 │       ├── store/
-│       │   └── sprintStore.ts     # Zustand store central
+│       │   └── sprintStore.ts     # Zustand store — persiste no Supabase + Realtime
 │       └── types/
 │           └── sprint.types.ts    # Todos os tipos TypeScript
 └── index.css                      # CSS variables + reset global
@@ -90,12 +97,26 @@ Todo update segue este padrão:
 
 ```
 1. Chama _commit({ ...state, novoCampo })
-2. computeFields(next)    → recalcula tests, exec, gherkinExecs
-3. saveToStorage(id, s)   → grava no localStorage
-4. upsertMasterIndex(id)  → atualiza totalTests/totalExec no índice
-5. queueRemotePersist()   → debounce 3s para sync com API
-6. set({ state, lastSaved: Date.now() })
+2. computeFields(next)        → recalcula tests, exec, gherkinExecs
+3. saveToStorage(id, s)       → grava no localStorage (síncrono, imediato)
+4. upsertMasterIndex(id)      → atualiza totalTests/totalExec no índice local
+5. queueRemotePersist()       → debounce 700ms → upsert no Supabase (async)
+6. set({ state, lastSaved })  → atualiza o store e dispara SaveToast
 ```
+
+### Realtime (co-edição)
+
+Quando uma sprint é aberta (`initSprint`), o store cria uma subscription Supabase Realtime:
+
+```
+supabase.channel('sprint:<id>')
+  .on('postgres_changes', { event: 'UPDATE', table: 'sprints', filter: 'id=eq.<id>' }, callback)
+
+callback → normalizeState → computeFields → saveToStorage → set({ state })
+```
+
+A tela do colega atualiza em ~200ms sem necessidade de F5.
+A subscription é cancelada em `resetSprint` (ao navegar para outra página).
 
 ### getFilteredFeatures
 
@@ -274,23 +295,47 @@ totalExec  = sum(features[].exec)
 
 ## Persistência
 
-### Keys de localStorage
+### Tabela Supabase: `sprints`
+
+```sql
+create table sprints (
+  id         text primary key,
+  data       jsonb not null,          -- SprintState completo
+  status     text default 'ativa',    -- 'ativa' | 'concluida'
+  updated_at timestamptz default now()
+);
+```
+
+### Keys de localStorage (cache local)
 | Key | Conteúdo |
 |-----|---------|
-| `qaDashboardData_<sprintId>` | `SprintState` completo |
-| `qaDashboardMasterIndex` | `SprintIndexEntry[]` |
+| `qaDashboardData_<sprintId>` | `SprintState` completo (cache) |
+| `qaDashboardMasterIndex` | `SprintIndexEntry[]` (cache) |
+
+O localStorage funciona como cache síncrono: leitura instantânea sem await, e fallback quando o Supabase está indisponível.
+
+### Funções de persistência (`persistence.ts`)
+
+| Função | Tipo | Descrição |
+|--------|------|-----------|
+| `loadFromStorage(id)` | sync | Lê do localStorage |
+| `saveToStorage(id, state)` | sync | Grava no localStorage |
+| `getMasterIndex()` | sync | Lê o índice do localStorage |
+| `saveMasterIndex(index)` | sync | Grava o índice no localStorage |
+| `loadFromServer(id)` | async | Carrega sprint do Supabase |
+| `persistToServer(id, state)` | async | Upsert no Supabase |
+| `syncAllFromSupabase()` | async | Startup: puxa todas as sprints do Supabase e popula o localStorage |
+| `deleteSprintFromSupabase(id)` | async | Remove sprint do Supabase |
+| `concludeSprint(id)` | sync + fire | Atualiza status local e no Supabase |
+| `reactivateSprint(id)` | sync + fire | Idem para reativação |
 
 ### Favoritar Sprint
 ```ts
 // persistence.ts
 export function toggleFavoriteSprint(sprintId: string): void
-// Lê o índice, inverte o campo favorite, salva.
+// Lê o índice, inverte o campo favorite, salva no localStorage.
+// Flags de favorito são locais — não sincronizadas com Supabase.
 ```
-
-### Sincronização Remota
-- `GET /api/dashboard/:sprintId` → carrega do servidor
-- `PUT /api/dashboard/:sprintId` → salva no servidor
-- Debounce 3s. Falha silenciosa.
 
 ---
 
@@ -349,8 +394,17 @@ plugins: { datalabels: { display: false } }
 ## Scripts
 
 ```bash
-npm run dev:client   # Vite dev server
-npm run dev          # Node.js + Express
+# Desenvolvimento
+supabase start        # Sobe o banco local (Docker) — rodar antes do dev:client
+npm run dev:client    # Vite dev server (http://localhost:5173)
+npm run dev:client -- --host  # Expõe na rede local para co-edição
+
+# Banco de dados
+supabase db push --local   # Aplica migrations no banco local
+supabase stop              # Para os containers (dados persistem)
+supabase start             # Retoma os containers
+
+# Build e qualidade
 npm run build        # tsc --noEmit && vite build
 npm run typecheck    # tsc --noEmit
 ```

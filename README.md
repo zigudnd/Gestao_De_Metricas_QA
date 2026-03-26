@@ -1,282 +1,304 @@
 # ToStatos — QA Metrics Dashboard
 
-Plataforma de gestão de métricas QA para acompanhamento de sprints. Centraliza KPIs, progresso de testes, bugs, impedimentos e alinhamentos em um único painel. Todo o estado das sprints é salvo localmente (LocalStorage + arquivos JSON via API Node.js), sem vazamento de dados confidenciais para a nuvem.
+Plataforma de gestão de métricas QA para acompanhamento de sprints. Centraliza KPIs, progresso de testes, bugs, impedimentos e alinhamentos em um único painel. Suporta uso individual (offline) e colaborativo em tempo real (via Supabase).
 
-**Stack:** React 19 + TypeScript · Vite 6 · Zustand · Chart.js · Express
+**Stack:** React 19 + TypeScript · Vite 6 · Zustand · Chart.js · Supabase (PostgreSQL + Realtime)
 
 ---
 
-## ⚙️ Pré-requisitos
+## Índice
 
-Antes de instalar, certifique-se de ter:
+1. [Pré-requisitos](#1-pré-requisitos)
+2. [Instalação](#2-instalação)
+3. [Modo Individual — somente localStorage](#3-modo-individual--somente-localstorage)
+4. [Modo Colaborativo — Supabase local com Docker](#4-modo-colaborativo--supabase-local-com-docker)
+5. [Modo Colaborativo — Supabase Cloud (produção)](#5-modo-colaborativo--supabase-cloud-produção)
+6. [Variáveis de ambiente](#6-variáveis-de-ambiente)
+7. [Estrutura do projeto](#7-estrutura-do-projeto)
+8. [Como funciona a persistência](#8-como-funciona-a-persistência)
+9. [Principais funcionalidades](#9-principais-funcionalidades)
+10. [Deploy](#10-deploy)
+
+---
+
+## 1. Pré-requisitos
 
 | Ferramenta | Versão mínima | Como verificar |
 |---|---|---|
-| **Node.js** | 18 LTS ou superior | `node --version` |
-| **npm** | 9 ou superior | `npm --version` |
-| **Git** | qualquer versão recente | `git --version` |
-| **Navegador** | Chrome, Edge ou Firefox (versão atual) | — |
+| **Node.js** | 18 LTS | `node --version` |
+| **npm** | 9 | `npm --version` |
+| **Docker Desktop** | qualquer | `docker --version` |
+| **Supabase CLI** | qualquer | `supabase --version` |
+| **Navegador** | Chrome / Edge / Firefox atual | — |
 
-> **Recomendado:** Node.js 20 LTS. Baixe em [nodejs.org](https://nodejs.org).
+> **Instalar Docker Desktop:** https://www.docker.com/products/docker-desktop/
+> **Instalar Supabase CLI (macOS):** `brew install supabase/tap/supabase`
 
 ---
 
-## 🚀 Instalação e execução
-
-### 1. Clone o repositório
+## 2. Instalação
 
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/zigudnd/Gestao_De_Metricas_QA.git
 cd Gestao_De_Metricas_QA
-```
 
-### 2. Instale as dependências
-
-```bash
+# 2. Instale as dependências
 npm install
 ```
 
-### 3. Configure o ambiente
+---
 
-Crie o arquivo `.env` na raiz do projeto:
+## 3. Modo Individual — somente localStorage
+
+Use este modo se quiser rodar o projeto sozinho, sem banco de dados, sem Docker.
 
 ```bash
-cp .env.example .env   # se existir o exemplo
-# ou crie manualmente:
+# Suba o frontend
+npm run dev:client
 ```
+
+Acesse: **http://localhost:5173**
+
+Os dados ficam salvos no `localStorage` do navegador. Nenhuma configuração adicional necessária.
+
+---
+
+## 4. Modo Colaborativo — Supabase local com Docker
+
+Use este modo para trabalhar em equipe na mesma rede local, sem precisar de internet.
+
+### Passo 1 — Suba o banco de dados local
+
+```bash
+# Na raiz do projeto, inicie o Supabase (Docker)
+supabase start
+```
+
+Na primeira execução, o Docker baixa as imagens (pode demorar alguns minutos). Nas execuções seguintes, sobe em segundos.
+
+Ao terminar, o terminal exibe as credenciais:
+
+```
+╭──────────────────────────────────────────────────────╮
+│  Project URL  │  http://127.0.0.1:54321              │
+│  Publishable  │  sb_publishable_XXXX                 │
+╰──────────────────────────────────────────────────────╯
+```
+
+### Passo 2 — Configure o `.env`
+
+Crie o arquivo `.env` na raiz do projeto com os valores exibidos pelo `supabase start`:
 
 ```env
-# Armazenamento local (recomendado para compliance)
-STORAGE_TYPE=local
-QA_PROJECT_KEY=meu_projeto
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=sb_publishable_XXXX
 ```
 
-> Para usar Supabase, veja a seção **Configurar o Banco de Dados** mais abaixo.
+> O arquivo `.env` já vem preenchido com as credenciais padrão do Supabase local. Se as suas forem diferentes, atualize.
 
-### 4. Rode em modo desenvolvimento
+### Passo 3 — Aplique a migration (cria a tabela `sprints`)
 
-Abra **dois terminais** e execute um comando em cada:
-
-**Terminal 1 — Backend Express (API):**
 ```bash
-npm run dev
+supabase db push --local
 ```
-> Servidor disponível em `http://localhost:3000`
 
-**Terminal 2 — Frontend Vite (React):**
+Confirme com `Y` quando solicitado. Isso cria a tabela `sprints` no PostgreSQL local.
+
+### Passo 4 — Suba o frontend
+
 ```bash
 npm run dev:client
 ```
-> Interface disponível em `http://localhost:5173`
 
-### 5. Build para produção
+Acesse: **http://localhost:5173**
+
+### Passo 5 — Acesso de outros usuários na rede
+
+Para que outros computadores na mesma rede acessem o dashboard:
 
 ```bash
-# Gera os arquivos estáticos em /dist
-npm run build
-
-# Inicia o servidor Express servindo o build
-npm start
+# Suba o Vite expondo na rede local
+npm run dev:client -- --host
 ```
-> Acesse em `http://localhost:3000`
+
+O terminal exibirá o IP da máquina (ex: `http://192.168.1.10:5173`). Compartilhe esse endereço com a equipe.
+
+> **Importante:** todos devem apontar o `.env` para o IP da máquina que está rodando o Supabase.
+> Ex: `VITE_SUPABASE_URL=http://192.168.1.10:54321`
+
+### Parar e retomar
+
+```bash
+# Parar o Supabase (dados ficam salvos no disco)
+supabase stop
+
+# Retomar depois
+supabase start
+```
+
+**Os dados persistem** entre reinicializações. O Docker usa volumes no disco local — os dados só são perdidos se você deletar o volume manualmente.
 
 ---
 
-## 📁 Estrutura
+## 5. Modo Colaborativo — Supabase Cloud (produção)
+
+Use este modo quando tiver um servidor dedicado (pod, VM, Kubernetes) ou quiser usar o Supabase hospedado na nuvem.
+
+### Opção A: Supabase Cloud (supabase.com)
+
+1. Crie uma conta em https://supabase.com e um novo projeto
+2. No painel do projeto, vá em **Settings → API** e copie:
+   - `Project URL`
+   - `anon public key`
+3. Aplique a migration:
+   ```bash
+   supabase link --project-ref SEU_PROJECT_REF
+   supabase db push
+   ```
+4. Atualize o `.env`:
+   ```env
+   VITE_SUPABASE_URL=https://xxxx.supabase.co
+   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
+
+### Opção B: Self-hosted (Docker em servidor)
+
+Execute o `supabase start` no servidor e aponte o `.env` para o IP público ou domínio do servidor:
+
+```env
+VITE_SUPABASE_URL=http://SEU_SERVIDOR_IP:54321
+VITE_SUPABASE_ANON_KEY=sb_publishable_XXXX
+```
+
+---
+
+## 6. Variáveis de ambiente
+
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Para modo colaborativo | URL da API do Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Para modo colaborativo | Chave pública (anon/publishable) |
+
+> Se as variáveis não estiverem definidas, o app roda normalmente em modo offline (somente `localStorage`).
+
+---
+
+## 7. Estrutura do projeto
 
 ```
 src/
-├── app/components/       # Componentes compartilhados (NewBugModal, ConfirmModal)
-├── app/pages/            # DocsPage (documentação integrada)
-├── app/layout/           # AppShell, Sidebar, Topbar, SaveToast
+├── lib/
+│   └── supabase.ts                  # Cliente Supabase (singleton)
+├── app/
+│   ├── components/                  # Modais compartilhados
+│   ├── layout/                      # AppShell, Sidebar, Topbar, SaveToast
+│   └── pages/                       # DocsPage
 ├── modules/sprints/
-│   ├── components/dashboard/   # Tabs: Overview, Features, Bugs, Config, Notes...
-│   ├── services/persistence.ts # localStorage + computeFields + helpers de dias
-│   ├── store/sprintStore.ts    # Zustand store central
-│   └── types/sprint.types.ts  # Tipos TypeScript
-server.js                 # API Express (sincronização remota opcional)
+│   ├── components/dashboard/        # Tabs: Overview, Features, Bugs, Config, Notes...
+│   ├── pages/
+│   │   ├── HomePage.tsx             # Lista de sprints
+│   │   ├── SprintDashboard.tsx      # Dashboard principal
+│   │   └── ComparePage.tsx          # Comparação entre sprints
+│   ├── services/
+│   │   ├── persistence.ts           # Toda a lógica de dados (localStorage + Supabase)
+│   │   ├── compareService.ts        # KPIs para comparação
+│   │   └── exportService.ts         # Export PNG e JSON
+│   ├── store/sprintStore.ts         # Zustand store central
+│   └── types/sprint.types.ts        # Tipos TypeScript
+supabase/
+├── config.toml                      # Configuração do Supabase local
+└── migrations/
+    └── 20260326000000_create_sprints.sql  # Tabela sprints + Realtime
 ```
-
-## Como funciona
-
-- Todo o estado é salvo no **localStorage** do navegador (`qaDashboardData_<sprintId>`).
-- Campos calculados (testes totais, executados, dias de sprint) são recomputados a cada `_commit` via `computeFields`.
-- Opcionalmente, o front sincroniza com a API Express via `PUT /api/dashboard/:sprintId` (debounce 3s).
-
-## ✨ Principais Funcionalidades e Casos de Uso
-
-O QA Dashboard centraliza em um único ambiente tudo que um Líder ou Analista de Qualidade precisa para gerenciar os testes e reportar o andamento da Sprint.
-
-- **Visão Executiva (C-Level & Gerencial):** Painel principal de alto nível com KPIs em tempo real (QA Health Score, Testes Executáveis, Capacidade Real, Bugs Abertos, Defeitos Prevenidos, MTTR, Índice de Retrabalho e mais), Burndown Chart e gráficos de bugs por stack.
-- **KPIs de Valor Gerado pelo QA:** *Defeitos Prevenidos* (total de bugs encontrados) e *Impacto Prevenido* (score ponderado pela criticidade — Σ peso × bugs por severidade). Evidenciam o valor do trabalho de QA além da simples contagem.
-- **Capacidade Real:** Percentual de testes disponíveis para execução, descontando features bloqueadas. Indicador de saúde operacional do ciclo.
-- **QA Health Score Personalizável:** Ajuste o peso das penalidades (Bugs Críticos, Retestes, Bloqueios, Atraso, etc.) diretamente na aba Configurações.
-- **Impacto Prevenido Configurável:** Pesos independentes por severidade (Crítica/Alta/Média/Baixa) para o cálculo do score ponderado de defeitos prevenidos.
-- **Gestão de Casos de Teste Estruturada:** Cadastro de Suites, Funcionalidades e Casos de Teste em formato Gherkin, com Checklists (Concluído / Falhou / Bloqueado) e controle de data de execução por dia de sprint.
-- **Fins de Semana Configuráveis:** Opção para incluir ou excluir fins de semana no cálculo de dias úteis da sprint. Por padrão, fins de semana são excluídos.
-- **Gestão de Bugs com Stacks Customizáveis:** Registro de bugs com severidade, stack (Front, BFF, Back, Mobile, Infra ou stacks personalizadas criadas inline), responsável e rastreamento de MTTR. Status *Falhou* auto-incrementa o contador de retestes. Colunas ordenáveis por severidade, status e data.
-- **Índice de Retrabalho:** Percentual de bugs que passaram por reteste — faixa qualitativa exibida na aba Overview.
-- **⛔ Bloqueios de Execução:** Registro de blockers com data, motivo e horas bloqueadas. Alimenta os KPIs e gráficos de gargalos.
-- **Notas Operacionais:** Campo livre (aba Notas) para massas de dados, cenários manuais, observações do dia e links úteis — fonte monoespaçada, redimensionável.
-- **Premissas e Plano de Ação (Gestão de Risco):** Na aba Notas, Premissas do Ciclo de Testes e Plano de Ação lado a lado.
-- **Armazenamento 100% Local (Secure-by-Design):** Dados salvos exclusivamente no localStorage do navegador. Nenhum dado sensível vaza para a nuvem.
-- **Exportação One-Click:** Snapshot renderizado dos indicadores do dia via "📸 Exportar Imagem".
-
-## 👨‍💻 Autor
-Desenvolvido por **[Jhonny Robert](https://www.linkedin.com/in/jhonny-robert/)**
 
 ---
 
-## 1) Configurar o Banco de Dados (Dual Mode)
+## 8. Como funciona a persistência
 
-Esta versão do Dashboard é flexível e permite que você escolha onde salvar seus dados modificando apenas uma variável de ambiente.
+O app usa uma arquitetura em camadas:
 
-Copie `.env.example` para `.env`:
-```bash
-cp .env.example .env
+```
+Usuário edita → _commit (Zustand)
+                    ├── saveToStorage()          → localStorage (imediato, sync)
+                    ├── upsertSprintInMasterIndex() → localStorage (imediato, sync)
+                    └── queueRemotePersist()     → Supabase (debounce 700ms, async)
+
+Outro usuário salva → Supabase Realtime (WebSocket)
+                          └── atualiza localStorage + Zustand store
+                              → tela do colega atualiza em ~200ms
 ```
 
-Abra o arquivo `.env` e configure conforme a sua necessidade corporativa:
+**Na inicialização do app** (`AppShell`), `syncAllFromSupabase()` é chamado:
+- Busca todas as sprints do Supabase
+- Popula o `localStorage` com os dados remotos
+- Garante que sprints criadas por outros usuários apareçam na lista
 
-### Opção A: Armazenamento 100% Local (Recomendado para Compliance)
-Se não quiser enviar dados para a internet, deixe configurado assim. O sistema criará a pasta `data/` automaticamente na raiz.
-```env
-STORAGE_TYPE=local
-QA_PROJECT_KEY=meu_banco_android
-```
+**Ao abrir uma sprint** (`SprintDashboard`):
+1. Tenta carregar do Supabase (`loadFromServer`)
+2. Fallback para `localStorage` se Supabase não responder
+3. Registra subscription Realtime para aquela sprint
 
-### Opção B: Armazenamento na Nuvem via Supabase
-Se a sua empresa permite e você quer que todos acessem um banco centralizado, mude o tipo e preencha as chaves:
-```env
-STORAGE_TYPE=supabase
-QA_PROJECT_KEY=android
-SUPABASE_URL=sua_url_aqui
-SUPABASE_SERVICE_ROLE_KEY=sua_secret_aqui
-```
+**Ao fechar uma sprint** (`resetSprint`): a subscription Realtime é cancelada.
 
-## 2) Rodar localmente
+---
 
-Se for a primeira vez, instale as dependências:
-```bash
-npm install
-```
+## 9. Principais funcionalidades
 
-E inicie o servidor local:
-```bash
-npm start
-```
+- **QA Health Score** — score ponderado com penalidades configuráveis (bugs críticos, retestes, bloqueios, atraso)
+- **Burndown Chart** — acompanhamento diário de execução vs meta
+- **KPIs em tempo real** — Testes Executáveis, Capacidade Real, Bugs Abertos, MTTR, Índice de Retrabalho
+- **Gestão de Casos de Teste** — Suites, Funcionalidades, Cenários Gherkin com status por dia
+- **Gestão de Bugs** — severidade, stack, responsável, MTTR, retestes
+- **Bloqueios de Execução** — registro de impedimentos com horas bloqueadas
+- **Comparativo entre Sprints** — 9 gráficos de evolução histórica
+- **Exportação** — relatório em imagem (PNG) e backup em JSON
+- **Colaboração em tempo real** — múltiplos usuários na mesma sprint simultaneamente
+- **Modo offline** — funciona sem Supabase, dados locais no navegador
 
-Abra no navegador:
-```text
-http://localhost:3000
-```
+---
 
-## 3) Extensibilidade: Como adicionar outras bases de dados
+## 10. Deploy
 
-Para adicionar suporte as outras bases (como MongoDB, Firebase, PostgreSQL, MySQL ou AWS DynamoDB), a lógica foi desenhada para ser "Plug and Play" no arquivo `server.js`. 
-
-Como o Dashboard trabalha apenas trocando um arquivo `JSON` enorme com o servidor (O estado da Sprint), o Front-end não se importa com onde os dados estão salvos. Basta seguir estes passos para ensinar a API a conversar com outro banco:
-
-**1) Adicionar a variável de controle no `.env`**
-Adicione o nome do seu banco e as credenciais necessárias:
-```env
-STORAGE_TYPE=mongodb
-MONGO_URI=mongodb+srv://usuario:senha@cluster0.exemplo.mongodb.net/meubanco
-QA_PROJECT_KEY=android
-```
-
-**2) Instale o SDK do seu banco**
-Abra o terminal e instale (exemplo: `npm install mongodb`).
-
-**3) Inicie a Conexão no `server.js`**
-No topo do arquivo `server.js`, importe sua lib, verifique o `STORAGE_TYPE` e inicie a conexão.
-
-```javascript
-/* No topo do arquivo */
-const { MongoClient } = require('mongodb');
-let mongoDb = null;
-
-/* Na área de inicialização do storage */
-if (STORAGE_TYPE === 'mongodb') {
-  const client = new MongoClient(process.env.MONGO_URI);
-  client.connect().then(() => {
-    mongoDb = client.db('qa_dashboard_db');
-    console.log('✅ Back-end configurado para usar: MONGODB');
-  });
-} else if (STORAGE_TYPE === 'supabase') { ... } 
-// ...
-```
-
-**4) Atualize as rotas de Leitura (`GET`) e Salvamento (`PUT`)**
-Nas rotas do Express (`app.get` e `app.put`), insira as querys específicas do seu banco no bloco caso o `STORAGE_TYPE` seja escolhido:
-
-Exemplo da leitura (`GET`):
-```javascript
-if (STORAGE_TYPE === 'mongodb') {
-  const collection = mongoDb.collection('dashboard_states');
-  const data = await collection.findOne({ project_key: projectKey });
-  
-  if (!data) return res.status(404).json({ message: 'Não encontrado' });
-  return res.json(data);
-} 
-```
-
-Exemplo da gravação (`PUT`):
-```javascript
-if (STORAGE_TYPE === 'mongodb') {
-  const collection = mongoDb.collection('dashboard_states');
-  await collection.updateOne(
-    { project_key: projectKey }, // Procura a sprint
-    { $set: row },               // Salva os dados dela
-    { upsert: true }             // Cria se não existir
-  );
-  return res.json(row);
-}
-```
-
-Abra:
-
-```text
-http://localhost:3000
-```
-
-## 4) Endpoints
-
-- `GET /api/health`
-- `GET /api/dashboard/:projectKey`
-- `PUT /api/dashboard/:projectKey`
-
-Exemplo de leitura:
+### Build de produção
 
 ```bash
-curl http://localhost:3000/api/dashboard/android
+npm run build
+# Arquivos gerados em /dist — sirva com qualquer servidor estático (nginx, Caddy, etc.)
 ```
 
-Exemplo de gravação:
+### Railway / Render / Fly.io
+
+1. Conecte o repositório
+2. Configure as variáveis de ambiente (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) apontando para o Supabase Cloud
+3. Comando de build: `npm run build`
+4. Pasta de saída: `dist`
+
+### Docker (containerizar o frontend)
+
+```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+```
 
 ```bash
-curl -X PUT http://localhost:3000/api/dashboard/android \
-  -H "Content-Type: application/json" \
-  -d '{"payload":{"config":{"title":"QA Dashboard"},"currentDate":"2026-03-10","reports":{},"notes":{},"alignments":[],"features":[],"blockers":[],"bugs":[]}}'
+docker build -t tostatos .
+docker run -p 80:80 \
+  -e VITE_SUPABASE_URL=https://xxxx.supabase.co \
+  -e VITE_SUPABASE_ANON_KEY=eyJ... \
+  tostatos
 ```
 
-## 5) Deploy
+---
 
-Você pode subir esse projeto em:
+## Autor
 
-- Railway
-- Render
-- VPS/Hostinger
-- Docker
-
-### Railway/Render
-
-- conecte o repositório
-- adicione as variáveis `.env`
-- comando de start: `npm start`
-
-## Observações
-
-- O front continua mantendo backup local para não perder dados se a API ficar indisponível
-- O `projectKey` padrão vem de `QA_PROJECT_KEY`
-- Também dá para usar vários dashboards trocando a URL para `?project=ios`, `?project=android`, etc.
+Desenvolvido por **[Jhonny Robert](https://www.linkedin.com/in/jhonny-robert/)**

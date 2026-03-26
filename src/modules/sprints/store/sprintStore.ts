@@ -5,14 +5,17 @@ import type {
 } from '../types/sprint.types'
 import {
   computeFields, saveToStorage, upsertSprintInMasterIndex,
-  DEFAULT_STATE, normalizeState,
+  DEFAULT_STATE, normalizeState, persistToServer,
 } from '../services/persistence'
+import { supabase } from '@/lib/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
-// ─── Remote persist queue ─────────────────────────────────────────────────────
+// ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
 let _remotePersistTimeout: ReturnType<typeof setTimeout> | null = null
 let _remotePersistInFlight = false
 let _remotePersistQueued = false
+let _realtimeChannel: RealtimeChannel | null = null
 
 async function doPersistToServer(sprintId: string, state: SprintState) {
   if (!sprintId) return
@@ -20,13 +23,9 @@ async function doPersistToServer(sprintId: string, state: SprintState) {
   _remotePersistInFlight = true
   _remotePersistQueued = false
   try {
-    await fetch(`/api/dashboard/${sprintId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload: state }),
-    })
+    await persistToServer(sprintId, state)
   } catch (e) {
-    console.error('Erro ao sincronizar com servidor:', e)
+    console.error('[Supabase] Erro ao sincronizar sprint:', e)
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued) queueRemotePersist(sprintId, state, 2000)
@@ -127,9 +126,35 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const normalized = normalizeState(loaded)
     const computed = computeFields(normalized)
     set({ sprintId, state: computed, activeSuiteFilter: new Set() })
+
+    // Garante que a sprint existe no Supabase ao abrir pela primeira vez
+    queueRemotePersist(sprintId, computed)
+
+    // Realtime: escuta alterações feitas por outros usuários nesta sprint
+    if (_realtimeChannel) supabase.removeChannel(_realtimeChannel)
+    _realtimeChannel = supabase
+      .channel(`sprint:${sprintId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'sprints', filter: `id=eq.${sprintId}` },
+        (payload) => {
+          // Ignora se o payload não tiver dados
+          if (!payload.new?.data) return
+          const incoming = normalizeState(payload.new.data)
+          const recomputed = computeFields(incoming)
+          saveToStorage(sprintId, recomputed)
+          upsertSprintInMasterIndex(sprintId, recomputed)
+          set({ state: recomputed })
+        }
+      )
+      .subscribe()
   },
 
   resetSprint: () => {
+    if (_realtimeChannel) {
+      supabase.removeChannel(_realtimeChannel)
+      _realtimeChannel = null
+    }
     set({ sprintId: '', state: JSON.parse(JSON.stringify(DEFAULT_STATE)), activeSuiteFilter: new Set() })
   },
 

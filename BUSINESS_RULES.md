@@ -24,8 +24,8 @@
 
 ### 1.4 Exclusão
 - A exclusão de uma sprint requer confirmação via modal.
-- Ao excluir, todos os dados da sprint são removidos permanentemente do localStorage.
-- A entrada no Master Index também é removida.
+- Ao excluir, os dados são removidos do localStorage e do Supabase (operação permanente).
+- A entrada no Master Index local também é removida.
 
 ### 1.5 Status Derivado
 - **Em Andamento**: sprint com testes restantes ou sem testes cadastrados.

@@ -4,7 +4,7 @@ import type { SprintIndexEntry } from '../types/sprint.types'
 import {
   getMasterIndex, saveMasterIndex, STORAGE_KEY,
   DEFAULT_STATE, normalizeState, saveToStorage, upsertSprintInMasterIndex,
-  toggleFavoriteSprint,
+  toggleFavoriteSprint, deleteSprintFromSupabase,
 } from '../services/persistence'
 import { importFromJSON } from '../services/exportService'
 
@@ -91,6 +91,7 @@ export function HomePage() {
     const index = getMasterIndex().filter((s) => s.id !== deleteTarget.id)
     saveMasterIndex(index)
     localStorage.removeItem(STORAGE_KEY(deleteTarget.id))
+    deleteSprintFromSupabase(deleteTarget.id)
     setDeleteTarget(null)
     reload()
   }

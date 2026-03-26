@@ -1,4 +1,5 @@
 import type { SprintState, SprintIndexEntry, SprintConfig, Feature, Notes } from '../types/sprint.types'
+import { supabase } from '@/lib/supabase'
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
@@ -336,25 +337,84 @@ export function toggleFavoriteSprint(sprintId: string): void {
   saveMasterIndex(index)
 }
 
-// ─── Remote persistence ───────────────────────────────────────────────────────
+// ─── Supabase persistence ─────────────────────────────────────────────────────
 
+/**
+ * Carrega uma sprint do Supabase. Usado por SprintDashboard antes do fallback local.
+ */
 export async function loadFromServer(sprintId: string): Promise<SprintState | null> {
   try {
-    const res = await fetch(`/api/dashboard/${sprintId}`)
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.payload ?? null
+    const { data, error } = await supabase
+      .from('sprints')
+      .select('data')
+      .eq('id', sprintId)
+      .single()
+    if (error || !data) return null
+    return normalizeState(data.data)
   } catch {
     return null
   }
 }
 
+/**
+ * Salva uma sprint no Supabase (upsert). Chamado pelo sprintStore a cada _commit.
+ */
 export async function persistToServer(sprintId: string, state: SprintState): Promise<void> {
-  await fetch(`/api/dashboard/${sprintId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ payload: state }),
+  const status = getMasterIndex().find((s) => s.id === sprintId)?.status ?? 'ativa'
+  await supabase.from('sprints').upsert({
+    id: sprintId,
+    data: state,
+    status,
+    updated_at: new Date().toISOString(),
   })
+}
+
+/**
+ * Ao iniciar o app, puxa todas as sprints do Supabase e popula o localStorage.
+ * Garante que qualquer usuário veja as sprints criadas por outras pessoas.
+ */
+export async function syncAllFromSupabase(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('sprints')
+      .select('id, data, status, updated_at')
+    if (error || !data) return
+
+    const remoteIndex: SprintIndexEntry[] = data.map((row) => {
+      const state = normalizeState(row.data)
+      saveToStorage(row.id, state)
+      const totalTests = state.features.reduce((a, f) => a + (f.tests || 0), 0)
+      const totalExec = state.features.reduce((a, f) => a + (f.exec || 0), 0)
+      return {
+        id: row.id,
+        title: state.config.title || 'S/ Título',
+        squad: state.config.squad || '',
+        startDate: state.config.startDate || '',
+        endDate: state.config.endDate || '',
+        totalTests,
+        totalExec,
+        updatedAt: row.updated_at,
+        status: row.status as 'ativa' | 'concluida',
+      }
+    })
+
+    // Preserva flags locais (favorito, ordem manual) e mescla com os dados remotos
+    const localIndex = getMasterIndex()
+    const merged = remoteIndex.map((remote) => {
+      const local = localIndex.find((l) => l.id === remote.id)
+      return { ...remote, favorite: local?.favorite }
+    })
+    saveMasterIndex(merged)
+  } catch (e) {
+    console.warn('[Supabase] syncAllFromSupabase falhou — usando dados locais.', e)
+  }
+}
+
+/**
+ * Remove uma sprint do Supabase. Fire-and-forget.
+ */
+export async function deleteSprintFromSupabase(sprintId: string): Promise<void> {
+  await supabase.from('sprints').delete().eq('id', sprintId)
 }
 
 export function concludeSprint(sprintId: string): void {
@@ -363,6 +423,7 @@ export function concludeSprint(sprintId: string): void {
   if (idx === -1) return
   index[idx] = { ...index[idx], status: 'concluida' }
   saveMasterIndex(index)
+  supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
 }
 
 export function reactivateSprint(sprintId: string): void {
@@ -371,4 +432,5 @@ export function reactivateSprint(sprintId: string): void {
   if (idx === -1) return
   index[idx] = { ...index[idx], status: 'ativa' }
   saveMasterIndex(index)
+  supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
 }
