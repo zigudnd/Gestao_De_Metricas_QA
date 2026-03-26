@@ -16,12 +16,13 @@ interface AuthState {
   loading: boolean
   profile: Profile | null
   setSession: (session: Session | null) => void
+  updateDisplayName: (name: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   loading: true,
@@ -29,6 +30,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setSession: (session) =>
     set({ session, user: session?.user ?? null }),
+
+  updateDisplayName: async (name: string) => {
+    const { user } = get()
+    if (!user) return
+    await supabase.from('profiles').update({ display_name: name }).eq('id', user.id)
+    set((s) => ({ profile: s.profile ? { ...s.profile, display_name: name } : s.profile }))
+  },
 
   signOut: async () => {
     await supabase.auth.signOut()

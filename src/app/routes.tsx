@@ -7,6 +7,7 @@ import { SprintDashboard } from '@/modules/sprints/pages/SprintDashboard'
 import { DocsPage } from '@/app/pages/DocsPage'
 import { ComparePage } from '@/modules/sprints/pages/ComparePage'
 import { SquadsPage } from '@/modules/squads/pages/SquadsPage'
+import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
 
 export const router = createHashRouter([
   // Tela de autenticação (pública)
@@ -28,6 +29,7 @@ export const router = createHashRouter([
       { path: 'sprints/compare', element: <ComparePage /> },
       { path: 'sprints/:sprintId', element: <SprintDashboard /> },
       { path: 'squads', element: <SquadsPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: 'docs', element: <DocsPage /> },
     ],
   },
