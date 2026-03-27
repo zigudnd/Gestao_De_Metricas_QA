@@ -8,6 +8,7 @@ import { DocsPage } from '@/app/pages/DocsPage'
 import { ComparePage } from '@/modules/sprints/pages/ComparePage'
 import { SquadsPage } from '@/modules/squads/pages/SquadsPage'
 import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
+import { ChangePasswordPage } from '@/modules/auth/pages/ChangePasswordPage'
 
 export const router = createHashRouter([
   // Tela de autenticação (pública)
@@ -30,6 +31,7 @@ export const router = createHashRouter([
       { path: 'sprints/:sprintId', element: <SprintDashboard /> },
       { path: 'squads', element: <SquadsPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'change-password', element: <ChangePasswordPage /> },
       { path: 'docs', element: <DocsPage /> },
     ],
   },

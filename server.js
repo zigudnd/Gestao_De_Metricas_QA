@@ -14,20 +14,23 @@ const DEFAULT_PROJECT_KEY = process.env.QA_PROJECT_KEY || 'android';
 const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local'; // 'local' or 'supabase'
 const DATA_DIR = path.join(__dirname, 'data');
 
-let supabase = null;
+// Client com service_role (admin) — sempre criado se as vars existirem
+let supabaseAdmin = null;
+const SB_URL = process.env.SUPABASE_URL;
+const SB_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (SB_URL && SB_SERVICE_KEY) {
+  supabaseAdmin = createClient(SB_URL, SB_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
+
+let supabase = supabaseAdmin;
 
 if (STORAGE_TYPE === 'supabase') {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!supabaseAdmin) {
     console.error('⚠️ ATENÇÃO: Variáveis SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórias quando STORAGE_TYPE=supabase.');
     process.exit(1);
   }
-
-  supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
   console.log('✅ Back-end configurado para usar: SUPABASE');
 } else {
   // Ensure data directory exists for local storage
@@ -137,6 +140,37 @@ app.put('/api/dashboard/:projectKey', validateKey, async (req, res) => {
   } catch (error) {
     console.error(`Erro ao salvar dashboard (${STORAGE_TYPE}):`, error);
     return res.status(500).json({ message: 'Erro ao salvar dashboard.' });
+  }
+});
+
+// ── Admin: criar usuário via Supabase Auth Admin API ─────────────────────────
+app.post('/api/admin/create-user', async (req, res) => {
+  if (!supabaseAdmin) {
+    return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
+  }
+
+  const { email, display_name } = req.body;
+  if (!email || !display_name) {
+    return res.status(400).json({ error: 'email e display_name são obrigatórios.' });
+  }
+  const password = 'Mudar@123';
+
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { display_name, must_change_password: true },
+    });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({ id: data.user.id, email: data.user.email });
+  } catch (err) {
+    console.error('Erro ao criar usuário:', err);
+    return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
   }
 });
 

@@ -7,7 +7,8 @@ import {
   toggleFavoriteSprint, deleteSprintFromSupabase,
 } from '../services/persistence'
 import { importFromJSON } from '../services/exportService'
-import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
+import { listMySquads, getMySquadIds, type Squad } from '@/modules/squads/services/squadsService'
+import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,10 @@ interface Filters {
 
 export function HomePage() {
   const navigate = useNavigate()
+  const { profile } = useAuthStore()
+  const isAdmin = profile?.global_role === 'admin'
   const [sprints, setSprints] = useState<SprintIndexEntry[]>([])
+  const [mySquadIds, setMySquadIds] = useState<string[] | null>(null)
   const [filters, setFilters] = useState<Filters>({ squad: 'all', status: 'all', year: 'all' })
   const [showCreate, setShowCreate] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<SprintIndexEntry | null>(null)
@@ -63,7 +67,10 @@ export function HomePage() {
   useEffect(() => {
     setSprints(getMasterIndex())
     listMySquads().then(setAvailableSquads).catch(() => {})
-  }, [])
+    if (!isAdmin) {
+      getMySquadIds().then(setMySquadIds).catch(() => setMySquadIds([]))
+    }
+  }, []) // eslint-disable-line
 
   useEffect(() => {
     if (showCreate) setTimeout(() => titleInputRef.current?.focus(), 60)
@@ -175,11 +182,16 @@ export function HomePage() {
     navigate('/sprints/compare?ids=' + [...selectedIds].join(','))
   }
 
-  // Filter options
-  const squads = [...new Set(sprints.map((s) => s.squad || '').filter(Boolean))].sort()
-  const years = [...new Set(sprints.map(sprintYear).filter(Boolean) as string[])].sort().reverse()
+  // Sprints visíveis: admin vê tudo; demais veem sprints dos seus squads ou sem squad
+  const visibleSprints = isAdmin || !mySquadIds
+    ? sprints
+    : sprints.filter((s) => !s.squadId || mySquadIds.includes(s.squadId))
 
-  const filtered = sprints.filter((s) => {
+  // Filter options
+  const squads = [...new Set(visibleSprints.map((s) => s.squad || '').filter(Boolean))].sort()
+  const years = [...new Set(visibleSprints.map(sprintYear).filter(Boolean) as string[])].sort().reverse()
+
+  const filtered = visibleSprints.filter((s) => {
     const st = sprintStatus(s)
     if (filters.squad !== 'all' && (s.squad || '') !== filters.squad) return false
     if (filters.status === 'active' && st !== 'active') return false

@@ -38,6 +38,8 @@ export const PERMISSION_LABELS: Record<keyof MemberPermissions, string> = {
 export interface Squad {
   id: string
   name: string
+  description: string
+  color: string
   created_by: string
   created_at: string
 }
@@ -67,20 +69,22 @@ export async function listMySquads(): Promise<Squad[]> {
   return data ?? []
 }
 
-export async function createSquad(name: string): Promise<Squad> {
+export async function createSquad(name: string, description = '', color = '#185FA5'): Promise<Squad> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Não autenticado')
 
   const { data, error } = await supabase.rpc('create_squad_with_lead', {
     squad_name: name,
     owner_id: user.id,
+    squad_desc: description,
+    squad_color: color,
   })
   if (error) throw new Error(error.message)
   return data as Squad
 }
 
-export async function updateSquadName(squadId: string, name: string): Promise<void> {
-  const { error } = await supabase.from('squads').update({ name }).eq('id', squadId)
+export async function updateSquad(squadId: string, fields: { name?: string; description?: string; color?: string }): Promise<void> {
+  const { error } = await supabase.from('squads').update(fields).eq('id', squadId)
   if (error) throw error
 }
 
@@ -148,6 +152,22 @@ export async function getMyRole(squadId: string): Promise<SquadRole | null> {
 
 // ─── Users (admin) ────────────────────────────────────────────────────────────
 
+export interface UserWithSquads extends Profile {
+  active: boolean
+  squads: { squad_id: string; squad_name: string; role: SquadRole }[]
+}
+
+export async function createUser(email: string, displayName: string): Promise<{ id: string; email: string }> {
+  const res = await fetch('/api/admin/create-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, display_name: displayName }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário')
+  return data
+}
+
 export async function listAllUsers(): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
@@ -157,11 +177,114 @@ export async function listAllUsers(): Promise<Profile[]> {
   return (data ?? []) as Profile[]
 }
 
+export async function listAllUsersWithSquads(): Promise<UserWithSquads[]> {
+  const { data: users, error: usersErr } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, global_role, active')
+    .order('display_name', { ascending: true })
+  if (usersErr) throw new Error(usersErr.message)
+
+  const { data: memberships, error: memErr } = await supabase
+    .from('squad_members')
+    .select('user_id, squad_id, role, squad:squads(name)')
+  if (memErr) throw new Error(memErr.message)
+
+  return (users ?? []).map((u) => {
+    const userMemberships = (memberships ?? [])
+      .filter((m) => m.user_id === u.id)
+      .map((m) => ({
+        squad_id: m.squad_id,
+        squad_name: (m.squad as unknown as { name: string })?.name ?? '',
+        role: m.role as SquadRole,
+      }))
+    return { ...u, active: u.active ?? true, squads: userMemberships } as UserWithSquads
+  })
+}
+
+export async function updateUserProfile(userId: string, fields: { display_name?: string; global_role?: 'admin' | 'user' }): Promise<void> {
+  const { error } = await supabase.from('profiles').update(fields).eq('id', userId)
+  if (error) throw new Error(error.message)
+}
+
+export async function toggleUserActive(userId: string, active: boolean): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ active }).eq('id', userId)
+  if (error) throw new Error(error.message)
+}
+
+/** Retorna os squad_ids do usuário logado (para filtrar sprints na Home) */
+export async function getMySquadIds(): Promise<string[]> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data, error } = await supabase
+    .from('squad_members')
+    .select('squad_id')
+    .eq('user_id', user.id)
+  if (error) return []
+  return (data ?? []).map((r) => r.squad_id)
+}
+
 export async function setGlobalRole(userId: string, role: 'admin' | 'user'): Promise<void> {
   const { error } = await supabase
     .from('profiles')
     .update({ global_role: role })
     .eq('id', userId)
+  if (error) throw new Error(error.message)
+}
+
+// ─── Permission Profiles ─────────────────────────────────────────────────────
+
+export interface PermissionProfile {
+  id: string
+  name: string
+  description: string
+  permissions: MemberPermissions
+  is_system: boolean
+  created_at: string
+}
+
+export async function listPermissionProfiles(): Promise<PermissionProfile[]> {
+  const { data, error } = await supabase
+    .from('permission_profiles')
+    .select('*')
+    .order('is_system', { ascending: false })
+    .order('created_at', { ascending: true })
+  if (error) throw new Error(error.message)
+  return (data ?? []) as PermissionProfile[]
+}
+
+export async function createPermissionProfile(
+  name: string,
+  description: string,
+  permissions: MemberPermissions,
+): Promise<PermissionProfile> {
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('permission_profiles')
+    .insert({ name, description, permissions, created_by: user?.id })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data as PermissionProfile
+}
+
+export async function updatePermissionProfile(
+  id: string,
+  name: string,
+  description: string,
+  permissions: MemberPermissions,
+): Promise<void> {
+  const { error } = await supabase
+    .from('permission_profiles')
+    .update({ name, description, permissions })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deletePermissionProfile(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('permission_profiles')
+    .delete()
+    .eq('id', id)
   if (error) throw new Error(error.message)
 }
 
