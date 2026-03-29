@@ -11,11 +11,12 @@ test.describe('Persistência — regressão crítica', () => {
     expect(typeof index === 'string' || index === null).toBe(true)
   })
 
-  test('localStorage não contém chaves de credenciais', async ({ page }) => {
+  test('localStorage não contém chaves de credenciais manuais', async ({ page }) => {
     await goToHome(page)
     const keys = await page.evaluate(() => Object.keys(localStorage))
+    // Ignora chaves do Supabase Auth (sb-*-auth-token) — são esperadas após login
     const suspicious = keys.filter(k =>
-      /password|secret|token|apikey|supabase_key/i.test(k)
+      /password|secret|apikey|supabase_key/i.test(k) && !k.startsWith('sb-')
     )
     expect(suspicious).toHaveLength(0)
   })

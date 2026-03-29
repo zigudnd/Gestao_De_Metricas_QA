@@ -6,6 +6,9 @@ const path = require('path');
 const fs = require('fs').promises;
 const { createClient } = require('@supabase/supabase-js');
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DEFAULT_PROJECT_KEY = process.env.QA_PROJECT_KEY || 'android';
@@ -45,8 +48,10 @@ if (STORAGE_TYPE === 'supabase') {
   console.log('✅ Back-end configurado para usar: LOCAL (Pasta data/)');
 }
 
+app.use(helmet());
 app.use(cors({ origin: 'http://localhost:' + PORT }));
 app.use(express.json({ limit: '2mb' }));
+app.use('/api/', rateLimit({ windowMs: 60_000, max: 100 }));
 
 const KEY_REGEX = /^[a-zA-Z0-9_-]{1,80}$/;
 function validateKey(req, res, next) {
@@ -149,6 +154,27 @@ app.post('/api/admin/create-user', async (req, res) => {
     return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
   }
 
+  // Verificar autenticação: extrair token do header Authorization
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token de autenticação não fornecido.' });
+  }
+  const token = authHeader.split(' ')[1];
+  const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !caller) {
+    return res.status(401).json({ error: 'Token inválido ou expirado.' });
+  }
+
+  // Verificar se é admin
+  const { data: callerProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('global_role')
+    .eq('id', caller.id)
+    .single();
+  if (!callerProfile || callerProfile.global_role !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores podem criar usuários.' });
+  }
+
   const { email, display_name } = req.body;
   if (!email || !display_name) {
     return res.status(400).json({ error: 'email e display_name são obrigatórios.' });
@@ -171,6 +197,70 @@ app.post('/api/admin/create-user', async (req, res) => {
   } catch (err) {
     console.error('Erro ao criar usuário:', err);
     return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
+  }
+});
+
+// ── Admin: resetar senha de usuário ──────────────────────────────────────────
+app.post('/api/admin/reset-password', async (req, res) => {
+  if (!supabaseAdmin) {
+    return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token de autenticação não fornecido.' });
+  }
+  const token = authHeader.split(' ')[1];
+  const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !caller) {
+    return res.status(401).json({ error: 'Token inválido ou expirado.' });
+  }
+
+  const { data: callerProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('global_role')
+    .eq('id', caller.id)
+    .single();
+  if (!callerProfile || callerProfile.global_role !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores podem resetar senhas.' });
+  }
+
+  const { user_id } = req.body;
+  if (!user_id) {
+    return res.status(400).json({ error: 'user_id é obrigatório.' });
+  }
+
+  try {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+      password: 'Mudar@123',
+      user_metadata: { must_change_password: true },
+    });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erro ao resetar senha:', err);
+    return res.status(500).json({ error: 'Erro interno ao resetar senha.' });
+  }
+});
+
+// ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
+app.post('/api/status-report-flush', express.text({ type: '*/*' }), async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
+  try {
+    const payload = JSON.parse(req.body);
+    if (!payload.id || !payload.data) return res.status(400).json({ error: 'Payload inválido.' });
+    await supabaseAdmin.from('status_reports').upsert({
+      id: payload.id,
+      data: payload.data,
+      status: payload.status || 'active',
+      updated_at: payload.updated_at || new Date().toISOString(),
+    });
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error('[flush] Erro:', e);
+    return res.status(500).json({ error: 'Erro ao persistir.' });
   }
 });
 

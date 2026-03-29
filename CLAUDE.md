@@ -4,7 +4,7 @@
 - Frontend: React 19 + TypeScript + Vite + Tailwind CSS v4
 - State: Zustand (auth, sprints)
 - Routing: React Router DOM v7 (HashRouter)
-- Backend: Node.js/Express (`server.js`) — serve SPA + endpoint de criação de usuários
+- Backend: Node.js/Express (`server.js`) — serve SPA + endpoints admin e status-report
 - Database: Supabase (PostgreSQL) com RLS, Realtime, Auth (GoTrue)
 - Storage: localStorage (primário) + Supabase (sync)
 - Alias: `@/*` → `src/*`
@@ -40,14 +40,11 @@ Para obter as keys: `supabase status`
 ```bash
 bash setup-admin.sh
 ```
-Ou criar manualmente via API:
-```bash
-node server.js &
-curl -X POST http://localhost:3000/api/admin/create-user \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@tostatos.com","display_name":"Admin"}'
-```
-Depois no banco: `UPDATE profiles SET global_role='admin' WHERE email='admin@tostatos.com';`
+O script cria o admin diretamente via Supabase Auth Admin API.
+Alternativa manual: criar usuário direto no banco e depois:
+`UPDATE profiles SET global_role='admin' WHERE email='admin@tostatos.com';`
+
+> Nota: O endpoint `POST /api/admin/create-user` requer Bearer token de um usuário com `global_role='admin'`. Para o primeiro admin, use o script ou o banco diretamente.
 
 ### Credenciais padrão
 | | |
@@ -91,10 +88,40 @@ Execute o código de forma real:
 ## Estrutura de módulos
 ```
 src/modules/
-├── auth/          # Login, registro, perfil, troca de senha
-├── sprints/       # Dashboard, home, comparação, persistência
-└── squads/        # Squads, membros, perfis de acesso, usuários
+├── auth/            # Login, registro, perfil, troca de senha obrigatória
+├── sprints/         # Dashboard, home, comparação, persistência
+├── squads/          # Squads, membros, perfis de acesso, gestão de usuários
+└── status-report/   # Status Report semanal (seções, itens, Gantt, export)
 ```
+
+### auth
+- `pages/`: LoginPage, ChangePasswordPage (troca obrigatória no 1o login)
+- `store/`: authStore (Zustand) — sessão, profile, must_change_password
+- Fluxo: novos usuários criados com `must_change_password: true` → ProtectedRoute redireciona para `/change-password`
+
+### sprints
+- `pages/`: HomePage (dashboard filtrado por squad), DashboardPage, ComparePage
+- `store/`: sprintsStore (Zustand) — CRUD de sprints, persistência localStorage + Supabase
+- Visibilidade: admin vê todas as sprints; demais veem apenas sprints dos seus squads
+
+### squads
+- `pages/`: SquadsPage (3 abas: Squads, Perfis de Acesso, Usuários)
+- `services/`: squadsService — CRUD squads, membros, permission_profiles, usuários
+- Funcionalidades: cores/descrição de squad, perfis de permissão, ativar/desativar usuários
+
+### status-report
+- `pages/`: StatusReportHomePage (listagem), StatusReportPage (editor)
+- `components/`: SectionManager, SectionCard, ItemRow, ItemFormModal, ItemDetailPanel, StatsBar, ReportPreview, GanttView
+- `services/`: statusReportPersistence (Supabase sync + sendBeacon flush), statusReportExport (PDF/clipboard), dateEngine
+- `store/`: statusReportStore (Zustand) + seedData
+- `types/`: statusReport.types.ts
+
+## API Endpoints (server.js)
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/api/health` | Não | Health check |
+| POST | `/api/admin/create-user` | Bearer + admin | Criar usuário via Supabase Auth Admin |
+| POST | `/api/status-report-flush` | Não | Flush de status report via sendBeacon |
 
 ## Migrations (supabase/migrations/)
 Ordem de aplicação:
@@ -109,6 +136,8 @@ Ordem de aplicação:
 9. `000007` — squad description/color + profiles.active
 10. `000008` — fix RPC overload
 11. `000009` — FK squad_members → profiles
+12. `000010` — status_reports table + RLS + índices
+13. `000011` — audit_logs table
 
 ## Comando /regressivo
 Para executar um ciclo completo de regressão de QA use `/regressivo`.

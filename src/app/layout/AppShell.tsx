@@ -3,13 +3,15 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { SaveToast } from './SaveToast'
+import { ToastContainer } from '@/app/components/Toast'
 import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
+import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
 
 export function AppShell() {
   useEffect(() => {
-    // Ao iniciar o app, sincroniza todas as sprints do Supabase para o localStorage.
-    // Garante que sprints criadas por outros usuários apareçam na lista.
+    // Ao iniciar o app, sincroniza dados do Supabase para o localStorage.
     syncAllFromSupabase()
+    syncStatusReports()
   }, [])
 
   return (
@@ -22,6 +24,7 @@ export function AppShell() {
         </main>
       </div>
       <SaveToast />
+      <ToastContainer />
     </div>
   )
 }

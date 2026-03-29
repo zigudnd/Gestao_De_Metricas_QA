@@ -3,13 +3,14 @@ import {
   listMySquads, createSquad, updateSquad, deleteSquad,
   listSquadMembers, addMember, updateMemberRole, updateMemberPermissions,
   removeMember, getMyRole, listAllUsers,
-  listAllUsersWithSquads, createUser, updateUserProfile, toggleUserActive,
+  listAllUsersWithSquads, createUser, updateUserProfile, toggleUserActive, resetUserPassword,
   listPermissionProfiles, createPermissionProfile, updatePermissionProfile, deletePermissionProfile,
   DEFAULT_PERMISSIONS, PERMISSION_LABELS,
   type Squad, type SquadMember, type SquadRole, type MemberPermissions, type PermissionProfile,
   type UserWithSquads,
 } from '../services/squadsService'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { showToast } from '@/app/components/Toast'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 import type { Profile } from '@/modules/auth/store/authStore'
 
@@ -108,6 +109,7 @@ export function SquadsPage() {
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState('')
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [showAddMemberForm, setShowAddMemberForm] = useState(false)
 
   // Editing permissions inline
   const [editingPermsMember, setEditingPermsMember] = useState<string | null>(null)
@@ -137,8 +139,21 @@ export function SquadsPage() {
   const [newUserEmail, setNewUserEmail] = useState('')
   const [creatingUser, setCreatingUser] = useState(false)
 
-  const [error, setError] = useState('')
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<UserWithSquads | null>(null)
+
+  const [error, _setError] = useState('')
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function setError(msg: string) {
+    _setError(msg)
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
+    if (msg) errorTimerRef.current = setTimeout(() => _setError(''), 6000)
+  }
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [squadSearch, setSquadSearch] = useState('')
+  const [profileSearch, setProfileSearch] = useState('')
+  const [userTabSearch, setUserTabSearch] = useState('')
+  const [userFilterRole, setUserFilterRole] = useState<'all' | 'admin' | 'user'>('all')
+  const [userFilterStatus, setUserFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -165,6 +180,11 @@ export function SquadsPage() {
   }, [activeSquad])
 
   useEffect(() => { loadSquads() }, []) // eslint-disable-line
+
+  // ── Load permission profiles independently ─────────────────────────────────
+  useEffect(() => {
+    listPermissionProfiles().then(setProfiles).catch(() => {})
+  }, [])
 
   // ── Load members + all users when squad changes ──────────────────────────────
 
@@ -246,6 +266,7 @@ export function SquadsPage() {
       setActiveSquad(squad)
       setNewName('')
       setNewDesc('')
+      showToast('Squad criado', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setCreating(false) }
   }
@@ -259,6 +280,7 @@ export function SquadsPage() {
       setSquads((prev) => prev.map((s) => s.id === editingSquad.id ? updated : s))
       if (activeSquad?.id === editingSquad.id) setActiveSquad(updated)
       setEditingSquad(null)
+      showToast('Squad atualizado', 'success')
     } catch (e) { setError(errMsg(e)) }
   }
 
@@ -269,6 +291,7 @@ export function SquadsPage() {
       const updated = squads.filter((s) => s.id !== deleteSquadTarget.id)
       setSquads(updated)
       if (activeSquad?.id === deleteSquadTarget.id) setActiveSquad(updated[0] ?? null)
+      showToast('Squad excluído', 'info')
     } catch (e) { setError(errMsg(e)) }
     finally { setDeleteSquadTarget(null) }
   }
@@ -305,6 +328,7 @@ export function SquadsPage() {
         u.id === editingUser.id ? { ...u, display_name: editUserName.trim(), global_role: editUserRole } : u
       ))
       setEditingUser(null)
+      showToast('Usuário atualizado', 'success')
     } catch (e) { setError(errMsg(e)) }
   }
 
@@ -318,6 +342,7 @@ export function SquadsPage() {
       setNewUserEmail('')
       setShowCreateUser(false)
       loadUsers()
+      showToast('Usuário criado com senha Mudar@123', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setCreatingUser(false) }
   }
@@ -326,6 +351,15 @@ export function SquadsPage() {
     try {
       await toggleUserActive(u.id, !u.active)
       setUsersTab((prev) => prev.map((x) => x.id === u.id ? { ...x, active: !u.active } : x))
+    } catch (e) { setError(errMsg(e)) }
+  }
+
+  async function handleResetPassword() {
+    if (!resetPasswordTarget) return
+    try {
+      await resetUserPassword(resetPasswordTarget.id)
+      setResetPasswordTarget(null)
+      showToast('Senha resetada para Mudar@123', 'success')
     } catch (e) { setError(errMsg(e)) }
   }
 
@@ -364,6 +398,7 @@ export function SquadsPage() {
         setProfiles((prev) => [...prev, created])
       }
       setShowProfileForm(false)
+      showToast(editingProfile ? 'Perfil atualizado' : 'Perfil criado', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setSavingProfile(false) }
   }
@@ -373,6 +408,7 @@ export function SquadsPage() {
     try {
       await deletePermissionProfile(deleteProfileTarget.id)
       setProfiles((prev) => prev.filter((p) => p.id !== deleteProfileTarget.id))
+      showToast('Perfil excluído', 'info')
     } catch (e) { setError(errMsg(e)) }
     finally { setDeleteProfileTarget(null) }
   }
@@ -392,6 +428,8 @@ export function SquadsPage() {
       setAddProfileId('')
       setAddPerms({ ...DEFAULT_PERMISSIONS })
       setUserSearch('')
+      setShowAddMemberForm(false)
+      showToast('Membro adicionado', 'success')
     } catch (e) { setAddError(errMsg(e)) }
     finally { setAdding(false) }
   }
@@ -409,6 +447,7 @@ export function SquadsPage() {
       await updateMemberPermissions(memberId, editingPerms)
       setMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, permissions: editingPerms } : m))
       setEditingPermsMember(null)
+      showToast('Permissões salvas', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setSavingPerms(false) }
   }
@@ -429,6 +468,7 @@ export function SquadsPage() {
     try {
       await removeMember(deleteMemberTarget.id)
       setMembers((prev) => prev.filter((m) => m.id !== deleteMemberTarget.id))
+      showToast('Membro removido', 'info')
     } catch (e) { setError(errMsg(e)) }
     finally { setDeleteMemberTarget(null) }
   }
@@ -445,9 +485,9 @@ export function SquadsPage() {
       {/* ── Tabs ──────────────────────────────────────────────────────────────── */}
       <div style={{ padding: '0 24px', display: 'flex', gap: 0, borderBottom: '1px solid var(--color-border)' }}>
         {([
-          ['squads',   'Squads'],
-          ['profiles', 'Perfis de Acesso'],
-          ...(isAdmin ? [['users', 'Usuários'] as const] : []),
+          ['squads',   '👥 Squads'],
+          ['profiles', '🔐 Perfis de Acesso'],
+          ...(isAdmin ? [['users', '👤 Usuários'] as const] : []),
         ] as const).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', background: 'none', border: 'none',
@@ -468,9 +508,34 @@ export function SquadsPage() {
         {/* ════ Tab: Squads ════ */}
         {tab === 'squads' && (
           <div style={{ maxWidth: 860 }}>
+            {squads.length > 0 && (
+              <div style={{ position: 'relative', marginBottom: 14, maxWidth: 320 }}>
+                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Buscar squad..."
+                  value={squadSearch}
+                  onChange={(e) => setSquadSearch(e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
+                />
+              </div>
+            )}
+            {/* Empty state */}
+            {squads.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-3)' }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 6px' }}>Nenhum squad criado</p>
+                <p style={{ fontSize: 13, margin: 0 }}>Crie seu primeiro squad para organizar a equipe.</p>
+              </div>
+            )}
+
             {/* Lista de squads como cards expansíveis */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {squads.map((s) => {
+              {squads.filter((s) => {
+                if (!squadSearch.trim()) return true
+                const q = squadSearch.toLowerCase().trim()
+                return s.name.toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q)
+              }).map((s) => {
                 const isOpen = activeSquad?.id === s.id
                 return (
                   <div key={s.id} style={{
@@ -491,7 +556,14 @@ export function SquadsPage() {
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</span>
+                          {s.member_count !== undefined && (
+                            <span style={{ fontSize: 11, color: 'var(--color-text-3)', fontWeight: 500 }}>
+                              {s.member_count} {s.member_count === 1 ? 'membro' : 'membros'}
+                            </span>
+                          )}
+                        </div>
                         {s.description && (
                           <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>{s.description}</div>
                         )}
@@ -529,7 +601,7 @@ export function SquadsPage() {
                                   return (
                                     <div key={m.id}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                                        <div style={avatarBase}>
+                                        <div style={avatarStyle(m.role, isAdminMember)}>
                                           {(m.profile?.display_name ?? '?')[0].toUpperCase()}
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -580,10 +652,19 @@ export function SquadsPage() {
                               </div>
                             )}
 
-                            {/* Adicionar membro inline */}
+                            {/* Adicionar membro — toggle */}
                             {canManage && (
                               <div style={{ borderTop: '0.5px solid var(--color-border)', paddingTop: 14 }}>
-                                <span style={{ ...labelSm, marginBottom: 8 }}>Adicionar membro</span>
+                                {!showAddMemberForm ? (
+                                  <button onClick={() => setShowAddMemberForm(true)} style={{ ...btnGhost, color: '#185FA5', fontSize: 13, padding: '6px 0' }}>
+                                    + Adicionar membro
+                                  </button>
+                                ) : (
+                                <div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                  <span style={labelSm}>Adicionar membro</span>
+                                  <button onClick={() => setShowAddMemberForm(false)} style={btnGhost}>Fechar</button>
+                                </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                   {/* Busca com autocomplete */}
                                   <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -638,8 +719,17 @@ export function SquadsPage() {
                                       </div>
                                     )}
                                   </div>
-                                  {/* Perfil + botão */}
-                                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  {/* Role + Perfil + botão */}
+                                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <select
+                                      value={addRole}
+                                      onChange={(e) => setAddRole(e.target.value as SquadRole)}
+                                      style={{ ...inputStyle, width: 'auto', minWidth: 120 }}
+                                    >
+                                      <option value="qa_lead">QA Lead</option>
+                                      <option value="qa">QA</option>
+                                      <option value="stakeholder">Stakeholder</option>
+                                    </select>
                                     <select
                                       value={addProfileId}
                                       onChange={(e) => {
@@ -650,7 +740,7 @@ export function SquadsPage() {
                                       }}
                                       style={{ ...inputStyle, width: 'auto', flex: 1 }}
                                     >
-                                      <option value="">Perfil de acesso: Sem perfil</option>
+                                      <option value="">Perfil: Sem perfil</option>
                                       {profiles.map((p) => (
                                         <option key={p.id} value={p.id}>{p.name}{p.is_system ? ' ★' : ''}</option>
                                       ))}
@@ -667,6 +757,8 @@ export function SquadsPage() {
                                 </div>
                                 {addError && (
                                   <p style={{ margin: '6px 0 0', fontSize: 12, color: '#A32D2D' }}>{addError}</p>
+                                )}
+                                </div>
                                 )}
                               </div>
                             )}
@@ -704,8 +796,24 @@ export function SquadsPage() {
                 <button onClick={openNewProfile} style={{ ...btnPrimary, flexShrink: 0, marginLeft: 12 }}>+ Novo Perfil</button>
               )}
             </div>
+            {profiles.length > 0 && (
+              <div style={{ position: 'relative', marginBottom: 14, maxWidth: 320 }}>
+                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Buscar perfil..."
+                  value={profileSearch}
+                  onChange={(e) => setProfileSearch(e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
+                />
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {profiles.map((p) => (
+              {profiles.filter((p) => {
+                if (!profileSearch.trim()) return true
+                const q = profileSearch.toLowerCase().trim()
+                return p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)
+              }).map((p) => (
                 <div key={p.id} style={{
                   background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
                   borderLeft: p.is_system ? '3px solid #185FA5' : '3px solid var(--color-border)',
@@ -772,8 +880,47 @@ export function SquadsPage() {
             {usersLoading ? (
               <p style={{ fontSize: 13, color: 'var(--color-text-2)' }}>Carregando...</p>
             ) : (
+              <>
+              {usersTab.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+                  {/* Search */}
+                  <div style={{ position: 'relative', minWidth: 200, flex: 1, maxWidth: 320 }}>
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Buscar usuário..."
+                      value={userTabSearch}
+                      onChange={(e) => setUserTabSearch(e.target.value)}
+                      style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
+                    />
+                  </div>
+                  {/* Filter: role */}
+                  <select value={userFilterRole} onChange={(e) => setUserFilterRole(e.target.value as 'all' | 'admin' | 'user')} style={{ ...inputStyle, width: 'auto' }}>
+                    <option value="all">Todos os perfis</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">Usuário</option>
+                  </select>
+                  {/* Filter: status */}
+                  <select value={userFilterStatus} onChange={(e) => setUserFilterStatus(e.target.value as 'all' | 'active' | 'inactive')} style={{ ...inputStyle, width: 'auto' }}>
+                    <option value="all">Todos os status</option>
+                    <option value="active">Ativos</option>
+                    <option value="inactive">Inativos</option>
+                  </select>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-3)', marginLeft: 'auto' }}>
+                    {usersTab.length} usuário{usersTab.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {usersTab.map((u) => (
+                {usersTab.filter((u) => {
+                  if (userFilterRole !== 'all' && u.global_role !== userFilterRole) return false
+                  if (userFilterStatus === 'active' && !u.active) return false
+                  if (userFilterStatus === 'inactive' && u.active) return false
+                  if (!userTabSearch.trim()) return true
+                  const q = userTabSearch.toLowerCase().trim()
+                  return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+                    || u.squads.some((sq) => sq.squad_name.toLowerCase().includes(q))
+                }).map((u) => (
                   <div key={u.id} style={{
                     display: 'flex', alignItems: 'center', gap: 14,
                     padding: '12px 16px',
@@ -801,14 +948,18 @@ export function SquadsPage() {
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                       <button onClick={() => openEditUser(u)} style={btnGhost}>Editar</button>
                       {u.id !== user?.id && (
-                        <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: '#3B6D11' }}>
-                          {u.active ? 'Desativar' : 'Ativar'}
-                        </button>
+                        <>
+                          <button onClick={() => setResetPasswordTarget(u)} style={btnGhost} title="Resetar senha para Mudar@123">🔑 Resetar</button>
+                          <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: '#3B6D11' }}>
+                            {u.active ? 'Desativar' : 'Ativar'}
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
+              </>
             )}
           </div>
         )}
@@ -828,7 +979,14 @@ export function SquadsPage() {
                 </div>
                 <div>
                   <label style={labelSm}>Cor</label>
-                  <input type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} style={colorInputStyle} />
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {SQUAD_COLORS.map((c) => (
+                      <button key={c} type="button" onClick={() => setEditColor(c)} style={{
+                        width: 28, height: 28, borderRadius: 7, background: c, border: editColor === c ? '2.5px solid var(--color-text)' : '2px solid transparent',
+                        cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                      }} />
+                    ))}
+                  </div>
                 </div>
               </div>
               <div>
@@ -897,6 +1055,8 @@ export function SquadsPage() {
 
       {deleteProfileTarget && <ConfirmModal title="Excluir Perfil" description={`Excluir "${deleteProfileTarget.name}"? Esta ação não pode ser desfeita.`} confirmLabel="Excluir" onConfirm={handleDeleteProfile} onCancel={() => setDeleteProfileTarget(null)} />}
 
+      {resetPasswordTarget && <ConfirmModal title="Resetar Senha" description={`Resetar a senha de "${resetPasswordTarget.display_name}" para Mudar@123? O usuário será obrigado a trocar no próximo login.`} confirmLabel="Resetar" onConfirm={handleResetPassword} onCancel={() => setResetPasswordTarget(null)} />}
+
       {error && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#FCEBEB', border: '1px solid #F7C1C1', color: '#A32D2D', borderRadius: 8, padding: '10px 14px', fontSize: 13, zIndex: 9999, maxWidth: 300 }}>
           {error}
@@ -911,13 +1071,23 @@ export function SquadsPage() {
 
 const btnPrimary: React.CSSProperties = { padding: '7px 16px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-text-2)', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }
-const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: '#A32D2D', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
+const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: '#A32D2D', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', outline: 'none' }
 const labelSm: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 6 }
 const badgeNeutral: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
 const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' }
 const badgeInactive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' }
 const avatarBase: React.CSSProperties = { width: 32, height: 32, borderRadius: '50%', background: '#E6F1FB', color: '#185FA5', border: '0.5px solid #B5D4F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }
-const backdropStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }
-const modalStyle: React.CSSProperties = { background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '24px 22px', width: 360, maxWidth: '90vw' }
+const AVATAR_STYLES: Record<string, React.CSSProperties> = {
+  admin:       { background: '#FEF3C7', color: '#B45309', border: '0.5px solid #FCD34D' },
+  qa_lead:     { background: '#E6F1FB', color: '#0c447c', border: '0.5px solid #93C5FD' },
+  qa:          { background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' },
+  stakeholder: { background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' },
+}
+function avatarStyle(role?: string, isAdmin?: boolean): React.CSSProperties {
+  if (isAdmin) return { ...avatarBase, ...AVATAR_STYLES.admin }
+  return { ...avatarBase, ...(AVATAR_STYLES[role || 'qa'] || {}) }
+}
+const backdropStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }
+const modalStyle: React.CSSProperties = { background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '24px 22px', width: 360, maxWidth: '90vw', boxShadow: 'var(--shadow-xl)' }
 const colorInputStyle: React.CSSProperties = { width: 36, height: 36, padding: 2, border: '0.5px solid var(--color-border)', borderRadius: 8, cursor: 'pointer', background: 'var(--color-bg)' }

@@ -9,6 +9,7 @@ import {
 } from '../services/persistence'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { logAudit } from '@/lib/auditService'
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
@@ -336,13 +337,14 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   },
 
   addBugFull: (data) => {
-    const { state, _commit } = get()
+    const { state, sprintId, _commit } = get()
     const newBug: Bug = {
       id: `BUG-${String(Date.now()).slice(-6)}`,
       retests: 0,
       ...data,
     }
     _commit({ ...state, bugs: [newBug, ...state.bugs] })
+    logAudit('sprint', sprintId, 'create', { bug: { old: null, new: newBug.id } })
   },
 
   updateBug: (index, field, value) => {
@@ -359,8 +361,10 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   },
 
   removeBug: (index) => {
-    const { state, _commit } = get()
+    const { state, sprintId, _commit } = get()
+    const removed = state.bugs[index]
     _commit({ ...state, bugs: state.bugs.filter((_, i) => i !== index) })
+    if (removed) logAudit('sprint', sprintId, 'delete', { bug: { old: removed.id, new: null } })
   },
 
   duplicateBug: (index) => {

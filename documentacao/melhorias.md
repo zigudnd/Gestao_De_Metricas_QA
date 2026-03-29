@@ -1,3 +1,6 @@
+usuário admin padrão (admin@tostatos.com / Admin@123)
+
+
 ❯ nao execute ou desenvolva nada no momento, me ajuda com uma duvida, quero exampandir o sistema para que possa     
 efetuar comparacao entre sprints, como seguiria com essa nova funcao ? me diga qual melhor abordagem                
 

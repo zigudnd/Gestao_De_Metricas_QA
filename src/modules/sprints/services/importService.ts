@@ -1,5 +1,16 @@
 import type { Feature, TestCase } from '../types/sprint.types'
 
+// ─── Sanitização de texto importado ──────────────────────────────────────────
+
+function sanitize(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 // ─── .feature parser ─────────────────────────────────────────────────────────
 
 export interface ImportResult {
@@ -24,7 +35,7 @@ export function parseFeatureText(text: string, suiteId: number): ImportResult {
         featuresMap[currentFeatureName].push(currentScenario)
         currentScenario = null
       }
-      currentFeatureName = trimmed.replace(featureRegex, '').trim() || 'Nova Funcionalidade Importada'
+      currentFeatureName = sanitize(trimmed.replace(featureRegex, '').trim()) || 'Nova Funcionalidade Importada'
       if (!featuresMap[currentFeatureName]) {
         featuresMap[currentFeatureName] = []
         featuresOrder.push(currentFeatureName)
@@ -38,7 +49,7 @@ export function parseFeatureText(text: string, suiteId: number): ImportResult {
           featuresOrder.push(currentFeatureName)
         }
       }
-      currentScenario = { name: trimmed.replace(scenarioRegex, '').trim(), gherkin: trimmed + '\n' }
+      currentScenario = { name: sanitize(trimmed.replace(scenarioRegex, '').trim()), gherkin: trimmed + '\n' }
     } else if (currentScenario) {
       currentScenario.gherkin += line + '\n'
     }
@@ -135,8 +146,8 @@ function buildFromRows(
   const now = Date.now()
 
   rows.forEach((cols, idx) => {
-    const featureName = String((cols[colFeature] as string) || '').trim() || defaultFeatureName
-    const scenarioName = String((cols[colScenario] as string) || '').trim()
+    const featureName = sanitize(String((cols[colFeature] as string) || '').trim()) || defaultFeatureName
+    const scenarioName = sanitize(String((cols[colScenario] as string) || '').trim())
     if (!scenarioName) return
 
     const gherkin = colGherkin >= 0 ? String((cols[colGherkin] as string) || '').trim() : ''

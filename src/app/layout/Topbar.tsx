@@ -50,25 +50,50 @@ export function Topbar() {
   }
 
   const isDashboard = location.pathname.startsWith('/sprints/') && !!params.sprintId
+  const isHome = location.pathname === '/'
+  const isStatusReport = location.pathname.startsWith('/status-report')
+  const isSquads = location.pathname.startsWith('/squads')
+  const isDocs = location.pathname === '/docs'
+  const isProfile = location.pathname === '/profile'
+  const isChangePassword = location.pathname === '/change-password'
+
+  function getBreadcrumb(): { label: string; path?: string }[] {
+    if (isHome) return [{ label: 'Início' }]
+    if (isDashboard && sprintTitle) return [{ label: 'Sprints', path: '/sprints' }, { label: sprintTitle }]
+    if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [{ label: 'Sprints' }]
+    if (isStatusReport) return [{ label: 'Status Report' }]
+    if (isSquads) return [{ label: 'Squads' }]
+    if (isDocs) return [{ label: 'Documentação' }]
+    if (isProfile) return [{ label: 'Perfil' }]
+    if (isChangePassword) return [{ label: 'Alterar Senha' }]
+    return [{ label: 'Sprints', path: '/sprints' }]
+  }
+
+  const crumbs = getBreadcrumb()
 
   return (
     <header style={headerStyle}>
       {/* Breadcrumb */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-2)' }}>
-        <span
-          onClick={() => navigate('/sprints')}
-          style={{ cursor: 'pointer', fontWeight: 500 }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-2)')}
-        >
-          Sprints
-        </span>
-        {isDashboard && sprintTitle && (
-          <>
-            <span style={{ opacity: 0.35 }}>/</span>
-            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{sprintTitle}</span>
-          </>
-        )}
+        {crumbs.map((crumb, i) => (
+          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 && <span style={{ opacity: 0.35 }}>/</span>}
+            {crumb.path ? (
+              <span
+                onClick={() => navigate(crumb.path!)}
+                style={{ cursor: 'pointer', fontWeight: 500 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-2)')}
+              >
+                {crumb.label}
+              </span>
+            ) : (
+              <span style={{ color: i === crumbs.length - 1 ? 'var(--color-text)' : 'var(--color-text-2)', fontWeight: 500 }}>
+                {crumb.label}
+              </span>
+            )}
+          </span>
+        ))}
       </nav>
 
       {/* Ações contextuais */}
@@ -253,7 +278,7 @@ function BtnFilledPrimary({ children, onClick, title }: React.PropsWithChildren<
       onMouseLeave={() => setHovered(false)}
       style={{
         ...btnBase,
-        background: hovered ? '#1a6bbf' : '#185FA5',
+        background: hovered ? '#1a6bbf' : 'var(--color-blue)',
         color: '#fff',
         border: 'none',
         fontWeight: 600,

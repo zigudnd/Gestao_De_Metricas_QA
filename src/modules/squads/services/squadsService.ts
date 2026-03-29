@@ -42,6 +42,7 @@ export interface Squad {
   color: string
   created_by: string
   created_at: string
+  member_count?: number
 }
 
 export interface SquadMember {
@@ -63,10 +64,14 @@ export interface SquadMember {
 export async function listMySquads(): Promise<Squad[]> {
   const { data, error } = await supabase
     .from('squads')
-    .select('*')
+    .select('*, squad_members(count)')
     .order('created_at', { ascending: true })
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map((s) => ({
+    ...s,
+    member_count: (s.squad_members as unknown as { count: number }[])?.[0]?.count ?? 0,
+    squad_members: undefined,
+  })) as Squad[]
 }
 
 export async function createSquad(name: string, description = '', color = '#185FA5'): Promise<Squad> {
@@ -158,9 +163,13 @@ export interface UserWithSquads extends Profile {
 }
 
 export async function createUser(email: string, displayName: string): Promise<{ id: string; email: string }> {
+  const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch('/api/admin/create-user', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ email, display_name: displayName }),
   })
   const data = await res.json()
@@ -209,6 +218,20 @@ export async function updateUserProfile(userId: string, fields: { display_name?:
 export async function toggleUserActive(userId: string, active: boolean): Promise<void> {
   const { error } = await supabase.from('profiles').update({ active }).eq('id', userId)
   if (error) throw new Error(error.message)
+}
+
+export async function resetUserPassword(userId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  const res = await fetch('/api/admin/reset-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify({ user_id: userId }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erro ao resetar senha')
 }
 
 /** Retorna os squad_ids do usuário logado (para filtrar sprints na Home) */
