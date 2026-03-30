@@ -4,11 +4,13 @@ import { supabase } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type GlobalRole = 'admin' | 'gerente' | 'user'
+
 export interface Profile {
   id: string
   email: string
   display_name: string
-  global_role: 'admin' | 'user'
+  global_role: GlobalRole
 }
 
 interface AuthState {

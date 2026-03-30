@@ -15,7 +15,10 @@ export function ChangePasswordPage() {
     e.preventDefault()
     setError('')
 
-    if (password.length < 6) { setError('A senha deve ter pelo menos 6 caracteres.'); return }
+    if (password.length < 8) { setError('A senha deve ter pelo menos 8 caracteres.'); return }
+    if (!/[A-Z]/.test(password)) { setError('A senha deve conter pelo menos uma letra maiúscula.'); return }
+    if (!/[0-9]/.test(password)) { setError('A senha deve conter pelo menos um número.'); return }
+    if (!/[^a-zA-Z0-9]/.test(password)) { setError('A senha deve conter pelo menos um caractere especial.'); return }
     if (password !== confirm) { setError('As senhas não coincidem.'); return }
 
     setLoading(true)

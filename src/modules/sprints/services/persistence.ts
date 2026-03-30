@@ -384,29 +384,42 @@ export async function persistToServer(sprintId: string, state: SprintState): Pro
  */
 export async function syncAllFromSupabase(): Promise<void> {
   try {
-    const { data, error } = await supabase
-      .from('sprints')
-      .select('id, data, status, squad_id, updated_at')
-    if (error || !data) return
+    const PAGE_SIZE = 100
+    const remoteIndex: SprintIndexEntry[] = []
+    let offset = 0
 
-    const remoteIndex: SprintIndexEntry[] = data.map((row) => {
-      const state = normalizeState(row.data)
-      saveToStorage(row.id, state)
-      const totalTests = state.features.reduce((a, f) => a + (f.tests || 0), 0)
-      const totalExec = state.features.reduce((a, f) => a + (f.exec || 0), 0)
-      return {
-        id: row.id,
-        title: state.config.title || 'S/ Título',
-        squad: state.config.squad || '',
-        squadId: row.squad_id ?? undefined,
-        startDate: state.config.startDate || '',
-        endDate: state.config.endDate || '',
-        totalTests,
-        totalExec,
-        updatedAt: row.updated_at,
-        status: row.status as 'ativa' | 'concluida',
+    // Paginação para evitar estouro de memória em projetos grandes
+    while (true) {
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('id, data, status, squad_id, updated_at')
+        .range(offset, offset + PAGE_SIZE - 1)
+      if (error || !data || data.length === 0) break
+
+      for (const row of data) {
+        const state = normalizeState(row.data)
+        saveToStorage(row.id, state)
+        const totalTests = state.features.reduce((a: number, f: { tests?: number }) => a + (f.tests || 0), 0)
+        const totalExec = state.features.reduce((a: number, f: { exec?: number }) => a + (f.exec || 0), 0)
+        remoteIndex.push({
+          id: row.id,
+          title: state.config.title || 'S/ Título',
+          squad: state.config.squad || '',
+          squadId: row.squad_id ?? undefined,
+          startDate: state.config.startDate || '',
+          endDate: state.config.endDate || '',
+          totalTests,
+          totalExec,
+          updatedAt: row.updated_at,
+          status: row.status as 'ativa' | 'concluida',
+        })
       }
-    })
+
+      if (data.length < PAGE_SIZE) break
+      offset += PAGE_SIZE
+    }
+
+    if (remoteIndex.length === 0) return
 
     // Preserva flags locais (favorito, ordem manual) e mescla com os dados remotos
     const localIndex = getMasterIndex()

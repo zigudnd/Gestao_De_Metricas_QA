@@ -30,6 +30,16 @@ const inputStyle: React.CSSProperties = {
   background: 'var(--color-surface)',
 }
 
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '7px 28px 7px 10px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+}
+
 export function ItemFormModal({ defaultSection, sections, existingItems, onConfirm, onCancel }: ItemFormModalProps) {
   const [title, setTitle] = useState('')
   const [section, setSection] = useState<SectionId>(defaultSection)
@@ -119,7 +129,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
           <div>
             <label style={labelStyle}>Seção</label>
-            <select value={section} onChange={(e) => setSection(e.target.value as SectionId)} style={inputStyle}>
+            <select value={section} onChange={(e) => setSection(e.target.value as SectionId)} style={selectStyle}>
               {sections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </div>
@@ -130,6 +140,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                 <button
                   key={p}
                   onClick={() => setPriority(p)}
+                  aria-pressed={priority === p}
                   style={{
                     flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
@@ -153,6 +164,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
               <button
                 key={opt.value}
                 onClick={() => toggleStack(opt.value)}
+                aria-pressed={stacks.includes(opt.value)}
                 style={{
                   padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
@@ -219,7 +231,14 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                 />
               </div>
               <div>
-                <label style={labelStyle}>Início manual</label>
+                <label style={labelStyle}>
+                  Início manual
+                  {dependsOn.length > 0 && (
+                    <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--color-text-3)', display: 'block', marginTop: 1 }}>
+                      Calculado pelos predecessores
+                    </span>
+                  )}
+                </label>
                 <input
                   type="date" value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
@@ -239,7 +258,13 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
 
             {/* Predecessors */}
             <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Predecessores</label>
+              <label style={labelStyle}>
+                Predecessores{dependsOn.length > 0 && (
+                  <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 10, fontSize: 10, fontWeight: 700, background: 'var(--color-blue)', color: '#fff' }}>
+                    {dependsOn.length}
+                  </span>
+                )}
+              </label>
               <div style={{
                 maxHeight: 120, overflowY: 'auto',
                 border: '1px solid var(--color-border)', borderRadius: 7, padding: 6,

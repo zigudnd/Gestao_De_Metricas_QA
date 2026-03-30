@@ -199,25 +199,38 @@ export async function deleteFromServer(id: string): Promise<void> {
 
 export async function syncAllFromSupabase(): Promise<void> {
   try {
-    const { data, error } = await supabase
-      .from('status_reports')
-      .select('id, data, updated_at')
-    if (error || !data || data.length === 0) return
-
+    const PAGE_SIZE = 100
     const remoteEntries: StatusReportIndexEntry[] = []
-    for (const row of data) {
-      const state = normalizeState(row.data)
-      saveToLocalStorage(state)
-      remoteEntries.push({
-        id: state.id,
-        title: state.config.title || 'S/ Titulo',
-        squad: state.config.squad || '',
-        itemCount: state.items.length,
-        updatedAt: row.updated_at,
-      })
+    let offset = 0
+
+    while (true) {
+      const { data, error } = await supabase
+        .from('status_reports')
+        .select('id, data, updated_at')
+        .range(offset, offset + PAGE_SIZE - 1)
+      if (error || !data || data.length === 0) break
+
+      for (const row of data) {
+        const state = normalizeState(row.data)
+        saveToLocalStorage(state)
+        remoteEntries.push({
+          id: state.id,
+          title: state.config.title || 'S/ Titulo',
+          squad: state.config.squad || '',
+          itemCount: state.items.length,
+          updatedAt: row.updated_at,
+          periodStart: state.config.periodStart || '',
+          periodEnd: state.config.periodEnd || '',
+        })
+      }
+
+      if (data.length < PAGE_SIZE) break
+      offset += PAGE_SIZE
     }
 
-    // Merge with local (preserve order)
+    if (remoteEntries.length === 0) return
+
+    // Merge with local (preserve favorites, status)
     const localIndex = getMasterIndex()
     const merged = remoteEntries.map((remote) => {
       const local = localIndex.find((l) => l.id === remote.id)

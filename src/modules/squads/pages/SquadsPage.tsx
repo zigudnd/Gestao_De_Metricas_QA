@@ -5,8 +5,10 @@ import {
   removeMember, getMyRole, listAllUsers,
   listAllUsersWithSquads, createUser, updateUserProfile, toggleUserActive, resetUserPassword,
   listPermissionProfiles, createPermissionProfile, updatePermissionProfile, deletePermissionProfile,
-  DEFAULT_PERMISSIONS, PERMISSION_LABELS,
+  archiveSquad, unarchiveSquad, listArchivedSquads,
+  DEFAULT_PERMISSIONS, PERMISSION_LABELS, PERMISSION_GROUPS, PERMISSION_RESOURCES, RESOURCE_LABELS,
   type Squad, type SquadMember, type SquadRole, type MemberPermissions, type PermissionProfile,
+  type PermissionGroup,
   type UserWithSquads,
 } from '../services/squadsService'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -44,28 +46,80 @@ function PermissionsEditor({
   onChange: (p: MemberPermissions) => void
   disabled?: boolean
 }) {
+  function toggleGroup(group: PermissionGroup, checked: boolean) {
+    const updates: Partial<MemberPermissions> = {}
+    for (const res of PERMISSION_RESOURCES) {
+      const key = `${group}_${res}` as keyof MemberPermissions
+      updates[key] = checked
+    }
+    onChange({ ...value, ...updates })
+  }
+
+  function isGroupAllChecked(group: PermissionGroup): boolean {
+    return PERMISSION_RESOURCES.every((res) => value[`${group}_${res}` as keyof MemberPermissions])
+  }
+
   return (
     <div style={{
       padding: '12px 14px',
       background: 'var(--color-bg)',
       border: '0.5px solid var(--color-border)',
       borderRadius: 8,
-      display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 2 }}>
-        Permissões de exclusão
+      <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 8, display: 'block' }}>
+        Permissoes
       </span>
-      {(Object.keys(PERMISSION_LABELS) as (keyof MemberPermissions)[]).map((key) => (
-        <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>
-          <input
-            type="checkbox"
-            checked={value[key]}
-            disabled={disabled}
-            onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
-            style={{ width: 15, height: 15, accentColor: '#185FA5', cursor: disabled ? 'default' : 'pointer', flexShrink: 0 }}
-          />
-          <span style={{ fontSize: 13, color: 'var(--color-text)' }}>{PERMISSION_LABELS[key]}</span>
-        </label>
+
+      {/* Grid header */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr repeat(3, 64px)',
+        gap: 0, alignItems: 'center',
+        borderBottom: '1px solid var(--color-border)',
+        paddingBottom: 6, marginBottom: 6,
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Recurso</span>
+        {PERMISSION_GROUPS.map((g) => (
+          <label key={g.id} style={{ textAlign: 'center', cursor: disabled ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <input
+              type="checkbox"
+              checked={isGroupAllChecked(g.id)}
+              disabled={disabled}
+              onChange={(e) => toggleGroup(g.id, e.target.checked)}
+              style={{ width: 13, height: 13, accentColor: g.color, cursor: disabled ? 'default' : 'pointer' }}
+            />
+            <span style={{ fontSize: 10, fontWeight: 600, color: g.color }}>{g.label}</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Grid rows */}
+      {PERMISSION_RESOURCES.map((res) => (
+        <div key={res} style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr repeat(3, 64px)',
+          gap: 0, alignItems: 'center',
+          padding: '5px 0',
+          borderBottom: '0.5px solid var(--color-border)',
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--color-text)', fontWeight: 500 }}>
+            {RESOURCE_LABELS[res]}
+          </span>
+          {PERMISSION_GROUPS.map((g) => {
+            const key = `${g.id}_${res}` as keyof MemberPermissions
+            return (
+              <div key={g.id} style={{ textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={value[key] ?? false}
+                  disabled={disabled}
+                  onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
+                  style={{ width: 14, height: 14, accentColor: g.color, cursor: disabled ? 'default' : 'pointer' }}
+                />
+              </div>
+            )
+          })}
+        </div>
       ))}
     </div>
   )
@@ -75,7 +129,7 @@ function PermissionsEditor({
 
 export function SquadsPage() {
   const { user, profile: myProfile } = useAuthStore()
-  const isAdmin = myProfile?.global_role === 'admin'
+  const isAdmin = myProfile?.global_role === 'admin' || myProfile?.global_role === 'gerente'
 
   const [squads, setSquads] = useState<Squad[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,6 +179,9 @@ export function SquadsPage() {
   const [editDesc, setEditDesc] = useState('')
   const [editColor, setEditColor] = useState('#185FA5')
   const [deleteSquadTarget, setDeleteSquadTarget] = useState<Squad | null>(null)
+  const [archiveSquadTarget, setArchiveSquadTarget] = useState<Squad | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
+  const [archivedSquads, setArchivedSquads] = useState<Squad[]>([])
   const [deleteMemberTarget, setDeleteMemberTarget] = useState<SquadMember | null>(null)
 
   // Users tab (admin)
@@ -132,7 +189,7 @@ export function SquadsPage() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [editingUser, setEditingUser] = useState<UserWithSquads | null>(null)
   const [editUserName, setEditUserName] = useState('')
-  const [editUserRole, setEditUserRole] = useState<'admin' | 'user'>('user')
+  const [editUserRole, setEditUserRole] = useState<'admin' | 'gerente' | 'user'>('user')
   // Create user form
   const [showCreateUser, setShowCreateUser] = useState(false)
   const [newUserName, setNewUserName] = useState('')
@@ -152,7 +209,7 @@ export function SquadsPage() {
   const [squadSearch, setSquadSearch] = useState('')
   const [profileSearch, setProfileSearch] = useState('')
   const [userTabSearch, setUserTabSearch] = useState('')
-  const [userFilterRole, setUserFilterRole] = useState<'all' | 'admin' | 'user'>('all')
+  const [userFilterRole, setUserFilterRole] = useState<'all' | 'admin' | 'gerente' | 'user'>('all')
   const [userFilterStatus, setUserFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
 
   // Fechar dropdown ao clicar fora
@@ -174,12 +231,19 @@ export function SquadsPage() {
     try {
       const data = await listMySquads()
       setSquads(data)
-      if (data.length > 0 && !activeSquad) setActiveSquad(data[0])
+      // Auto-selecionar primeiro squad apenas se nenhum está selecionado
+      setActiveSquad((prev) => {
+        if (prev && data.some((s) => s.id === prev.id)) return prev
+        return data.length > 0 ? data[0] : null
+      })
     } catch (e) { setError(errMsg(e)) }
     finally { setLoading(false) }
-  }, [activeSquad])
+  }, [])
 
-  useEffect(() => { loadSquads() }, []) // eslint-disable-line
+  // Recarregar squads ao voltar para a aba squads
+  useEffect(() => {
+    if (tab === 'squads') loadSquads()
+  }, [tab, loadSquads])
 
   // ── Load permission profiles independently ─────────────────────────────────
   useEffect(() => {
@@ -255,17 +319,30 @@ export function SquadsPage() {
 
   // ── Create squad ─────────────────────────────────────────────────────────────
 
+  const [showNewSquadForm, setShowNewSquadForm] = useState(false)
+  const [newNameError, setNewNameError] = useState('')
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!newName.trim()) return
+    const trimmed = newName.trim()
+    if (!trimmed) return
+    // Validar nome duplicado
+    const exists = squads.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())
+    if (exists) {
+      setNewNameError('Já existe um squad com este nome.')
+      return
+    }
+    setNewNameError('')
     setCreating(true)
     try {
       const autoColor = SQUAD_COLORS[squads.length % SQUAD_COLORS.length]
-      const squad = await createSquad(newName.trim(), newDesc.trim(), autoColor)
+      const squad = await createSquad(trimmed, newDesc.trim(), autoColor)
       setSquads((prev) => [...prev, squad])
       setActiveSquad(squad)
       setNewName('')
       setNewDesc('')
+      setNewNameError('')
+      setShowNewSquadForm(false)
       showToast('Squad criado', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setCreating(false) }
@@ -295,6 +372,39 @@ export function SquadsPage() {
     } catch (e) { setError(errMsg(e)) }
     finally { setDeleteSquadTarget(null) }
   }
+
+  // ── Archive squad ───────────────────────────────────────────────────────────
+
+  async function handleArchiveSquad() {
+    if (!archiveSquadTarget) return
+    try {
+      await archiveSquad(archiveSquadTarget.id)
+      setSquads((prev) => prev.filter((s) => s.id !== archiveSquadTarget.id))
+      if (activeSquad?.id === archiveSquadTarget.id) setActiveSquad(null)
+      showToast(`"${archiveSquadTarget.name}" arquivado`, 'info')
+    } catch (e) { setError(errMsg(e)) }
+    finally { setArchiveSquadTarget(null) }
+  }
+
+  async function handleUnarchiveSquad(squad: Squad) {
+    try {
+      await unarchiveSquad(squad.id)
+      setArchivedSquads((prev) => prev.filter((s) => s.id !== squad.id))
+      setSquads((prev) => [...prev, { ...squad, archived: false }])
+      showToast(`"${squad.name}" restaurado`, 'success')
+    } catch (e) { setError(errMsg(e)) }
+  }
+
+  async function loadArchivedSquads() {
+    try {
+      const data = await listArchivedSquads()
+      setArchivedSquads(data)
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (showArchived && isAdmin) loadArchivedSquads()
+  }, [showArchived]) // eslint-disable-line
 
   // ── Load users for Users tab ─────────────────────────────────────────────────
 
@@ -508,24 +618,88 @@ export function SquadsPage() {
         {/* ════ Tab: Squads ════ */}
         {tab === 'squads' && (
           <div style={{ maxWidth: 860 }}>
-            {squads.length > 0 && (
-              <div style={{ position: 'relative', marginBottom: 14, maxWidth: 320 }}>
-                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
+            {/* Search + New Squad button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              {squads.length > 0 && (
+                <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-3)', pointerEvents: 'none' }}>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar squad..."
+                    value={squadSearch}
+                    onChange={(e) => setSquadSearch(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
+                  />
+                </div>
+              )}
+              <button
+                onClick={() => setShowNewSquadForm(!showNewSquadForm)}
+                style={{
+                  padding: '8px 16px', borderRadius: 8, border: 'none',
+                  background: showNewSquadForm ? 'var(--color-surface-2)' : 'var(--color-blue)',
+                  color: showNewSquadForm ? 'var(--color-text-2)' : '#fff',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {showNewSquadForm ? 'Cancelar' : '+ Novo Squad'}
+              </button>
+            </div>
+
+            {/* Inline new squad form */}
+            {showNewSquadForm && (
+              <form onSubmit={handleCreate} style={{
+                padding: '16px 18px',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-blue)',
+                borderRadius: 10,
+                marginBottom: 14,
+                display: 'flex', flexDirection: 'column', gap: 10,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Novo Squad</div>
+                <div>
+                  <input
+                    value={newName}
+                    onChange={(e) => { setNewName(e.target.value); setNewNameError('') }}
+                    style={{ ...inputStyle, width: '100%', borderColor: newNameError ? 'var(--color-red-mid)' : undefined }}
+                    required
+                    placeholder="Nome do squad *"
+                    autoFocus
+                  />
+                  {newNameError && (
+                    <div style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4, fontWeight: 600 }}>
+                      {newNameError}
+                    </div>
+                  )}
+                </div>
                 <input
-                  type="text"
-                  placeholder="Buscar squad..."
-                  value={squadSearch}
-                  onChange={(e) => setSquadSearch(e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
+                  placeholder="Descrição (opcional)"
                 />
-              </div>
+                <button
+                  type="submit"
+                  disabled={creating || !newName.trim()}
+                  style={{
+                    ...btnPrimary, alignSelf: 'flex-start',
+                    opacity: creating || !newName.trim() ? 0.5 : 1,
+                  }}
+                >
+                  {creating ? 'Criando...' : 'Criar Squad'}
+                </button>
+              </form>
             )}
+
             {/* Empty state */}
-            {squads.length === 0 && (
+            {squads.length === 0 && !showNewSquadForm && (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-3)' }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
                 <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 6px' }}>Nenhum squad criado</p>
-                <p style={{ fontSize: 13, margin: 0 }}>Crie seu primeiro squad para organizar a equipe.</p>
+                <p style={{ fontSize: 13, margin: 0 }}>Clique em <strong>+ Novo Squad</strong> para começar.</p>
               </div>
             )}
 
@@ -572,11 +746,11 @@ export function SquadsPage() {
                         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => { setEditingSquad(s); setEditName(s.name); setEditDesc(s.description); setEditColor(s.color) }} style={btnGhost}>Editar</button>
                           <button
-                            onClick={() => setDeleteSquadTarget(s)}
+                            onClick={() => setArchiveSquadTarget(s)}
                             style={btnDestructive}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#FCEBEB' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)' }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-                          >Excluir</button>
+                          >Arquivar</button>
                         </div>
                       )}
                       <span style={{ fontSize: 16, color: 'var(--color-text-3)', flexShrink: 0, transition: 'transform 0.15s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
@@ -596,7 +770,7 @@ export function SquadsPage() {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                                 {members.map((m) => {
                                   const isMe = m.user_id === user?.id
-                                  const isAdminMember = m.profile?.global_role === 'admin'
+                                  const isAdminMember = m.profile?.global_role === 'admin' || m.profile?.global_role === 'gerente'
                                   const isEditingP = editingPermsMember === m.id
                                   return (
                                     <div key={m.id}>
@@ -612,7 +786,12 @@ export function SquadsPage() {
                                           <span style={{ fontSize: 11, color: 'var(--color-text-3)', marginLeft: 8 }}>{m.profile?.email}</span>
                                         </div>
                                         {canManage && !isMe && !isAdminMember ? (
-                                          <select value={m.role} onChange={(e) => handleRoleChange(m, e.target.value as SquadRole)} style={{ ...roleBadge, cursor: 'pointer', outline: 'none' }}>
+                                          <select value={m.role} onChange={(e) => handleRoleChange(m, e.target.value as SquadRole)} style={{
+                                            ...roleBadge, cursor: 'pointer', outline: 'none', appearance: 'none',
+                                            paddingRight: 20,
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+                                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
+                                          }}>
                                             <option value="qa_lead">QA Lead</option>
                                             <option value="qa">QA</option>
                                             <option value="stakeholder">Stakeholder</option>
@@ -630,7 +809,7 @@ export function SquadsPage() {
                                             onClick={() => setDeleteMemberTarget(m)}
                                             title={isMe ? 'Sair' : 'Remover'}
                                             style={{ background: 'none', border: 'none', color: '#A32D2D', width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', flexShrink: 0 }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.background = '#FCEBEB' }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)' }}
                                             onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                                           >×</button>
                                         )}
@@ -724,7 +903,7 @@ export function SquadsPage() {
                                     <select
                                       value={addRole}
                                       onChange={(e) => setAddRole(e.target.value as SquadRole)}
-                                      style={{ ...inputStyle, width: 'auto', minWidth: 120 }}
+                                      style={{ ...selectStyle, width: 'auto', minWidth: 120 }}
                                     >
                                       <option value="qa_lead">QA Lead</option>
                                       <option value="qa">QA</option>
@@ -738,7 +917,7 @@ export function SquadsPage() {
                                         if (found) setAddPerms({ ...found.permissions })
                                         else setAddPerms({ ...DEFAULT_PERMISSIONS })
                                       }}
-                                      style={{ ...inputStyle, width: 'auto', flex: 1 }}
+                                      style={{ ...selectStyle, width: 'auto', flex: 1 }}
                                     >
                                       <option value="">Perfil: Sem perfil</option>
                                       {profiles.map((p) => (
@@ -771,17 +950,67 @@ export function SquadsPage() {
               })}
             </div>
 
-            {/* Criar squad */}
-            <div style={{ marginTop: 24 }}>
-              <span style={labelSm}>Novo Squad</span>
-              <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} style={inputStyle} required placeholder="Nome do squad" />
-                <input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} style={inputStyle} placeholder="Descrição (opcional)" />
-                <button type="submit" disabled={creating || !newName.trim()} style={{ ...btnPrimary, alignSelf: 'flex-start', opacity: creating || !newName.trim() ? 0.5 : 1 }}>
-                  {creating ? 'Criando...' : 'Criar Squad'}
+            {/* (Form de criação movido para o topo, ao lado da busca) */}
+
+            {/* Squads arquivados — visível para admin */}
+            {isAdmin && (
+              <div style={{ marginTop: 28 }}>
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, color: 'var(--color-text-3)',
+                    padding: 0, fontFamily: 'var(--font-family-sans)',
+                  }}
+                >
+                  <span style={{
+                    display: 'inline-block', transition: 'transform 0.15s',
+                    transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)',
+                    fontSize: 10,
+                  }}>▶</span>
+                  Squads arquivados {archivedSquads.length > 0 && `(${archivedSquads.length})`}
                 </button>
-              </form>
-            </div>
+
+                {showArchived && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                    {archivedSquads.length === 0 && (
+                      <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic' }}>
+                        Nenhum squad arquivado.
+                      </p>
+                    )}
+                    {archivedSquads.map((s) => (
+                      <div key={s.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 16px', background: 'var(--color-bg)',
+                        border: '0.5px solid var(--color-border)',
+                        borderLeft: `3px solid ${s.color || '#6b7280'}`,
+                        borderRadius: 10, opacity: 0.7,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</span>
+                          {s.description && (
+                            <span style={{ fontSize: 12, color: 'var(--color-text-3)', marginLeft: 8 }}>{s.description}</span>
+                          )}
+                        </div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                          background: 'var(--color-surface-2)', color: 'var(--color-text-3)',
+                        }}>
+                          Arquivado
+                        </span>
+                        <button
+                          onClick={() => handleUnarchiveSquad(s)}
+                          style={{ ...btnGhost, color: 'var(--color-green)', fontSize: 12 }}
+                        >
+                          Restaurar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -826,18 +1055,32 @@ export function SquadsPage() {
                         {p.is_system && <span style={badgeNeutral}>PADRÃO</span>}
                       </div>
                       {p.description && <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-text-2)' }}>{p.description}</p>}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {(Object.keys(PERMISSION_LABELS) as (keyof MemberPermissions)[]).map((key) => (
-                          <span key={key} style={p.permissions[key] ? badgeActive : badgeNeutral}>
-                            {p.permissions[key] ? '✓' : '✗'} {PERMISSION_LABELS[key].replace('Excluir ', '')}
-                          </span>
-                        ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {PERMISSION_GROUPS.map((g) => {
+                          const active = PERMISSION_RESOURCES.filter((res) => p.permissions[`${g.id}_${res}` as keyof MemberPermissions])
+                          if (active.length === 0) return null
+                          return (
+                            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: g.color, minWidth: 42 }}>{g.label}:</span>
+                              {active.map((res) => (
+                                <span key={res} style={{ ...badgeActive, borderColor: g.color + '44', color: g.color, background: g.color + '12' }}>
+                                  {RESOURCE_LABELS[res]}
+                                </span>
+                              ))}
+                            </div>
+                          )
+                        })}
+                        {PERMISSION_GROUPS.every((g) => PERMISSION_RESOURCES.every((res) => !p.permissions[`${g.id}_${res}` as keyof MemberPermissions])) && (
+                          <span style={badgeNeutral}>Somente leitura</span>
+                        )}
                       </div>
                     </div>
-                    {isAdmin && !p.is_system && (
+                    {isAdmin && (
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                         <button onClick={() => openEditProfile(p)} style={btnGhost}>Editar</button>
-                        <button onClick={() => setDeleteProfileTarget(p)} style={btnDestructive}>Excluir</button>
+                        {!p.is_system && (
+                          <button onClick={() => setDeleteProfileTarget(p)} style={btnDestructive}>Excluir</button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -895,13 +1138,14 @@ export function SquadsPage() {
                     />
                   </div>
                   {/* Filter: role */}
-                  <select value={userFilterRole} onChange={(e) => setUserFilterRole(e.target.value as 'all' | 'admin' | 'user')} style={{ ...inputStyle, width: 'auto' }}>
+                  <select value={userFilterRole} onChange={(e) => setUserFilterRole(e.target.value as 'all' | 'admin' | 'gerente' | 'user')} style={{ ...selectStyle, width: 'auto' }}>
                     <option value="all">Todos os perfis</option>
                     <option value="admin">Admin</option>
-                    <option value="user">Usuário</option>
+                    <option value="gerente">Gerente</option>
+                    <option value="user">Usuario</option>
                   </select>
                   {/* Filter: status */}
-                  <select value={userFilterStatus} onChange={(e) => setUserFilterStatus(e.target.value as 'all' | 'active' | 'inactive')} style={{ ...inputStyle, width: 'auto' }}>
+                  <select value={userFilterStatus} onChange={(e) => setUserFilterStatus(e.target.value as 'all' | 'active' | 'inactive')} style={{ ...selectStyle, width: 'auto' }}>
                     <option value="all">Todos os status</option>
                     <option value="active">Ativos</option>
                     <option value="inactive">Inativos</option>
@@ -934,7 +1178,7 @@ export function SquadsPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</span>
-                        <span style={badgeNeutral}>{u.global_role === 'admin' ? 'Admin' : 'Usuário'}</span>
+                        <span style={badgeNeutral}>{u.global_role === 'admin' ? 'Admin' : u.global_role === 'gerente' ? 'Gerente' : 'Usuario'}</span>
                         <span style={u.active ? badgeActive : badgeInactive}>{u.active ? 'Ativo' : 'Inativo'}</span>
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 2 }}>{u.email}</div>
@@ -1010,8 +1254,8 @@ export function SquadsPage() {
               <div><label style={labelSm}>Nome</label><input autoFocus value={editUserName} onChange={(e) => setEditUserName(e.target.value)} style={inputStyle} required /></div>
               <div><label style={labelSm}>E-mail</label><input value={editingUser.email} style={{ ...inputStyle, opacity: 0.5 }} disabled /></div>
               <div><label style={labelSm}>Perfil global</label>
-                <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'admin' | 'user')} style={inputStyle}>
-                  <option value="user">Usuário</option><option value="admin">Admin</option>
+                <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'admin' | 'gerente' | 'user')} style={selectStyle}>
+                  <option value="user">Usuario</option><option value="gerente">Gerente</option><option value="admin">Admin</option>
                 </select>
               </div>
               {editingUser.squads.length > 0 && (
@@ -1033,7 +1277,8 @@ export function SquadsPage() {
         </div>
       )}
 
-      {deleteSquadTarget && <ConfirmModal title="Excluir Squad" description={`Excluir "${deleteSquadTarget.name}"? Todos os membros serão removidos.`} confirmLabel="Excluir" onConfirm={handleDeleteSquad} onCancel={() => setDeleteSquadTarget(null)} />}
+      {deleteSquadTarget && <ConfirmModal title="Excluir Squad" description={`Excluir "${deleteSquadTarget.name}" permanentemente? Todos os membros serao removidos. Considere arquivar em vez de excluir.`} confirmLabel="Excluir" onConfirm={handleDeleteSquad} onCancel={() => setDeleteSquadTarget(null)} />}
+      {archiveSquadTarget && <ConfirmModal title="Arquivar Squad" description={`Arquivar "${archiveSquadTarget.name}"? O squad nao aparecera mais nas listas. Somente membros do squad e admins poderao visualizar os dados antigos. Voce podera restaurar a qualquer momento.`} confirmLabel="Arquivar" onConfirm={handleArchiveSquad} onCancel={() => setArchiveSquadTarget(null)} />}
       {deleteMemberTarget && <ConfirmModal title={deleteMemberTarget.user_id === user?.id ? 'Sair do Squad' : 'Remover Membro'} description={deleteMemberTarget.user_id === user?.id ? `Sair do squad "${activeSquad?.name}"?` : `Remover ${deleteMemberTarget.profile?.display_name ?? 'este membro'} do squad?`} confirmLabel={deleteMemberTarget.user_id === user?.id ? 'Sair' : 'Remover'} onConfirm={handleRemoveMember} onCancel={() => setDeleteMemberTarget(null)} />}
 
       {showProfileForm && (
@@ -1073,15 +1318,20 @@ const btnPrimary: React.CSSProperties = { padding: '7px 16px', background: '#185
 const btnGhost: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-text-2)', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }
 const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: '#A32D2D', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', outline: 'none' }
+const selectStyle: React.CSSProperties = {
+  ...inputStyle, padding: '8px 28px 8px 12px', cursor: 'pointer', appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
+}
 const labelSm: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 6 }
 const badgeNeutral: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
-const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' }
-const badgeInactive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' }
-const avatarBase: React.CSSProperties = { width: 32, height: 32, borderRadius: '50%', background: '#E6F1FB', color: '#185FA5', border: '0.5px solid #B5D4F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }
+const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' }
+const badgeInactive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)' }
+const avatarBase: React.CSSProperties = { width: 32, height: 32, borderRadius: '50%', background: 'var(--color-blue-light)', color: 'var(--color-blue)', border: '0.5px solid var(--color-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }
 const AVATAR_STYLES: Record<string, React.CSSProperties> = {
-  admin:       { background: '#FEF3C7', color: '#B45309', border: '0.5px solid #FCD34D' },
-  qa_lead:     { background: '#E6F1FB', color: '#0c447c', border: '0.5px solid #93C5FD' },
-  qa:          { background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' },
+  admin:       { background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', border: '0.5px solid var(--color-amber-mid)' },
+  qa_lead:     { background: 'var(--color-blue-light)', color: 'var(--color-blue-text)', border: '0.5px solid var(--color-blue)' },
+  qa:          { background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' },
   stakeholder: { background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' },
 }
 function avatarStyle(role?: string, isAdmin?: boolean): React.CSSProperties {

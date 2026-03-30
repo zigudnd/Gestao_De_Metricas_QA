@@ -163,7 +163,7 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
             const offset = diffDays(minDate, today)
             if (offset < 0 || offset > totalDays) return null
             const x = offset * DAY_W
-            return <line x1={x} y1={0} x2={x} y2={svgH} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 2" />
+            return <line x1={x} y1={0} x2={x} y2={svgH} stroke="var(--color-red-mid)" strokeWidth={1.5} strokeDasharray="4 2" />
           })()}
 
           {/* Header border */}
@@ -215,8 +215,8 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
                 {/* Late badge */}
                 {c.isLate && (
                   <g>
-                    <rect x={barX + barW + 4} y={y + 10} width={46} height={14} rx={3} fill="#FCEBEB" />
-                    <text x={barX + barW + 8} y={y + 20} fontSize={9} fill="#a32d2d" fontWeight={700}>
+                    <rect x={barX + barW + 4} y={y + 10} width={46} height={14} rx={3} fill="var(--color-red-light)" />
+                    <text x={barX + barW + 8} y={y + 20} fontSize={9} fill="var(--color-red)" fontWeight={700}>
                       ATRASO
                     </text>
                   </g>

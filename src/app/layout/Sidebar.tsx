@@ -6,14 +6,11 @@ import { useAuthStore } from '@/modules/auth/store/authStore'
 
 const IconSprints = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2.5" y="3" width="15" height="14" rx="2" />
-    <path d="M2.5 7.5h15" />
-    <path d="M7 3v4.5" />
-    <path d="M13 3v4.5" />
-    <path d="M6 11h2" />
-    <path d="M6 13.5h2" />
-    <path d="M10 11h4" />
-    <path d="M10 13.5h4" />
+    {/* Shield body */}
+    <path d="M10 2.5L3.5 5.5v4c0 4.2 2.8 7.2 6.5 8.5 3.7-1.3 6.5-4.3 6.5-8.5v-4L10 2.5z" />
+    {/* Magnifying glass inside shield */}
+    <circle cx="9.5" cy="9.5" r="2.8" />
+    <path d="M11.5 11.5l2 2" strokeWidth="2" />
   </svg>
 )
 
@@ -30,11 +27,13 @@ const IconSquads = () => (
 
 const IconStatusReport = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="2.5" width="14" height="15" rx="2" />
-    <path d="M6.5 6.5h7" />
-    <path d="M6.5 9.5h5" />
-    <path d="M6.5 12.5h7" />
-    <path d="M6.5 15.5h3" />
+    {/* 3 bars (progress) */}
+    <path d="M4 16V12" strokeWidth="2.5" />
+    <path d="M8 16V9" strokeWidth="2.5" />
+    <path d="M12 16V6" strokeWidth="2.5" />
+    {/* Trend arrow going up-right */}
+    <path d="M11 5l3-2.5" strokeWidth="1.8" />
+    <path d="M12.5 2.5H14V4" strokeWidth="1.4" />
   </svg>
 )
 
@@ -53,6 +52,13 @@ const IconChevron = ({ direction }: { direction: 'right' | 'left' }) => (
     {direction === 'right'
       ? <path d="M6 3l5 5-5 5" />
       : <path d="M10 3l-5 5 5 5" />}
+  </svg>
+)
+
+const IconHome = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 10l7-7 7 7" />
+    <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" />
   </svg>
 )
 
@@ -359,9 +365,10 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Nav items — principais */}
-      <NavItem icon={<IconSprints />} label="Sprints" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
-      <NavItem icon={<IconStatusReport />} label="Status Report" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
+      {/* Nav items */}
+      <NavItem icon={<IconHome />} label="Início" active={location.pathname === '/'} expanded={expanded} onClick={() => navigate('/')} />
+      <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
+      <NavItem icon={<IconStatusReport />} label="Visão Geral" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
 
       <div style={{ flex: 1 }} />
 
@@ -373,7 +380,7 @@ export function Sidebar() {
       }} />
 
       {/* Nav items — administrativo */}
-      <NavItem icon={<IconSquads />} label="Squads"  active={isSquads}  expanded={expanded} onClick={() => navigate('/squads')} />
+      <NavItem icon={<IconSquads />} label="Cadastros"  active={isSquads}  expanded={expanded} onClick={() => navigate('/squads')} />
       <NavItem icon={<IconDocs />} label="Documentação" active={location.pathname === '/docs'} expanded={expanded} onClick={() => navigate('/docs')} />
 
       {/* Separator */}

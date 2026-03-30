@@ -38,24 +38,19 @@ function useStats(): CardStats {
 
 const IconSprints = () => (
   <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2.5" y="3" width="15" height="14" rx="2" />
-    <path d="M2.5 7.5h15" />
-    <path d="M7 3v4.5" />
-    <path d="M13 3v4.5" />
-    <path d="M6 11h2" />
-    <path d="M6 13.5h2" />
-    <path d="M10 11h4" />
-    <path d="M10 13.5h4" />
+    <path d="M10 2.5L3.5 5.5v4c0 4.2 2.8 7.2 6.5 8.5 3.7-1.3 6.5-4.3 6.5-8.5v-4L10 2.5z" />
+    <circle cx="9.5" cy="9.5" r="2.8" />
+    <path d="M11.5 11.5l2 2" strokeWidth="1.8" />
   </svg>
 )
 
 const IconStatusReport = () => (
   <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="2.5" width="14" height="15" rx="2" />
-    <path d="M6.5 6.5h7" />
-    <path d="M6.5 9.5h5" />
-    <path d="M6.5 12.5h7" />
-    <path d="M6.5 15.5h3" />
+    <path d="M4 16V12" strokeWidth="2.2" />
+    <path d="M8 16V9" strokeWidth="2.2" />
+    <path d="M12 16V6" strokeWidth="2.2" />
+    <path d="M11 5l3-2.5" strokeWidth="1.6" />
+    <path d="M12.5 2.5H14V4" strokeWidth="1.2" />
   </svg>
 )
 
@@ -195,12 +190,12 @@ export function DashboardHome() {
       }}>
         <NavCard
           icon={<IconSprints />}
-          title="Sprints"
-          description="Dashboard de métricas QA"
+          title="Cobertura QA"
+          description="Gerencie a cobertura de testes das sprints"
           color="var(--color-blue)"
           stats={[
             { label: 'Ativas', value: stats.sprints.active },
-            { label: 'Concluídas', value: stats.sprints.concluded },
+            { label: 'Concluidas', value: stats.sprints.concluded },
           ]}
           onClick={() => navigate('/sprints')}
         />
@@ -208,7 +203,7 @@ export function DashboardHome() {
         <NavCard
           icon={<IconStatusReport />}
           title="Status Report"
-          description="Relatórios de status do SM"
+          description="Relatorios de status e visao geral dos projetos"
           color="#f59e0b"
           stats={[
             { label: 'Reports', value: stats.reports.count },
@@ -219,11 +214,11 @@ export function DashboardHome() {
 
         <NavCard
           icon={<IconSquads />}
-          title="Squads"
-          description="Equipes e permissões"
+          title="Cadastros"
+          description="Squads, membros, perfis de acesso e usuarios"
           color="#10b981"
           stats={[
-            { label: 'Gerenciar', value: '→' },
+            { label: 'Gerenciar', value: '\u2192' },
           ]}
           onClick={() => navigate('/squads')}
         />

@@ -114,6 +114,8 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                           <button
                             key={c}
                             onClick={() => onUpdate(sec.id, { color: c })}
+                            aria-label={`Cor ${c}`}
+                            aria-pressed={sec.color === c}
                             style={{
                               width: 18, height: 18, borderRadius: 4,
                               background: c, border: sec.color === c ? '2px solid var(--color-text)' : '1px solid transparent',
@@ -206,6 +208,8 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                   <button
                     key={c}
                     onClick={() => setNewColor(c)}
+                    aria-label={`Cor ${c}`}
+                    aria-pressed={newColor === c}
                     style={{
                       width: 20, height: 20, borderRadius: 4,
                       background: c, border: newColor === c ? '2px solid var(--color-text)' : '1px solid transparent',

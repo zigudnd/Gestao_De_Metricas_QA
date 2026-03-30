@@ -35,6 +35,16 @@ const inputStyle: React.CSSProperties = {
   background: 'var(--color-surface)',
 }
 
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '6px 28px 6px 8px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
+}
+
 function formatDate(iso: string): string {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-')
@@ -84,7 +94,7 @@ export function ItemDetailPanel({
               onClick={() => setShowDeleteConfirm(true)}
               style={{
                 padding: '5px 10px', borderRadius: 6, border: 'none',
-                background: '#FCEBEB', color: '#a32d2d', fontSize: 11,
+                background: 'var(--color-red-light)', color: 'var(--color-red)', fontSize: 11,
                 fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
               }}
             >
@@ -125,11 +135,11 @@ export function ItemDetailPanel({
           <div>
             <div style={labelStyle}>Status</div>
             {computed.isLate ? (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: '#FCEBEB', color: '#a32d2d', fontWeight: 700 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-red-light)', color: 'var(--color-red)', fontWeight: 700 }}>
                 EM ATRASO
               </span>
             ) : computed.isCycle ? (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: '#fef3c7', color: '#b45309', fontWeight: 700 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', fontWeight: 700 }}>
                 CICLO
               </span>
             ) : (
@@ -157,7 +167,7 @@ export function ItemDetailPanel({
               <select
                 value={item.section}
                 onChange={(e) => onUpdate(item.id, { section: e.target.value as SectionId })}
-                style={inputStyle}
+                style={selectStyle}
               >
                 {sections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
@@ -169,6 +179,7 @@ export function ItemDetailPanel({
                   <button
                     key={p}
                     onClick={() => onUpdate(item.id, { priority: p })}
+                    aria-pressed={item.priority === p}
                     style={{
                       flex: 1, padding: '5px 0', borderRadius: 5, fontSize: 11, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
@@ -197,6 +208,7 @@ export function ItemDetailPanel({
                       : [...item.stacks, opt.value]
                     onUpdate(item.id, { stacks: next })
                   }}
+                  aria-pressed={item.stacks.includes(opt.value)}
                   style={{
                     padding: '4px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
@@ -302,7 +314,7 @@ export function ItemDetailPanel({
               <select
                 value=""
                 onChange={(e) => { if (e.target.value) onAddDependency(item.id, e.target.value) }}
-                style={{ ...inputStyle, fontSize: 12, color: 'var(--color-text-2)' }}
+                style={{ ...selectStyle, fontSize: 12, color: 'var(--color-text-2)' }}
               >
                 <option value="">+ Adicionar predecessor...</option>
                 {availableDeps.map((dep) => (

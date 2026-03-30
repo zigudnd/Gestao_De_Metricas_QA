@@ -65,7 +65,7 @@ export function StatusReportPage() {
     if (!urlReportId) { navigate('/status-report'); return }
     initReport(urlReportId)
     return () => resetReport()
-  }, [urlReportId, initReport, resetReport, navigate])
+  }, [urlReportId]) // eslint-disable-line
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -195,7 +195,7 @@ export function StatusReportPage() {
       <ReportDashboard sections={sections} items={items} computedDates={computedDates} />
 
       {/* Tab navigation */}
-      <div style={{
+      <div role="tablist" aria-label="Abas do Status Report" style={{
         display: 'flex', gap: 2,
         marginBottom: 16,
         borderBottom: '1px solid var(--color-border)',
@@ -204,6 +204,8 @@ export function StatusReportPage() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={currentTab === tab.id}
             onClick={() => setTab(tab.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,

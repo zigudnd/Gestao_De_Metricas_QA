@@ -29,6 +29,8 @@ export function SectionCard({
       {/* Header */}
       <button
         onClick={onToggle}
+        aria-expanded={!isCollapsed}
+        aria-label={`${isCollapsed ? 'Expandir' : 'Recolher'} seção ${section.label}`}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10,
           padding: '10px 14px',
@@ -81,6 +83,7 @@ export function SectionCard({
           ))}
           <button
             onClick={onAddItem}
+            aria-label={`Adicionar item na seção ${section.label}`}
             style={{
               width: '100%', padding: '8px 0',
               background: 'none', border: '1px dashed var(--color-border-md)',

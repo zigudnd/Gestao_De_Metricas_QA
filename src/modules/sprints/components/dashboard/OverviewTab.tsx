@@ -228,7 +228,7 @@ export function OverviewTab() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           {ritmoStatus !== 'ok' && (
-            <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: '#fef2f2', color: '#E24B4A', border: '0.5px solid #fecaca', letterSpacing: '0.5px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: 'var(--color-red-light)', color: 'var(--color-red-mid)', border: '0.5px solid var(--color-red-mid)', letterSpacing: '0.5px', whiteSpace: 'nowrap', flexShrink: 0 }}>
               EM ATRASO
             </span>
           )}
@@ -271,24 +271,24 @@ export function OverviewTab() {
 
       {/* ── Alert Strips ───────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div style={{ background: '#EAF3DE', border: '0.5px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#639922', flexShrink: 0, marginTop: 3 }} />
+        <div style={{ background: 'var(--color-green-light)', border: '0.5px solid var(--color-green-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-green-mid)', flexShrink: 0, marginTop: 3 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#166534' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-green)' }}>
               {validBugs.length} defeito{validBugs.length !== 1 ? 's' : ''} prevenido{validBugs.length !== 1 ? 's' : ''}
             </div>
-            <div style={{ fontSize: 12, color: '#166534', opacity: 0.75, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-green)', opacity: 0.75, marginTop: 2 }}>
               Impacto prevenido: {preventionScore} pts
             </div>
           </div>
         </div>
-        <div style={{ background: '#FCEBEB', border: '0.5px solid #fecaca', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, marginTop: 3 }} />
+        <div style={{ background: 'var(--color-red-light)', border: '0.5px solid var(--color-red-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, marginTop: 3 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-red)' }}>
               {testesComprometidos > 0 ? `${testesComprometidos} testes bloqueados` : 'Sem testes bloqueados'}
             </div>
-            <div style={{ fontSize: 12, color: '#991b1b', opacity: 0.75, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-red)', opacity: 0.75, marginTop: 2 }}>
               {testesComprometidos > 0 ? `${blockedFeatureCount} funcionalidade${blockedFeatureCount !== 1 ? 's' : ''} impedindo a execução` : 'Todos os testes estão liberados para execução'}
             </div>
           </div>
@@ -752,8 +752,8 @@ function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
 }) {
   return (
     <div style={{
-      background: highlight ? '#fef2f2' : 'var(--color-surface)',
-      border: `${highlight ? '1.5px' : '0.5px'} solid ${highlight ? '#fecaca' : 'var(--color-border)'}`,
+      background: highlight ? 'var(--color-red-light)' : 'var(--color-surface)',
+      border: `${highlight ? '1.5px' : '0.5px'} solid ${highlight ? 'var(--color-red-mid)' : 'var(--color-border)'}`,
       borderRadius: 10,
       padding: '16px 18px 18px',
       display: 'flex', flexDirection: 'column', gap: 6,

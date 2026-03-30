@@ -4,6 +4,8 @@ import { useSprintStore } from '@/modules/sprints/store/sprintStore'
 import { exportToImage, exportJSON, importFromJSON } from '@/modules/sprints/services/exportService'
 import { getMasterIndex, concludeSprint, reactivateSprint } from '@/modules/sprints/services/persistence'
 import { TermoConclusaoModal } from '@/app/components/TermoConclusaoModal'
+import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
+import { useAuthStore } from '@/modules/auth/store/authStore'
 
 export function Topbar() {
   const location = useLocation()
@@ -15,6 +17,12 @@ export function Topbar() {
   const [showTermo, setShowTermo] = useState(false)
   const [isConcluida, setIsConcluida] = useState(false)
   const [showConfirmConcluir, setShowConfirmConcluir] = useState(false)
+
+  const globalRole = useAuthStore((s) => s.profile?.global_role)
+  const { squads, activeSquadId, setActiveSquad, loadSquads } = useActiveSquadStore()
+  const isPrivileged = globalRole === 'admin' || globalRole === 'gerente'
+
+  useEffect(() => { loadSquads() }, []) // eslint-disable-line
 
   useEffect(() => {
     if (!params.sprintId) return
@@ -59,10 +67,10 @@ export function Topbar() {
 
   function getBreadcrumb(): { label: string; path?: string }[] {
     if (isHome) return [{ label: 'Início' }]
-    if (isDashboard && sprintTitle) return [{ label: 'Sprints', path: '/sprints' }, { label: sprintTitle }]
-    if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [{ label: 'Sprints' }]
+    if (isDashboard && sprintTitle) return [{ label: 'Cobertura QA', path: '/sprints' }, { label: sprintTitle }]
+    if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [{ label: 'Cobertura QA' }]
     if (isStatusReport) return [{ label: 'Status Report' }]
-    if (isSquads) return [{ label: 'Squads' }]
+    if (isSquads) return [{ label: 'Cadastros' }]
     if (isDocs) return [{ label: 'Documentação' }]
     if (isProfile) return [{ label: 'Perfil' }]
     if (isChangePassword) return [{ label: 'Alterar Senha' }]
@@ -95,6 +103,42 @@ export function Topbar() {
           </span>
         ))}
       </nav>
+
+      {/* Squad selector */}
+      {squads.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+            Squad
+          </span>
+          {activeSquadId && squads.find((s) => s.id === activeSquadId)?.color && (
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: squads.find((s) => s.id === activeSquadId)?.color ?? 'var(--color-blue)',
+              flexShrink: 0,
+            }} />
+          )}
+          <select
+            value={activeSquadId ?? ''}
+            onChange={(e) => { if (e.target.value) setActiveSquad(e.target.value) }}
+            aria-label="Selecionar squad"
+            style={{
+              padding: '6px 30px 6px 12px', fontSize: 13, fontWeight: 600,
+              border: '0.5px solid var(--color-border)', borderRadius: 8,
+              background: 'var(--color-surface)', color: 'var(--color-text)',
+              fontFamily: 'var(--font-family-sans)', cursor: 'pointer',
+              outline: 'none', appearance: 'none', minWidth: 160,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 10px center',
+            }}
+          >
+            {isPrivileged && <option value="all">Todos os squads</option>}
+            {squads.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Ações contextuais */}
       {isDashboard && (

@@ -10,9 +10,9 @@ interface ItemRowProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: '#ef4444',
-  medium: '#f59e0b',
-  low: '#10b981',
+  high: 'var(--color-red-mid)',
+  medium: 'var(--color-amber-mid)',
+  low: 'var(--color-green-mid)',
 }
 
 const STACK_LABELS: Record<string, string> = {

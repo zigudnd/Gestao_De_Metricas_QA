@@ -59,6 +59,8 @@ export function SprintDashboard() {
     <div id="sprint-dashboard" style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Tab Navigation */}
       <div
+        role="tablist"
+        aria-label="Abas da Sprint"
         style={{
           display: 'flex',
           gap: 2,
@@ -72,6 +74,8 @@ export function SprintDashboard() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
               display: 'flex',

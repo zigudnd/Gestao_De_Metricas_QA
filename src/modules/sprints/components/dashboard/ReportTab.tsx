@@ -53,7 +53,7 @@ export function ReportTab() {
               borderRadius: 8,
               fontSize: 13,
               color: 'var(--color-text)',
-              background: '#eff6ff',
+              background: 'var(--color-blue-light)',
               fontFamily: 'var(--font-family-sans)',
               resize: 'vertical',
               lineHeight: 1.7,
@@ -86,8 +86,8 @@ export function ReportTab() {
                     onClick={() => changeDate(dt)}
                     style={{
                       padding: '10px 14px',
-                      background: isCurrent ? '#eff6ff' : 'var(--color-bg)',
-                      border: `1px solid ${isCurrent ? '#bfdbfe' : 'var(--color-border)'}`,
+                      background: isCurrent ? 'var(--color-blue-light)' : 'var(--color-bg)',
+                      border: `1px solid ${isCurrent ? 'var(--color-blue)' : 'var(--color-border)'}`,
                       borderLeft: `4px solid ${isCurrent ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
                       borderRadius: 8,
                       cursor: 'pointer',

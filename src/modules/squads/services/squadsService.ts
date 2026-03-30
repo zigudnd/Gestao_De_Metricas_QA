@@ -6,6 +6,23 @@ import type { Profile } from '@/modules/auth/store/authStore'
 export type SquadRole = 'qa_lead' | 'qa' | 'stakeholder'
 
 export interface MemberPermissions {
+  // Criar
+  create_sprints:    boolean
+  create_bugs:       boolean
+  create_features:   boolean
+  create_test_cases: boolean
+  create_suites:     boolean
+  create_blockers:   boolean
+  create_alignments: boolean
+  // Editar
+  edit_sprints:      boolean
+  edit_bugs:         boolean
+  edit_features:     boolean
+  edit_test_cases:   boolean
+  edit_suites:       boolean
+  edit_blockers:     boolean
+  edit_alignments:   boolean
+  // Excluir
   delete_sprints:    boolean
   delete_bugs:       boolean
   delete_features:   boolean
@@ -16,23 +33,48 @@ export interface MemberPermissions {
 }
 
 export const DEFAULT_PERMISSIONS: MemberPermissions = {
-  delete_sprints:    false,
-  delete_bugs:       false,
-  delete_features:   false,
-  delete_test_cases: false,
-  delete_suites:     false,
-  delete_blockers:   false,
-  delete_alignments: false,
+  create_sprints: true, create_bugs: true, create_features: true, create_test_cases: true,
+  create_suites: true, create_blockers: true, create_alignments: true,
+  edit_sprints: true, edit_bugs: true, edit_features: true, edit_test_cases: true,
+  edit_suites: true, edit_blockers: true, edit_alignments: true,
+  delete_sprints: false, delete_bugs: false, delete_features: false, delete_test_cases: false,
+  delete_suites: false, delete_blockers: false, delete_alignments: false,
+}
+
+export type PermissionGroup = 'create' | 'edit' | 'delete'
+
+export const PERMISSION_GROUPS: { id: PermissionGroup; label: string; color: string }[] = [
+  { id: 'create', label: 'Criar', color: 'var(--color-green)' },
+  { id: 'edit',   label: 'Editar', color: 'var(--color-blue)' },
+  { id: 'delete', label: 'Excluir', color: 'var(--color-red)' },
+]
+
+export const PERMISSION_RESOURCES = [
+  'sprints', 'bugs', 'features', 'test_cases', 'suites', 'blockers', 'alignments',
+] as const
+
+export type PermissionResource = typeof PERMISSION_RESOURCES[number]
+
+export const RESOURCE_LABELS: Record<PermissionResource, string> = {
+  sprints:     'Sprints',
+  bugs:        'Bugs',
+  features:    'Funcionalidades',
+  test_cases:  'Casos de Teste',
+  suites:      'Suites',
+  blockers:    'Bloqueios',
+  alignments:  'Alinhamentos',
 }
 
 export const PERMISSION_LABELS: Record<keyof MemberPermissions, string> = {
-  delete_sprints:    'Excluir Sprints',
-  delete_bugs:       'Excluir Bugs',
-  delete_features:   'Excluir Funcionalidades',
-  delete_test_cases: 'Excluir Casos de Teste',
-  delete_suites:     'Excluir Suites',
-  delete_blockers:   'Excluir Bloqueios',
-  delete_alignments: 'Excluir Alinhamentos',
+  create_sprints: 'Criar Sprints', create_bugs: 'Criar Bugs', create_features: 'Criar Funcionalidades',
+  create_test_cases: 'Criar Casos de Teste', create_suites: 'Criar Suites',
+  create_blockers: 'Criar Bloqueios', create_alignments: 'Criar Alinhamentos',
+  edit_sprints: 'Editar Sprints', edit_bugs: 'Editar Bugs', edit_features: 'Editar Funcionalidades',
+  edit_test_cases: 'Editar Casos de Teste', edit_suites: 'Editar Suites',
+  edit_blockers: 'Editar Bloqueios', edit_alignments: 'Editar Alinhamentos',
+  delete_sprints: 'Excluir Sprints', delete_bugs: 'Excluir Bugs', delete_features: 'Excluir Funcionalidades',
+  delete_test_cases: 'Excluir Casos de Teste', delete_suites: 'Excluir Suites',
+  delete_blockers: 'Excluir Bloqueios', delete_alignments: 'Excluir Alinhamentos',
 }
 
 export interface Squad {
@@ -43,6 +85,7 @@ export interface Squad {
   created_by: string
   created_at: string
   member_count?: number
+  archived?: boolean
 }
 
 export interface SquadMember {
@@ -55,23 +98,92 @@ export interface SquadMember {
   profile?: {
     email: string
     display_name: string
-    global_role: 'admin' | 'user'
+    global_role: 'admin' | 'gerente' | 'user'
   }
 }
 
 // ─── Squads ───────────────────────────────────────────────────────────────────
 
-export async function listMySquads(): Promise<Squad[]> {
+export async function listMySquads(includeArchived = false): Promise<Squad[]> {
   const { data, error } = await supabase
     .from('squads')
     .select('*, squad_members(count)')
     .order('created_at', { ascending: true })
   if (error) throw error
-  return (data ?? []).map((s) => ({
+  const mapped = (data ?? []).map((s) => ({
     ...s,
     member_count: (s.squad_members as unknown as { count: number }[])?.[0]?.count ?? 0,
     squad_members: undefined,
   })) as Squad[]
+  // Enriquecer com fallback local para archived
+  const archivedLocal = getArchivedLocal()
+  const enriched = mapped.map((s) => ({
+    ...s,
+    archived: s.archived ?? archivedLocal.has(s.id),
+  }))
+  if (!includeArchived) {
+    return enriched.filter((s) => !s.archived)
+  }
+  return enriched
+}
+
+export async function listArchivedSquads(): Promise<Squad[]> {
+  const all = await listMySquads(true)
+  return all.filter((s) => s.archived === true)
+}
+
+export async function archiveSquad(squadId: string): Promise<void> {
+  try {
+    const { error } = await supabase.from('squads').update({ archived: true }).eq('id', squadId)
+    if (error) {
+      // Coluna archived pode não existir ainda — salvar no localStorage como fallback
+      if (error.message.includes('archived')) {
+        saveArchivedLocal(squadId, true)
+        return
+      }
+      throw error
+    }
+  } catch (e) {
+    saveArchivedLocal(squadId, true)
+    throw e
+  }
+}
+
+export async function unarchiveSquad(squadId: string): Promise<void> {
+  try {
+    const { error } = await supabase.from('squads').update({ archived: false }).eq('id', squadId)
+    if (error) {
+      if (error.message.includes('archived')) {
+        saveArchivedLocal(squadId, false)
+        return
+      }
+      throw error
+    }
+  } catch (e) {
+    saveArchivedLocal(squadId, false)
+    throw e
+  }
+}
+
+// Fallback local para quando a coluna archived ainda não existe no banco
+const ARCHIVED_LS_KEY = 'archivedSquadIds'
+
+function getArchivedLocal(): Set<string> {
+  try {
+    const raw = localStorage.getItem(ARCHIVED_LS_KEY)
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch { return new Set() }
+}
+
+function saveArchivedLocal(squadId: string, archived: boolean): void {
+  const set = getArchivedLocal()
+  if (archived) set.add(squadId)
+  else set.delete(squadId)
+  localStorage.setItem(ARCHIVED_LS_KEY, JSON.stringify([...set]))
+}
+
+export function isArchivedLocal(squadId: string): boolean {
+  return getArchivedLocal().has(squadId)
 }
 
 export async function createSquad(name: string, description = '', color = '#185FA5'): Promise<Squad> {
@@ -210,7 +322,7 @@ export async function listAllUsersWithSquads(): Promise<UserWithSquads[]> {
   })
 }
 
-export async function updateUserProfile(userId: string, fields: { display_name?: string; global_role?: 'admin' | 'user' }): Promise<void> {
+export async function updateUserProfile(userId: string, fields: { display_name?: string; global_role?: 'admin' | 'gerente' | 'user' }): Promise<void> {
   const { error } = await supabase.from('profiles').update(fields).eq('id', userId)
   if (error) throw new Error(error.message)
 }

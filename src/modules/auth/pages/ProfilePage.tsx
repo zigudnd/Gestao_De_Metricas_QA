@@ -39,7 +39,10 @@ export function ProfilePage() {
     e.preventDefault()
     setPwError('')
 
-    if (password.length < 6) { setPwError('A senha deve ter pelo menos 6 caracteres.'); return }
+    if (password.length < 8) { setPwError('A senha deve ter pelo menos 8 caracteres.'); return }
+    if (!/[A-Z]/.test(password)) { setPwError('A senha deve conter pelo menos uma letra maiúscula.'); return }
+    if (!/[0-9]/.test(password)) { setPwError('A senha deve conter pelo menos um número.'); return }
+    if (!/[^a-zA-Z0-9]/.test(password)) { setPwError('A senha deve conter pelo menos um caractere especial.'); return }
     if (password !== confirm) { setPwError('As senhas não coincidem.'); return }
 
     setPwLoading(true)

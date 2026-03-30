@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const helmet = require('helmet');
@@ -49,9 +50,12 @@ if (STORAGE_TYPE === 'supabase') {
 }
 
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:' + PORT }));
+const allowedOrigins = (process.env.CORS_ORIGINS || `http://localhost:5173,http://localhost:${PORT}`).split(',').map(s => s.trim());
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '2mb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 100 }));
+const adminLimiter = rateLimit({ windowMs: 60_000, max: 10 });
+const flushLimiter = rateLimit({ windowMs: 60_000, max: 30 });
 
 const KEY_REGEX = /^[a-zA-Z0-9_-]{1,80}$/;
 function validateKey(req, res, next) {
@@ -149,7 +153,7 @@ app.put('/api/dashboard/:projectKey', validateKey, async (req, res) => {
 });
 
 // ── Admin: criar usuário via Supabase Auth Admin API ─────────────────────────
-app.post('/api/admin/create-user', async (req, res) => {
+app.post('/api/admin/create-user', adminLimiter, async (req, res) => {
   if (!supabaseAdmin) {
     return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
   }
@@ -179,7 +183,8 @@ app.post('/api/admin/create-user', async (req, res) => {
   if (!email || !display_name) {
     return res.status(400).json({ error: 'email e display_name são obrigatórios.' });
   }
-  const password = 'Mudar@123';
+  // Gerar senha temporária aleatória (16 chars, base64)
+  const password = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
 
   try {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -193,7 +198,7 @@ app.post('/api/admin/create-user', async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    return res.json({ id: data.user.id, email: data.user.email });
+    return res.json({ id: data.user.id, email: data.user.email, temporaryPassword: password });
   } catch (err) {
     console.error('Erro ao criar usuário:', err);
     return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
@@ -201,7 +206,7 @@ app.post('/api/admin/create-user', async (req, res) => {
 });
 
 // ── Admin: resetar senha de usuário ──────────────────────────────────────────
-app.post('/api/admin/reset-password', async (req, res) => {
+app.post('/api/admin/reset-password', adminLimiter, async (req, res) => {
   if (!supabaseAdmin) {
     return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
   }
@@ -231,14 +236,15 @@ app.post('/api/admin/reset-password', async (req, res) => {
   }
 
   try {
+    const newPassword = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      password: 'Mudar@123',
+      password: newPassword,
       user_metadata: { must_change_password: true },
     });
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    return res.json({ ok: true });
+    return res.json({ ok: true, temporaryPassword: newPassword });
   } catch (err) {
     console.error('Erro ao resetar senha:', err);
     return res.status(500).json({ error: 'Erro interno ao resetar senha.' });
@@ -246,19 +252,29 @@ app.post('/api/admin/reset-password', async (req, res) => {
 });
 
 // ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
-app.post('/api/status-report-flush', express.text({ type: '*/*' }), async (req, res) => {
+app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
-    if (!payload.id || !payload.data) return res.status(400).json({ error: 'Payload inválido.' });
+    // Validação de input
+    if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+      return res.status(400).json({ error: 'Data inválido.' });
+    }
+    // Não confiar em timestamps do client
     await supabaseAdmin.from('status_reports').upsert({
       id: payload.id,
       data: payload.data,
       status: payload.status || 'active',
-      updated_at: payload.updated_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
     return res.json({ ok: true });
   } catch (e) {
+    if (e instanceof SyntaxError) {
+      return res.status(400).json({ error: 'JSON inválido.' });
+    }
     console.error('[flush] Erro:', e);
     return res.status(500).json({ error: 'Erro ao persistir.' });
   }

@@ -30,15 +30,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
   Pendente: 'var(--color-text-2)',
-  Concluído: '#3B6D11',
-  Falhou: '#A32D2D',
-  Bloqueado: '#854F0B',
+  Concluído: 'var(--color-green)',
+  Falhou: 'var(--color-red)',
+  Bloqueado: 'var(--color-amber)',
 }
 
 const COMPLEXITY_COLORS: Record<string, string> = {
-  Baixa: '#639922',
-  Moderada: '#BA7517',
-  Alta: '#E24B4A',
+  Baixa: 'var(--color-green-mid)',
+  Moderada: 'var(--color-amber-mid)',
+  Alta: 'var(--color-red-mid)',
 }
 
 // ─── SVG icon components ──────────────────────────────────────────────────────
@@ -109,12 +109,12 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: hov ? (danger ? '#FCEBEB' : 'var(--color-bg)') : 'none',
+        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
         border: 'none',
         padding: 6,
         borderRadius: 6,
         cursor: 'pointer',
-        color: hov && danger ? '#A32D2D' : 'var(--color-text-2)',
+        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -161,9 +161,9 @@ export function FeaturesTab() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '3px 10px', borderRadius: 20,
-                  border: active ? '0.5px solid #B5D4F4' : '0.5px solid var(--color-border)',
-                  background: active ? '#E6F1FB' : 'var(--color-bg)',
-                  color: active ? '#185FA5' : 'var(--color-text-2)',
+                  border: active ? '0.5px solid var(--color-blue-light)' : '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-blue-light)' : 'var(--color-bg)',
+                  color: active ? 'var(--color-blue)' : 'var(--color-text-2)',
                   fontWeight: 500, fontSize: 11, cursor: 'pointer',
                   transition: 'background 0.15s',
                   fontFamily: 'var(--font-family-sans)',
@@ -309,7 +309,7 @@ function SuiteAccordion({
         )}
 
         {blockedCount > 0 && (
-          <span style={{ fontSize: 10, fontWeight: 500, background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1', padding: '2px 8px', borderRadius: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 500, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)', padding: '2px 8px', borderRadius: 10 }}>
             {blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
           </span>
         )}
@@ -435,8 +435,8 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   const cases = feature.cases ?? []
   const activeFilter = feature.activeFilter || 'Todos'
 
-  const statusBg = isBlocked ? '#fef2f2' : isCancelled ? '#f3f4f6' : undefined
-  const statusBorder = isBlocked ? '#fecaca' : isCancelled ? '#d1d5db' : 'var(--color-border)'
+  const statusBg = isBlocked ? 'var(--color-red-light)' : isCancelled ? 'var(--color-surface-2)' : undefined
+  const statusBorder = isBlocked ? 'var(--color-red-mid)' : isCancelled ? 'var(--color-border-md)' : 'var(--color-border)'
 
   function handleMockupUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -491,7 +491,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
             {feature.name || 'Funcionalidade sem nome'}
           </span>
           {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, display: 'inline-block' }} />}
-          {isCancelled && <span style={{ fontSize: 11, background: '#e5e7eb', color: '#6b7280', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
+          {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
         </span>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
           {feature.tests} Testes
@@ -531,7 +531,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   }
                 }}
                 style={{
-                  ...inputSm,
+                  ...selectSm,
                   fontWeight: 700,
                   color: isBlocked ? 'var(--color-red)' : isCancelled ? 'var(--color-text-2)' : 'var(--color-green)',
                 }}
@@ -596,7 +596,14 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
             <select
               value={activeFilter}
               onChange={(e) => updateFeature(featureIndex, 'activeFilter', e.target.value)}
-              style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', background: 'var(--color-bg)', color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)' }}
+              style={{
+                fontSize: 12, padding: '4px 24px 4px 8px', borderRadius: 6,
+                border: '1px solid var(--color-border-md)', background: 'var(--color-bg)',
+                color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)',
+                cursor: 'pointer', appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+              }}
             >
               <option value="Todos">Todos</option>
               <option value="Pendente">Pendentes</option>
@@ -829,13 +836,13 @@ function TestCaseCard({
           value={testCase.complexity}
           onChange={(e) => updateTestCase(featureIndex, caseIndex, 'complexity', e.target.value as TestCaseComplexity)}
           style={{
-            ...inputSm,
+            ...selectSm,
             width: 130,
             color: COMPLEXITY_COLORS[testCase.complexity] ?? 'var(--color-text-2)',
             fontWeight: 500,
             fontSize: 12,
             border: '0.5px solid var(--color-border)',
-            padding: '4px 10px',
+            padding: '4px 24px 4px 10px',
           }}
         >
           <option value="Baixa">Baixa</option>
@@ -846,13 +853,13 @@ function TestCaseCard({
           value={testCase.status}
           onChange={(e) => handleStatusChange(e.target.value as TestCaseStatus)}
           style={{
-            ...inputSm,
+            ...selectSm,
             width: 140,
             color: STATUS_TEXT_COLORS[testCase.status] ?? 'var(--color-text-2)',
             fontWeight: 500,
             fontSize: 12,
             border: '0.5px solid var(--color-border)',
-            padding: '4px 10px',
+            padding: '4px 24px 4px 10px',
           }}
         >
           <option value="Pendente">Pendente</option>
@@ -995,6 +1002,16 @@ const inputSm: React.CSSProperties = {
   background: 'var(--color-surface)',
   fontFamily: 'var(--font-family-sans)',
   boxSizing: 'border-box',
+}
+
+const selectSm: React.CSSProperties = {
+  ...inputSm,
+  padding: '6px 24px 6px 8px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
 }
 
 const btnOutline: React.CSSProperties = {

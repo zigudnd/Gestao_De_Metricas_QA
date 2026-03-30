@@ -4,12 +4,16 @@
   "private": true,
   "description": "QA Dashboard com persistência em API Node.js + Supabase",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "node server.js",
     "dev:client": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed": "node scripts/seed-local.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

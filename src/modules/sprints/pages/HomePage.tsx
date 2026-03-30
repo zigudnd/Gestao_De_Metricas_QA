@@ -8,6 +8,7 @@ import {
 } from '../services/persistence'
 import { importFromJSON } from '../services/exportService'
 import { listMySquads, getMySquadIds, type Squad } from '@/modules/squads/services/squadsService'
+import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -41,7 +42,8 @@ interface Filters {
 export function HomePage() {
   const navigate = useNavigate()
   const { profile } = useAuthStore()
-  const isAdmin = profile?.global_role === 'admin'
+  const isAdmin = profile?.global_role === 'admin' || profile?.global_role === 'gerente'
+  const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
   const [sprints, setSprints] = useState<SprintIndexEntry[]>([])
   const [mySquadIds, setMySquadIds] = useState<string[] | null>(null)
   const [filters, setFilters] = useState<Filters>({ squad: 'all', status: 'all', year: 'all', search: '' })
@@ -184,9 +186,16 @@ export function HomePage() {
   }
 
   // Sprints visíveis: admin vê tudo; demais veem sprints dos seus squads ou sem squad
-  const visibleSprints = isAdmin || !mySquadIds
-    ? sprints
-    : sprints.filter((s) => !s.squadId || mySquadIds.includes(s.squadId))
+  const visibleSprints = (() => {
+    let visible = isAdmin || !mySquadIds
+      ? sprints
+      : sprints.filter((s) => !s.squadId || mySquadIds.includes(s.squadId))
+    // Filtrar pelo squad ativo no seletor (se não for "all")
+    if (activeSquadId && activeSquadId !== 'all') {
+      visible = visible.filter((s) => s.squadId === activeSquadId)
+    }
+    return visible
+  })()
 
   // Filter options
   const squads = [...new Set(visibleSprints.map((s) => s.squad || '').filter(Boolean))].sort()
@@ -221,9 +230,9 @@ export function HomePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Sprints</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Cobertura QA</h1>
           <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 4, marginBottom: 0 }}>
-            Gerencie e acompanhe a qualidade de múltiplas Sprints.
+            Gerencie e acompanhe a cobertura de testes das suas Sprints.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -579,7 +588,7 @@ export function HomePage() {
                 <select
                   value={newSquadId}
                   onChange={(e) => setNewSquadId(e.target.value)}
-                  style={inputStyle}
+                  style={selectStyle}
                 >
                   <option value="">— Sem squad (pessoal) —</option>
                   {availableSquads.map((s) => (
@@ -743,7 +752,7 @@ function SprintCard({
             {sprint.title}
           </span>
           {sprint.favorite && (
-            <span style={{ fontSize: 11, color: '#f59e0b', flexShrink: 0 }}>★</span>
+            <span style={{ fontSize: 11, color: 'var(--color-amber-mid)', flexShrink: 0 }}>★</span>
           )}
           {compareMode && isSelected && (
             <span style={{
@@ -784,10 +793,12 @@ function SprintCard({
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(e, sprint.id) }}
           title={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          aria-label={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          aria-pressed={sprint.favorite}
           style={{
             width: 26, height: 26, borderRadius: 6,
             border: 'none', background: 'transparent',
-            color: sprint.favorite ? '#f59e0b' : 'var(--color-text-3)',
+            color: sprint.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
             cursor: 'pointer', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontSize: 13,
           }}
@@ -797,6 +808,7 @@ function SprintCard({
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(e) }}
           title="Excluir sprint"
+          aria-label="Excluir sprint"
           style={{
             width: 26, height: 26, borderRadius: 6,
             border: 'none', background: 'transparent',
@@ -858,9 +870,13 @@ function FilterGroup({
           background: 'var(--color-bg)',
           border: '1px solid var(--color-border-md)',
           borderRadius: 6,
-          padding: '3px 8px',
+          padding: '3px 24px 3px 8px',
           cursor: 'pointer',
           fontFamily: 'var(--font-family-sans)',
+          appearance: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 8px center',
         }}
       >
         {children}
@@ -999,4 +1015,14 @@ const inputStyle: React.CSSProperties = {
   background: 'var(--color-bg)',
   fontFamily: 'var(--font-family-sans)',
   boxSizing: 'border-box',
+}
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '8px 28px 8px 10px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
 }

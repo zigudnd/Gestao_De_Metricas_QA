@@ -63,6 +63,7 @@ export interface StatusReportIndexEntry {
   id: string
   title: string
   squad: string
+  squadId?: string
   itemCount: number
   updatedAt: string
   favorite?: boolean

@@ -10,6 +10,18 @@ import {
 import type { StatusReportIndexEntry, StatusReportItem } from '../types/statusReport.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { showToast } from '@/app/components/Toast'
+import { CombinadosTab } from '../components/combinados/CombinadosTab'
+import { TimeTab } from '../components/time/TimeTab'
+import { useSquadConfigStore } from '../store/squadConfigStore'
+import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
+
+type HomeTabId = 'reports' | 'combinados' | 'time'
+
+const HOME_TABS: { id: HomeTabId; label: string; icon: string }[] = [
+  { id: 'reports',    label: 'Reports',             icon: '📄' },
+  { id: 'combinados', label: 'Combinados do time',  icon: '🤝' },
+  { id: 'time',       label: 'Time & Calendario',   icon: '👥' },
+]
 
 type FilterStatus = 'all' | 'active' | 'concluded' | 'favorites'
 
@@ -24,6 +36,9 @@ const btnIcon: React.CSSProperties = {
 
 export function StatusReportHomePage() {
   const navigate = useNavigate()
+  const [homeTab, setHomeTab] = useState<HomeTabId>('reports')
+  const { initSquadConfig, resetSquadConfig } = useSquadConfigStore()
+  const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
   const [reports, setReports] = useState<StatusReportIndexEntry[]>([])
   const [showNew, setShowNew] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -39,7 +54,14 @@ export function StatusReportHomePage() {
 
   useEffect(() => {
     setReports(getMasterIndex())
-  }, [])
+    return () => resetSquadConfig()
+  }, []) // eslint-disable-line
+
+  // Inicializar squad config quando o squad ativo muda
+  useEffect(() => {
+    const squadId = activeSquadId && activeSquadId !== 'all' ? activeSquadId : 'default'
+    initSquadConfig(squadId)
+  }, [activeSquadId]) // eslint-disable-line
 
   function refreshList() {
     setReports(getMasterIndex())
@@ -48,7 +70,9 @@ export function StatusReportHomePage() {
   // ── Filtered + sorted list ──────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
-    let list = [...reports]
+    let list = activeSquadId && activeSquadId !== 'all'
+      ? reports.filter((r) => r.squadId === activeSquadId)
+      : [...reports]
 
     // Search
     if (search.trim()) {
@@ -79,7 +103,7 @@ export function StatusReportHomePage() {
     })
 
     return list
-  }, [reports, search, filterStatus, filterDateFrom, filterDateTo])
+  }, [reports, search, filterStatus, filterDateFrom, filterDateTo, activeSquadId])
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -222,28 +246,67 @@ export function StatusReportHomePage() {
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: 0,
       }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
             Status Reports
           </h1>
           <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
-            Gerencie os relatórios de status dos seus times
+            Gerencie os relatorios de status dos seus times
           </p>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{
-            padding: '9px 20px', borderRadius: 8, border: 'none',
-            background: 'var(--color-blue)', color: '#fff',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-        >
-          + Novo Report
-        </button>
+        {homeTab === 'reports' && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{
+              padding: '9px 20px', borderRadius: 8, border: 'none',
+              background: 'var(--color-blue)', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+            }}
+          >
+            + Novo Report
+          </button>
+        )}
       </div>
+
+      {/* Home tabs */}
+      <div role="tablist" aria-label="Abas de Status Reports" style={{
+        display: 'flex', gap: 0,
+        borderBottom: '1px solid var(--color-border)',
+        margin: '16px 0 20px',
+      }}>
+        {HOME_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={homeTab === tab.id}
+            onClick={() => setHomeTab(tab.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '9px 16px', background: 'none', border: 'none',
+              borderBottom: homeTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
+              color: homeTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+              fontWeight: homeTab === tab.id ? 700 : 500,
+              fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+              fontFamily: 'var(--font-family-sans)', marginBottom: -1,
+            }}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Combinados */}
+      {homeTab === 'combinados' && <CombinadosTab />}
+
+      {/* Tab: Time */}
+      {homeTab === 'time' && <TimeTab />}
+
+      {/* Tab: Reports */}
+      {homeTab === 'reports' && (<>
+
 
       {/* Filters bar */}
       {reports.length > 0 && (
@@ -597,9 +660,13 @@ export function StatusReportHomePage() {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 4 }}>Report destino</label>
               <select value={migrateToId} onChange={(e) => setMigrateToId(e.target.value)} style={{
-                width: '100%', padding: '8px 10px', borderRadius: 7,
+                width: '100%', padding: '8px 28px 8px 10px', borderRadius: 7,
                 border: '1px solid var(--color-border-md)', fontSize: 13,
                 fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                cursor: 'pointer', appearance: 'none' as const,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
               }}>
                 <option value="">Selecione o report destino...</option>
                 {reports.filter((r) => r.id !== migrateFromId).map((r) => (
@@ -628,6 +695,7 @@ export function StatusReportHomePage() {
       )}
 
       {/* Delete confirmation */}
+      {/* Delete confirmation */}
       {deleteId && deleteTarget && (
         <ConfirmModal
           title="Excluir Status Report"
@@ -636,6 +704,7 @@ export function StatusReportHomePage() {
           onCancel={() => setDeleteId(null)}
         />
       )}
+      </>)}
     </div>
   )
 }

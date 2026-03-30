@@ -133,7 +133,7 @@ function ProgressRing({ pct, size = 48 }: { pct: number; size?: number }) {
   const color = pctColor(pct)
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }} role="img" aria-label={`Progresso: ${pct}%`}>
       <circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none" stroke="var(--color-border)" strokeWidth={stroke}
@@ -222,6 +222,8 @@ export function ReportDashboard({ sections, items, computedDates }: ReportDashbo
       {/* Toggle header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
+        aria-expanded={!collapsed}
+        aria-label="Expandir ou recolher dashboard"
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 8,
           padding: '10px 16px', border: 'none', background: 'none',
@@ -389,7 +391,7 @@ export function ReportDashboard({ sections, items, computedDates }: ReportDashbo
             </span>
             {(['high', 'medium', 'low'] as const).map((p) => {
               const count = items.filter((i) => i.priority === p).length
-              const colors = { high: '#ef4444', medium: '#f59e0b', low: '#6b7280' }
+              const colors = { high: 'var(--color-red-mid)', medium: 'var(--color-amber-mid)', low: 'var(--color-text-3)' }
               return (
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                   <span style={{

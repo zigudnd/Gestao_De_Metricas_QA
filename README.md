@@ -32,8 +32,109 @@ Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza K
 | **Supabase CLI** | qualquer | `supabase --version` |
 | **Navegador** | Chrome / Edge / Firefox atual | — |
 
-> **Instalar Docker Desktop:** https://www.docker.com/products/docker-desktop/
-> **Instalar Supabase CLI (macOS):** `brew install supabase/tap/supabase`
+### Instalando Docker Desktop
+
+O Docker e necessario apenas para o **modo colaborativo** (Supabase local). Se voce so quer usar o modo individual (localStorage), pode pular esta etapa.
+
+#### macOS
+
+1. Acesse https://www.docker.com/products/docker-desktop/
+2. Baixe o instalador para Mac (Apple Silicon ou Intel — verifique seu chip em  → Sobre este Mac)
+3. Abra o `.dmg` e arraste o **Docker** para a pasta **Aplicativos**
+4. Abra o Docker Desktop pela primeira vez — ele pedira permissao de sistema
+5. Aguarde o Docker inicializar (icone na barra de menu para de animar)
+6. Verifique:
+   ```bash
+   docker --version
+   # Docker version 27.x.x ou superior
+   ```
+
+#### Windows
+
+1. Acesse https://www.docker.com/products/docker-desktop/
+2. Baixe o instalador para Windows
+3. Execute o instalador. Aceite a opcao **"Use WSL 2 instead of Hyper-V"** (recomendado)
+4. Reinicie o computador quando solicitado
+5. Abra o Docker Desktop — na primeira execucao ele pode pedir para instalar/atualizar o WSL 2:
+   ```powershell
+   # Se solicitado, execute no PowerShell como administrador:
+   wsl --install
+   # Reinicie novamente
+   ```
+6. Verifique:
+   ```powershell
+   docker --version
+   ```
+
+> **Erro comum no Windows:** "WSL 2 installation is incomplete" — execute `wsl --update` no PowerShell como administrador e reinicie o Docker Desktop.
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+# 1. Remova versoes antigas
+sudo apt remove docker docker-engine docker.io containerd runc 2>/dev/null
+
+# 2. Adicione o repositorio oficial
+sudo apt update
+sudo apt install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 3. Instale o Docker Engine
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 4. Adicione seu usuario ao grupo docker (para rodar sem sudo)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# 5. Verifique
+docker --version
+docker run hello-world
+```
+
+### Instalando o Supabase CLI
+
+#### macOS (Homebrew)
+
+```bash
+brew install supabase/tap/supabase
+supabase --version
+```
+
+#### Windows (Scoop)
+
+```powershell
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+supabase --version
+```
+
+#### Linux (Homebrew ou binario)
+
+```bash
+# Via Homebrew (se instalado)
+brew install supabase/tap/supabase
+
+# Ou via download direto
+curl -sSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xz
+sudo mv supabase /usr/local/bin/
+supabase --version
+```
+
+### Verificacao final
+
+Antes de prosseguir, confirme que tudo esta instalado:
+
+```bash
+node --version        # v18+ ou v20+
+npm --version         # 9+
+docker --version      # 27+
+supabase --version    # 1.x+
+```
+
+> **Dica:** o Docker Desktop precisa estar **rodando** (nao apenas instalado) antes de executar `supabase start`. Verifique o icone na barra de sistema.
 
 ---
 

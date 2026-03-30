@@ -17,17 +17,17 @@ const SEV_ORDER: Record<string, number> = { Crítica: 0, Alta: 1, Média: 2, Bai
 const STATUS_ORDER: Record<string, number> = { Falhou: 0, Aberto: 1, 'Em Andamento': 2, Resolvido: 3 }
 
 const SEV_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  Baixa:   { bg: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' },
-  Média:   { bg: '#FAEEDA', color: '#854F0B', border: '0.5px solid #FAC775' },
-  Alta:    { bg: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' },
-  Crítica: { bg: '#A32D2D', color: '#fff',    border: 'none' },
+  Baixa:   { bg: 'var(--color-green-light)', color: 'var(--color-green)',  border: '0.5px solid var(--color-green-mid)' },
+  Média:   { bg: 'var(--color-amber-light)', color: 'var(--color-amber)',  border: '0.5px solid var(--color-amber-mid)' },
+  Alta:    { bg: 'var(--color-red-light)',   color: 'var(--color-red)',    border: '0.5px solid var(--color-red-mid)' },
+  Crítica: { bg: 'var(--color-red)',         color: '#fff',               border: 'none' },
 }
 
 const STATUS_TEXT_COLOR: Record<string, string> = {
-  Aberto:        '#A32D2D',
-  'Em Andamento': '#854F0B',
-  Falhou:        '#A32D2D',
-  Resolvido:     '#3B6D11',
+  Aberto:         'var(--color-red)',
+  'Em Andamento': 'var(--color-amber)',
+  Falhou:         'var(--color-red)',
+  Resolvido:      'var(--color-green)',
 }
 
 export function BugsTab() {
@@ -124,7 +124,7 @@ export function BugsTab() {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 400 }}>{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
           {hasFilters && (
-            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: '#fee2e2', color: 'var(--color-red)', cursor: 'pointer' }}>
+            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: 'var(--color-red-light)', color: 'var(--color-red)', cursor: 'pointer' }}>
               ✕ Limpar
             </button>
           )}
@@ -159,7 +159,7 @@ export function BugsTab() {
                 const isResolved = b.status === 'Resolvido'
 
                 return (
-                  <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: isResolved ? '#f0fdf4' : 'var(--color-surface)', opacity: isResolved ? 0.85 : 1 }}>
+                  <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: isResolved ? 'var(--color-green-light)' : 'var(--color-surface)', opacity: isResolved ? 0.85 : 1 }}>
                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                       <BugIdInput id={b.id} onCommit={(val) => updateBug(i, 'id', val)} />
                     </td>
@@ -194,7 +194,7 @@ export function BugsTab() {
                         style={{
                           fontSize: 12,
                           fontWeight: 500,
-                          padding: '4px 10px',
+                          padding: '4px 24px 4px 10px',
                           borderRadius: 8,
                           border: '0.5px solid var(--color-border)',
                           background: 'var(--color-surface)',
@@ -202,6 +202,10 @@ export function BugsTab() {
                           cursor: 'pointer',
                           fontFamily: 'var(--font-family-sans)',
                           width: 138,
+                          appearance: 'none',
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 8px center',
                         }}
                       >
                         <option value="Aberto">Aberto</option>
@@ -355,10 +359,10 @@ function BugEditInline({ bug, index, onDone }: { bug: Bug; index: number; onDone
         {featureNames.map((n) => <option key={n} value={n} />)}
       </datalist>
       <div style={{ display: 'flex', gap: 6 }}>
-        <select value={bug.stack} onChange={(e) => updateBug(index, 'stack', e.target.value as BugStack)} style={inputSm}>
+        <select value={bug.stack} onChange={(e) => updateBug(index, 'stack', e.target.value as BugStack)} style={selectSm}>
           {['Front', 'BFF', 'Back', 'Mobile', 'Infra'].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={bug.severity} onChange={(e) => updateBug(index, 'severity', e.target.value as BugSeverity)} style={inputSm}>
+        <select value={bug.severity} onChange={(e) => updateBug(index, 'severity', e.target.value as BugSeverity)} style={selectSm}>
           {['Crítica', 'Alta', 'Média', 'Baixa'].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
@@ -414,15 +418,16 @@ function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChild
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: hov ? (danger ? '#FCEBEB' : 'var(--color-bg)') : 'none',
+        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
         border: 'none',
         padding: 6,
         borderRadius: 6,
         cursor: 'pointer',
-        color: hov && danger ? '#A32D2D' : 'var(--color-text-2)',
+        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -447,7 +452,7 @@ function ThSort({ children, field, current, dir, onSort }: { children: React.Rea
   return (
     <th
       onClick={() => onSort(field)}
-      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? '#185FA5' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? 'var(--color-blue)' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
     >
       {children}
       {active ? (dir === 'asc' ? <IcoSortAsc /> : <IcoSortDesc />) : <IcoSort />}
@@ -464,15 +469,16 @@ function FilterGroup({ label, value, options, onChange }: { label: string; field
           <button
             key={opt}
             onClick={() => onChange(opt)}
+            aria-pressed={value === opt}
             style={{
               fontSize: 11,
               fontWeight: 500,
               padding: '3px 10px',
               borderRadius: 20,
-              border: value === opt ? '0.5px solid #B5D4F4' : '0.5px solid var(--color-border)',
+              border: value === opt ? '0.5px solid var(--color-blue-light)' : '0.5px solid var(--color-border)',
               cursor: 'pointer',
-              background: value === opt ? '#E6F1FB' : 'var(--color-bg)',
-              color: value === opt ? '#185FA5' : 'var(--color-text-2)',
+              background: value === opt ? 'var(--color-blue-light)' : 'var(--color-bg)',
+              color: value === opt ? 'var(--color-blue)' : 'var(--color-text-2)',
               fontFamily: 'var(--font-family-sans)',
               transition: 'background 0.15s',
             }}
@@ -487,7 +493,7 @@ function FilterGroup({ label, value, options, onChange }: { label: string; field
 
 const btnPrimary: React.CSSProperties = {
   padding: '7px 16px',
-  background: '#185FA5',
+  background: 'var(--color-blue)',
   color: '#fff',
   border: 'none',
   borderRadius: 8,
@@ -533,4 +539,14 @@ const inputSm: React.CSSProperties = {
   background: 'var(--color-surface)',
   fontFamily: 'var(--font-family-sans)',
   boxSizing: 'border-box',
+}
+
+const selectSm: React.CSSProperties = {
+  ...inputSm,
+  padding: '5px 24px 5px 8px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
 }

@@ -44,9 +44,9 @@ export function NotesTab() {
         value={state.notes.premises}
         placeholder="Liste as premissas acordadas para este ciclo de testes…"
         onChange={(v) => updateNotes('premises', v)}
-        color="#eff6ff"
-        borderColor="#bfdbfe"
-        textColor="#1e3a8a"
+        color="var(--color-blue-light)"
+        borderColor="var(--color-blue)"
+        textColor="var(--color-blue-text)"
       />
       <NoteArea
         label="Plano de Ação"
@@ -54,9 +54,9 @@ export function NotesTab() {
         value={state.notes.actionPlan}
         placeholder="Descreva o plano de ação para riscos ou pontos de atenção…"
         onChange={(v) => updateNotes('actionPlan', v)}
-        color="#fef2f2"
-        borderColor="#fecaca"
-        textColor="#991b1b"
+        color="var(--color-red-light)"
+        borderColor="var(--color-red-mid)"
+        textColor="var(--color-red)"
       />
       </div>
     </div>
