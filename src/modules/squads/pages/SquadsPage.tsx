@@ -197,6 +197,9 @@ export function SquadsPage() {
   const [creatingUser, setCreatingUser] = useState(false)
 
   const [resetPasswordTarget, setResetPasswordTarget] = useState<UserWithSquads | null>(null)
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
+  const [batchResetting, setBatchResetting] = useState(false)
+  const [showBatchResetConfirm, setShowBatchResetConfirm] = useState(false)
 
   const [error, _setError] = useState('')
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -471,6 +474,30 @@ export function SquadsPage() {
       setResetPasswordTarget(null)
       showToast('Senha resetada para Mudar@123', 'success')
     } catch (e) { setError(errMsg(e)) }
+  }
+
+  function toggleUserSelection(userId: string) {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(userId)) next.delete(userId)
+      else next.add(userId)
+      return next
+    })
+  }
+
+  async function handleBatchResetPasswords() {
+    setBatchResetting(true)
+    let ok = 0
+    let fail = 0
+    for (const id of selectedUserIds) {
+      try { await resetUserPassword(id); ok++ }
+      catch { fail++ }
+    }
+    setBatchResetting(false)
+    setShowBatchResetConfirm(false)
+    setSelectedUserIds(new Set())
+    if (fail === 0) showToast(`Senha resetada para ${ok} usuário${ok !== 1 ? 's' : ''}`, 'success')
+    else showToast(`${ok} resetado${ok !== 1 ? 's' : ''}, ${fail} falha${fail !== 1 ? 's' : ''}`, 'error')
   }
 
   // ── Permission profile CRUD ───────────────────────────────────────────────────
@@ -1155,6 +1182,43 @@ export function SquadsPage() {
                   </span>
                 </div>
               )}
+              {/* Toolbar de ações em lote */}
+              {selectedUserIds.size > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 16px', marginBottom: 10,
+                  background: 'var(--color-blue-light)',
+                  border: '1px solid var(--color-blue)',
+                  borderRadius: 10,
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-blue-text)' }}>
+                    {selectedUserIds.size} selecionado{selectedUserIds.size !== 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={() => setShowBatchResetConfirm(true)}
+                    style={{
+                      padding: '5px 14px', borderRadius: 7, border: 'none',
+                      background: 'var(--color-blue)', color: '#fff',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'var(--font-family-sans)',
+                    }}
+                  >
+                    🔑 Resetar senha ({selectedUserIds.size})
+                  </button>
+                  <button
+                    onClick={() => setSelectedUserIds(new Set())}
+                    style={{
+                      padding: '5px 12px', borderRadius: 7,
+                      border: '1px solid var(--color-blue)',
+                      background: 'transparent', color: 'var(--color-blue-text)',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'var(--font-family-sans)',
+                    }}
+                  >
+                    Limpar seleção
+                  </button>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {usersTab.filter((u) => {
                   if (userFilterRole !== 'all' && u.global_role !== userFilterRole) return false
@@ -1173,6 +1237,16 @@ export function SquadsPage() {
                     borderRadius: 12,
                     opacity: u.active ? 1 : 0.5,
                   }}>
+                    {/* Checkbox para seleção em lote */}
+                    {u.id !== user?.id && (
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.has(u.id)}
+                        onChange={() => toggleUserSelection(u.id)}
+                        aria-label={`Selecionar ${u.display_name}`}
+                        style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0, accentColor: 'var(--color-blue)' }}
+                      />
+                    )}
                     {/* Avatar + info */}
                     <div style={avatarBase}>{u.display_name[0]?.toUpperCase() ?? '?'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -1302,8 +1376,18 @@ export function SquadsPage() {
 
       {resetPasswordTarget && <ConfirmModal title="Resetar Senha" description={`Resetar a senha de "${resetPasswordTarget.display_name}" para Mudar@123? O usuário será obrigado a trocar no próximo login.`} confirmLabel="Resetar" onConfirm={handleResetPassword} onCancel={() => setResetPasswordTarget(null)} />}
 
+      {showBatchResetConfirm && (
+        <ConfirmModal
+          title="Resetar Senha em Lote"
+          description={`Resetar a senha de ${selectedUserIds.size} usuário${selectedUserIds.size !== 1 ? 's' : ''} para Mudar@123? Todos serão obrigados a trocar no próximo login.`}
+          confirmLabel={batchResetting ? 'Resetando...' : `Resetar ${selectedUserIds.size}`}
+          onConfirm={handleBatchResetPasswords}
+          onCancel={() => setShowBatchResetConfirm(false)}
+        />
+      )}
+
       {error && (
-        <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#FCEBEB', border: '1px solid #F7C1C1', color: '#A32D2D', borderRadius: 8, padding: '10px 14px', fontSize: 13, zIndex: 9999, maxWidth: 300 }}>
+        <div style={{ position: 'fixed', bottom: 20, right: 20, background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)', color: 'var(--color-red)', borderRadius: 8, padding: '10px 14px', fontSize: 13, zIndex: 9999, maxWidth: 300 }}>
           {error}
           <button onClick={() => setError('')} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#A32D2D', fontWeight: 700 }}>×</button>
         </div>

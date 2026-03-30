@@ -8,21 +8,46 @@ Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza K
 
 ## Indice
 
-1. [Pre-requisitos](#1-pre-requisitos)
-2. [Instalacao](#2-instalacao)
-3. [Modo Individual — somente localStorage](#3-modo-individual--somente-localstorage)
-4. [Modo Colaborativo — Supabase local com Docker](#4-modo-colaborativo--supabase-local-com-docker)
-5. [Modo Colaborativo — Supabase Cloud (producao)](#5-modo-colaborativo--supabase-cloud-producao)
-6. [Variaveis de ambiente](#6-variaveis-de-ambiente)
-7. [Sistema de Autenticacao e Permissoes](#7-sistema-de-autenticacao-e-permissoes)
-8. [Estrutura do projeto](#8-estrutura-do-projeto)
-9. [Como funciona a persistencia](#9-como-funciona-a-persistencia)
-10. [Principais funcionalidades](#10-principais-funcionalidades)
-11. [Deploy](#11-deploy)
+1. [Acesso rapido](#1-acesso-rapido)
+2. [Pre-requisitos](#2-pre-requisitos)
+3. [Instalacao](#3-instalacao)
+4. [Modo Individual — somente localStorage](#4-modo-individual--somente-localstorage)
+5. [Modo Colaborativo — Supabase local com Docker](#5-modo-colaborativo--supabase-local-com-docker)
+6. [Modo Colaborativo — Supabase Cloud (producao)](#6-modo-colaborativo--supabase-cloud-producao)
+7. [Variaveis de ambiente](#7-variaveis-de-ambiente)
+8. [Sistema de Autenticacao e Permissoes](#8-sistema-de-autenticacao-e-permissoes)
+9. [Estrutura do projeto](#9-estrutura-do-projeto)
+10. [Como funciona a persistencia](#10-como-funciona-a-persistencia)
+11. [Principais funcionalidades](#11-principais-funcionalidades)
+12. [Deploy](#12-deploy)
 
 ---
 
-## 1. Pre-requisitos
+## 1. Acesso rapido
+
+### Credenciais padrao
+
+| Usuario | Email | Senha |
+|---------|-------|-------|
+| **Admin** | `admin@tostatos.com` | `Admin@123` |
+| **Novos usuarios** | definido pelo admin | `Mudar@123` (troca obrigatoria no primeiro login) |
+
+> O usuario admin e criado pelo script `bash setup-admin.sh` ou via API (veja a secao 5, Passo 4).
+> Novos usuarios sao criados pelo admin na aba **Cadastros > Usuarios**.
+
+### Comandos essenciais
+
+```bash
+npm install          # instalar dependencias
+npm run dev:client   # iniciar frontend (porta 5173)
+npm run dev          # iniciar backend (porta 3000)
+npm run build        # build de producao
+npm run typecheck    # verificar tipos TypeScript
+```
+
+---
+
+## 2. Pre-requisitos
 
 | Ferramenta | Versao minima | Como verificar |
 |---|---|---|
@@ -138,7 +163,7 @@ supabase --version    # 1.x+
 
 ---
 
-## 2. Instalacao
+## 3. Instalacao
 
 ```bash
 # 1. Clone o repositorio
@@ -151,7 +176,7 @@ npm install
 
 ---
 
-## 3. Modo Individual — somente localStorage
+## 4. Modo Individual — somente localStorage
 
 Use este modo se quiser rodar o projeto sozinho, sem banco de dados, sem Docker.
 
@@ -168,7 +193,7 @@ Os dados ficam salvos no `localStorage` do navegador. Nenhuma configuracao adici
 
 ---
 
-## 4. Modo Colaborativo — Supabase local com Docker
+## 5. Modo Colaborativo — Supabase local com Docker
 
 Use este modo para trabalhar em equipe na mesma rede local, sem precisar de internet.
 
@@ -262,7 +287,7 @@ supabase start
 
 ---
 
-## 5. Modo Colaborativo — Supabase Cloud (producao)
+## 6. Modo Colaborativo — Supabase Cloud (producao)
 
 Use este modo quando tiver um servidor dedicado (pod, VM, Kubernetes) ou quiser usar o Supabase hospedado na nuvem.
 
@@ -299,7 +324,7 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_XXXX
 
 ---
 
-## 6. Variaveis de ambiente
+## 7. Variaveis de ambiente
 
 | Variavel | Obrigatoria | Descricao |
 |---|---|---|
@@ -314,7 +339,7 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_XXXX
 
 ---
 
-## 7. Sistema de Autenticacao e Permissoes
+## 8. Sistema de Autenticacao e Permissoes
 
 ### Autenticacao
 
@@ -346,7 +371,7 @@ Permissoes podem ser atribuidas individualmente ou via **Perfis de Permissao** (
 
 ---
 
-## 8. Estrutura do projeto
+## 9. Estrutura do projeto
 
 ```
 src/
@@ -383,7 +408,7 @@ server.js                            # Express: SPA + API admin + health
 
 ---
 
-## 9. Como funciona a persistencia
+## 10. Como funciona a persistencia
 
 O app usa uma arquitetura em camadas:
 
@@ -412,7 +437,7 @@ Outro usuario salva → Supabase Realtime (WebSocket)
 
 ---
 
-## 10. Principais funcionalidades
+## 11. Principais funcionalidades
 
 - **Sistema Multi-usuario** — Login com Supabase Auth, roles (admin/user), squads
 - **Permissoes Granulares** — Controle de exclusao por recurso, por membro, com perfis reutilizaveis
@@ -430,7 +455,7 @@ Outro usuario salva → Supabase Realtime (WebSocket)
 
 ---
 
-## 11. Deploy
+## 12. Deploy
 
 ### Build de producao
 

@@ -5,6 +5,7 @@ import type { SprintConfig } from '../../types/sprint.types'
 import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 const ROLE_SUGGESTIONS = ['PO', 'TL', 'Coordenador', 'Gerente', 'Dev Lead', 'Scrum Master', 'Designer', 'Dev']
 
@@ -41,10 +42,15 @@ export function ConfigTab() {
     setConfirming(true)
     setConfirmError('')
     try {
-      // Verificar senha re-autenticando
+      // Verificar senha com cliente isolado para não interferir na sessão ativa
       const email = (await supabase.auth.getUser()).data.user?.email
-      if (!email) { setConfirmError('Erro ao obter email.'); return }
-      const { error } = await supabase.auth.signInWithPassword({ email, password: confirmPassword })
+      if (!email) { setConfirmError('Erro ao obter email.'); setConfirming(false); return }
+      const verifyClient = createClient(
+        import.meta.env.VITE_SUPABASE_URL ?? '',
+        import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      )
+      const { error } = await verifyClient.auth.signInWithPassword({ email, password: confirmPassword })
       if (error) { setConfirmError('Senha incorreta.'); setConfirming(false); return }
 
       // Aplicar mudança

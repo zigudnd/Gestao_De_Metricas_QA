@@ -19,7 +19,8 @@ export function Topbar() {
   const [showConfirmConcluir, setShowConfirmConcluir] = useState(false)
 
   const globalRole = useAuthStore((s) => s.profile?.global_role)
-  const { squads, activeSquadId, setActiveSquad, loadSquads } = useActiveSquadStore()
+  const { squads: allSquads, activeSquadId, setActiveSquad, loadSquads } = useActiveSquadStore()
+  const squads = allSquads.filter((s) => !s.archived)
   const isPrivileged = globalRole === 'admin' || globalRole === 'gerente'
 
   useEffect(() => { loadSquads() }, []) // eslint-disable-line
@@ -104,8 +105,8 @@ export function Topbar() {
         ))}
       </nav>
 
-      {/* Squad selector */}
-      {squads.length > 0 && (
+      {/* Squad selector — visível apenas em páginas que filtram por squad */}
+      {squads.length > 0 && (isHome || isStatusReport || location.pathname === '/sprints') && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
             Squad
