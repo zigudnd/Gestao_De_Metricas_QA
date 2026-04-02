@@ -47,8 +47,27 @@ function UserMenu() {
     ? { label: 'Gerente', bg: 'var(--color-amber-light)', color: 'var(--color-amber)' }
     : null
 
+  const activeSquad = squads.find((s) => s.id === activeSquadId)
+
   return (
-    <div ref={menuRef} style={{ position: 'relative', marginLeft: 8 }}>
+    <div ref={menuRef} style={{ position: 'relative', marginLeft: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Squad label */}
+      {activeSquad && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: activeSquad.color ?? 'var(--color-blue)',
+            flexShrink: 0,
+          }} />
+          <span style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
+            whiteSpace: 'nowrap',
+          }}>
+            {activeSquad.name}
+          </span>
+        </div>
+      )}
+
       {/* Avatar button */}
       <button
         onClick={() => setOpen(!open)}
@@ -343,15 +362,16 @@ export function Topbar() {
   const isChangePassword = location.pathname === '/change-password'
 
   function getBreadcrumb(): { label: string; path?: string }[] {
+    const home = { label: 'Início', path: '/' }
     if (isHome) return [{ label: 'Início' }]
-    if (isDashboard && sprintTitle) return [{ label: 'Cobertura QA', path: '/sprints' }, { label: sprintTitle }]
-    if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [{ label: 'Cobertura QA' }]
-    if (isStatusReport) return [{ label: 'Status Report' }]
-    if (isReleases) return [{ label: 'Releases' }]
-    if (isSquads) return [{ label: 'Cadastros' }]
-    if (isDocs) return [{ label: 'Documentação' }]
-    if (isProfile) return [{ label: 'Perfil' }]
-    if (isChangePassword) return [{ label: 'Alterar Senha' }]
+    if (isDashboard && sprintTitle) return [home, { label: 'Cobertura QA', path: '/sprints' }, { label: sprintTitle }]
+    if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [home, { label: 'Cobertura QA' }]
+    if (isStatusReport) return [home, { label: 'Status Report' }]
+    if (isReleases) return [home, { label: 'Releases' }]
+    if (isSquads) return [home, { label: 'Cadastros' }]
+    if (isDocs) return [home, { label: 'Documentação' }]
+    if (isProfile) return [home, { label: 'Perfil' }]
+    if (isChangePassword) return [home, { label: 'Alterar Senha' }]
     return [{ label: 'Início' }]
   }
 
