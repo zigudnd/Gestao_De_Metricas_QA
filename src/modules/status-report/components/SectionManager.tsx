@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { SectionDef, SectionId } from '../types/statusReport.types'
 import { SECTION_COLORS } from '../types/statusReport.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -25,6 +25,12 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
     setNewLabel('')
   }
 
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    modalRef.current?.focus()
+  }, [])
+
   const deleteTarget = sections.find((s) => s.id === deleteId)
 
   return (
@@ -38,7 +44,11 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
           padding: 16,
         }}
       >
-        <div style={{
+        <div
+          ref={modalRef}
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+          style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           borderTop: '3px solid var(--color-blue)',
@@ -47,6 +57,7 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
           maxHeight: '85vh', overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          outline: 'none',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',

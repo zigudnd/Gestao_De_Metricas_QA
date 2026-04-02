@@ -102,7 +102,7 @@ export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMov
             fontSize: 10, padding: '2px 6px', borderRadius: 4,
             background: 'var(--color-red-light)', color: 'var(--color-red)', fontWeight: 700,
           }}>
-            ATRASO
+            ⚠ ATRASO
           </span>
         )}
         {computed.isCycle && (
@@ -110,7 +110,7 @@ export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMov
             fontSize: 10, padding: '2px 6px', borderRadius: 4,
             background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', fontWeight: 700,
           }}>
-            CICLO
+            ↻ CICLO
           </span>
         )}
         {!computed.isLate && !computed.isCycle && !computed.start && !computed.end && (
@@ -140,9 +140,9 @@ export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMov
               title="Mover para seção anterior"
               aria-label="Mover para seção anterior"
               style={{
-                width: 22, height: 18, border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)', borderRadius: 4,
-                cursor: 'pointer', fontSize: 10, lineHeight: 1,
+                width: 28, height: 28, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)', borderRadius: 6,
+                cursor: 'pointer', fontSize: 12, lineHeight: 1,
                 color: 'var(--color-text-2)',
               }}
             >
@@ -155,9 +155,9 @@ export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMov
               title="Mover para próxima seção"
               aria-label="Mover para próxima seção"
               style={{
-                width: 22, height: 18, border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)', borderRadius: 4,
-                cursor: 'pointer', fontSize: 10, lineHeight: 1,
+                width: 28, height: 28, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)', borderRadius: 6,
+                cursor: 'pointer', fontSize: 12, lineHeight: 1,
                 color: 'var(--color-text-2)',
               }}
             >

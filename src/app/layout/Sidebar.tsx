@@ -462,7 +462,7 @@ export function Sidebar() {
 
       {/* Nav items */}
       <NavItem icon={<IconHome />} label="Início" active={location.pathname === '/'} expanded={expanded} onClick={() => navigate('/')} />
-      <NavItem icon={<IconStatusReport />} label="Visão Geral" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
+      <NavItem icon={<IconStatusReport />} label="Status Report" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
       <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
       <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />
 

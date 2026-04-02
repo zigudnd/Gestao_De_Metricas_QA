@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  getMasterIndex, upsertMasterIndex,
+  getMasterIndex, saveMasterIndex, upsertMasterIndex,
   createDefaultState, saveToLocalStorage, loadFromLocalStorage,
   deleteFromLocalStorage, removeFromMasterIndex, deleteFromServer,
   persistToServer, normalizeState,
@@ -39,10 +39,11 @@ export function StatusReportHomePage() {
   const [homeTab, setHomeTab] = useState<HomeTabId>('reports')
   const { initSquadConfig, resetSquadConfig } = useSquadConfigStore()
   const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
+  const squads = useActiveSquadStore((s) => s.squads)
   const [reports, setReports] = useState<StatusReportIndexEntry[]>([])
   const [showNew, setShowNew] = useState(false)
   const [newTitle, setNewTitle] = useState('')
-  const [newSquad, setNewSquad] = useState('')
+  const [newSquadId, setNewSquadId] = useState(activeSquadId && activeSquadId !== 'all' ? activeSquadId : '')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [migrateFromId, setMigrateFromId] = useState<string | null>(null)
   const [migrateToId, setMigrateToId] = useState<string>('')
@@ -109,16 +110,29 @@ export function StatusReportHomePage() {
 
   function handleCreate() {
     const title = newTitle.trim() || 'Novo Status Report'
+    const selectedSquad = squads.find((s) => s.id === newSquadId)
     const id = 'sr_' + Date.now()
     const state = createDefaultState(id)
     state.config.title = title
-    state.config.squad = newSquad.trim()
+    state.config.squad = selectedSquad?.name ?? ''
     state.config.date = new Date().toISOString().split('T')[0]
     saveToLocalStorage(state)
-    upsertMasterIndex(state)
+    // Salvar squadId no index para filtragem
+    const index = getMasterIndex()
+    const idx = index.findIndex((e) => e.id === id)
+    if (idx >= 0) index[idx].squadId = newSquadId || undefined
+    else {
+      upsertMasterIndex(state)
+      const newIndex = getMasterIndex()
+      const newIdx = newIndex.findIndex((e) => e.id === id)
+      if (newIdx >= 0) newIndex[newIdx].squadId = newSquadId || undefined
+      saveMasterIndex(newIndex)
+    }
+    if (idx >= 0) saveMasterIndex(index)
+    else upsertMasterIndex(state)
     setShowNew(false)
     setNewTitle('')
-    setNewSquad('')
+    setNewSquadId(activeSquadId && activeSquadId !== 'all' ? activeSquadId : '')
     navigate(`/status-report/${id}`)
   }
 
@@ -440,11 +454,31 @@ export function StatusReportHomePage() {
               {/* Favorite star */}
               <button
                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(report.id) }}
-                title={report.favorite ? 'Remover favorito' : 'Favoritar'}
                 aria-label={report.favorite ? 'Remover favorito' : 'Favoritar'}
+                aria-pressed={report.favorite}
                 style={{
-                  ...btnIcon, fontSize: 16, width: 28, height: 28,
+                  height: 36, minWidth: 36, borderRadius: 8,
+                  border: '1px solid transparent',
+                  background: report.favorite ? 'var(--color-amber-light)' : 'transparent',
                   color: report.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', gap: 4,
+                  fontSize: 14, padding: '0 8px',
+                  transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!report.favorite) {
+                    e.currentTarget.style.background = 'var(--color-amber-light)'
+                    e.currentTarget.style.borderColor = 'var(--color-amber-mid)'
+                    e.currentTarget.style.color = 'var(--color-amber-mid)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!report.favorite) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'transparent'
+                    e.currentTarget.style.color = 'var(--color-text-3)'
+                  }
                 }}
               >
                 {report.favorite ? '★' : '☆'}
@@ -483,60 +517,95 @@ export function StatusReportHomePage() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
+              {/* Actions — same style as Cobertura QA (36px, icon + label) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                 {isConcluded ? (
                   <button
                     onClick={() => handleReactivate(report.id)}
-                    title="Reativar report"
                     aria-label="Reativar report"
-                    style={btnIcon}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.color = 'var(--color-blue)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                    style={{
+                      height: 36, minWidth: 36, borderRadius: 8,
+                      border: '1px solid transparent', background: 'transparent',
+                      color: 'var(--color-text-3)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      fontSize: 12, fontWeight: 600, padding: '0 10px',
+                      transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.borderColor = 'var(--color-blue)'; e.currentTarget.style.color = 'var(--color-blue-text)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                   >
-                    ↩
+                    <span style={{ fontSize: 14 }}>↩</span>
+                    <span style={{ fontSize: 11 }}>Reativar</span>
                   </button>
                 ) : (
                   <button
                     onClick={() => handleConclude(report.id)}
-                    title="Concluir report"
                     aria-label="Concluir report"
-                    style={btnIcon}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-green-light)'; e.currentTarget.style.color = 'var(--color-green)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                    style={{
+                      height: 36, minWidth: 36, borderRadius: 8,
+                      border: '1px solid transparent', background: 'transparent',
+                      color: 'var(--color-text-3)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      fontSize: 12, fontWeight: 600, padding: '0 10px',
+                      transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-green-light)'; e.currentTarget.style.borderColor = 'var(--color-green-mid)'; e.currentTarget.style.color = 'var(--color-green)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                   >
-                    ✓
+                    <span style={{ fontSize: 14 }}>✓</span>
+                    <span style={{ fontSize: 11 }}>Concluir</span>
                   </button>
                 )}
                 <button
                   onClick={() => handleDuplicate(report.id)}
-                  title="Duplicar report"
                   aria-label="Duplicar report"
-                  style={btnIcon}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.color = 'var(--color-blue-text)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  style={{
+                    height: 36, minWidth: 36, borderRadius: 8,
+                    border: '1px solid transparent', background: 'transparent',
+                    color: 'var(--color-text-3)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    fontSize: 12, fontWeight: 600, padding: '0 10px',
+                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.borderColor = 'var(--color-blue)'; e.currentTarget.style.color = 'var(--color-blue-text)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                 >
-                  ⧉
+                  <span style={{ fontSize: 14 }}>⧉</span>
+                  <span style={{ fontSize: 11 }}>Duplicar</span>
                 </button>
                 <button
                   onClick={() => { setMigrateFromId(report.id); setMigrateToId(''); setMigrateMode('copy') }}
-                  title="Migrar itens"
                   aria-label="Migrar itens para outro report"
-                  style={btnIcon}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-amber-light)'; e.currentTarget.style.color = 'var(--color-amber)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  style={{
+                    height: 36, minWidth: 36, borderRadius: 8,
+                    border: '1px solid transparent', background: 'transparent',
+                    color: 'var(--color-text-3)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    fontSize: 12, fontWeight: 600, padding: '0 10px',
+                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-amber-light)'; e.currentTarget.style.borderColor = 'var(--color-amber-mid)'; e.currentTarget.style.color = 'var(--color-amber)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                 >
-                  ↗
+                  <span style={{ fontSize: 14 }}>↗</span>
+                  <span style={{ fontSize: 11 }}>Migrar</span>
                 </button>
                 <button
                   onClick={() => setDeleteId(report.id)}
-                  title="Excluir report"
                   aria-label="Excluir report"
-                  style={btnIcon}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)'; e.currentTarget.style.color = 'var(--color-red)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  style={{
+                    height: 36, minWidth: 36, borderRadius: 8,
+                    border: '1px solid transparent', background: 'transparent',
+                    color: 'var(--color-text-3)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    fontSize: 12, fontWeight: 600, padding: '0 10px',
+                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)'; e.currentTarget.style.borderColor = 'var(--color-red-mid)'; e.currentTarget.style.color = 'var(--color-red)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                 >
-                  🗑
+                  <span style={{ fontSize: 13 }}>✕</span>
+                  <span style={{ fontSize: 11 }}>Excluir</span>
                 </button>
               </div>
             </div>
@@ -585,16 +654,24 @@ export function StatusReportHomePage() {
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 4 }}>
                 Squad
               </label>
-              <input
-                value={newSquad} onChange={(e) => setNewSquad(e.target.value)}
-                placeholder="Ex: WL - Consignado Privado"
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              <select
+                value={newSquadId}
+                onChange={(e) => setNewSquadId(e.target.value)}
                 style={{
-                  width: '100%', padding: '8px 10px', borderRadius: 7,
+                  width: '100%', padding: '8px 28px 8px 10px', borderRadius: 7,
                   border: '1px solid var(--color-border-md)', fontSize: 13,
                   fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                  background: 'var(--color-surface)', cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
                 }}
-              />
+              >
+                <option value="">— Sem squad —</option>
+                {squads.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowNew(false)} style={{

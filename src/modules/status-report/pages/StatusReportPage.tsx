@@ -57,7 +57,6 @@ export function StatusReportPage() {
   const lastSyncedAt = useStatusReportStore((s) => s.lastSyncedAt)
 
   const [addFormSection, setAddFormSection] = useState<SectionId>('sprint')
-  const [copyFeedback, setCopyFeedback] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [showSectionManager, setShowSectionManager] = useState(false)
 
@@ -89,8 +88,7 @@ export function StatusReportPage() {
   function handleCopyReport() {
     const text = generateClipboardText(config, sections, items)
     navigator.clipboard.writeText(text).then(() => {
-      setCopyFeedback(true)
-      setTimeout(() => setCopyFeedback(false), 2000)
+      showToast('Relatório copiado para a área de transferência', 'success', { duration: 2500 })
     })
   }
 
@@ -230,14 +228,14 @@ export function StatusReportPage() {
               onClick={handleCopyReport}
               style={{
                 padding: '6px 14px', borderRadius: 7, border: 'none',
-                background: copyFeedback ? 'var(--color-green-light)' : 'var(--color-blue)',
-                color: copyFeedback ? 'var(--color-green)' : '#fff',
+                background: 'var(--color-blue)',
+                color: '#fff',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font-family-sans)',
                 marginBottom: 4, transition: 'background 0.2s',
               }}
             >
-              {copyFeedback ? 'Copiado!' : 'Copiar relatório'}
+              Copiar relatório
             </button>
             <button
               onClick={handleExportImage}
@@ -276,6 +274,16 @@ export function StatusReportPage() {
               ⚙ Gerenciar seções
             </button>
           </div>
+          {items.length === 0 && (
+            <div style={{
+              textAlign: 'center', padding: '48px 20px',
+              color: 'var(--color-text-3)', fontSize: 14,
+            }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>📋</div>
+              <p style={{ fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 4px' }}>Nenhum item adicionado</p>
+              <p style={{ margin: 0, fontSize: 13 }}>Clique em <strong>+ Adicionar item</strong> dentro de uma seção para começar.</p>
+            </div>
+          )}
           {sections.map((sec) => (
             <SectionCard
               key={sec.id}

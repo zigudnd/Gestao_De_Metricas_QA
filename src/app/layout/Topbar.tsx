@@ -336,6 +336,7 @@ export function Topbar() {
   const isDashboard = location.pathname.startsWith('/sprints/') && !!params.sprintId
   const isHome = location.pathname === '/'
   const isStatusReport = location.pathname.startsWith('/status-report')
+  const isReleases = location.pathname.startsWith('/releases')
   const isSquads = location.pathname.startsWith('/squads')
   const isDocs = location.pathname === '/docs'
   const isProfile = location.pathname === '/profile'
@@ -346,11 +347,12 @@ export function Topbar() {
     if (isDashboard && sprintTitle) return [{ label: 'Cobertura QA', path: '/sprints' }, { label: sprintTitle }]
     if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [{ label: 'Cobertura QA' }]
     if (isStatusReport) return [{ label: 'Status Report' }]
+    if (isReleases) return [{ label: 'Releases' }]
     if (isSquads) return [{ label: 'Cadastros' }]
     if (isDocs) return [{ label: 'Documentação' }]
     if (isProfile) return [{ label: 'Perfil' }]
     if (isChangePassword) return [{ label: 'Alterar Senha' }]
-    return [{ label: 'Sprints', path: '/sprints' }]
+    return [{ label: 'Início' }]
   }
 
   const crumbs = getBreadcrumb()

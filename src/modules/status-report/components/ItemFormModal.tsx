@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { SectionId, Priority, Stack, StatusReportItem, SectionDef } from '../types/statusReport.types'
 
 type NewItemData = Omit<StatusReportItem, 'id' | 'createdAt' | 'updatedAt'>
@@ -62,6 +62,12 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
     setDependsOn((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
   }
 
+  const modalContentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    modalContentRef.current?.focus()
+  }, [])
+
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [validationError, setValidationError] = useState('')
 
@@ -103,7 +109,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         padding: 16,
       }}
     >
-      <div style={{
+      <div ref={modalContentRef} tabIndex={-1} style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderTop: '3px solid var(--color-blue)',
@@ -111,6 +117,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         width: '100%', maxWidth: 520,
         maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+        outline: 'none',
       }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', marginBottom: 16 }}>
           Novo Item

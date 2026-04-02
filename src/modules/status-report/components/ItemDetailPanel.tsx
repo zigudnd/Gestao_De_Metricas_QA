@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { StatusReportItem, ComputedDates, SectionId, Priority, Stack, SectionDef } from '../types/statusReport.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { diffDays } from '../services/dateEngine'
@@ -56,6 +56,11 @@ export function ItemDetailPanel({
   onUpdate, onDelete, onAddDependency, onRemoveDependency, onClose,
 }: ItemDetailPanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    panelRef.current?.focus()
+  }, [])
 
   const predecessors = allItems.filter((i) => item.dependsOn.includes(i.id))
   const availableDeps = allItems.filter(
@@ -71,6 +76,7 @@ export function ItemDetailPanel({
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.15)', zIndex: 900 }}
       />
       <div
+        ref={panelRef}
         tabIndex={-1}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
         style={{
@@ -82,6 +88,7 @@ export function ItemDetailPanel({
         zIndex: 1000,
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
+        outline: 'none',
       }}>
         {/* Header */}
         <div style={{
