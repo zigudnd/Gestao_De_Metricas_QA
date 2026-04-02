@@ -453,12 +453,6 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* User section — NO TOPO */}
-      <UserSection expanded={expanded} />
-
-      {/* Squad selector */}
-      <SquadSelector expanded={expanded} />
-
       {/* Separator */}
       <div style={{
         width: expanded ? 'calc(100% - 24px)' : 28,
