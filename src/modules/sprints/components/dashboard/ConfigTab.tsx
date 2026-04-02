@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
-import { upsertSprintInMasterIndex } from '../../services/persistence'
+import { upsertSprintInMasterIndex, getMasterIndex } from '../../services/persistence'
 import type { SprintConfig } from '../../types/sprint.types'
 import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
+import { useReleaseStore } from '@/modules/releases/store/releaseStore'
 import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 
@@ -17,6 +18,27 @@ export function ConfigTab() {
   const updateResponsible = useSprintStore((s) => s.updateResponsible)
   const removeResponsible = useSprintStore((s) => s.removeResponsible)
 
+  const lastSaved = useSprintStore((s) => s.lastSaved)
+
+  // Save confirmation indicator
+  const [saved, setSaved] = useState(false)
+  const initialLoad = useRef(true)
+
+  useEffect(() => {
+    if (initialLoad.current) {
+      initialLoad.current = false
+      return
+    }
+    if (lastSaved > 0) {
+      setSaved(true)
+      const t = setTimeout(() => setSaved(false), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [lastSaved])
+
+  // Weights accordion
+  const [showWeights, setShowWeights] = useState(false)
+
   const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
   const [squads, setSquads] = useState<Squad[]>([])
   const [showSquadChangeModal, setShowSquadChangeModal] = useState(false)
@@ -25,9 +47,20 @@ export function ConfigTab() {
   const [confirmError, setConfirmError] = useState('')
   const [confirming, setConfirming] = useState(false)
 
+  // Release vinculada
+  const { releases: allReleases, load: loadReleases } = useReleaseStore()
+  const sprintEntry = getMasterIndex().find((s) => s.id === sprintId)
+  const sprintType = sprintEntry?.sprintType || 'squad'
+  const currentReleaseId = sprintEntry?.releaseId || ''
+  const isLinkedType = sprintType === 'regressivo' || sprintType === 'integrado'
+
+  const [showReleaseChangeModal, setShowReleaseChangeModal] = useState(false)
+  const [pendingReleaseId, setPendingReleaseId] = useState('')
+
   useEffect(() => {
     listMySquads().then(setSquads).catch(() => {})
-  }, [])
+    loadReleases()
+  }, []) // eslint-disable-line
 
   function handleSquadSelectChange(newSquadId: string) {
     if (!newSquadId || newSquadId === activeSquadId) return
@@ -70,6 +103,23 @@ export function ConfigTab() {
     }
   }
 
+  function handleReleaseSelectChange(newReleaseId: string) {
+    if (newReleaseId === currentReleaseId) return
+    setPendingReleaseId(newReleaseId)
+    setShowReleaseChangeModal(true)
+  }
+
+  function handleConfirmReleaseChange() {
+    if (!sprintId) return
+    const newRelease = allReleases.find((r) => r.id === pendingReleaseId)
+    upsertSprintInMasterIndex(sprintId, state, sprintEntry?.squadId, {
+      sprintType,
+      releaseId: pendingReleaseId || undefined,
+      releaseVersion: newRelease?.version,
+    })
+    setShowReleaseChangeModal(false)
+  }
+
   function field(key: keyof SprintConfig, type: 'text' | 'number' | 'date' = 'text') {
     const value = state.config[key]
     return (
@@ -84,6 +134,16 @@ export function ConfigTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {saved && (
+        <span style={{
+          fontSize: 12, color: 'var(--color-green)', fontWeight: 600,
+          alignSelf: 'flex-end', padding: '2px 8px',
+          background: 'var(--color-green-light)', borderRadius: 6,
+          transition: 'opacity 0.3s',
+        }}>
+          Salvo &#10003;
+        </span>
+      )}
       {/* Sprint info */}
       <Card title="Informações da Sprint">
         <div style={grid2}>
@@ -122,6 +182,25 @@ export function ConfigTab() {
               )}
             </div>
           </FormGroup>
+          {/* Release vinculada — só para regressivo/integrado */}
+          {isLinkedType && (
+            <FormGroup label={`Release vinculada (${sprintType === 'regressivo' ? 'Regressivo' : 'Integrado'})`}>
+              <select
+                value={currentReleaseId}
+                onChange={(e) => handleReleaseSelectChange(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">— Nenhuma release —</option>
+                {allReleases
+                  .filter((r) => r.status !== 'concluida')
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.version} — {r.title}
+                    </option>
+                  ))}
+              </select>
+            </FormGroup>
+          )}
           <FormGroup label="QA Responsável">
             {field('qaName')}
           </FormGroup>
@@ -203,6 +282,26 @@ export function ConfigTab() {
         </button>
       </Card>
 
+      {/* Advanced weights accordion */}
+      <button
+        onClick={() => setShowWeights(!showWeights)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 12, fontWeight: 600, color: 'var(--color-blue-text)',
+          padding: '4px 0', marginTop: 8,
+          fontFamily: 'var(--font-family-sans)',
+        }}
+      >
+        <span style={{
+          display: 'inline-block', transition: 'transform 0.15s',
+          transform: showWeights ? 'rotate(90deg)' : 'rotate(0deg)',
+          fontSize: 10,
+        }}>&#9654;</span>
+        {showWeights ? 'Ocultar pesos avançados' : 'Configurações avançadas (Health Score e Impacto Prevenido)'}
+      </button>
+
+      {showWeights && (<>
       {/* Health Score */}
       <Card title="Health Score — Pesos das Penalidades">
         <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
@@ -333,6 +432,85 @@ export function ConfigTab() {
         </div>
       )}
 
+      {/* Modal: Confirmar mudança de release */}
+      {showReleaseChangeModal && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setShowReleaseChangeModal(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '0.5px solid var(--color-border)',
+            borderTop: '3px solid var(--color-amber-mid)',
+            borderRadius: 12, padding: '24px 22px',
+            width: 420, maxWidth: '90vw',
+            boxShadow: 'var(--shadow-xl)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
+              Alterar Release Vinculada
+            </h3>
+            <div style={{
+              padding: '12px 14px', borderRadius: 8, marginBottom: 16,
+              background: 'var(--color-amber-light)', border: '1px solid var(--color-amber-mid)',
+              fontSize: 13, color: 'var(--color-amber)', lineHeight: 1.6,
+            }}>
+              <strong style={{ display: 'block', marginBottom: 4 }}>Atencao — esta acao tem impacto:</strong>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                <li>Esta sprint sera desvinculada da release atual</li>
+                <li>Os dados de testes da sprint NAO serao alterados</li>
+                <li>A aba Regressivos da release anterior deixara de contabilizar esta sprint</li>
+                <li>A nova release passara a incluir esta sprint nas metricas consolidadas</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>De:</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
+                {currentReleaseId
+                  ? allReleases.find((r) => r.id === currentReleaseId)?.version + ' — ' + allReleases.find((r) => r.id === currentReleaseId)?.title
+                  : 'Nenhuma'}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>→</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-blue)' }}>
+                {pendingReleaseId
+                  ? allReleases.find((r) => r.id === pendingReleaseId)?.version + ' — ' + allReleases.find((r) => r.id === pendingReleaseId)?.title
+                  : 'Nenhuma'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowReleaseChangeModal(false)}
+                style={{
+                  padding: '8px 18px', borderRadius: 8,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmReleaseChange}
+                style={{
+                  padding: '8px 18px', borderRadius: 8, border: 'none',
+                  background: 'var(--color-amber-mid)',
+                  color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Confirmar alteracao
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Impacto Prevenido */}
       <Card title="Impacto Prevenido — Pesos por Severidade">
         <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
@@ -353,6 +531,7 @@ export function ConfigTab() {
           </FormGroup>
         </div>
       </Card>
+      </>)}
     </div>
   )
 }

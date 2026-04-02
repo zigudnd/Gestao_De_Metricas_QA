@@ -308,6 +308,7 @@ export function upsertSprintInMasterIndex(
   sprintId: string,
   state: SprintState,
   squadId?: string,
+  extras?: { sprintType?: SprintIndexEntry['sprintType']; releaseId?: string; releaseVersion?: string },
 ): void {
   const index = getMasterIndex()
   const totalTests = state.features.reduce((a, f) => a + (f.tests || 0), 0)
@@ -319,6 +320,9 @@ export function upsertSprintInMasterIndex(
     title: state.config.title || 'S/ Título',
     squad: state.config.squad || '',
     squadId: squadId ?? existing?.squadId,
+    sprintType: extras?.sprintType ?? existing?.sprintType ?? 'squad',
+    releaseId: extras?.releaseId ?? existing?.releaseId,
+    releaseVersion: extras?.releaseVersion ?? existing?.releaseVersion,
     startDate: state.config.startDate || '',
     endDate: state.config.endDate || '',
     totalTests,

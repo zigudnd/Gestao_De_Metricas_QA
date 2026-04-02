@@ -14,8 +14,9 @@
 
 ### 1.2 Criacao de Usuarios
 - Novos usuarios sao criados exclusivamente pelo admin (via SquadsPage ou API `/api/admin/create-user`).
-- Senha padrao: `Mudar@123` (flag `must_change_password` no metadata).
-- Troca obrigatoria no primeiro login via `/change-password`.
+- Senha gerada automaticamente via `crypto.randomBytes` — nao ha mais senha hardcoded.
+- Politica de senha: minimo 8 caracteres, pelo menos 1 maiuscula, 1 numero e 1 caractere especial.
+- Flag `must_change_password` no metadata; troca obrigatoria no primeiro login via `/change-password`.
 
 ### 1.3 Roles Globais
 | Role | Capacidades |
@@ -100,11 +101,16 @@ Cada membro tem permissoes individuais de exclusao:
 - A entrada no Master Index local tambem e removida.
 - Respeita permissao `delete_sprints` do membro no squad.
 
-### 3.5 Status Derivado
+### 3.5 Tipos de Sprint
+- Campo `sprintType` define o tipo: `'squad'` (padrao), `'regressivo'` ou `'integrado'`.
+- Sprints do tipo `regressivo` ou `integrado` possuem campos adicionais `releaseId` e `releaseVersion` que vinculam a sprint a uma Release.
+- O tipo determina o contexto de execucao: squads operam isolados, regressivos validam a release completa, integrados cobrem fluxos cross-squad.
+
+### 3.6 Status Derivado
 - **Em Andamento**: sprint com testes restantes ou sem testes cadastrados.
 - **Concluida**: `totalExec >= totalTests` e `totalTests > 0`.
 
-### 3.6 Conclusao e Reativacao
+### 3.7 Conclusao e Reativacao
 - `concludeSprint(id)` marca status como `concluida` no localStorage e Supabase.
 - `reactivateSprint(id)` reverte para `ativa`.
 
@@ -455,6 +461,125 @@ A aba Overview exibe os indicadores em camadas de prioridade decrescente:
 - Dot colorido + valor + descricao interpretativa.
 - MTTR: dot roxo (#8b5cf6).
 - Indice de Retrabalho: dot na cor da faixa (verde/amarelo/laranja/vermelho).
+
+---
+
+## 18. Releases
+
+### 18.1 Ciclo de Vida
+Uma release segue o ciclo de status:
+`planejada → em_desenvolvimento → corte → em_homologacao → em_regressivo → aprovada → em_producao → concluida`
+
+Cada transicao de status registra timestamp e motivo (reason) para rastreabilidade.
+
+### 18.2 Pipeline de 5 Fases
+| Fase | Descricao |
+|------|-----------|
+| **Corte** | Congelamento de escopo; define quais features entram na release |
+| **Geracao** | Build e empacotamento da versao candidata |
+| **Homologacao** | Testes de aceitacao e validacao funcional |
+| **Beta** | Rollout parcial para grupo restrito |
+| **Producao** | Rollout gradual ate 100% dos usuarios |
+
+### 18.3 Rollout Tracking
+- Percentual de rollout acompanhado em steps pre-definidos: `0, 1, 2, 3, 5, 10, 20, 40, 60, 80, 100`.
+- Cada step e registrado com timestamp para historico de progressao.
+
+### 18.4 Checkpoint Dashboard
+- Painel centralizado para monitoramento de releases ativas.
+- Exibe status atual, fase do pipeline, percentual de rollout e metricas agregadas.
+
+### 18.5 Areas de Teste por Squad
+- Dentro de uma release, cada squad possui suas proprias areas de teste.
+- Permite acompanhamento granular de cobertura e progresso por squad.
+
+### 18.6 Metricas da Release
+| Metrica | Descricao |
+|---------|-----------|
+| `totalTests` | Total de testes planejados na release |
+| `executedTests` | Testes executados ate o momento |
+| `passedTests` | Testes aprovados |
+| `failedTests` | Testes reprovados |
+| `coveragePct` | Percentual de cobertura (`executedTests / totalTests x 100`) |
+| `passPct` | Percentual de aprovacao (`passedTests / executedTests x 100`) |
+
+### 18.7 Calendario de Releases
+- Slots de calendario para agendamento de releases.
+- Permite visualizar conflitos e planejar janelas de deploy.
+
+---
+
+## 19. Status Report (enhancements)
+
+### 19.1 Multi-Report
+- Suporte a multiplos reports por squad/periodo.
+- Operacoes: criar, listar, duplicar, migrar, concluir e favoritar reports.
+- Reports favoritos aparecem em destaque na listagem.
+
+### 19.2 Secoes Dinamicas
+- Secoes sao customizaveis — nao limitadas aos 6 tipos padrao.
+- O usuario pode criar, renomear e reordenar secoes livremente.
+
+### 19.3 Periodo como Date Range
+- Campo de periodo substituido por `periodStart` e `periodEnd` (datas concretas).
+- Substitui o campo de texto livre anterior por intervalo de datas preciso.
+
+### 19.4 Combinados do Time
+- Secao dedicada para registrar cerimonias, acordos do time, DOR (Definition of Ready) e DOD (Definition of Done).
+- Persistido como parte da configuracao do report.
+
+### 19.5 Time e Calendario
+- Lista de membros do time vinculados ao report.
+- Tracking de ausencias e folgas (time off) por membro.
+- Permite visualizar disponibilidade do time durante o periodo do report.
+
+### 19.6 Configuracao de Squad
+- Configuracao de squad persistida no report.
+- Inclui membros, roles e preferencias que sobrevivem entre sessoes.
+
+---
+
+## 20. Audit Trail
+
+### 20.1 Tabela `audit_logs`
+- Registra acoes de usuarios no sistema para rastreabilidade completa.
+- Campos: `id`, `user_id`, `action`, `entity_type`, `entity_id`, `metadata`, `created_at`.
+
+### 20.2 Registro via RPC
+- Acoes sao logadas via funcao RPC `audit_action()` com `SECURITY DEFINER`.
+- Garante que o log e gravado independente das politicas RLS do usuario.
+
+### 20.3 Acoes Rastreadas
+| Entidade | Acoes |
+|----------|-------|
+| `sprints` | create, update, delete |
+| `status_reports` | create, update, delete |
+
+---
+
+## 21. Seguranca
+
+### 21.1 Rate Limiting
+| Escopo | Limite |
+|--------|--------|
+| Geral | 100 requisicoes/minuto |
+| Endpoints admin | 10 requisicoes/minuto |
+| Flush (sendBeacon) | 30 requisicoes/minuto |
+
+### 21.2 CORS
+- Origens permitidas configuradas via variavel de ambiente `CORS_ORIGINS`.
+- Em desenvolvimento, aceita `localhost` por padrao.
+
+### 21.3 Politica de Senhas
+- Minimo 8 caracteres.
+- Pelo menos 1 letra maiuscula.
+- Pelo menos 1 numero.
+- Pelo menos 1 caractere especial.
+- Senhas geradas automaticamente via `crypto.randomBytes` — sem valores hardcoded.
+
+### 21.4 Crash Recovery
+- Evento `beforeunload` dispara `navigator.sendBeacon` para flush de dados pendentes.
+- Garante que alteracoes nao salvas sejam persistidas mesmo em caso de fechamento inesperado do browser.
 
 ---
 

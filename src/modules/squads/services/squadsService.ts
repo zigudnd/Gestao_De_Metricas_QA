@@ -7,38 +7,50 @@ export type SquadRole = 'qa_lead' | 'qa' | 'stakeholder'
 
 export interface MemberPermissions {
   // Criar
-  create_sprints:    boolean
-  create_bugs:       boolean
-  create_features:   boolean
-  create_test_cases: boolean
-  create_suites:     boolean
-  create_blockers:   boolean
-  create_alignments: boolean
+  create_sprints:        boolean
+  create_bugs:           boolean
+  create_features:       boolean
+  create_test_cases:     boolean
+  create_suites:         boolean
+  create_blockers:       boolean
+  create_alignments:     boolean
+  create_releases:       boolean
+  create_status_reports: boolean
+  create_checkpoints:    boolean
   // Editar
-  edit_sprints:      boolean
-  edit_bugs:         boolean
-  edit_features:     boolean
-  edit_test_cases:   boolean
-  edit_suites:       boolean
-  edit_blockers:     boolean
-  edit_alignments:   boolean
+  edit_sprints:          boolean
+  edit_bugs:             boolean
+  edit_features:         boolean
+  edit_test_cases:       boolean
+  edit_suites:           boolean
+  edit_blockers:         boolean
+  edit_alignments:       boolean
+  edit_releases:         boolean
+  edit_status_reports:   boolean
+  edit_checkpoints:      boolean
   // Excluir
-  delete_sprints:    boolean
-  delete_bugs:       boolean
-  delete_features:   boolean
-  delete_test_cases: boolean
-  delete_suites:     boolean
-  delete_blockers:   boolean
-  delete_alignments: boolean
+  delete_sprints:        boolean
+  delete_bugs:           boolean
+  delete_features:       boolean
+  delete_test_cases:     boolean
+  delete_suites:         boolean
+  delete_blockers:       boolean
+  delete_alignments:     boolean
+  delete_releases:       boolean
+  delete_status_reports: boolean
+  delete_checkpoints:    boolean
 }
 
 export const DEFAULT_PERMISSIONS: MemberPermissions = {
   create_sprints: true, create_bugs: true, create_features: true, create_test_cases: true,
   create_suites: true, create_blockers: true, create_alignments: true,
+  create_releases: true, create_status_reports: true, create_checkpoints: true,
   edit_sprints: true, edit_bugs: true, edit_features: true, edit_test_cases: true,
   edit_suites: true, edit_blockers: true, edit_alignments: true,
+  edit_releases: true, edit_status_reports: true, edit_checkpoints: true,
   delete_sprints: false, delete_bugs: false, delete_features: false, delete_test_cases: false,
   delete_suites: false, delete_blockers: false, delete_alignments: false,
+  delete_releases: false, delete_status_reports: false, delete_checkpoints: false,
 }
 
 export type PermissionGroup = 'create' | 'edit' | 'delete'
@@ -51,30 +63,40 @@ export const PERMISSION_GROUPS: { id: PermissionGroup; label: string; color: str
 
 export const PERMISSION_RESOURCES = [
   'sprints', 'bugs', 'features', 'test_cases', 'suites', 'blockers', 'alignments',
+  'releases', 'status_reports', 'checkpoints',
 ] as const
 
 export type PermissionResource = typeof PERMISSION_RESOURCES[number]
 
 export const RESOURCE_LABELS: Record<PermissionResource, string> = {
-  sprints:     'Sprints',
-  bugs:        'Bugs',
-  features:    'Funcionalidades',
-  test_cases:  'Casos de Teste',
-  suites:      'Suites',
-  blockers:    'Bloqueios',
-  alignments:  'Alinhamentos',
+  sprints:        'Sprints',
+  bugs:           'Bugs',
+  features:       'Funcionalidades',
+  test_cases:     'Casos de Teste',
+  suites:         'Suites',
+  blockers:       'Bloqueios',
+  alignments:     'Alinhamentos',
+  releases:       'Releases',
+  status_reports: 'Status Reports',
+  checkpoints:    'Checkpoints',
 }
 
 export const PERMISSION_LABELS: Record<keyof MemberPermissions, string> = {
   create_sprints: 'Criar Sprints', create_bugs: 'Criar Bugs', create_features: 'Criar Funcionalidades',
   create_test_cases: 'Criar Casos de Teste', create_suites: 'Criar Suites',
   create_blockers: 'Criar Bloqueios', create_alignments: 'Criar Alinhamentos',
+  create_releases: 'Criar Releases', create_status_reports: 'Criar Status Reports',
+  create_checkpoints: 'Criar Checkpoints',
   edit_sprints: 'Editar Sprints', edit_bugs: 'Editar Bugs', edit_features: 'Editar Funcionalidades',
   edit_test_cases: 'Editar Casos de Teste', edit_suites: 'Editar Suites',
   edit_blockers: 'Editar Bloqueios', edit_alignments: 'Editar Alinhamentos',
+  edit_releases: 'Editar Releases', edit_status_reports: 'Editar Status Reports',
+  edit_checkpoints: 'Editar Checkpoints',
   delete_sprints: 'Excluir Sprints', delete_bugs: 'Excluir Bugs', delete_features: 'Excluir Funcionalidades',
   delete_test_cases: 'Excluir Casos de Teste', delete_suites: 'Excluir Suites',
   delete_blockers: 'Excluir Bloqueios', delete_alignments: 'Excluir Alinhamentos',
+  delete_releases: 'Excluir Releases', delete_status_reports: 'Excluir Status Reports',
+  delete_checkpoints: 'Excluir Checkpoints',
 }
 
 export interface Squad {
@@ -358,14 +380,6 @@ export async function getMySquadIds(): Promise<string[]> {
   return (data ?? []).map((r) => r.squad_id)
 }
 
-export async function setGlobalRole(userId: string, role: 'admin' | 'user'): Promise<void> {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ global_role: role })
-    .eq('id', userId)
-  if (error) throw new Error(error.message)
-}
-
 // ─── Permission Profiles ─────────────────────────────────────────────────────
 
 export interface PermissionProfile {
@@ -423,14 +437,3 @@ export async function deletePermissionProfile(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-// ─── Legacy (mantém compatibilidade com código antigo) ───────────────────────
-/** @deprecated use addMember */
-export async function inviteMember(squadId: string, email: string, role: SquadRole): Promise<void> {
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', email.toLowerCase().trim())
-    .single()
-  if (profileError || !profile) throw new Error('Usuário não encontrado.')
-  await addMember(squadId, profile.id, role, { ...DEFAULT_PERMISSIONS })
-}

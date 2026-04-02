@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/modules/auth/store/authStore'
+import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 
 // ─── SVG Icons (20×20, stroke-based, currentColor) ──────────────────────────
 
@@ -34,6 +35,16 @@ const IconStatusReport = () => (
     {/* Trend arrow going up-right */}
     <path d="M11 5l3-2.5" strokeWidth="1.8" />
     <path d="M12.5 2.5H14V4" strokeWidth="1.4" />
+  </svg>
+)
+
+const IconReleases = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {/* Rocket / deploy icon */}
+    <path d="M10 15.5v-3" />
+    <path d="M7 17l3-4.5 3 4.5" />
+    <path d="M10 2.5c-2 2-3.5 5-3.5 8.5h7c0-3.5-1.5-6.5-3.5-8.5z" />
+    <circle cx="10" cy="8" r="1.2" />
   </svg>
 )
 
@@ -303,6 +314,82 @@ function UserSection({ expanded }: { expanded: boolean }) {
   )
 }
 
+// ─── SquadSelector ───────────────────────────────────────────────────────────
+
+function SquadSelector({ expanded }: { expanded: boolean }) {
+  const { squads, activeSquadId, setActiveSquad } = useActiveSquadStore()
+  const globalRole = useAuthStore((s) => s.profile?.global_role)
+  const isPrivileged = globalRole === 'admin' || globalRole === 'gerente'
+
+  if (squads.length === 0) return null
+
+  const activeSquad = squads.find((s) => s.id === activeSquadId)
+
+  if (!expanded) {
+    // Colapsado: dot colorido com tooltip
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0' }}>
+        <div
+          title={activeSquad?.name ?? 'Squad'}
+          style={{
+            width: 28, height: 28, borderRadius: 7,
+            background: activeSquad?.color ? `${activeSquad.color}18` : 'var(--color-surface-2)',
+            border: `2px solid ${activeSquad?.color ?? 'var(--color-border-md)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 800,
+            color: activeSquad?.color ?? 'var(--color-text-3)',
+          }}
+        >
+          {(activeSquad?.name ?? 'S')[0].toUpperCase()}
+        </div>
+      </div>
+    )
+  }
+
+  // Expandido: select estilizado
+  return (
+    <div style={{ padding: '2px 10px 4px' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '7px 10px',
+        background: activeSquad?.color ? `${activeSquad.color}08` : 'var(--color-surface-2)',
+        border: `1px solid ${activeSquad?.color ? activeSquad.color + '30' : 'var(--color-border)'}`,
+        borderRadius: 8,
+        transition: 'all 0.15s',
+      }}>
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: activeSquad?.color ?? 'var(--color-text-3)',
+          flexShrink: 0,
+        }} />
+        <select
+          value={activeSquadId ?? ''}
+          onChange={(e) => { if (e.target.value) setActiveSquad(e.target.value) }}
+          aria-label="Selecionar squad"
+          style={{
+            flex: 1, fontSize: 12, fontWeight: 600,
+            border: 'none', background: 'transparent',
+            color: 'var(--color-text)',
+            fontFamily: 'var(--font-family-sans)',
+            cursor: 'pointer', outline: 'none',
+            appearance: 'none',
+            padding: 0,
+            minWidth: 0,
+          }}
+        >
+          {isPrivileged && <option value="all">Todos os squads</option>}
+          {squads.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M1 1l4 4 4-4" stroke="var(--color-text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 const COLLAPSED_W = 56
@@ -315,6 +402,7 @@ export function Sidebar() {
   const isSprints = location.pathname.startsWith('/sprints')
   const isSquads  = location.pathname.startsWith('/squads')
   const isStatusReport = location.pathname.startsWith('/status-report')
+  const isReleases = location.pathname.startsWith('/releases')
 
   return (
     <aside
@@ -365,10 +453,24 @@ export function Sidebar() {
         )}
       </div>
 
+      {/* User section — NO TOPO */}
+      <UserSection expanded={expanded} />
+
+      {/* Squad selector */}
+      <SquadSelector expanded={expanded} />
+
+      {/* Separator */}
+      <div style={{
+        width: expanded ? 'calc(100% - 24px)' : 28,
+        height: 1, background: 'var(--color-border)',
+        margin: '6px auto',
+      }} />
+
       {/* Nav items */}
       <NavItem icon={<IconHome />} label="Início" active={location.pathname === '/'} expanded={expanded} onClick={() => navigate('/')} />
-      <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
       <NavItem icon={<IconStatusReport />} label="Visão Geral" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
+      <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
+      <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />
 
       <div style={{ flex: 1 }} />
 
@@ -382,16 +484,6 @@ export function Sidebar() {
       {/* Nav items — administrativo */}
       <NavItem icon={<IconSquads />} label="Cadastros"  active={isSquads}  expanded={expanded} onClick={() => navigate('/squads')} />
       <NavItem icon={<IconDocs />} label="Documentação" active={location.pathname === '/docs'} expanded={expanded} onClick={() => navigate('/docs')} />
-
-      {/* Separator */}
-      <div style={{
-        width: expanded ? 'calc(100% - 24px)' : 28,
-        height: 1, background: 'var(--color-border)',
-        margin: '4px auto',
-      }} />
-
-      {/* User section */}
-      <UserSection expanded={expanded} />
 
       {/* Toggle button */}
       <div style={{

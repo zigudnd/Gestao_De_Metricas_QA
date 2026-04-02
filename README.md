@@ -1,8 +1,8 @@
-# ToStatos — QA Metrics Dashboard
+# ToStatos — QA Metrics & Release Management Dashboard
 
-Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza KPIs, progresso de testes, bugs, impedimentos e alinhamentos em um unico painel. Suporta uso individual (offline) e colaborativo em tempo real (via Supabase) com sistema multi-usuario, squads e permissoes granulares.
+Plataforma completa de gestao de metricas QA, status reports e releases para times de qualidade. Centraliza KPIs de sprints, gestao de bugs, impedimentos, alinhamentos, status reports semanais com Gantt, pipeline de releases multi-fase e cadastro de squads com permissoes granulares. Suporta uso individual (offline), colaborativo local (Docker) e cloud (Supabase Cloud) com sincronizacao em tempo real.
 
-**Stack:** React 19 + TypeScript . Vite 6 . Tailwind CSS v4 . Zustand . Chart.js . Supabase (PostgreSQL + Auth + Realtime)
+**Stack:** React 19 + TypeScript 5.9 + Vite 6 + Tailwind CSS v4 + Zustand 5 + Chart.js 4 + Supabase (PostgreSQL + Auth + Realtime) + Express 4 + Playwright 1.58
 
 ---
 
@@ -11,15 +11,12 @@ Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza K
 1. [Acesso rapido](#1-acesso-rapido)
 2. [Pre-requisitos](#2-pre-requisitos)
 3. [Instalacao](#3-instalacao)
-4. [Modo Individual — somente localStorage](#4-modo-individual--somente-localstorage)
-5. [Modo Colaborativo — Supabase local com Docker](#5-modo-colaborativo--supabase-local-com-docker)
-6. [Modo Colaborativo — Supabase Cloud (producao)](#6-modo-colaborativo--supabase-cloud-producao)
-7. [Variaveis de ambiente](#7-variaveis-de-ambiente)
-8. [Sistema de Autenticacao e Permissoes](#8-sistema-de-autenticacao-e-permissoes)
-9. [Estrutura do projeto](#9-estrutura-do-projeto)
-10. [Como funciona a persistencia](#10-como-funciona-a-persistencia)
-11. [Principais funcionalidades](#11-principais-funcionalidades)
-12. [Deploy](#12-deploy)
+4. [Modos de operacao](#4-modos-de-operacao)
+5. [Variaveis de ambiente](#5-variaveis-de-ambiente)
+6. [Autenticacao e Permissoes](#6-autenticacao-e-permissoes)
+7. [Estrutura do projeto](#7-estrutura-do-projeto)
+8. [Funcionalidades](#8-funcionalidades)
+9. [Deploy](#9-deploy)
 
 ---
 
@@ -32,7 +29,7 @@ Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza K
 | **Admin** | `admin@tostatos.com` | `Admin@123` |
 | **Novos usuarios** | definido pelo admin | `Mudar@123` (troca obrigatoria no primeiro login) |
 
-> O usuario admin e criado pelo script `bash setup-admin.sh` ou via API (veja a secao 5, Passo 4).
+> O usuario admin e criado pelo script `bash setup-admin.sh` ou via API (veja a secao 4).
 > Novos usuarios sao criados pelo admin na aba **Cadastros > Usuarios**.
 
 ### Comandos essenciais
@@ -40,7 +37,7 @@ Plataforma de gestao de metricas QA para acompanhamento de sprints. Centraliza K
 ```bash
 npm install          # instalar dependencias
 npm run dev:client   # iniciar frontend (porta 5173)
-npm run dev          # iniciar backend (porta 3000)
+npm run dev          # iniciar backend Express (porta 3000)
 npm run build        # build de producao
 npm run typecheck    # verificar tipos TypeScript
 ```
@@ -57,9 +54,9 @@ npm run typecheck    # verificar tipos TypeScript
 | **Supabase CLI** | qualquer | `supabase --version` |
 | **Navegador** | Chrome / Edge / Firefox atual | — |
 
-### Instalando Docker Desktop
+> Docker e Supabase CLI sao necessarios apenas para o **modo colaborativo**. O modo offline funciona sem eles.
 
-O Docker e necessario apenas para o **modo colaborativo** (Supabase local). Se voce so quer usar o modo individual (localStorage), pode pular esta etapa.
+### Instalando Docker Desktop
 
 #### macOS
 
@@ -150,8 +147,6 @@ supabase --version
 
 ### Verificacao final
 
-Antes de prosseguir, confirme que tudo esta instalado:
-
 ```bash
 node --version        # v18+ ou v20+
 npm --version         # 9+
@@ -176,63 +171,64 @@ npm install
 
 ---
 
-## 4. Modo Individual — somente localStorage
+## 4. Modos de operacao
 
-Use este modo se quiser rodar o projeto sozinho, sem banco de dados, sem Docker.
+O ToStatos suporta tres modos de operacao, escolhidos pela presenca (ou ausencia) das variaveis de ambiente.
+
+### Modo Offline — somente localStorage
+
+Use este modo para rodar sozinho, sem banco de dados, sem Docker.
 
 ```bash
-# Suba o frontend
 npm run dev:client
 ```
 
 Acesse: **http://localhost:5173**
 
-Os dados ficam salvos no `localStorage` do navegador. Nenhuma configuracao adicional necessaria.
-
-> **Nota:** No modo individual, o sistema de autenticacao nao e ativado. Todas as funcionalidades estao disponiveis sem login.
+Dados ficam salvos no `localStorage` do navegador. O sistema de autenticacao nao e ativado — todas as funcionalidades estao disponiveis sem login.
 
 ---
 
-## 5. Modo Colaborativo — Supabase local com Docker
+### Modo Colaborativo Local — Supabase com Docker
 
-Use este modo para trabalhar em equipe na mesma rede local, sem precisar de internet.
+Use este modo para trabalhar em equipe na mesma rede, sem precisar de internet.
 
-### Passo 1 — Suba o banco de dados local
+**Passo 1 — Suba o banco de dados local**
 
 ```bash
-# Na raiz do projeto, inicie o Supabase (Docker)
 supabase start
 ```
 
-Na primeira execucao, o Docker baixa as imagens (pode demorar alguns minutos). Nas execucoes seguintes, sobe em segundos.
+Na primeira execucao, o Docker baixa as imagens (pode demorar alguns minutos). Para consultar as credenciais: `supabase status`.
 
-Ao terminar, o terminal exibe as credenciais. Para consulta-las novamente: `supabase status`.
+**Passo 2 — Configure o `.env`**
 
-### Passo 2 — Configure o `.env`
-
-Crie o arquivo `.env` na raiz do projeto com os valores exibidos pelo `supabase start`:
+Crie o arquivo `.env` na raiz com os valores exibidos pelo `supabase start`:
 
 ```env
 # Frontend (Vite)
 VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=<publishable key do supabase status>
 
-# Backend (server.js) — necessario para criar usuarios
+# Backend (server.js)
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_SERVICE_ROLE_KEY=<service_role key do supabase status>
+
+# Opcional
+CORS_ORIGINS=http://localhost:5173
+STORAGE_TYPE=supabase
+PORT=3000
 ```
 
-> O arquivo `.env.example` contem um template. As keys sao geradas pelo `supabase start`.
-
-### Passo 3 — Aplique as migrations
+**Passo 3 — Aplique as migrations (22 no total)**
 
 ```bash
 supabase db push --local
 ```
 
-Confirme com `Y` quando solicitado. Isso cria todas as tabelas: `sprints`, `profiles`, `squads`, `squad_members`, `permission_profiles`, triggers e RLS policies.
+Confirme com `Y` quando solicitado. Isso cria todas as tabelas, triggers, RLS policies, RPCs e seed data.
 
-### Passo 4 — Crie o usuario admin
+**Passo 4 — Crie o usuario admin**
 
 ```bash
 # Opcao 1: Script automatizado
@@ -245,59 +241,38 @@ curl -X POST http://localhost:3000/api/admin/create-user \
   -d '{"email":"admin@tostatos.com","display_name":"Admin"}'
 ```
 
-**Credenciais padrao:**
-| | |
-|---|---|
-| **Admin** | `admin@tostatos.com` / `Admin@123` |
-| **Novos usuarios** | senha padrao `Mudar@123` (troca obrigatoria no primeiro login) |
-
-### Passo 5 — Suba o frontend
+**Passo 5 — Suba frontend e backend**
 
 ```bash
-npm run dev:client
+npm run dev:client   # frontend na porta 5173
+npm run dev          # backend na porta 3000 (em outro terminal)
 ```
 
 Acesse: **http://localhost:5173**
 
-### Passo 6 — Acesso de outros usuarios na rede
-
-Para que outros computadores na mesma rede acessem o dashboard:
+**Passo 6 — Acesso de outros na rede**
 
 ```bash
-# Suba o Vite expondo na rede local
 npm run dev:client -- --host
 ```
 
-O terminal exibira o IP da maquina (ex: `http://192.168.1.10:5173`). Compartilhe esse endereco com a equipe.
+O terminal exibira o IP da maquina (ex: `http://192.168.1.10:5173`). Outros computadores devem apontar `VITE_SUPABASE_URL` para o IP da maquina que roda o Supabase.
 
-> **Importante:** todos devem apontar o `.env` para o IP da maquina que esta rodando o Supabase.
-> Ex: `VITE_SUPABASE_URL=http://192.168.1.10:54321`
-
-### Parar e retomar
+**Parar e retomar**
 
 ```bash
-# Parar o Supabase (dados ficam salvos no disco)
-supabase stop
-
-# Retomar depois
-supabase start
+supabase stop    # dados ficam salvos no disco
+supabase start   # retomar depois
 ```
-
-**Os dados persistem** entre reinicializacoes. O Docker usa volumes no disco local — os dados so sao perdidos se voce deletar o volume manualmente.
 
 ---
 
-## 6. Modo Colaborativo — Supabase Cloud (producao)
+### Modo Cloud — Supabase Cloud (producao)
 
-Use este modo quando tiver um servidor dedicado (pod, VM, Kubernetes) ou quiser usar o Supabase hospedado na nuvem.
-
-### Opcao A: Supabase Cloud (supabase.com)
+**Opcao A: Supabase Cloud (supabase.com)**
 
 1. Crie uma conta em https://supabase.com e um novo projeto
-2. No painel do projeto, va em **Settings → API** e copie:
-   - `Project URL`
-   - `anon public key`
-   - `service_role key` (para o backend)
+2. No painel do projeto, va em **Settings > API** e copie: `Project URL`, `anon public key`, `service_role key`
 3. Aplique as migrations:
    ```bash
    supabase link --project-ref SEU_PROJECT_REF
@@ -306,25 +281,19 @@ Use este modo quando tiver um servidor dedicado (pod, VM, Kubernetes) ou quiser 
 4. Atualize o `.env`:
    ```env
    VITE_SUPABASE_URL=https://xxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   VITE_SUPABASE_ANON_KEY=eyJ...
    SUPABASE_URL=https://xxxx.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   CORS_ORIGINS=https://seu-dominio.com
    ```
 
-### Opcao B: Self-hosted (Docker em servidor)
+**Opcao B: Self-hosted (Docker em servidor)**
 
-Execute o `supabase start` no servidor e aponte o `.env` para o IP publico ou dominio do servidor:
-
-```env
-VITE_SUPABASE_URL=http://SEU_SERVIDOR_IP:54321
-VITE_SUPABASE_ANON_KEY=sb_publishable_XXXX
-SUPABASE_URL=http://SEU_SERVIDOR_IP:54321
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_XXXX
-```
+Execute `supabase start` no servidor e aponte o `.env` para o IP publico ou dominio do servidor.
 
 ---
 
-## 7. Variaveis de ambiente
+## 5. Variaveis de ambiente
 
 | Variavel | Obrigatoria | Descricao |
 |---|---|---|
@@ -332,146 +301,221 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_XXXX
 | `VITE_SUPABASE_ANON_KEY` | Modo colaborativo | Chave publica anon (frontend) |
 | `SUPABASE_URL` | Backend | URL do Supabase (server.js) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Backend | Chave service_role para admin API |
+| `CORS_ORIGINS` | Nao | Origens permitidas para CORS (default: `*`) |
 | `STORAGE_TYPE` | Nao | `'local'` ou `'supabase'` (default: `'local'`) |
 | `PORT` | Nao | Porta do Express (default: 3000) |
 
-> Se as variaveis `VITE_*` nao estiverem definidas, o app roda normalmente em modo offline (somente `localStorage`).
+> Se as variaveis `VITE_*` nao estiverem definidas, o app roda em modo offline (somente `localStorage`).
 
 ---
 
-## 8. Sistema de Autenticacao e Permissoes
+## 6. Autenticacao e Permissoes
 
 ### Autenticacao
 
 O sistema usa **Supabase Auth (GoTrue)** para gerenciar usuarios:
 - Login com email e senha
 - Sessoes persistentes (refresh automatico de token)
-- Novos usuarios sao criados pelo admin via interface ou API
+- Novos usuarios criados pelo admin via interface ou API
+- Troca de senha obrigatoria no primeiro login (`must_change_password`)
+- Tela de perfil com edicao de nome e avatar
 
 ### Roles Globais
 
 | Role | Permissoes |
 |------|-----------|
-| `admin` | Criar usuarios, gerenciar squads, alterar roles, ativar/desativar usuarios |
-| `user` | Acesso normal ao dashboard, operacoes dentro dos squads vinculados |
+| `admin` | Criar usuarios, gerenciar squads, alterar roles, ativar/desativar usuarios, acesso total |
+| `user` | Acesso ao dashboard, operacoes dentro dos squads vinculados |
 
-### Squads
+### Squads e Membros
 
-Squads sao equipes que agrupam membros e sprints:
-- Cada squad tem **nome**, **descricao** e **cor**
-- Membros possuem roles: `qa_lead`, `qa`, `stakeholder`
-- Sprints podem ser vinculadas a um squad (`squadId`)
+- Cada squad tem **nome**, **descricao**, **cor** e pode ser **arquivado**
+- Membros possuem roles de squad: `qa_lead`, `qa`, `stakeholder`
+- Visibilidade: admin ve tudo; demais veem apenas dados dos seus squads
 
 ### Permissoes Granulares
 
-Cada membro de um squad tem permissoes individuais de exclusao:
-- Excluir Sprints, Bugs, Funcionalidades, Casos de Teste, Suites, Bloqueios, Alinhamentos
-
-Permissoes podem ser atribuidas individualmente ou via **Perfis de Permissao** (templates reutilizaveis).
+Cada membro tem permissoes individuais controladas por recurso (sprints, bugs, funcionalidades, casos de teste, suites, bloqueios, alinhamentos, releases). Permissoes podem ser atribuidas individualmente ou via **Perfis de Permissao** (templates reutilizaveis).
 
 ---
 
-## 9. Estrutura do projeto
+## 7. Estrutura do projeto
 
 ```
 src/
 ├── lib/
-│   └── supabase.ts                  # Cliente Supabase (singleton)
+│   └── supabase.ts                     # Cliente Supabase (singleton)
 ├── app/
-│   ├── components/                  # Modais compartilhados + ProtectedRoute
-│   ├── layout/                      # AppShell, Sidebar, Topbar, SaveToast
-│   └── pages/                       # DocsPage
+│   ├── components/                     # Modais compartilhados + ProtectedRoute
+│   ├── layout/                         # AppShell, Sidebar, Topbar, SaveToast
+│   ├── pages/                          # DocsPage
+│   └── routes.tsx                      # Definicao das 13 rotas
+├── shared/
+│   ├── components/                     # Componentes reutilizaveis
+│   └── hooks/                          # Hooks compartilhados
 ├── modules/
-│   ├── auth/                        # Login, perfil, troca de senha, authStore
+│   ├── auth/                           # Login, perfil, troca de senha, authStore
 │   ├── sprints/
-│   │   ├── components/dashboard/    # Tabs: Overview, Report, Bugs, Features, Blockers,
-│   │   │                            #        Alignments, Notes, Config + useSprintMetrics
-│   │   ├── pages/
-│   │   │   ├── HomePage.tsx         # Lista de sprints
-│   │   │   ├── SprintDashboard.tsx  # Dashboard principal
-│   │   │   └── ComparePage.tsx      # Comparacao entre sprints
-│   │   ├── services/
-│   │   │   ├── persistence.ts       # Toda a logica de dados (localStorage + Supabase)
-│   │   │   ├── compareService.ts    # KPIs para comparacao
-│   │   │   ├── exportService.ts     # Export JPG, JSON, CSV
-│   │   │   └── importService.ts     # Import .feature e .csv
-│   │   ├── store/sprintStore.ts     # Zustand store central
-│   │   └── types/sprint.types.ts    # Tipos TypeScript
-│   └── squads/                      # Gestao de squads, membros, permissoes, usuarios
-│       ├── pages/SquadsPage.tsx
-│       └── services/squadsService.ts
+│   │   ├── components/dashboard/       # 8 tabs: Overview, Report, Bugs, Features,
+│   │   │                               #   Blockers, Alignments, Notes, Config
+│   │   ├── pages/                      # HomePage, SprintDashboard, ComparePage
+│   │   ├── services/                   # persistence, compareService, exportService,
+│   │   │                               #   importService
+│   │   ├── store/                      # sprintStore (Zustand)
+│   │   └── types/                      # sprint.types.ts
+│   ├── status-report/
+│   │   ├── components/                 # SectionManager, SectionCard, ItemRow,
+│   │   │                               #   ItemFormModal, ItemDetailPanel, GanttView,
+│   │   │                               #   ReportPreview, ReportDashboard,
+│   │   │                               #   combinados/, time/
+│   │   ├── pages/                      # StatusReportHomePage, StatusReportPage
+│   │   ├── services/                   # persistence, export, dateEngine
+│   │   ├── store/                      # statusReportStore + seedData
+│   │   └── types/                      # statusReport.types.ts
+│   ├── releases/
+│   │   ├── components/
+│   │   │   ├── dashboard/              # Checkpoint, Regressivos, Historico,
+│   │   │   │                           #   Cronograma, Eventos
+│   │   │   └── tests/                  # Areas de teste por squad
+│   │   ├── pages/                      # ReleasesPage, ReleaseDashboard
+│   │   ├── services/                   # persistence, export
+│   │   ├── store/                      # releaseStore
+│   │   └── types/                      # release.types.ts
+│   └── squads/
+│       ├── pages/                      # SquadsPage (Squads, Perfis, Usuarios)
+│       └── services/                   # squadsService
 supabase/
-├── config.toml                      # Configuracao do Supabase local
-└── migrations/                      # 11 migrations SQL sequenciais
-server.js                            # Express: SPA + API admin + health
+├── config.toml                         # Configuracao do Supabase local
+└── migrations/                         # 22 migrations SQL sequenciais
+server.js                               # Express: SPA + API admin + flush endpoints
+setup-admin.sh                          # Script de criacao do admin
 ```
+
+### Rotas (13)
+
+| Rota | Descricao |
+|------|-----------|
+| `/login` | Tela de login (publica) |
+| `/change-password` | Troca de senha obrigatoria |
+| `/` | Dashboard Home |
+| `/sprints` | Lista de sprints |
+| `/sprints/compare` | Comparacao entre sprints |
+| `/sprints/:sprintId` | Dashboard da sprint |
+| `/status-report` | Lista de status reports |
+| `/status-report/:reportId` | Editor de status report |
+| `/releases` | Lista de releases |
+| `/releases/:releaseId` | Dashboard da release |
+| `/squads` | Cadastro de squads, perfis e usuarios |
+| `/profile` | Perfil do usuario |
+| `/docs` | Documentacao |
+
+### API Endpoints (8)
+
+| Metodo | Rota | Auth | Rate Limit | Descricao |
+|---|---|---|---|---|
+| GET | `/config.js` | Nao | — | Configuracao dinamica do frontend |
+| GET | `/api/health` | Nao | — | Health check |
+| GET | `/api/dashboard/:projectKey` | Nao | — | Dados do dashboard |
+| PUT | `/api/dashboard/:projectKey` | Nao | — | Atualizar dashboard |
+| POST | `/api/admin/create-user` | Bearer + admin | 10/min | Criar usuario |
+| POST | `/api/admin/reset-password` | Bearer + admin | 10/min | Resetar senha de usuario |
+| POST | `/api/status-report-flush` | Nao | 30/min | Flush de status report (sendBeacon) |
+| POST | `/api/release-flush` | Nao | 30/min | Flush de release (sendBeacon) |
+
+### Seguranca
+
+- **Helmet** — Headers de seguranca HTTP
+- **CORS** — Origens configuradas via env (`CORS_ORIGINS`)
+- **Rate limiting** — Endpoints admin e flush com limites por minuto
+- **RLS** — Row Level Security em todas as tabelas do Supabase
+- **Audit logging** — Registro de acoes via RPC no banco
+- **Senhas** — Geradas com `crypto.randomBytes` para novos usuarios
 
 ---
 
-## 10. Como funciona a persistencia
+## 8. Funcionalidades
 
-O app usa uma arquitetura em camadas:
+### Modulo 1 — Auth
 
-```
-Usuario edita → _commit (Zustand)
-                    ├── saveToStorage()          → localStorage (imediato, sync)
-                    ├── upsertSprintInMasterIndex() → localStorage (imediato, sync)
-                    └── queueRemotePersist()     → Supabase (debounce 700ms, async)
+- Login com email e senha (Supabase Auth/GoTrue)
+- Troca de senha obrigatoria no primeiro login
+- Tela de perfil (nome, avatar)
+- Sessoes persistentes com refresh automatico
 
-Outro usuario salva → Supabase Realtime (WebSocket)
-                          └── atualiza localStorage + Zustand store
-                              → tela do colega atualiza em ~200ms
-```
+### Modulo 2 — Cobertura QA (Sprints)
 
-**Na inicializacao do app** (`AppShell`), `syncAllFromSupabase()` e chamado:
-- Busca todas as sprints do Supabase
-- Popula o `localStorage` com os dados remotos
-- Garante que sprints criadas por outros usuarios aparecam na lista
+- **Dashboard com 8 abas:** Overview, Report, Bugs, Features, Blockers, Alignments, Notes, Config
+- **KPIs:** Health Score (ponderado com penalidades configuraveis), MTTR, Capacidade Real, Indice de Reteste, Burndown
+- **Gestao de Casos de Teste:** Suites, funcionalidades, cenarios Gherkin com status por dia
+- **Gestao de Bugs:** Severidade, stack, responsavel, MTTR, retestes, categoria
+- **Bloqueios de Execucao:** Registro de impedimentos com horas bloqueadas
+- **Comparacao entre Sprints:** Graficos de evolucao historica com KPIs lado a lado
+- **Exportacao:** JPG (relatorio visual), JSON (backup), CSV (cobertura e suites)
+- **Importacao:** Arquivos `.feature` (Gherkin), `.csv` (cenarios), JSON (backup)
 
-**Ao abrir uma sprint** (`SprintDashboard`):
-1. Tenta carregar do Supabase (`loadFromServer`)
-2. Fallback para `localStorage` se Supabase nao responder
-3. Registra subscription Realtime para aquela sprint
+### Modulo 3 — Visao Geral (Status Report)
 
-**Ao fechar uma sprint** (`resetSprint`): a subscription Realtime e cancelada.
+- **Multi-report para Scrum Masters:** Varios reports por semana/periodo
+- **Secoes dinamicas** com itens contendo dependencias e status
+- **Gantt SVG** — Visualizacao temporal dos itens
+- **Preview 2 colunas** — Formato Word para copiar (clipboard)
+- **Favoritos, concluir, migrar/duplicar** reports
+- **Combinados do time** — Acordos e combinados registrados
+- **Time & Calendario** — Abas para gestao de equipe e datas
+
+### Modulo 4 — Releases
+
+- **Pipeline de 5 fases:** Corte → Geracao → Homologacao → Beta → Producao
+- **5 abas:** Checkpoint, Regressivos, Historico, Cronograma, Eventos
+- **Rollout %** — Acompanhamento percentual de implantacao
+- **Areas de teste por squad** — Divisao de responsabilidades por squad
+- **Flush via sendBeacon** — Persistencia garantida ao fechar aba
+
+### Modulo 5 — Cadastros (Squads)
+
+- **Squads:** Nome, descricao, cor, arquivamento
+- **Membros:** Roles de squad (qa_lead, qa, stakeholder)
+- **Permissoes granulares:** Por recurso, por membro, com perfis reutilizaveis
+- **Gestao de usuarios (admin):** Criar, ativar/desativar, resetar senha
+- **Perfis de permissao:** Templates aplicaveis a varios membros
+
+### Colaboracao em tempo real
+
+- Multiplos usuarios na mesma sprint/report/release simultaneamente
+- Sincronizacao via Supabase Realtime (WebSocket)
+- Debounce de 700ms para persistencia remota
+- Fallback para localStorage se Supabase nao responder
+
+### Modo offline
+
+- Funciona 100% sem Supabase — dados locais no navegador
+- Sem necessidade de login ou configuracao
 
 ---
 
-## 11. Principais funcionalidades
-
-- **Sistema Multi-usuario** — Login com Supabase Auth, roles (admin/user), squads
-- **Permissoes Granulares** — Controle de exclusao por recurso, por membro, com perfis reutilizaveis
-- **QA Health Score** — Score ponderado com penalidades configuraveis (bugs, retestes, bloqueios, atraso)
-- **Burndown Chart** — Acompanhamento diario de execucao vs meta
-- **KPIs em tempo real** — Testes Executaveis, Capacidade Real, Bugs Abertos, Indice de Retrabalho
-- **Gestao de Casos de Teste** — Suites, Funcionalidades, Cenarios Gherkin com status por dia
-- **Gestao de Bugs** — Severidade, stack, responsavel, MTTR, retestes, categoria
-- **Bloqueios de Execucao** — Registro de impedimentos com horas bloqueadas
-- **Comparativo entre Sprints** — Graficos de evolucao historica
-- **Exportacao** — Relatorio em imagem (JPG), backup JSON, CSV de cobertura, CSV de suite
-- **Importacao** — Arquivos .feature (Gherkin), .csv (cenarios) e JSON (backup)
-- **Colaboracao em tempo real** — Multiplos usuarios na mesma sprint simultaneamente
-- **Modo offline** — Funciona sem Supabase, dados locais no navegador
-
----
-
-## 12. Deploy
+## 9. Deploy
 
 ### Build de producao
 
 ```bash
 npm run build
-# Arquivos gerados em /dist — sirva com qualquer servidor estatico (nginx, Caddy, etc.)
+# Arquivos gerados em /dist
+```
+
+O `server.js` serve tanto a SPA (arquivos estaticos do `/dist`) quanto os endpoints de API. Em producao, basta rodar:
+
+```bash
+node server.js
 ```
 
 ### Railway / Render / Fly.io
 
 1. Conecte o repositorio
-2. Configure as variaveis de ambiente (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) apontando para o Supabase Cloud
+2. Configure as variaveis de ambiente (veja secao 5)
 3. Comando de build: `npm run build`
-4. Pasta de saida: `dist`
+4. Comando de start: `node server.js`
 
-### Docker (containerizar o frontend)
+### Docker (containerizar tudo)
 
 ```dockerfile
 FROM node:20-alpine AS build
@@ -481,16 +525,24 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/server.js ./
+COPY --from=build /app/package*.json ./
+RUN npm ci --omit=dev
+EXPOSE 3000
+CMD ["node", "server.js"]
 ```
 
 ```bash
 docker build -t tostatos .
-docker run -p 80:80 \
+docker run -p 3000:3000 \
   -e VITE_SUPABASE_URL=https://xxxx.supabase.co \
   -e VITE_SUPABASE_ANON_KEY=eyJ... \
+  -e SUPABASE_URL=https://xxxx.supabase.co \
+  -e SUPABASE_SERVICE_ROLE_KEY=eyJ... \
+  -e CORS_ORIGINS=https://seu-dominio.com \
   tostatos
 ```
 

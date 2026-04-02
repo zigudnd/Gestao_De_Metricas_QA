@@ -6,12 +6,14 @@ import { SaveToast } from './SaveToast'
 import { ToastContainer } from '@/app/components/Toast'
 import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
 import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
+import { syncAllReleases } from '@/modules/releases/services/releasePersistence'
 
 export function AppShell() {
   useEffect(() => {
     // Ao iniciar o app, sincroniza dados do Supabase para o localStorage.
     syncAllFromSupabase()
     syncStatusReports()
+    syncAllReleases()
   }, [])
 
   return (

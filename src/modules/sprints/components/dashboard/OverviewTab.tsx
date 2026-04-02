@@ -263,16 +263,19 @@ export function OverviewTab() {
 
       {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? '#639922' : healthScore >= 70 ? '#EAB308' : '#E24B4A'} />
+        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
-        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? '#639922' : execPercent >= 50 ? '#EAB308' : '#6b7280'} />
-        <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? '#E24B4A' : '#639922'} barColor={openBugs > 0 ? '#E24B4A' : '#639922'} highlight={openBugs > 0} />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
+        <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} barColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} highlight={openBugs > 0} />
       </div>
 
       {/* ── Alert Strips ───────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div style={{ background: 'var(--color-green-light)', border: '0.5px solid var(--color-green-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-green-mid)', flexShrink: 0, marginTop: 3 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-green-mid)' }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-green)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OK</span>
+          </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-green)' }}>
               {validBugs.length} defeito{validBugs.length !== 1 ? 's' : ''} prevenido{validBugs.length !== 1 ? 's' : ''}
@@ -283,7 +286,10 @@ export function OverviewTab() {
           </div>
         </div>
         <div style={{ background: 'var(--color-red-light)', border: '0.5px solid var(--color-red-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, marginTop: 3 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)' }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-red)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{testesComprometidos > 0 ? 'ALERTA' : 'OK'}</span>
+          </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-red)' }}>
               {testesComprometidos > 0 ? `${testesComprometidos} testes bloqueados` : 'Sem testes bloqueados'}
@@ -298,7 +304,10 @@ export function OverviewTab() {
       {/* ── Faixas Qualitativas ────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#8b5cf6', flexShrink: 0, marginTop: 3 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-blue)' }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-blue)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>MTTR</span>
+          </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
               MTTR Global — {mttrGlobal !== null ? `${mttrGlobal}d` : '—'}
@@ -309,7 +318,10 @@ export function OverviewTab() {
           </div>
         </div>
         <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: retestIndexColor, flexShrink: 0, marginTop: 3 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: retestIndexColor }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: retestIndexColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{retestIndexLabel}</span>
+          </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
               Índice de Retrabalho — {retestIndex}%
@@ -424,7 +436,7 @@ export function OverviewTab() {
             </thead>
             <tbody>
               {openBugsList.map((b) => {
-                const stripeColor = b.status === 'Aberto' || b.status === 'Em Andamento' ? '#E24B4A' : b.status === 'Falhou' ? '#EAB308' : '#639922'
+                const stripeColor = b.status === 'Aberto' || b.status === 'Em Andamento' ? 'var(--color-red-mid)' : b.status === 'Falhou' ? 'var(--color-amber-mid)' : 'var(--color-green-mid)'
                 const badgeStyle: React.CSSProperties = b.status === 'Aberto' || b.status === 'Em Andamento'
                   ? { background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' }
                   : b.status === 'Falhou'
@@ -458,7 +470,7 @@ export function OverviewTab() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Legenda global */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-              {([['#639922','Concluído'],['#E24B4A','Falha'],['#EAB308','Bloqueado'],['var(--color-bg)','Pendente']] as [string,string][]).map(([color, label]) => (
+              {([['var(--color-green-mid)','Concluído'],['var(--color-red-mid)','Falha'],['var(--color-amber-mid)','Bloqueado'],['var(--color-bg)','Pendente']] as [string,string][]).map(([color, label]) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: color, border: color === 'var(--color-bg)' ? '0.5px solid var(--color-border)' : 'none', flexShrink: 0 }} />
                   <span style={{ fontSize: 11, color: 'var(--color-text-2)' }}>{label}</span>
@@ -486,9 +498,9 @@ export function OverviewTab() {
                       </span>
                       <div style={{ flex: 1, height: 20, borderRadius: 4, overflow: 'hidden', display: 'flex', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)' }}>
                         {total === 0 && <div style={{ flex: 1 }} />}
-                        {concluido > 0 && <div style={{ flex: concluido, background: '#639922', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{concluido}</span></div>}
-                        {falhou    > 0 && <div style={{ flex: falhou,    background: '#E24B4A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{falhou}</span></div>}
-                        {bloqueado > 0 && <div style={{ flex: bloqueado, background: '#EAB308', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{bloqueado}</span></div>}
+                        {concluido > 0 && <div style={{ flex: concluido, background: 'var(--color-green-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{concluido}</span></div>}
+                        {falhou    > 0 && <div style={{ flex: falhou,    background: 'var(--color-red-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{falhou}</span></div>}
+                        {bloqueado > 0 && <div style={{ flex: bloqueado, background: 'var(--color-amber-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{bloqueado}</span></div>}
                         {pendente  > 0 && <div style={{ flex: pendente }} />}
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--color-text-3)', flex: '0 0 44px', textAlign: 'right', fontFamily: 'var(--font-family-mono)' }}>
@@ -606,8 +618,8 @@ export function OverviewTab() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="7" stroke="#E24B4A" strokeWidth="1.5" />
-                <text x="8" y="12" textAnchor="middle" fontSize="10" fontWeight="700" fill="#E24B4A">!</text>
+                <circle cx="8" cy="8" r="7" stroke="var(--color-red-mid)" strokeWidth="1.5" />
+                <text x="8" y="12" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-red-mid)">!</text>
               </svg>
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Bloqueios de execução</span>
             </div>
@@ -623,7 +635,7 @@ export function OverviewTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {blockedItems.map((item) => {
                 const suiteName = suites.find((s) => String(s.id) === String(item.suiteId))?.name
-                const stripeColor = item.stripe === 'blocked' ? '#E24B4A' : '#EAB308'
+                const stripeColor = item.stripe === 'blocked' ? 'var(--color-red-mid)' : 'var(--color-amber-mid)'
                 return (
                   <div key={`${item.stripe}-${item.id}`} style={{ display: 'flex', border: '0.5px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
                     <div style={{ width: 3, flexShrink: 0, background: stripeColor, alignSelf: 'stretch' }} />
@@ -655,8 +667,8 @@ export function OverviewTab() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <circle cx="7.5" cy="7.5" r="6.5" stroke="#E24B4A" strokeWidth="1.2" />
-                <path d="M5 5l5 5M10 5l-5 5" stroke="#E24B4A" strokeWidth="1.2" strokeLinecap="round" />
+                <circle cx="7.5" cy="7.5" r="6.5" stroke="var(--color-red-mid)" strokeWidth="1.2" />
+                <path d="M5 5l5 5M10 5l-5 5" stroke="var(--color-red-mid)" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Cenários com falha</span>
             </div>
@@ -680,7 +692,7 @@ export function OverviewTab() {
               <tbody>
                 {failedScenarios.map((item, i) => (
                   <tr key={i} style={{ borderBottom: '0.5px solid var(--color-border)' }}>
-                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', color: 'var(--color-text-2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', borderLeft: '3px solid #E24B4A' }} title={item.featureName}>{item.featureName || '—'}</td>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', color: 'var(--color-text-2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', borderLeft: '3px solid var(--color-red-mid)' }} title={item.featureName}>{item.featureName || '—'}</td>
                     <td style={{ padding: '6px 8px', color: 'var(--color-text)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.scenarioName}>{item.scenarioName || '—'}</td>
                   </tr>
                 ))}
@@ -718,7 +730,7 @@ export function OverviewTab() {
             {state.notes.premises ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {state.notes.premises.split('\n').filter(Boolean).map((line, i) => (
-                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid #E24B4A', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
+                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--color-red-mid)', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
                 ))}
               </div>
             ) : (
@@ -732,7 +744,7 @@ export function OverviewTab() {
             {state.notes.actionPlan ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {state.notes.actionPlan.split('\n').filter(Boolean).map((line, i) => (
-                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid #378ADD', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
+                  <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--color-blue)', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
                 ))}
               </div>
             ) : (
@@ -813,7 +825,7 @@ function Section({ title, icon, count, children }: { title: string; icon: string
 
 function EmptyOk({ label }: { label: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: '#ecfdf5', borderRadius: 8, border: '1px dashed #a7f3d0', fontSize: 13 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: 'var(--color-green-light)', borderRadius: 8, border: '1px dashed var(--color-green-mid)', fontSize: 13 }}>
       ✅ {label}
     </div>
   )

@@ -129,6 +129,23 @@ export function BugsTab() {
             </button>
           )}
         </div>
+        {/* Severity summary */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          {(['Crítica', 'Alta', 'Média', 'Baixa'] as const).map((sev) => {
+            const count = state.bugs.filter((b) => b.severity === sev && b.status !== 'Resolvido').length
+            if (count === 0) return null
+            const s = SEV_STYLE[sev]
+            return (
+              <span key={sev} style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6,
+                background: s.bg, color: s.color, border: s.border,
+              }}>
+                {count} {sev}
+              </span>
+            )
+          })}
+        </div>
+        <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
         <button onClick={() => setShowNewModal(true)} style={btnPrimary}>+ Novo Bug</button>
       </div>
 
@@ -167,7 +184,7 @@ export function BugsTab() {
                       {editingBug === i ? (
                         <BugEditInline bug={b} index={i} onDone={() => setEditingBug(null)} />
                       ) : (
-                        <div style={{ fontWeight: 600, color: 'var(--color-text)', lineHeight: 1.3 }}>{b.desc || 'Sem descrição'}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--color-text)', lineHeight: 1.3, textDecoration: isResolved ? 'line-through' : 'none' }}>{b.desc || 'Sem descrição'}</div>
                       )}
                     </td>
                     <td style={{ padding: '10px 12px', maxWidth: 180 }}>
@@ -180,6 +197,7 @@ export function BugsTab() {
                     <td style={{ padding: '10px 12px' }}>
                       <select
                         value={b.status}
+                        aria-label="Status do bug"
                         onChange={(e) => {
                           const newStatus = e.target.value as BugStatus
                           if (newStatus === 'Resolvido') {
@@ -220,6 +238,7 @@ export function BugsTab() {
                         min={0}
                         value={b.retests || 0}
                         onChange={(e) => updateBug(i, 'retests', Number(e.target.value))}
+                        aria-label="Número de retestes"
                         style={{ width: 55, textAlign: 'center', padding: '4px', border: '1px solid var(--color-border-md)', borderRadius: 6, background: 'var(--color-surface)', color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)' }}
                       />
                     </td>
@@ -261,7 +280,7 @@ export function BugsTab() {
 
       {/* ── Modal: Confirmar Resolução ────────────────────────────────────── */}
       {resolveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={(e) => { if (e.target === e.currentTarget) setResolveModal(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>✅ Confirmar Resolução</div>
             <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>Informe a data em que o bug foi resolvido.</div>
@@ -296,6 +315,7 @@ export function BugsTab() {
 
 function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => void }) {
   const [local, setLocal] = useState(id)
+  const [hovered, setHovered] = useState(false)
 
   return (
     <input
@@ -304,6 +324,7 @@ function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => v
       onChange={(e) => setLocal(e.target.value)}
       onBlur={(e) => {
         e.currentTarget.style.border = '1px solid transparent'
+        e.currentTarget.style.borderBottom = hovered ? '1px solid var(--color-border-md)' : '1px dashed var(--color-border-md)'
         if (local.trim() && local !== id) onCommit(local.trim())
         else setLocal(id)
       }}
@@ -312,6 +333,9 @@ function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => v
         if (e.key === 'Escape') { setLocal(id); e.currentTarget.blur() }
       }}
       onFocus={(e) => (e.currentTarget.style.border = '1px solid var(--color-border-md)')}
+      onMouseEnter={(e) => { setHovered(true); e.currentTarget.style.borderBottom = '1px solid var(--color-border-md)' }}
+      onMouseLeave={(e) => { setHovered(false); if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderBottom = '1px dashed var(--color-border-md)' }}
+      aria-label="ID do bug"
       style={{
         fontFamily: 'var(--font-family-mono)',
         fontSize: 12,
@@ -319,6 +343,7 @@ function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => v
         color: 'var(--color-text-2)',
         background: 'transparent',
         border: '1px solid transparent',
+        borderBottom: '1px dashed var(--color-border-md)',
         borderRadius: 6,
         padding: '3px 6px',
         width: 110,
@@ -424,8 +449,10 @@ function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChild
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
         border: 'none',
-        padding: 6,
-        borderRadius: 6,
+        padding: 8,
+        minWidth: 32,
+        minHeight: 32,
+        borderRadius: 8,
         cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
         display: 'inline-flex',
@@ -449,10 +476,22 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function ThSort({ children, field, current, dir, onSort }: { children: React.ReactNode; field: SortField; current: SortField; dir: SortDir; onSort: (f: SortField) => void }) {
   const active = current === field
+  const ariaSortValue = active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
   return (
     <th
+      tabIndex={0}
+      role="button"
+      aria-sort={ariaSortValue as 'ascending' | 'descending' | 'none'}
       onClick={() => onSort(field)}
-      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? 'var(--color-blue)' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSort(field)
+        }
+      }}
+      onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
+      onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? 'var(--color-blue)' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none', outline: 'none', borderRadius: 4 }}
     >
       {children}
       {active ? (dir === 'asc' ? <IcoSortAsc /> : <IcoSortDesc />) : <IcoSort />}

@@ -280,6 +280,34 @@ app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*' })
   }
 });
 
+app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*' }), async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
+  try {
+    const payload = JSON.parse(req.body);
+    if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+      return res.status(400).json({ error: 'Data inválido.' });
+    }
+    await supabaseAdmin.from('releases').upsert({
+      id: payload.id,
+      data: payload.data,
+      status: payload.status || 'planejada',
+      version: payload.version || null,
+      production_date: payload.production_date || null,
+      updated_at: new Date().toISOString(),
+    });
+    return res.json({ ok: true });
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      return res.status(400).json({ error: 'JSON inválido.' });
+    }
+    console.error('[release-flush] Erro:', e);
+    return res.status(500).json({ error: 'Erro ao persistir.' });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

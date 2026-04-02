@@ -1,6 +1,6 @@
 # Engineering Documentation — ToStatos QA Dashboard
 
-> **Versao:** 4.0 — Multi-user + Auth + Squads
+> **Versao:** 5.0 — Multi-user + Auth + Squads + Status Reports + Releases
 > **Ultima atualizacao:** Marco 2026
 > **Tipo de sistema:** Single Page Application (SPA) — React 19 + TypeScript + Vite
 
@@ -10,22 +10,21 @@
 
 | Camada | Tecnologia | Versao |
 |--------|-----------|--------|
-| Frontend Framework | React | 19.x |
-| Language | TypeScript | 5.9 |
-| Build Tool | Vite | 6.4 |
-| CSS | Tailwind CSS v4 + tema customizado (`@theme` em `index.css`) |
-| State Management | Zustand | 5.x |
-| Routing | React Router DOM (HashRouter) | 7.x |
-| Charts | Chart.js + react-chartjs-2 | 4.x / 5.x |
-| Chart Labels | chartjs-plugin-datalabels | 2.x |
-| Drag & Drop | @dnd-kit/core + @dnd-kit/sortable | — |
-| Persistencia Local | localStorage (cache sincrono) | — |
-| Banco de Dados | Supabase (PostgreSQL) | 2.x |
-| Autenticacao | Supabase Auth (GoTrue) | 2.x |
-| Realtime | Supabase Realtime (WebSocket) | 2.x |
-| Client Supabase | @supabase/supabase-js | 2.x |
-| Export | html2canvas | — |
-| E2E Testing | Playwright | 1.58 |
+| Frontend Framework | React | 19.2.4 |
+| Language | TypeScript | 5.9.3 |
+| Build Tool | Vite | 6.4.1 |
+| CSS | Tailwind CSS v4 + tema customizado (`@theme` em `index.css`) | 4.2.2 |
+| State Management | Zustand | 5.0.12 |
+| Routing | React Router DOM (HashRouter) | 7.13.1 |
+| Charts | Chart.js + react-chartjs-2 | 4.5.1 / 5.3.1 |
+| Chart Labels | chartjs-plugin-datalabels | 2.2.0 |
+| Drag & Drop | @dnd-kit/core + @dnd-kit/sortable | 6.3.1 / 10.0.0 |
+| Export Screenshot | html2canvas | 1.4.1 |
+| Server | Express | 4.21.2 |
+| Server Security | helmet | 8.1.0 |
+| Rate Limiting | express-rate-limit | 8.3.1 |
+| Banco de Dados / Auth / Realtime | Supabase (@supabase/supabase-js) | 2.99.1 |
+| E2E Testing | Playwright | 1.58.2 |
 
 ---
 
@@ -34,7 +33,7 @@
 ```
 src/
 ├── main.tsx                           # Entry point React
-├── index.css                          # Tailwind v4 @import + @theme (cores, fontes)
+├── index.css                          # Tailwind v4 @import + @theme (cores, fontes, radius, shadows)
 ├── lib/
 │   └── supabase.ts                    # Cliente Supabase singleton (createClient)
 ├── app/
@@ -42,13 +41,15 @@ src/
 │   │   ├── ConfirmModal.tsx           # Modal de confirmacao reutilizavel
 │   │   ├── NewBugModal.tsx            # Modal de criacao de bug reutilizavel
 │   │   ├── ProtectedRoute.tsx         # Guard de autenticacao (redireciona p/ /login)
-│   │   └── TermoConclusaoModal.tsx    # Modal de termo de conclusao de sprint
+│   │   ├── TermoConclusaoModal.tsx    # Modal de termo de conclusao de sprint
+│   │   └── Toast.tsx                  # Componente de toast generico
 │   ├── layout/
 │   │   ├── AppShell.tsx               # Layout raiz — inicia syncAllFromSupabase no mount
 │   │   ├── Sidebar.tsx                # Navegacao lateral com icones
 │   │   ├── Topbar.tsx                 # Barra superior com acoes contextuais
 │   │   └── SaveToast.tsx              # Toast de "Salvo" (observa lastSaved)
 │   ├── pages/
+│   │   ├── DashboardHome.tsx          # Pagina inicial (hub de navegacao)
 │   │   └── DocsPage.tsx               # Pagina de documentacao do sistema
 │   └── routes.tsx                     # Hash Router com todas as rotas
 ├── modules/
@@ -56,7 +57,7 @@ src/
 │   │   ├── pages/
 │   │   │   ├── AuthPage.tsx           # Login / Registro
 │   │   │   ├── ProfilePage.tsx        # Edicao de perfil (display_name)
-│   │   │   └── ChangePasswordPage.tsx # Troca de senha
+│   │   │   └── ChangePasswordPage.tsx # Troca de senha (obrigatoria no 1o login)
 │   │   └── store/
 │   │       └── authStore.ts           # Zustand: user, session, profile, signOut
 │   ├── sprints/                       # Modulo principal de sprints
@@ -82,16 +83,82 @@ src/
 │   │   ├── store/
 │   │   │   └── sprintStore.ts         # Zustand store central — persiste Supabase + Realtime
 │   │   └── types/
-│   │       └── sprint.types.ts        # Todos os tipos TypeScript
-│   └── squads/                        # Modulo de squads e gestao de usuarios
+│   │       └── sprint.types.ts        # Todos os tipos TypeScript do modulo
+│   ├── status-report/                 # Modulo de Status Report semanal
+│   │   ├── pages/
+│   │   │   ├── StatusReportHomePage.tsx  # Listagem de reports
+│   │   │   └── StatusReportPage.tsx     # Editor de report individual
+│   │   ├── components/
+│   │   │   ├── SectionManager.tsx       # Gerenciador de secoes do report
+│   │   │   ├── SectionCard.tsx          # Card de secao individual
+│   │   │   ├── ItemRow.tsx              # Linha de item dentro de secao
+│   │   │   ├── ItemFormModal.tsx        # Modal de criacao/edicao de item
+│   │   │   ├── ItemDetailPanel.tsx      # Painel lateral de detalhes do item
+│   │   │   ├── ReportPreview.tsx        # Preview do report para export
+│   │   │   ├── ReportDashboard.tsx      # Dashboard com metricas do report
+│   │   │   ├── GanttView.tsx            # Visualizacao Gantt dos itens
+│   │   │   ├── combinados/
+│   │   │   │   ├── CombinadosTab.tsx    # Aba de combinados da squad
+│   │   │   │   ├── SectionList.tsx      # Lista de secoes de combinados
+│   │   │   │   ├── CeremoniaCard.tsx    # Card de cerimonia
+│   │   │   │   └── StoryPointsSelector.tsx # Seletor de story points
+│   │   │   └── time/
+│   │   │       ├── TimeTab.tsx          # Aba de gestao de time
+│   │   │       ├── MemberRow.tsx        # Linha de membro do time
+│   │   │       ├── AddMemberForm.tsx    # Formulario para adicionar membro
+│   │   │       ├── AddOffForm.tsx       # Formulario de ausencia
+│   │   │       └── OffTable.tsx         # Tabela de ausencias
+│   │   ├── services/
+│   │   │   ├── statusReportPersistence.ts  # Supabase sync + sendBeacon flush
+│   │   │   ├── statusReportExport.ts       # Export PDF/clipboard
+│   │   │   ├── dateEngine.ts               # Calculo de datas uteis e periodos
+│   │   │   ├── squadConfigPersistence.ts   # Persistencia config de squad
+│   │   │   └── offAlertEngine.ts           # Engine de alertas de ausencia
+│   │   ├── store/
+│   │   │   ├── statusReportStore.ts     # Zustand store do report
+│   │   │   ├── seedData.ts             # Dados iniciais (template de report)
+│   │   │   └── squadConfigStore.ts     # Zustand store de config da squad
+│   │   └── types/
+│   │       ├── statusReport.types.ts    # Tipos do Status Report
+│   │       └── squadConfig.types.ts     # Tipos de config da squad
+│   ├── releases/                        # Modulo de Releases
+│   │   ├── pages/
+│   │   │   ├── ReleasesPage.tsx         # Listagem de releases
+│   │   │   └── ReleaseDashboard.tsx     # Dashboard individual da release
+│   │   ├── components/dashboard/
+│   │   │   ├── CheckpointTab.tsx        # Aba de checkpoints da release
+│   │   │   ├── CronogramaTab.tsx        # Aba de cronograma
+│   │   │   ├── EventsTab.tsx            # Aba de eventos da release
+│   │   │   ├── RegressivosTab.tsx       # Aba de testes regressivos
+│   │   │   ├── ReleasePhasesPanel.tsx   # Painel de fases da release
+│   │   │   ├── ReleaseTimeline.tsx      # Timeline visual da release
+│   │   │   └── ReleaseSquadCard.tsx     # Card de squad dentro da release
+│   │   ├── components/tests/
+│   │   │   ├── SquadTestArea.tsx         # Area de testes por squad
+│   │   │   ├── ReleaseSuiteCard.tsx      # Card de suite na release
+│   │   │   ├── ReleaseFeatureRow.tsx     # Linha de feature na release
+│   │   │   ├── ReleaseTestCaseRow.tsx    # Linha de caso de teste
+│   │   │   └── ReleaseBugsList.tsx       # Lista de bugs da release
+│   │   ├── services/
+│   │   │   ├── releasePersistence.ts    # localStorage + Supabase sync + Realtime
+│   │   │   ├── releaseMetrics.ts        # Metricas derivadas da release
+│   │   │   ├── releaseExport.ts         # Export de dados da release
+│   │   │   └── releaseImportService.ts  # Import de dados para release
+│   │   ├── store/
+│   │   │   └── releaseStore.ts          # Zustand store da release
+│   │   └── types/
+│   │       └── release.types.ts         # Tipos TypeScript do modulo
+│   └── squads/                          # Modulo de squads e gestao de usuarios
 │       ├── pages/
-│       │   └── SquadsPage.tsx         # Gestao de squads, membros, usuarios, permissoes
-│       └── services/
-│           └── squadsService.ts       # CRUD squads, members, permissions, users (admin)
+│       │   └── SquadsPage.tsx           # Gestao de squads, membros, usuarios, permissoes
+│       ├── services/
+│       │   └── squadsService.ts         # CRUD squads, members, permissions, users (admin)
+│       └── store/
+│           └── activeSquadStore.ts      # Zustand store do squad ativo selecionado
 supabase/
-├── config.toml                        # Configuracao do Supabase local
-└── migrations/                        # 11 migrations SQL sequenciais
-server.js                              # Express: serve SPA + API admin + health
+├── config.toml                          # Configuracao do Supabase local
+└── migrations/                          # 22 migrations SQL sequenciais
+server.js                                # Express: serve SPA + API admin + flush endpoints
 ```
 
 ---
@@ -101,498 +168,224 @@ server.js                              # Express: serve SPA + API admin + health
 | Rota | Componente | Acesso |
 |------|-----------|--------|
 | `/login` | AuthPage | Publica |
-| `/` | redirect → `/sprints` | Protegida |
+| `/` | DashboardHome | Protegida |
 | `/sprints` | HomePage | Protegida |
 | `/sprints/compare` | ComparePage | Protegida |
 | `/sprints/:sprintId` | SprintDashboard | Protegida |
 | `/squads` | SquadsPage | Protegida |
+| `/status-report` | StatusReportHomePage | Protegida |
+| `/status-report/:reportId` | StatusReportPage | Protegida |
+| `/releases` | ReleasesPage | Protegida |
+| `/releases/:releaseId` | ReleaseDashboard | Protegida |
 | `/profile` | ProfilePage | Protegida |
-| `/change-password` | ChangePasswordPage | Protegida |
+| `/change-password` | ChangePasswordPage | Protegida (fora do AppShell) |
 | `/docs` | DocsPage | Protegida |
 
 Rotas protegidas passam por `ProtectedRoute` → redireciona para `/login` se nao autenticado.
 
 ---
 
-## Modulo Auth (`src/modules/auth/`)
+## Server (Express — server.js)
 
-### authStore (Zustand)
+| Endpoint | Metodo | Auth | Rate Limit | Descricao |
+|----------|--------|------|------------|-----------|
+| `/config.js` | GET | Nao | Global (100/min) | Config JS injetada no client |
+| `/api/health` | GET | Nao | Global (100/min) | Health check (`{ ok: true, storage }`) |
+| `/api/dashboard/:projectKey` | GET | Nao | Global (100/min) | Busca dashboard (Supabase ou local) |
+| `/api/dashboard/:projectKey` | PUT | Nao | Global (100/min) | Salva dashboard |
+| `/api/admin/create-user` | POST | Bearer + admin | Admin (10/min) | Cria usuario via Supabase Auth Admin |
+| `/api/admin/reset-password` | POST | Bearer + admin | Admin (10/min) | Reseta senha de usuario |
+| `/api/status-report-flush` | POST | Nao | Flush (30/min) | Flush de status report via sendBeacon |
+| `/api/release-flush` | POST | Nao | Flush (30/min) | Flush de release via sendBeacon |
+| `*` | GET | — | — | Fallback: serve `public/index.html` (SPA) |
 
-```ts
-AuthState {
-  user: User | null              // Supabase User
-  session: Session | null        // Supabase Session
-  loading: boolean               // true ate getSession() resolver
-  profile: Profile | null        // { id, email, display_name, global_role }
-  setSession(session)
-  updateDisplayName(name)
-  signOut()
-}
-```
-
-### Profile
-
-```ts
-interface Profile {
-  id: string
-  email: string
-  display_name: string
-  global_role: 'admin' | 'user'
-}
-```
-
-### Bootstrap
-- `supabase.auth.getSession()` restaura sessao existente ao carregar
-- `supabase.auth.onAuthStateChange()` escuta login/logout/refresh
-- `loadProfile(userId)` carrega dados da tabela `profiles`
-
-### Credenciais padrao
-- Admin: `admin@tostatos.com` / `Admin@123`
-- Novos usuarios: `Mudar@123` (troca obrigatoria no primeiro login)
+Middlewares globais: `helmet()`, CORS (origens configuraveis via `CORS_ORIGINS`), `express.json({ limit: '2mb' })`.
 
 ---
 
-## Modulo Squads (`src/modules/squads/`)
+## Modulos
 
-### Types
+### auth (`src/modules/auth/`)
 
-```ts
-type SquadRole = 'qa_lead' | 'qa' | 'stakeholder'
+**Arquivos:** AuthPage.tsx, ChangePasswordPage.tsx, ProfilePage.tsx, authStore.ts
 
-interface Squad {
-  id: string; name: string; description: string
-  color: string; created_by: string; created_at: string
-}
+O authStore (Zustand) gerencia `user`, `session`, `profile`, `loading` e expoe `signOut()`, `updateDisplayName()`. Bootstrap via `supabase.auth.getSession()` + `onAuthStateChange()`. Novos usuarios criados com `must_change_password: true` sao redirecionados para `/change-password` pelo ProtectedRoute.
 
-interface SquadMember {
-  id: string; squad_id: string; user_id: string
-  role: SquadRole; permissions: MemberPermissions
-  profile?: { email, display_name, global_role }
-}
+### sprints (`src/modules/sprints/`)
 
-interface MemberPermissions {
-  delete_sprints: boolean; delete_bugs: boolean
-  delete_features: boolean; delete_test_cases: boolean
-  delete_suites: boolean; delete_blockers: boolean
-  delete_alignments: boolean
-}
+**Arquivos:**
+- **Pages:** HomePage.tsx, SprintDashboard.tsx, ComparePage.tsx
+- **Dashboard tabs (8):** OverviewTab, ReportTab, BugsTab, FeaturesTab, BlockersTab, AlignmentsTab, NotesTab, ConfigTab
+- **Hook:** useSprintMetrics.ts
+- **Services:** persistence.ts, compareService.ts, exportService.ts, importService.ts
+- **Store:** sprintStore.ts
+- **Types:** sprint.types.ts
 
-interface PermissionProfile {
-  id: string; name: string; description: string
-  permissions: MemberPermissions; is_system: boolean
-}
-```
+### status-report (`src/modules/status-report/`)
 
-### Funcoes do squadsService
+**Arquivos:**
+- **Pages:** StatusReportHomePage.tsx, StatusReportPage.tsx
+- **Components (12+):** SectionManager, SectionCard, ItemRow, ItemFormModal, ItemDetailPanel, ReportPreview, ReportDashboard, GanttView
+- **Components combinados/:** CombinadosTab, SectionList, CeremoniaCard, StoryPointsSelector
+- **Components time/:** TimeTab, MemberRow, AddMemberForm, AddOffForm, OffTable
+- **Services:** statusReportPersistence.ts, statusReportExport.ts, dateEngine.ts, squadConfigPersistence.ts, offAlertEngine.ts
+- **Stores:** statusReportStore.ts, seedData.ts, squadConfigStore.ts
+- **Types:** statusReport.types.ts, squadConfig.types.ts
 
-| Funcao | Descricao |
-|--------|-----------|
-| `listMySquads()` | Lista squads do usuario |
-| `createSquad(name, desc, color)` | Cria squad via RPC `create_squad_with_lead` |
-| `updateSquad(id, fields)` | Atualiza squad |
-| `deleteSquad(id)` | Exclui squad |
-| `listSquadMembers(squadId)` | Lista membros com perfil |
-| `addMember(squadId, userId, role, perms)` | Adiciona membro |
-| `updateMemberRole(memberId, role)` | Altera role |
-| `updateMemberPermissions(memberId, perms)` | Altera permissoes |
-| `removeMember(memberId)` | Remove membro |
-| `getMyRole(squadId)` | Retorna role do usuario logado |
-| `getMySquadIds()` | Retorna squad_ids do usuario (para filtrar sprints) |
-| `createUser(email, displayName)` | Cria usuario via `/api/admin/create-user` |
-| `listAllUsers()` | Lista todos os perfis |
-| `listAllUsersWithSquads()` | Lista usuarios com squads vinculados |
-| `updateUserProfile(userId, fields)` | Atualiza display_name/global_role |
-| `toggleUserActive(userId, active)` | Ativa/desativa usuario |
-| `setGlobalRole(userId, role)` | Define role global (admin/user) |
-| `listPermissionProfiles()` | Lista templates de permissao |
-| `createPermissionProfile(name, desc, perms)` | Cria template |
-| `updatePermissionProfile(id, name, desc, perms)` | Atualiza template |
-| `deletePermissionProfile(id)` | Exclui template |
+### releases (`src/modules/releases/`)
+
+**Arquivos:**
+- **Pages:** ReleasesPage.tsx, ReleaseDashboard.tsx
+- **Components dashboard/:** CheckpointTab, CronogramaTab, EventsTab, RegressivosTab, ReleasePhasesPanel, ReleaseTimeline, ReleaseSquadCard
+- **Components tests/:** SquadTestArea, ReleaseSuiteCard, ReleaseFeatureRow, ReleaseTestCaseRow, ReleaseBugsList
+- **Services:** releasePersistence.ts, releaseMetrics.ts, releaseExport.ts, releaseImportService.ts
+- **Store:** releaseStore.ts
+- **Types:** release.types.ts
+
+### squads (`src/modules/squads/`)
+
+**Arquivos:** SquadsPage.tsx, squadsService.ts, activeSquadStore.ts
+
+---
+
+## Migrations (22 total)
+
+| # | Arquivo | Descricao |
+|---|---------|-----------|
+| 0 | `20260326000000_create_sprints.sql` | Tabela `sprints` (id text PK, data jsonb, status, updated_at) |
+| 1 | `20260327000000_multi_user.sql` | Tabelas `profiles`, `squads`, `squad_members` + trigger handle_new_user + RLS |
+| 2 | `20260327000001_fix_handle_new_user.sql` | Correcao do trigger handle_new_user |
+| 3 | `20260327000002_create_squad_rpc.sql` | RPC `create_squad_with_lead` (cria squad + adiciona criador como qa_lead) |
+| 4 | `20260327000003_fix_rls_recursion.sql` | Funcoes SECURITY DEFINER para evitar recursao infinita em RLS |
+| 5 | `20260327000004_global_role_and_permissions.sql` | Campo `global_role` em profiles + `permissions` JSONB em squad_members |
+| 6 | `20260327000005_seed_admin_user.sql` | Seed do usuario admin padrao |
+| 7 | `20260327000006_permission_profiles.sql` | Tabela `permission_profiles` + templates padrao |
+| 8 | `20260327000007_squad_desc_color_and_user_mgmt.sql` | Campos description/color em squads + campo active em profiles |
+| 9 | `20260327000008_fix_squad_rpc_overload.sql` | Correcao de overload da RPC create_squad_with_lead |
+| 10 | `20260327000009_fk_squad_members_profiles.sql` | Foreign key squad_members → profiles |
+| 11 | `20260327000010_status_reports.sql` | Tabela `status_reports` (id text PK, data jsonb, squad_id, status) + RLS + indices |
+| 12 | `20260327000011_audit_logs.sql` | Tabela `audit_logs` (user_id, resource_type, resource_id, action, changes jsonb) |
+| 13 | `20260329000012_squad_config.sql` | Tabela `squad_config` (squad_id unique, data jsonb) + Realtime |
+| 14 | `20260330000013_gerente_role_and_quality_beta.sql` | Role `gerente` em global_role + squad QualityBeta para dados legados |
+| 15 | `20260330000014_squad_archive_and_seed.sql` | Campo `archived` em squads + policy de visibilidade |
+| 16 | `20260330000015_allow_edit_system_profiles.sql` | Policy para admin editar permission_profiles de sistema |
+| 17 | `20260330000016_expand_permissions.sql` | Permissoes granulares: create_*, edit_*, delete_* por recurso |
+| 18 | `20260330000017_fix_backend_rls.sql` | Correcao RLS de audit_logs (leitura por squad) + insert por service_role |
+| 19 | `20260330000018_audit_rpc_and_trigger_fix.sql` | RPC `audit_action()` anti-forging (server garante user_id) |
+| 20 | `20260330000019_releases.sql` | Tabela `releases` (id text PK, data jsonb, status, version, production_date) + RLS + Realtime |
+| 21 | `20260331000020_expand_permissions_releases.sql` | Permissoes para releases, status_reports e checkpoints em squad_members |
 
 ---
 
 ## Arquitetura de Estado
 
-### Store Central (`sprintStore.ts`)
+### Padrao de Stores (Zustand)
 
-O estado de cada sprint aberta e gerenciado pelo Zustand via `useSprintStore`.
-
-```
-SprintStore {
-  sprintId: string
-  state: SprintState          // dados da sprint ativa
-  lastSaved: number           // timestamp do ultimo save (triggera SaveToast)
-  activeSuiteFilter: Set<str> // suites visiveis no filtro
-}
-```
-
-### Ciclo de Commit (_commit)
-
-Todo update segue este padrao:
+Todos os stores de recursos (sprints, status-report, releases) seguem o mesmo ciclo de commit:
 
 ```
 1. Chama _commit({ ...state, novoCampo })
-2. computeFields(next)        → recalcula tests, exec, gherkinExecs
+2. computeFields(next)        → recalcula campos derivados
 3. saveToStorage(id, s)       → grava no localStorage (sincrono, imediato)
-4. upsertMasterIndex(id)      → atualiza totalTests/totalExec no indice local
+4. upsertMasterIndex(id)      → atualiza totais no indice local
 5. queueRemotePersist()       → debounce 700ms → upsert no Supabase (async)
 6. set({ state, lastSaved })  → atualiza o store e dispara SaveToast
 ```
 
-### Acoes do Store
+### Supabase Realtime (co-edicao)
 
-Principais acoes alem do _commit:
-
-| Acao | Descricao |
-|------|-----------|
-| `initSprint(id)` | Carrega sprint e inicia subscription Realtime |
-| `resetSprint()` | Cancela subscription e limpa estado |
-| `reorderFeatures(suiteId, from, to)` | Reordena features dentro de uma suite |
-| `importFeatures(features)` | Importa features de arquivo (.feature/.csv) |
-
-### Realtime (co-edicao)
-
-Quando uma sprint e aberta (`initSprint`), o store cria uma subscription Supabase Realtime:
+Cada recurso aberto cria uma subscription Supabase Realtime:
 
 ```
-supabase.channel('sprint:<id>')
-  .on('postgres_changes', { event: 'UPDATE', table: 'sprints', filter: 'id=eq.<id>' }, callback)
+supabase.channel('<resource>:<id>')
+  .on('postgres_changes', { event: 'UPDATE', table: '<table>', filter: 'id=eq.<id>' }, callback)
 
 callback → normalizeState → computeFields → saveToStorage → set({ state })
 ```
 
-A tela do colega atualiza em ~200ms sem necessidade de F5.
-A subscription e cancelada em `resetSprint` (ao navegar para outra pagina).
+A tela do colega atualiza em ~200ms sem necessidade de F5. Subscription cancelada ao navegar para outra pagina.
 
-### getFilteredFeatures
+### Persistencia em camadas
 
-Seletor puro exportado que aplica o `activeSuiteFilter` sobre `state.features`.
-Usado em `OverviewTab` e `useSprintMetrics` para garantir consistencia de metricas com os filtros.
+| Camada | Papel | Latencia |
+|--------|-------|----------|
+| localStorage | Cache sincrono, leitura instantanea, fallback offline | 0ms |
+| Supabase (PostgreSQL) | Source of truth, sync remoto | ~200ms |
 
----
+### Sync inicial
 
-## Componentes Compartilhados
+No mount do AppShell, `syncAllFromSupabase()` puxa todos os recursos paginados (`PAGE_SIZE=100`) e popula o localStorage.
 
-### ConfirmModal
-```tsx
-<ConfirmModal
-  title="Titulo"
-  description="Descricao do que sera excluido"
-  confirmLabel="Excluir"   // opcional, default: 'Excluir'
-  onConfirm={() => void}
-  onCancel={() => void}
-/>
-```
-Borda vermelha no topo. Fechar clicando no backdrop.
+### Crash recovery
 
-### NewBugModal
-```tsx
-<NewBugModal
-  featureNames={string[]}
-  assignees={string[]}
-  stacks={string[]}                    // opcional — stacks ja usadas na sprint
-  currentDate={string}
-  initialDraft={Partial<NewBugDraft>}  // opcional
-  onConfirm={(draft) => void}
-  onCancel={() => void}
-/>
-```
-- Stacks padrao: `Front`, `BFF`, `Back`, `Mobile`, `Infra`.
-- Stacks customizadas criaveis inline via opcao "Nova stack..." no select (sentinela `__new__`).
-- Reutilizado em `BugsTab` e `FeaturesTab` (via status Falhou no TestCaseCard).
+- `beforeunload` event + `navigator.sendBeacon()` para flush endpoints (`/api/status-report-flush`, `/api/release-flush`)
+- Garante que dados nao persistidos sejam salvos mesmo se o usuario fechar a aba abruptamente
 
-### ProtectedRoute
-Guard de autenticacao. Verifica `useAuthStore.session`:
-- Se `loading` → exibe spinner
-- Se sem sessao → redireciona para `/login`
-- Se autenticado → renderiza `children`
+### Audit logging
+
+Todas as acoes criticas sao registradas via RPC `audit_action(resource_type, resource_id, action, changes)`. A funcao e SECURITY DEFINER e garante o `user_id` do caller (anti-forging).
 
 ---
 
-## Tipos Principais
+## Design Tokens (`src/index.css` @theme)
 
-### TestCase
-```ts
-interface TestCase {
-  id: number
-  name: string
-  complexity: 'Baixa' | 'Moderada' | 'Alta'
-  status: 'Pendente' | 'Concluido' | 'Falhou' | 'Bloqueado'
-  executionDay: string   // 'D1', 'D2', ... | ''
-  gherkin: string        // texto Gherkin completo do cenario
-}
-```
+### Cores
 
-### Feature
-```ts
-interface Feature {
-  id: number
-  suiteId: number
-  name: string
-  tests: number           // calculado: cases.length + manualTests
-  manualTests: number
-  exec: number            // calculado: sum(execution)
-  execution: Record<string, number>
-  manualExecData: Record<string, number>
-  gherkinExecs: Record<string, number>
-  mockupImage: string     // base64
-  status: 'Ativa' | 'Bloqueada' | 'Cancelada'
-  blockReason: string
-  activeFilter: TestCaseStatus | 'Todos'
-  cases: TestCase[]
-}
-```
+| Token | Valor |
+|-------|-------|
+| `--color-bg` | `#f7f6f2` |
+| `--color-surface` | `#ffffff` |
+| `--color-surface-2` | `#f2f1ed` |
+| `--color-border` | `rgba(0, 0, 0, 0.08)` |
+| `--color-border-md` | `rgba(0, 0, 0, 0.14)` |
+| `--color-text` | `#1a1a18` |
+| `--color-text-2` | `#6b6a65` |
+| `--color-text-3` | `#a09f99` |
+| `--color-blue` | `#185fa5` |
+| `--color-blue-light` | `#e6f1fb` |
+| `--color-blue-text` | `#0c447c` |
+| `--color-green` | `#3b6d11` |
+| `--color-green-light` | `#eaf3de` |
+| `--color-green-mid` | `#639922` |
+| `--color-green-text` | `#3b6d11` |
+| `--color-amber` | `#854f0b` |
+| `--color-amber-light` | `#faeeda` |
+| `--color-amber-mid` | `#ba7517` |
+| `--color-yellow` | `#b45309` |
+| `--color-yellow-light` | `#fef3c7` |
+| `--color-red` | `#a32d2d` |
+| `--color-red-light` | `#fcebeb` |
+| `--color-red-mid` | `#e24b4a` |
 
-### Suite
-```ts
-interface Suite {
-  id: number
-  name: string
-}
-```
+### Tipografia
 
-### Bug
-```ts
-interface Bug {
-  id: string
-  desc: string
-  feature: string
-  stack: 'Front' | 'BFF' | 'Back' | 'Mobile' | 'Infra' | string
-  category?: string       // categoria opcional do bug
-  severity: 'Critica' | 'Alta' | 'Media' | 'Baixa'
-  assignee: string
-  status: 'Aberto' | 'Em Andamento' | 'Falhou' | 'Resolvido'
-  retests: number
-  openedAt?: string       // ISO date string
-  resolvedAt?: string     // ISO date string
-  notes?: string
-}
-```
+| Token | Valor |
+|-------|-------|
+| `--font-family-sans` | `"IBM Plex Sans", system-ui, sans-serif` |
+| `--font-family-mono` | `"IBM Plex Mono", monospace` |
 
-### Blocker
-```ts
-interface Blocker {
-  id: number
-  date: string           // ISO date string
-  reason: string
-  hours: number
-}
-```
+### Border Radius
 
-### Alignment
-```ts
-interface Alignment {
-  id: number
-  text: string
-}
-```
+| Token | Valor |
+|-------|-------|
+| `--radius-sm` | `6px` |
+| `--radius-md` | `8px` |
+| `--radius-lg` | `12px` |
 
-### ResponsiblePerson
-```ts
-interface ResponsiblePerson {
-  id: number
-  role: string   // PO, TL, Coordenador, Gerente, etc.
-  name: string
-}
-```
+### Shadows
 
-### Notes
-```ts
-interface Notes {
-  premises: string          // Premissas do ciclo de testes
-  actionPlan: string        // Plano de acao / gestao de risco
-  operationalNotes: string  // Notas operacionais livres
-}
-```
+| Token | Valor |
+|-------|-------|
+| `--shadow-sm` | `0 1px 2px rgba(0, 0, 0, 0.05)` |
+| `--shadow-md` | `0 2px 8px rgba(0, 0, 0, 0.08)` |
+| `--shadow-lg` | `0 4px 16px rgba(0, 0, 0, 0.12)` |
+| `--shadow-xl` | `0 12px 40px rgba(0, 0, 0, 0.2)` |
 
-### SprintConfig
-```ts
-interface SprintConfig {
-  sprintDays: number
-  title: string              // titulo da sprint
-  startDate: string
-  endDate: string
-  targetVersion: string      // versao alvo da sprint
-  squad: string              // nome do squad (texto livre)
-  qaName: string             // nome do QA responsavel
-  excludeWeekends: boolean   // true = exclui fins de semana (padrao)
-  // Health Score weights
-  hsCritical: number         // default 15
-  hsHigh: number             // default 10
-  hsMedium: number           // default 5
-  hsLow: number              // default 2
-  hsRetest: number           // default 2
-  hsBlocked: number          // default 10
-  hsDelayed: number          // default 2
-  // Impacto Prevenido weights
-  psCritical: number         // default 10
-  psHigh: number             // default 5
-  psMedium: number           // default 3
-  psLow: number              // default 1
-}
-```
+### Focus
 
-### SprintState
-```ts
-interface SprintState {
-  config: SprintConfig
-  currentDate: string
-  reports: Record<string, string>   // { '2024-01-15': 'report text' }
-  notes: Notes
-  alignments: Alignment[]
-  suites: Suite[]
-  features: Feature[]
-  blockers: Blocker[]
-  bugs: Bug[]
-  responsibles: ResponsiblePerson[]
-}
-```
-
-### SprintIndexEntry
-```ts
-interface SprintIndexEntry {
-  id: string
-  title: string
-  squad: string
-  squadId?: string              // UUID da Squad no Supabase (null = sprint pessoal/legada)
-  startDate: string
-  endDate: string
-  totalTests: number
-  totalExec: number
-  updatedAt: string
-  favorite?: boolean
-  status?: 'ativa' | 'concluida'
-}
-```
-
----
-
-## Helpers de Dias Uteis (`persistence.ts`)
-
-```ts
-// Conta dias uteis entre duas datas, respeitando excludeWeekends
-countSprintDays(startDate: string, endDate: string, excludeWeekends: boolean): number
-
-// Converte numero de dia de sprint (1-based) em Date
-sprintDayToDate(startDate: string, n: number, excludeWeekends: boolean): Date
-
-// Converte uma data em chave 'D1'/'D2'/... ou null se fora do escopo
-dateToSprintDayKey(dateStr: string, startDate: string, sprintDays: number, excludeWeekends: boolean): string | null
-```
-
----
-
-## computeFields
-
-Funcao pura em `persistence.ts` que recalcula campos derivados:
-
-```ts
-// Por Feature:
-gherkinExecs[Dk] = count of cases where executionDay === 'Dk'
-execution[Dk]    = manualExecData[Dk] + gherkinExecs[Dk]
-exec             = sum(execution)
-tests            = cases.length + manualTests
-
-// Por SprintState:
-totalTests = sum(features[].tests)
-totalExec  = sum(features[].exec)
-```
-
----
-
-## Persistencia
-
-### Tabela Supabase: `sprints`
-
-```sql
-create table sprints (
-  id         text primary key,
-  data       jsonb not null,          -- SprintState completo
-  status     text default 'ativa',    -- 'ativa' | 'concluida'
-  updated_at timestamptz default now()
-);
-```
-
-### Tabelas de autenticacao e squads
-
-```sql
--- Criadas automaticamente pelo Supabase Auth:
-auth.users                      -- usuarios (email, senha, metadata)
-
--- Tabelas customizadas:
-profiles (id, email, display_name, global_role, active)
-squads (id, name, description, color, created_by, created_at)
-squad_members (id, squad_id, user_id, role, permissions, created_at)
-permission_profiles (id, name, description, permissions, is_system, created_by, created_at)
-```
-
-### Keys de localStorage (cache local)
-| Key | Conteudo |
-|-----|---------|
-| `qaDashboardData_<sprintId>` | `SprintState` completo (cache) |
-| `qaDashboardMasterIndex` | `SprintIndexEntry[]` (cache) |
-
-O localStorage funciona como cache sincrono: leitura instantanea sem await, e fallback quando o Supabase esta indisponivel.
-
-### Funcoes de persistencia (`persistence.ts`)
-
-| Funcao | Tipo | Descricao |
-|--------|------|-----------|
-| `loadFromStorage(id)` | sync | Le do localStorage |
-| `saveToStorage(id, state)` | sync | Grava no localStorage |
-| `getMasterIndex()` | sync | Le o indice do localStorage |
-| `saveMasterIndex(index)` | sync | Grava o indice no localStorage |
-| `upsertSprintInMasterIndex(id, state)` | sync | Atualiza/cria entrada no indice |
-| `loadFromServer(id)` | async | Carrega sprint do Supabase |
-| `persistToServer(id, state)` | async | Upsert no Supabase |
-| `syncAllFromSupabase()` | async | Startup: puxa todas as sprints e popula o localStorage |
-| `deleteSprintFromSupabase(id)` | async | Remove sprint do Supabase |
-| `concludeSprint(id)` | sync + fire | Atualiza status local e no Supabase |
-| `reactivateSprint(id)` | sync + fire | Idem para reativacao |
-| `toggleFavoriteSprint(id)` | sync | Inverte favorito no indice local (nao sincroniza) |
-| `normalizeState(raw)` | sync | Garante campos obrigatorios com defaults |
-| `computeFields(state)` | sync | Recalcula campos derivados |
-
----
-
-## Graficos (Chart.js)
-
-### Registro Global
-`ChartDataLabels` e registrado globalmente. Todo grafico que **nao** deve exibir labels precisa:
-```ts
-plugins: { datalabels: { display: false } }
-```
-
-### Progresso por Funcionalidade
-- Agrupado por suite (`featsBySuite`).
-- Fonte: `cases[].status` (nao mais `f.exec`).
-- Datasets: Concluido, Falhou, Bloqueado, Pendente.
-- Um `<Bar>` por suite, legenda exibida apenas no primeiro.
-
----
-
-## Drag & Drop
-
-### Sprints (HomePage)
-- HTML5 nativo. Reordena `MasterIndex` no localStorage.
-
-### Funcionalidades (FeaturesTab / SuiteAccordion)
-- HTML5 nativo com `dragIdx` / `dragOverIdx` locais.
-- Chama `reorderFeatures(suiteId, fromDomIdx, toDomIdx)`.
-- Escopo por suite (nao cruza suites).
-
----
-
-## Fluxos com Modal
-
-| Acao | Modal | Comportamento ao Cancelar |
-|------|-------|--------------------------|
-| Caso → Concluido | Pede data de execucao | Status nao muda |
-| Caso → Falhou | Abre NewBugModal pre-preenchido | Status fica Falhou, bug nao criado |
-| Bug → Resolvido | Pede data de resolucao | Status nao muda |
-| Funcionalidade → Bloqueada | Pede motivo (obrigatorio) | Status nao muda |
-| Funcionalidade → Cancelada | Pede alinhamento tecnico (obrigatorio) + cria Alinhamento automatico | Status nao muda |
-| Excluir qualquer item | ConfirmModal | Item nao excluido |
+| Token | Valor |
+|-------|-------|
+| `--focus-ring` | `0 0 0 3px rgba(24, 95, 165, 0.3)` |
 
 ---
 
@@ -617,124 +410,9 @@ npm run typecheck    # tsc --noEmit
 
 ---
 
-## useSprintMetrics
+## Credenciais padrao
 
-Hook (`src/modules/sprints/components/dashboard/useSprintMetrics.ts`) que deriva KPIs do estado Zustand. Exports:
-
-```ts
-// Auxiliares
-sprintDays              // dias totais da sprint (default 20)
-filtered                // features filtradas pelo activeSuiteFilter
-activeFeatures          // features nao-canceladas
-
-// Execucao
-totalTests              // soma de feature.tests (features ativas)
-totalExec               // soma de feature.exec
-remaining               // totalTests - totalExec (min 0)
-execPercent             // totalExec / testesExecutaveis * 100
-
-// Capacidade
-testesComprometidos     // testes de features Bloqueadas + casos individuais Bloqueados
-testesExecutaveis       // totalTests - testesComprometidos
-capacidadeReal          // testesExecutaveis / totalTests * 100
-blockedFeatureCount     // features com algum impedimento
-
-// Meta e Ritmo
-metaPerDay              // ceil(testesExecutaveis / sprintDays)
-exactMeta               // testesExecutaveis / sprintDays (sem arredondamento)
-atrasoCasos             // diferenca entre meta ideal ate hoje e execucao real
-ritmoStatus             // 'ok' | 'warning' | 'danger' baseado em atrasoCasos
-
-// Bugs
-openBugs                // bugs com status != Resolvido
-totalRetests            // soma de bug.retests
-retestIndex             // totalRetests / (totalBugs + totalRetests) * 100
-
-// Sprint
-healthScore             // 100 - penalidades (0-100)
-totalBlockedHours       // soma de blockers[].hours
-```
-
-### Metricas em compareService (nao no hook)
-
-O `compareService.ts` exporta `computeSprintKPIs(state)` com metricas adicionais para comparacao:
-
-```ts
-interface SprintKPIs {
-  // Inclui tudo acima, mais:
-  resolvedBugs            // count de bugs Resolvidos
-  mttrGlobal              // tempo medio de resolucao (horas)
-}
-```
-
----
-
-## Server (Express — server.js)
-
-| Endpoint | Metodo | Descricao |
-|----------|--------|-----------|
-| `/config.js` | GET | Config JS injetada no client |
-| `/api/health` | GET | Health check (`{ ok: true, storage }`) |
-| `/api/dashboard/:projectKey` | GET | Busca dashboard (Supabase ou local) |
-| `/api/dashboard/:projectKey` | PUT | Salva dashboard |
-| `/api/admin/create-user` | POST | Cria usuario via Supabase Auth Admin (requer `SUPABASE_SERVICE_ROLE_KEY`) |
-| `*` | GET | Fallback: serve `public/index.html` (SPA) |
-
----
-
-## Exportacao / Importacao
-
-### Exportacao (`exportService.ts`)
-
-| Funcao | Formato | Descricao |
-|--------|---------|-----------|
-| `exportToImage()` | JPG | Captura da aba Overview via html2canvas |
-| `exportJSON(state)` | JSON | Backup completo do SprintState |
-| `exportCoverage(state)` | CSV | Relatorio de cobertura por suite/feature |
-| `exportSuiteAsCSV(name, features)` | CSV | Exporta casos de teste de uma suite (reimportavel) |
-
-### Importacao (`importService.ts` e `exportService.ts`)
-
-| Funcao | Formato | Descricao |
-|--------|---------|-----------|
-| `parseFeatureText(text, suiteId)` | .feature | Parser Gherkin → cria features e casos |
-| `parseCSVText(text, suiteId)` | .csv | Formato: Funcionalidade,Cenario,Complexidade,Gherkin |
-| `importFromJSON(file)` | JSON | Importa backup como nova sprint |
-
----
-
-## CSS — Tailwind v4 + Theme
-
-O projeto usa **Tailwind CSS v4** com tema customizado via bloco `@theme` em `src/index.css`:
-
-```css
-@import "tailwindcss";
-
-@theme {
-  --color-bg: #f7f6f2;
-  --color-surface: #ffffff;
-  --color-surface-2: #f2f1ed;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-md: rgba(0, 0, 0, 0.14);
-  --color-text: #1a1a18;
-  --color-text-2: #6b6a65;
-  --color-text-3: #a09f99;
-  --color-blue: #185fa5;
-  --color-blue-light: #e6f1fb;
-  --color-blue-text: #0c447c;
-  --color-green: #3b6d11;
-  --color-green-light: #eaf3de;
-  --color-green-mid: #639922;
-  --color-amber: #854f0b;
-  --color-amber-light: #faeeda;
-  --color-amber-mid: #ba7517;
-  --color-yellow: #b45309;
-  --color-yellow-light: #fef3c7;
-  --color-green-text: #3b6d11;
-  --color-red: #a32d2d;
-  --color-red-light: #fcebeb;
-  --color-red-mid: #e24b4a;
-  --font-family-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-family-mono: "IBM Plex Mono", monospace;
-}
-```
+| | |
+|---|---|
+| **Admin** | `admin@tostatos.com` / `Admin@123` |
+| **Novos usuarios** | Senha temporaria aleatoria (troca obrigatoria no primeiro login) |

@@ -220,13 +220,22 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
 
         {showAdvanced && (
           <>
-            {/* Duration + Start + Deadline */}
+            {/* Duration + Start + Deadline (auto-cálculo bidirecional) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Duração (dias)</label>
                 <input
                   type="number" min={1} value={durationDays}
-                  onChange={(e) => setDurationDays(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const d = Math.max(1, parseInt(e.target.value) || 1)
+                    setDurationDays(d)
+                    // Auto-calcular deadline a partir de início + duração
+                    if (startDate) {
+                      const end = new Date(startDate + 'T00:00:00')
+                      end.setDate(end.getDate() + d - 1)
+                      setDeadlineDate(end.toISOString().split('T')[0])
+                    }
+                  }}
                   style={inputStyle}
                 />
               </div>
@@ -241,16 +250,41 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                 </label>
                 <input
                   type="date" value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    const s = e.target.value
+                    setStartDate(s)
+                    // Auto-calcular deadline a partir de início + duração
+                    if (s && durationDays > 0) {
+                      const end = new Date(s + 'T00:00:00')
+                      end.setDate(end.getDate() + durationDays - 1)
+                      setDeadlineDate(end.toISOString().split('T')[0])
+                    }
+                  }}
                   disabled={dependsOn.length > 0}
                   style={{ ...inputStyle, opacity: dependsOn.length > 0 ? 0.5 : 1 }}
                 />
               </div>
               <div>
-                <label style={labelStyle} title="Sobrescreve a data calculada">Deadline fixo</label>
+                <label style={labelStyle}>
+                  Deadline
+                  <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--color-text-3)', display: 'block', marginTop: 1 }}>
+                    {startDate ? 'Auto-calculado' : 'Manual'}
+                  </span>
+                </label>
                 <input
                   type="date" value={deadlineDate}
-                  onChange={(e) => setDeadlineDate(e.target.value)}
+                  min={startDate || undefined}
+                  onChange={(e) => {
+                    const dl = e.target.value
+                    setDeadlineDate(dl)
+                    // Recalcular duração a partir de início → deadline
+                    if (startDate && dl) {
+                      const diff = Math.round(
+                        (new Date(dl + 'T00:00:00').getTime() - new Date(startDate + 'T00:00:00').getTime()) / 86400000
+                      ) + 1
+                      if (diff >= 1) setDurationDays(diff)
+                    }
+                  }}
                   style={inputStyle}
                 />
               </div>

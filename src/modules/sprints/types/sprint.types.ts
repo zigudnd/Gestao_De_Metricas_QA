@@ -136,11 +136,16 @@ export interface SprintState {
 
 // ─── Master Index ─────────────────────────────────────────────────────────────
 
+export type SprintType = 'squad' | 'regressivo' | 'integrado'
+
 export interface SprintIndexEntry {
   id: string
   title: string
   squad: string
   squadId?: string   // UUID da Squad no Supabase (null = sprint pessoal/legada)
+  sprintType?: SprintType   // tipo: squad (default), regressivo ou integrado
+  releaseId?: string        // vínculo com release (para regressivo/integrado)
+  releaseVersion?: string   // versão da release (ex: "v5.0") para exibição
   startDate: string
   endDate: string
   totalTests: number

@@ -3,21 +3,25 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 import { getMasterIndex } from '@/modules/sprints/services/persistence'
 import { getMasterIndex as getReportIndex } from '@/modules/status-report/services/statusReportPersistence'
+import { listMySquads, listAllUsers } from '@/modules/squads/services/squadsService'
 import type { SprintIndexEntry } from '@/modules/sprints/types/sprint.types'
 import type { StatusReportIndexEntry } from '@/modules/status-report/types/statusReport.types'
 
 interface CardStats {
-  sprints: { active: number; concluded: number; totalBugs: number }
+  sprints: { active: number; concluded: number }
   reports: { count: number; totalItems: number }
+  cadastros: { squads: number; users: number }
 }
 
 function useStats(): CardStats {
   const [stats, setStats] = useState<CardStats>({
-    sprints: { active: 0, concluded: 0, totalBugs: 0 },
+    sprints: { active: 0, concluded: 0 },
     reports: { count: 0, totalItems: 0 },
+    cadastros: { squads: 0, users: 0 },
   })
 
   useEffect(() => {
+    // Sync (localStorage)
     const sprintIndex: SprintIndexEntry[] = getMasterIndex()
     const active = sprintIndex.filter((s) => s.status !== 'concluida').length
     const concluded = sprintIndex.filter((s) => s.status === 'concluida').length
@@ -25,9 +29,21 @@ function useStats(): CardStats {
     const reportIndex: StatusReportIndexEntry[] = getReportIndex()
     const totalItems = reportIndex.reduce((a, r) => a + r.itemCount, 0)
 
-    setStats({
-      sprints: { active, concluded, totalBugs: 0 },
+    setStats((prev) => ({
+      ...prev,
+      sprints: { active, concluded },
       reports: { count: reportIndex.length, totalItems },
+    }))
+
+    // Async (Supabase)
+    Promise.all([
+      listMySquads().catch(() => []),
+      listAllUsers().catch(() => []),
+    ]).then(([squads, users]) => {
+      setStats((prev) => ({
+        ...prev,
+        cadastros: { squads: squads.length, users: users.length },
+      }))
     })
   }, [])
 
@@ -62,6 +78,14 @@ const IconSquads = () => (
     <path d="M1.5 15c0-1.8 1.1-3.2 2.5-3.5" />
     <circle cx="16" cy="8.5" r="1.8" />
     <path d="M18.5 15c0-1.8-1.1-3.2-2.5-3.5" />
+  </svg>
+)
+
+const IconReleases = () => (
+  <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 2L6 8h3v5h2V8h3L10 2z" />
+    <path d="M6 15h8" />
+    <path d="M7 17h6" />
   </svg>
 )
 
@@ -213,12 +237,24 @@ export function DashboardHome() {
         />
 
         <NavCard
-          icon={<IconSquads />}
-          title="Cadastros"
-          description="Squads, membros, perfis de acesso e usuarios"
-          color="#10b981"
+          icon={<IconReleases />}
+          title="Releases"
+          description="Calendario, homologacao e ciclo de releases"
+          color="#06b6d4"
           stats={[
             { label: 'Gerenciar', value: '\u2192' },
+          ]}
+          onClick={() => navigate('/releases')}
+        />
+
+        <NavCard
+          icon={<IconSquads />}
+          title="Cadastros"
+          description="Squads, membros, perfis de acesso e usuários"
+          color="#10b981"
+          stats={[
+            { label: 'Squads', value: stats.cadastros.squads },
+            { label: 'Usuários', value: stats.cadastros.users },
           ]}
           onClick={() => navigate('/squads')}
         />

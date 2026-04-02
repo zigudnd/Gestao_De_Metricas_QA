@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import type { SprintIndexEntry } from '../types/sprint.types'
 import {
   getMasterIndex, saveMasterIndex, STORAGE_KEY,
-  DEFAULT_STATE, normalizeState, saveToStorage, upsertSprintInMasterIndex,
+  DEFAULT_STATE, normalizeState, saveToStorage, loadFromStorage, upsertSprintInMasterIndex,
   toggleFavoriteSprint, deleteSprintFromSupabase,
 } from '../services/persistence'
+import { showToast } from '@/app/components/Toast'
 import { importFromJSON } from '../services/exportService'
 import { listMySquads, getMySquadIds, type Squad } from '@/modules/squads/services/squadsService'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
+import { useReleaseStore } from '@/modules/releases/store/releaseStore'
+import type { SprintType } from '../types/sprint.types'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -37,6 +40,7 @@ interface Filters {
   status: 'all' | 'active' | 'completed' | 'favorite'
   year: string
   search: string
+  tipo: 'all' | 'squad' | 'regressivo' | 'integrado'
 }
 
 export function HomePage() {
@@ -46,7 +50,7 @@ export function HomePage() {
   const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
   const [sprints, setSprints] = useState<SprintIndexEntry[]>([])
   const [mySquadIds, setMySquadIds] = useState<string[] | null>(null)
-  const [filters, setFilters] = useState<Filters>({ squad: 'all', status: 'all', year: 'all', search: '' })
+  const [filters, setFilters] = useState<Filters>({ squad: 'all', status: 'all', year: 'all', search: '', tipo: 'all' })
   const [showCreate, setShowCreate] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<SprintIndexEntry | null>(null)
   const [newTitle, setNewTitle] = useState('')
@@ -57,6 +61,9 @@ export function HomePage() {
   const importInputRef = useRef<HTMLInputElement>(null)
   const [compareMode, setCompareMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [newSprintType, setNewSprintType] = useState<SprintType>('squad')
+  const [newReleaseId, setNewReleaseId] = useState('')
+  const { releases: allReleases, load: loadReleases } = useReleaseStore()
 
   // Trigger criado pela Topbar via DOM (manter compatibilidade)
   useEffect(() => {
@@ -70,6 +77,7 @@ export function HomePage() {
   useEffect(() => {
     setSprints(getMasterIndex())
     listMySquads().then(setAvailableSquads).catch(() => {})
+    loadReleases()
     if (!isAdmin) {
       getMySquadIds().then(setMySquadIds).catch(() => setMySquadIds([]))
     }
@@ -95,10 +103,17 @@ export function HomePage() {
     newState.config.squad = selectedSquad ? selectedSquad.name : newSquad.trim()
     const normalized = normalizeState(newState)
     saveToStorage(sprintId, normalized)
-    upsertSprintInMasterIndex(sprintId, normalized, newSquadId || undefined)
+    const linkedRelease = allReleases.find((r) => r.id === newReleaseId)
+    upsertSprintInMasterIndex(sprintId, normalized, newSquadId || undefined, {
+      sprintType: newSprintType,
+      releaseId: newReleaseId || undefined,
+      releaseVersion: linkedRelease?.version,
+    })
     setNewTitle('')
     setNewSquad('')
     setNewSquadId('')
+    setNewSprintType('squad')
+    setNewReleaseId('')
     setShowCreate(false)
     navigate(`/sprints/${sprintId}`)
   }
@@ -110,6 +125,40 @@ export function HomePage() {
     localStorage.removeItem(STORAGE_KEY(deleteTarget.id))
     deleteSprintFromSupabase(deleteTarget.id)
     setDeleteTarget(null)
+    reload()
+  }
+
+  function handleDuplicate(sprintEntry: SprintIndexEntry) {
+    const source = loadFromStorage(sprintEntry.id)
+    if (!source) {
+      showToast('Erro ao carregar sprint para duplicar', 'error')
+      return
+    }
+    const newId = 'sprint_' + Date.now()
+    const cloned = JSON.parse(JSON.stringify(source))
+    cloned.config.title = (source.config.title || 'Sprint') + ' (copia)'
+    // Reset execution data
+    for (const f of cloned.features) {
+      f.exec = 0
+      f.execution = {}
+      f.manualExecData = {}
+      f.gherkinExecs = {}
+      for (const c of f.cases || []) {
+        c.status = 'Pendente'
+        c.executionDay = ''
+      }
+    }
+    cloned.bugs = []
+    cloned.blockers = []
+    cloned.reports = {}
+    const normalized = normalizeState(cloned)
+    saveToStorage(newId, normalized)
+    upsertSprintInMasterIndex(newId, normalized, sprintEntry.squadId, {
+      sprintType: sprintEntry.sprintType,
+      releaseId: sprintEntry.releaseId,
+      releaseVersion: sprintEntry.releaseVersion,
+    })
+    showToast(`"${normalized.config.title}" duplicada`, 'success')
     reload()
   }
 
@@ -211,13 +260,17 @@ export function HomePage() {
     if (filters.status === 'completed' && st !== 'completed') return false
     if (filters.status === 'favorite' && !s.favorite) return false
     if (filters.year !== 'all' && sprintYear(s) !== filters.year) return false
+    if (filters.tipo !== 'all') {
+      const tipo = s.sprintType || 'squad'
+      if (tipo !== filters.tipo) return false
+    }
     return true
   }).sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
 
   const filteredActive = filtered.filter((s) => sprintStatus(s) === 'active')
   const filteredCompleted = filtered.filter((s) => sprintStatus(s) === 'completed')
 
-  const hasFilters = filters.squad !== 'all' || filters.status !== 'all' || filters.year !== 'all' || filters.search !== ''
+  const hasFilters = filters.squad !== 'all' || filters.status !== 'all' || filters.year !== 'all' || filters.search !== '' || filters.tipo !== 'all'
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -346,9 +399,22 @@ export function HomePage() {
             </>
           )}
 
+          <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
+
+          <FilterGroup
+            label="Tipo"
+            value={filters.tipo}
+            onChange={(v) => setFilters((f) => ({ ...f, tipo: v as Filters['tipo'] }))}
+          >
+            <option value="all">Todos</option>
+            <option value="squad">🎯 Sprint Squad</option>
+            <option value="regressivo">🔄 Regressivo</option>
+            <option value="integrado">🔗 Integrado</option>
+          </FilterGroup>
+
           {hasFilters && (
             <button
-              onClick={() => setFilters({ squad: 'all', status: 'all', year: 'all', search: '' })}
+              onClick={() => setFilters({ squad: 'all', status: 'all', year: 'all', search: '', tipo: 'all' })}
               style={{
                 marginLeft: 'auto',
                 fontSize: 12,
@@ -457,6 +523,7 @@ export function HomePage() {
                 onDragStart={onDragStart}
                 onDrop={onDrop}
                 onToggleFavorite={handleToggleFavorite}
+                onDuplicate={(e) => { e.stopPropagation(); handleDuplicate(sprint) }}
                 onDelete={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
               />
             ))}
@@ -528,6 +595,7 @@ export function HomePage() {
                 onDragStart={onDragStart}
                 onDrop={onDrop}
                 onToggleFavorite={handleToggleFavorite}
+                onDuplicate={(e) => { e.stopPropagation(); handleDuplicate(sprint) }}
                 onDelete={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
               />
             ))}
@@ -582,6 +650,59 @@ export function HomePage() {
                 style={inputStyle}
               />
             </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Tipo</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {([
+                  { value: 'squad' as SprintType, label: 'Sprint do Squad', icon: '🎯' },
+                  { value: 'regressivo' as SprintType, label: 'Regressivo', icon: '🔄' },
+                  { value: 'integrado' as SprintType, label: 'Integrado', icon: '🔗' },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => { setNewSprintType(opt.value); if (opt.value === 'squad') setNewReleaseId('') }}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                      border: newSprintType === opt.value ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
+                      background: newSprintType === opt.value ? 'var(--color-blue-light)' : 'transparent',
+                      color: newSprintType === opt.value ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {opt.icon} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Release vinculada — só para regressivo/integrado */}
+            {(newSprintType === 'regressivo' || newSprintType === 'integrado') && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Release vinculada</label>
+                <select
+                  value={newReleaseId}
+                  onChange={(e) => setNewReleaseId(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">— Nenhuma release —</option>
+                  {allReleases
+                    .filter((r) => r.status !== 'concluida')
+                    .map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.version} — {r.title}
+                      </option>
+                    ))}
+                </select>
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
+                  {newSprintType === 'regressivo'
+                    ? 'Sprint de testes regressivos vinculada a uma release.'
+                    : 'Sprint de testes integrados por features novas.'}
+                </p>
+              </div>
+            )}
+
             <div style={{ marginBottom: 20 }}>
               <label style={labelStyle}>Squad</label>
               {availableSquads.length > 0 ? (
@@ -654,6 +775,7 @@ interface SprintCardProps {
   onDragStart: (e: React.DragEvent, id: string) => void
   onDrop: (e: React.DragEvent, id: string) => void
   onToggleFavorite: (e: React.MouseEvent, id: string) => void
+  onDuplicate: (e: React.MouseEvent) => void
   onDelete: (e: React.MouseEvent) => void
 }
 
@@ -665,6 +787,7 @@ function SprintCard({
   onDragStart,
   onDrop,
   onToggleFavorite,
+  onDuplicate,
   onDelete,
 }: SprintCardProps) {
   const [hovered, setHovered] = useState(false)
@@ -751,6 +874,17 @@ function SprintCard({
           }}>
             {sprint.title}
           </span>
+          {sprint.sprintType && sprint.sprintType !== 'squad' && (
+            <span style={{
+              fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 8, flexShrink: 0,
+              background: sprint.sprintType === 'regressivo' ? '#f97316' + '18' : 'var(--color-blue-light)',
+              color: sprint.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
+              textTransform: 'uppercase',
+            }}>
+              {sprint.sprintType === 'regressivo' ? '🔄 REG' : '🔗 INT'}
+              {sprint.releaseVersion && ` · ${sprint.releaseVersion}`}
+            </span>
+          )}
           {sprint.favorite && (
             <span style={{ fontSize: 11, color: 'var(--color-amber-mid)', flexShrink: 0 }}>★</span>
           )}
@@ -784,49 +918,107 @@ function SprintCard({
         </div>
       </div>
 
-      {/* Right actions — visible on hover */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0,
-        opacity: hovered && !compareMode ? 1 : 0,
-        transition: 'opacity 0.15s',
-      }}>
+      {/* Right actions — always visible at low opacity, full on hover */}
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+          opacity: compareMode ? 0 : (hovered ? 1 : 0.4),
+          transition: 'opacity 0.15s',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Favoritar */}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(e, sprint.id) }}
-          title={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           aria-label={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           aria-pressed={sprint.favorite}
           style={{
-            width: 26, height: 26, borderRadius: 6,
-            border: 'none', background: 'transparent',
+            height: 36, minWidth: 36, borderRadius: 8,
+            border: '1px solid transparent',
+            background: sprint.favorite ? 'var(--color-amber-light)' : 'transparent',
             color: sprint.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
             cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 13,
+            alignItems: 'center', justifyContent: 'center', gap: 4,
+            fontSize: 14, padding: '0 8px',
+            transition: 'all 0.15s',
+            fontFamily: 'var(--font-family-sans)',
+          }}
+          onMouseEnter={(e) => {
+            if (!sprint.favorite) {
+              e.currentTarget.style.background = 'var(--color-amber-light)'
+              e.currentTarget.style.borderColor = 'var(--color-amber-mid)'
+              e.currentTarget.style.color = 'var(--color-amber-mid)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!sprint.favorite) {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.color = 'var(--color-text-3)'
+            }
           }}
         >
           {sprint.favorite ? '★' : '☆'}
         </button>
+
+        {/* Duplicar */}
         <button
-          onClick={(e) => { e.stopPropagation(); onDelete(e) }}
-          title="Excluir sprint"
-          aria-label="Excluir sprint"
+          onClick={(e) => { e.stopPropagation(); onDuplicate(e) }}
+          aria-label="Duplicar sprint"
           style={{
-            width: 26, height: 26, borderRadius: 6,
-            border: 'none', background: 'transparent',
+            height: 36, minWidth: 36, borderRadius: 8,
+            border: '1px solid transparent',
+            background: 'transparent',
             color: 'var(--color-text-3)',
             cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 13,
-            transition: 'background 0.15s, color 0.15s',
+            alignItems: 'center', justifyContent: 'center', gap: 5,
+            fontSize: 12, fontWeight: 600, padding: '0 10px',
+            transition: 'all 0.15s',
+            fontFamily: 'var(--font-family-sans)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--color-blue-light)'
+            e.currentTarget.style.borderColor = 'var(--color-blue)'
+            e.currentTarget.style.color = 'var(--color-blue-text)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = 'transparent'
+            e.currentTarget.style.color = 'var(--color-text-3)'
+          }}
+        >
+          <span style={{ fontSize: 14 }}>⧉</span>
+          <span style={{ fontSize: 11 }}>Duplicar</span>
+        </button>
+
+        {/* Excluir */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(e) }}
+          aria-label="Excluir sprint"
+          style={{
+            height: 36, minWidth: 36, borderRadius: 8,
+            border: '1px solid transparent',
+            background: 'transparent',
+            color: 'var(--color-text-3)',
+            cursor: 'pointer', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', gap: 5,
+            fontSize: 12, fontWeight: 600, padding: '0 10px',
+            transition: 'all 0.15s',
+            fontFamily: 'var(--font-family-sans)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--color-red-light)'
+            e.currentTarget.style.borderColor = 'var(--color-red-mid)'
             e.currentTarget.style.color = 'var(--color-red)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = 'transparent'
             e.currentTarget.style.color = 'var(--color-text-3)'
           }}
         >
-          ✕
+          <span style={{ fontSize: 13 }}>✕</span>
+          <span style={{ fontSize: 11 }}>Excluir</span>
         </button>
       </div>
     </div>

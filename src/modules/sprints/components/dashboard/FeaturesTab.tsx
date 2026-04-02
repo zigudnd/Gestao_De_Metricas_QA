@@ -5,6 +5,7 @@ import { parseFeatureText, parseCSVText } from '../../services/importService'
 import { exportCoverage, exportSuiteAsCSV } from '../../services/exportService'
 import { sprintDayToDate, dateToSprintDayKey } from '../../services/persistence'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { showToast } from '@/app/components/Toast'
 import { NewBugModal } from '@/app/components/NewBugModal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -22,10 +23,10 @@ function dateToDayKey(dateStr: string, startDate: string, sprintDays: number, ex
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  Pendente: '#B4B2A9',
-  Concluído: '#639922',
-  Falhou: '#E24B4A',
-  Bloqueado: '#BA7517',
+  Pendente: 'var(--color-text-3)',
+  Concluído: 'var(--color-green-mid)',
+  Falhou: 'var(--color-red-mid)',
+  Bloqueado: 'var(--color-amber-mid)',
 }
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
@@ -100,19 +101,22 @@ function IconAttach() {
 }
 
 // Ghost action button with hover
-function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
+function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean; 'aria-label'?: string }>) {
   const [hov, setHov] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
+      aria-label={ariaLabel}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
         border: 'none',
-        padding: 6,
-        borderRadius: 6,
+        padding: 8,
+        minWidth: 32,
+        minHeight: 32,
+        borderRadius: 8,
         cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
         display: 'flex',
@@ -247,11 +251,11 @@ function SuiteAccordion({
       reader.onload = (ev) => {
         try {
           const result = parseFeatureText(ev.target!.result as string, suiteId)
-          if (result.totalScenarios === 0) { alert('Nenhum cenário encontrado no arquivo.'); return }
+          if (result.totalScenarios === 0) { showToast('Nenhum cenário encontrado no arquivo.', 'error'); return }
           importFeatures(suiteId, result.features)
-          alert(`✅ Importação concluída!\n\n${result.totalScenarios} cenário(s) em ${result.features.length} funcionalidade(s):\n\n${result.summary.join('\n')}`)
+          showToast(`${result.totalScenarios} cenário(s) importado(s) em ${result.features.length} funcionalidade(s)`, 'success')
         } catch (err: unknown) {
-          alert(String(err instanceof Error ? err.message : err))
+          showToast(String(err instanceof Error ? err.message : err), 'error')
         }
       }
       reader.readAsText(file)
@@ -261,14 +265,14 @@ function SuiteAccordion({
         try {
           const result = parseCSVText(ev.target!.result as string, suiteId)
           importFeatures(suiteId, result.features)
-          alert(`✅ Importação CSV concluída!\n\n${result.totalScenarios} cenário(s) importado(s).`)
+          showToast(`${result.totalScenarios} cenário(s) importado(s) de CSV`, 'success')
         } catch (err: unknown) {
-          alert(String(err instanceof Error ? err.message : err))
+          showToast(String(err instanceof Error ? err.message : err), 'error')
         }
       }
       reader.readAsText(file, 'UTF-8')
     } else {
-      alert('Formato não suportado. Use: .feature ou .csv')
+      showToast('Formato não suportado. Use: .feature ou .csv', 'error')
     }
     if (importInputRef.current) importInputRef.current.value = ''
   }
@@ -322,19 +326,22 @@ function SuiteAccordion({
           <ActionBtn
             onClick={() => { const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId)); exportSuiteAsCSV(suiteName, sFeatures) }}
             title="Exportar casos desta suite para reimportação (CSV)"
+            aria-label="Exportar CSV da suite"
           ><IconExportCSV /></ActionBtn>
           <ActionBtn
             onClick={() => exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })}
             title="Exportar cobertura desta suite (CSV)"
+            aria-label="Exportar cobertura da suite"
           ><IconChart /></ActionBtn>
           <ActionBtn
             onClick={() => { setNameVal(suiteName); setEditingName(true) }}
             title="Renomear suite"
+            aria-label="Renomear suite"
           ><IconEdit /></ActionBtn>
-          <ActionBtn onClick={onDuplicate} title="Duplicar suite (com todas as funcionalidades)">
+          <ActionBtn onClick={onDuplicate} title="Duplicar suite (com todas as funcionalidades)" aria-label="Duplicar suite">
             <IconDuplicate />
           </ActionBtn>
-          <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir suite" danger>
+          <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir suite" danger aria-label="Excluir suite">
             <IconTrash />
           </ActionBtn>
         </div>
@@ -441,8 +448,8 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   function handleMockupUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { alert('Tipo de arquivo não permitido. Use PNG, JPG, WebP ou GIF.'); return }
-    if (file.size > 5 * 1024 * 1024) { alert('Imagem muito grande. Máximo 5MB.'); return }
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { showToast('Tipo de arquivo não permitido. Use PNG, JPG, WebP ou GIF.', 'error'); return }
+    if (file.size > 5 * 1024 * 1024) { showToast('Imagem muito grande. Máximo 5MB.', 'error'); return }
     const reader = new FileReader()
     reader.onload = (ev) => {
       if (ev.target?.result) setMockupImage(featureIndex, ev.target.result as string)
@@ -490,11 +497,32 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
           >
             {feature.name || 'Funcionalidade sem nome'}
           </span>
-          {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, display: 'inline-block' }} />}
+          {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, display: 'inline-block' }} />}
           {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
-          {feature.tests} Testes
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Mini progress dots */}
+          {cases.length > 0 && (
+            <span style={{ display: 'flex', gap: 2 }}>
+              {(() => {
+                const done = cases.filter(c => c.status === 'Concluído').length
+                const failed = cases.filter(c => c.status === 'Falhou').length
+                const blocked = cases.filter(c => c.status === 'Bloqueado').length
+                const pending = cases.length - done - failed - blocked
+                return (
+                  <>
+                    {done > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-green)', background: 'var(--color-green-light)', padding: '1px 5px', borderRadius: 4 }}>{done}✓</span>}
+                    {failed > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)', background: 'var(--color-red-light)', padding: '1px 5px', borderRadius: 4 }}>{failed}✗</span>}
+                    {blocked > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-amber)', background: 'var(--color-amber-light)', padding: '1px 5px', borderRadius: 4 }}>{blocked}⊘</span>}
+                    {pending > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-3)' }}>{pending}○</span>}
+                  </>
+                )
+              })()}
+            </span>
+          )}
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
+            {feature.tests} Testes
+          </span>
         </span>
       </div>
 
@@ -553,7 +581,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 />
               </div>
             )}
-            <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir funcionalidade" danger>
+            <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir funcionalidade" danger aria-label="Excluir funcionalidade">
               <IconTrash />
             </ActionBtn>
           </div>
@@ -797,6 +825,12 @@ function TestCaseCard({
       setConcluindoDate(execDateVal || today)
     } else if (newStatus === 'Falhou') {
       updateTestCase(featureIndex, caseIndex, 'status', 'Falhou')
+      // Atribuir data de execução automaticamente (o cenário foi executado e falhou)
+      if (!testCase.executionDay) {
+        const today = new Date().toISOString().split('T')[0]
+        const dayKey = dateToDayKey(today, startDate, sprintDays, excludeWeekends)
+        if (dayKey) updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey)
+      }
       setShowBugModal(true)
     } else {
       updateTestCase(featureIndex, caseIndex, 'status', newStatus)
@@ -884,8 +918,8 @@ function TestCaseCard({
           )}
         </div>
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <ActionBtn onClick={() => duplicateTestCase(featureIndex, caseIndex)} title="Clonar caso de teste"><IconClone /></ActionBtn>
-          <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger><IconTrash /></ActionBtn>
+          <ActionBtn onClick={() => duplicateTestCase(featureIndex, caseIndex)} title="Clonar caso de teste" aria-label="Clonar caso de teste"><IconClone /></ActionBtn>
+          <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger aria-label="Remover caso de teste"><IconTrash /></ActionBtn>
         </div>
       </div>
 

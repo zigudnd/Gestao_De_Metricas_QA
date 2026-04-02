@@ -12,6 +12,8 @@ import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
 import { ChangePasswordPage } from '@/modules/auth/pages/ChangePasswordPage'
 import { StatusReportHomePage } from '@/modules/status-report/pages/StatusReportHomePage'
 import { StatusReportPage } from '@/modules/status-report/pages/StatusReportPage'
+import { ReleasesPage } from '@/modules/releases/pages/ReleasesPage'
+import { ReleaseDashboard } from '@/modules/releases/pages/ReleaseDashboard'
 
 export const router = createHashRouter([
   // Tela de autenticação (pública)
@@ -44,6 +46,8 @@ export const router = createHashRouter([
       { path: 'squads', element: <SquadsPage /> },
       { path: 'status-report', element: <StatusReportHomePage /> },
       { path: 'status-report/:reportId', element: <StatusReportPage /> },
+      { path: 'releases', element: <ReleasesPage /> },
+      { path: 'releases/:releaseId', element: <ReleaseDashboard /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'docs', element: <DocsPage /> },
     ],
