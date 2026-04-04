@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Squad, SquadRole, MemberPermissions } from '../services/squadsService'
 import { listMySquads, getMyRole, listSquadMembers, DEFAULT_PERMISSIONS } from '../services/squadsService'
+import { supabase } from '@/lib/supabase'
 import type { GlobalRole } from '@/modules/auth/store/authStore'
 
 const LS_KEY = 'activeSquadId'
@@ -18,7 +19,7 @@ interface ActiveSquadState {
 
   // Derived (call after setActiveSquad)
   isPrivileged: (globalRole: GlobalRole | undefined) => boolean
-  canEdit: (globalRole: GlobalRole | undefined) => boolean
+  canEdit: (globalRole: GlobalRole | undefined, resource: keyof MemberPermissions) => boolean
   canDelete: (globalRole: GlobalRole | undefined, resource: keyof MemberPermissions) => boolean
   canManageMembers: (globalRole: GlobalRole | undefined) => boolean
   isReadOnly: (globalRole: GlobalRole | undefined) => boolean
@@ -59,8 +60,10 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
       let permissions = { ...DEFAULT_PERMISSIONS }
 
       if (role) {
+        const { data: { user } } = await supabase.auth.getUser()
+        const userId = user?.id
         const members = await listSquadMembers(squadId)
-        const me = members.find((m) => m.role === role)
+        const me = members.find((m) => m.user_id === userId)
         if (me) permissions = me.permissions
       }
 
@@ -74,18 +77,16 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
   // Admin e Gerente ignoram restrições de squad
   isPrivileged: (globalRole) => globalRole === 'admin' || globalRole === 'gerente',
 
-  canEdit: (globalRole) => {
+  canEdit: (globalRole, resource) => {
     if (globalRole === 'admin' || globalRole === 'gerente') return true
-    const { myRole } = get()
-    return myRole === 'qa_lead' || myRole === 'qa'
+    const { myPermissions } = get()
+    return myPermissions[resource] === true
   },
 
   canDelete: (globalRole, resource) => {
     if (globalRole === 'admin' || globalRole === 'gerente') return true
-    const { myRole, myPermissions } = get()
-    if (myRole === 'qa_lead') return true
-    if (myRole === 'qa') return myPermissions[resource] === true
-    return false
+    const { myPermissions } = get()
+    return myPermissions[resource] === true
   },
 
   canManageMembers: (globalRole) => {
@@ -95,6 +96,7 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
 
   isReadOnly: (globalRole) => {
     if (globalRole === 'admin' || globalRole === 'gerente') return false
-    return get().myRole === 'stakeholder'
+    const { myPermissions } = get()
+    return Object.values(myPermissions).every((v) => v === false)
   },
 }))

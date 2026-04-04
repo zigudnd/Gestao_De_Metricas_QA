@@ -51,10 +51,17 @@ const labelStyle: React.CSSProperties = {
 export function ReleaseDashboard() {
   const { releaseId } = useParams<{ releaseId: string }>()
   const navigate = useNavigate()
-  const { releases, load, updateRelease } = useReleaseStore()
+  const { releases, load, updateRelease, initRelease, resetRelease } = useReleaseStore()
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => { load(); setLoaded(true) }, []) // eslint-disable-line
+
+  // Subscribe to Supabase Realtime for this release
+  useEffect(() => {
+    if (!releaseId) return
+    initRelease(releaseId)
+    return () => { resetRelease() }
+  }, [releaseId]) // eslint-disable-line
 
   const release: Release | undefined = releases.find((r) => r.id === releaseId)
 

@@ -178,11 +178,6 @@ export function UserMenu() {
               label="Meu perfil"
               onClick={() => { navigate('/profile'); setOpen(false) }}
             />
-            <MenuButton
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/></svg>}
-              label="Alterar senha"
-              onClick={() => { navigate('/profile'); setOpen(false) }}
-            />
             <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 12px' }} />
             <MenuButton
               icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2H4a2 2 0 00-2 2v8a2 2 0 002 2h2"/><path d="M10 12l4-4-4-4"/><path d="M14 8H6"/></svg>}

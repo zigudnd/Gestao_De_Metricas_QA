@@ -68,7 +68,7 @@ function fmtDate(iso: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function EventsTab({ events, onAdd, onRemove }: EventsTabProps) {
+export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps) {
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [showAddHoliday, setShowAddHoliday] = useState(false)
   const [eventName, setEventName] = useState('')

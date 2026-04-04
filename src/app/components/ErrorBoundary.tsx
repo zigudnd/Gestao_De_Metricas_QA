@@ -9,15 +9,16 @@ interface Props {
 interface State {
   hasError: boolean
   error: Error | null
+  retryCount: number
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, retryCount: 0 }
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error }
   }
 
@@ -43,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.error?.message || 'Erro inesperado'}
           </div>
           <button
-            onClick={() => this.setState({ hasError: false, error: null })}
+            onClick={() => this.setState({ hasError: false, error: null, retryCount: this.state.retryCount + 1 })}
             aria-label="Tentar novamente"
             style={{
               padding: '7px 16px', borderRadius: 7, border: 'none',
@@ -57,6 +58,6 @@ export class ErrorBoundary extends Component<Props, State> {
         </div>
       )
     }
-    return this.props.children
+    return <div key={this.state.retryCount}>{this.props.children}</div>
   }
 }

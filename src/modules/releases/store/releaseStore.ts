@@ -65,7 +65,8 @@ if (typeof window !== 'undefined') {
         production_date: _lastPendingState.productionDate || null,
         updated_at: new Date().toISOString(),
       })
-      navigator.sendBeacon?.('/api/release-flush', payload)
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon?.('/api/release-flush', blob)
     }
   })
 }
@@ -353,7 +354,8 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     upsertMasterIndex(updated)
     queueRemotePersist(updated, 2500, updatedAt)
     _lastPersistedAt = updatedAt
-    set({ release: updated, lastSaved: Date.now() })
+    const releases = get().releases.map((r) => r.id === updated.id ? updated : r)
+    set({ release: updated, releases, lastSaved: Date.now() })
   },
 
   // ── Config ─────────────────────────────────────────────────────────────────

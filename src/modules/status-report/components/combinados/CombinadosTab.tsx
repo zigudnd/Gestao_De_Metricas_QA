@@ -10,7 +10,7 @@ export function CombinadosTab() {
     addDorItem, removeDorItem, updateDorItem,
     addDodItem, removeDodItem, updateDodItem,
     addAcordo, removeAcordo, updateAcordo,
-    addCerimonia, removeCerimonia,
+    addCerimonia, removeCerimonia, updateCerimonia,
     setStoryPointsMethod, setStoryPointsNotas,
   } = useSquadConfigStore()
 
@@ -87,7 +87,7 @@ export function CombinadosTab() {
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {cerimonias.map((c) => (
-                <CeremoniaCard key={c.id} cerimonia={c} onRemove={removeCerimonia} />
+                <CeremoniaCard key={c.id} cerimonia={c} onRemove={removeCerimonia} onUpdate={updateCerimonia} />
               ))}
             </div>
 

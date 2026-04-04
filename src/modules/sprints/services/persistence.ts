@@ -400,55 +400,64 @@ export async function syncAllFromSupabase(): Promise<void> {
     const lastSync = localStorage.getItem(LAST_SYNC_KEY) || '1970-01-01T00:00:00Z'
     const now = new Date().toISOString()
 
-    // Fetch only updated records since last sync
-    const { data, error } = await supabase
-      .from('sprints')
-      .select('id, data, status, squad_id, updated_at')
-      .gt('updated_at', lastSync)
-      .order('updated_at', { ascending: true })
-      .limit(200)
-
-    if (error) throw error
-    if (!data || data.length === 0) {
-      localStorage.setItem(LAST_SYNC_KEY, now)
-      return
-    }
-
+    const PAGE_SIZE = 100
     const localIndex = getMasterIndex()
+    let offset = 0
+    let totalSynced = 0
 
-    for (const row of data) {
-      const state = normalizeState(row.data)
-      const computed = computeFields(state)
-      saveToStorage(row.id, computed)
+    while (true) {
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('id, data, status, squad_id, updated_at')
+        .gt('updated_at', lastSync)
+        .order('updated_at', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-      // Update index entry
-      const existing = localIndex.find((s) => s.id === row.id)
-      const entry: SprintIndexEntry = {
-        id: row.id,
-        title: state.config.title || 'S/ Título',
-        squad: state.config.squad || '',
-        squadId: row.squad_id ?? existing?.squadId,
-        sprintType: existing?.sprintType,
-        releaseId: existing?.releaseId,
-        releaseVersion: existing?.releaseVersion,
-        startDate: state.config.startDate || '',
-        endDate: state.config.endDate || '',
-        totalTests: computed.features.reduce((a, f) => a + (f.tests || 0), 0),
-        totalExec: computed.features.reduce((a, f) => a + (f.exec || 0), 0),
-        updatedAt: row.updated_at,
-        favorite: existing?.favorite,
-        status: row.status as SprintIndexEntry['status'],
+      if (error) throw error
+      if (!data || data.length === 0) break
+
+      for (const row of data) {
+        const state = normalizeState(row.data)
+        const computed = computeFields(state)
+        saveToStorage(row.id, computed)
+
+        // Update index entry — extract sprintType/releaseId from sprint data JSON
+        const existing = localIndex.find((s) => s.id === row.id)
+        const rawData = row.data as Record<string, unknown> | null
+        const remoteSprintType = (rawData?.sprintType as SprintIndexEntry['sprintType']) ?? undefined
+        const remoteReleaseId = (rawData?.releaseId as string) ?? undefined
+        const remoteReleaseVersion = (rawData?.releaseVersion as string) ?? undefined
+        const entry: SprintIndexEntry = {
+          id: row.id,
+          title: state.config.title || 'S/ Título',
+          squad: state.config.squad || '',
+          squadId: row.squad_id ?? existing?.squadId,
+          sprintType: remoteSprintType ?? existing?.sprintType,
+          releaseId: remoteReleaseId ?? existing?.releaseId,
+          releaseVersion: remoteReleaseVersion ?? existing?.releaseVersion,
+          startDate: state.config.startDate || '',
+          endDate: state.config.endDate || '',
+          totalTests: computed.features.reduce((a, f) => a + (f.tests || 0), 0),
+          totalExec: computed.features.reduce((a, f) => a + (f.exec || 0), 0),
+          updatedAt: row.updated_at,
+          favorite: existing?.favorite,
+          status: row.status as SprintIndexEntry['status'],
+        }
+
+        const idx = localIndex.findIndex((s) => s.id === row.id)
+        if (idx >= 0) localIndex[idx] = { ...localIndex[idx], ...entry }
+        else localIndex.unshift(entry)
       }
 
-      const idx = localIndex.findIndex((s) => s.id === row.id)
-      if (idx >= 0) localIndex[idx] = { ...localIndex[idx], ...entry }
-      else localIndex.unshift(entry)
+      totalSynced += data.length
+      if (data.length < PAGE_SIZE) break
+      offset += PAGE_SIZE
     }
 
     saveMasterIndex(localIndex)
     localStorage.setItem(LAST_SYNC_KEY, now)
 
-    if (import.meta.env.DEV) console.log(`[Sync] ${data.length} sprint(s) sincronizada(s)`)
+    if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} sprint(s) sincronizada(s)`)
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[Supabase] syncAllFromSupabase falhou:', e)
   }
@@ -469,18 +478,40 @@ export async function concludeSprint(sprintId: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((s) => s.id === sprintId)
   if (idx === -1) return
+  const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'concluida' }
   saveMasterIndex(index)
   const { error } = await supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
-  if (error && import.meta.env.DEV) console.error('[Sprints] concludeSprint server update failed:', error.message)
+  if (error) {
+    // Revert local state on server failure
+    const rollbackIndex = getMasterIndex()
+    const rollbackIdx = rollbackIndex.findIndex((s) => s.id === sprintId)
+    if (rollbackIdx >= 0) {
+      rollbackIndex[rollbackIdx] = previousEntry
+      saveMasterIndex(rollbackIndex)
+    }
+    if (import.meta.env.DEV) console.error('[Sprints] concludeSprint server update failed:', error.message)
+    throw error
+  }
 }
 
 export async function reactivateSprint(sprintId: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((s) => s.id === sprintId)
   if (idx === -1) return
+  const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'ativa' }
   saveMasterIndex(index)
   const { error } = await supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
-  if (error && import.meta.env.DEV) console.error('[Sprints] reactivateSprint server update failed:', error.message)
+  if (error) {
+    // Revert local state on server failure
+    const rollbackIndex = getMasterIndex()
+    const rollbackIdx = rollbackIndex.findIndex((s) => s.id === sprintId)
+    if (rollbackIdx >= 0) {
+      rollbackIndex[rollbackIdx] = previousEntry
+      saveMasterIndex(rollbackIndex)
+    }
+    if (import.meta.env.DEV) console.error('[Sprints] reactivateSprint server update failed:', error.message)
+    throw error
+  }
 }

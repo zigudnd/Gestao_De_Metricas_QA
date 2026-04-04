@@ -202,23 +202,39 @@ export async function deleteFromServer(id: string): Promise<void> {
   }
 }
 
+const LAST_SYNC_KEY = 'releasesLastSync'
+
+/**
+ * Incremental sync: fetches only releases updated since the last sync timestamp.
+ * On first load (no timestamp), does a full sync for backward compatibility.
+ */
 export async function syncAllReleases(): Promise<void> {
   try {
+    const lastSync = localStorage.getItem(LAST_SYNC_KEY) || '1970-01-01T00:00:00Z'
+    const now = new Date().toISOString()
+
     const PAGE_SIZE = 100
-    const remoteEntries: ReleaseIndexEntry[] = []
+    const localIndex = getMasterIndex()
     let offset = 0
+    let totalSynced = 0
 
     while (true) {
       const { data, error } = await supabase
         .from('releases')
         .select('id, data, status, version, production_date, updated_at')
+        .gt('updated_at', lastSync)
+        .order('updated_at', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1)
-      if (error || !data || data.length === 0) break
+
+      if (error) throw error
+      if (!data || data.length === 0) break
 
       for (const row of data) {
         const release = normalizeRelease(row.data)
         saveToLocalStorage(release)
-        remoteEntries.push({
+
+        const existing = localIndex.find((l) => l.id === release.id)
+        const entry: ReleaseIndexEntry = {
           id: release.id,
           version: release.version || '',
           title: release.title || 'S/ Titulo',
@@ -226,22 +242,23 @@ export async function syncAllReleases(): Promise<void> {
           productionDate: release.productionDate || '',
           squadCount: release.squads.length,
           updatedAt: row.updated_at,
-        })
+          favorite: existing?.favorite ?? false,
+        }
+
+        const idx = localIndex.findIndex((l) => l.id === release.id)
+        if (idx >= 0) localIndex[idx] = { ...localIndex[idx], ...entry }
+        else localIndex.unshift(entry)
       }
 
+      totalSynced += data.length
       if (data.length < PAGE_SIZE) break
       offset += PAGE_SIZE
     }
 
-    if (remoteEntries.length === 0) return
+    saveMasterIndex(localIndex)
+    localStorage.setItem(LAST_SYNC_KEY, now)
 
-    // Merge with local (preserve favorites)
-    const localIndex = getMasterIndex()
-    const merged = remoteEntries.map((remote) => {
-      const local = localIndex.find((l) => l.id === remote.id)
-      return local ? { ...local, ...remote } : remote
-    })
-    saveMasterIndex(merged)
+    if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} release(s) sincronizada(s)`)
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[Release] syncAllReleases falhou — usando dados locais.', e)
   }

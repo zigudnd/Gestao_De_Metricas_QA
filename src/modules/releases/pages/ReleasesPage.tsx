@@ -391,6 +391,11 @@ export function ReleasesPage() {
             addRelease(newRelease)
             showToast('Release duplicada', 'success')
           }}
+          calendarSlots={calendarSlots}
+          onAddCalendarSlot={addCalendarSlot}
+          onUpdateCalendarSlot={updateCalendarSlot}
+          onRemoveCalendarSlot={removeCalendarSlot}
+          onCreateReleaseFromSlot={(slotId) => openCreate(slotId)}
         />
       )}
 

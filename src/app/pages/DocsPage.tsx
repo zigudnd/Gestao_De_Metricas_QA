@@ -86,7 +86,7 @@ const SECTIONS: DocSection[] = [
   {
     id: 'kpis',
     icon: '📊',
-    title: 'Metricas KPI',
+    title: 'Métricas KPI',
     group: 'Cobertura QA',
     content: (
       <div>
@@ -204,7 +204,7 @@ const SECTIONS: DocSection[] = [
   {
     id: 'charts',
     icon: '📈',
-    title: 'Graficos',
+    title: 'Gráficos',
     group: 'Cobertura QA',
     content: (
       <div>
@@ -253,7 +253,7 @@ const SECTIONS: DocSection[] = [
   {
     id: 'tests',
     icon: '🧪',
-    title: 'Gestao de Testes',
+    title: 'Gestão de Testes',
     group: 'Cobertura QA',
     content: (
       <div>
@@ -295,7 +295,7 @@ const SECTIONS: DocSection[] = [
   {
     id: 'bugs',
     icon: '🐞',
-    title: 'Gestao de Bugs',
+    title: 'Gestão de Bugs',
     group: 'Cobertura QA',
     content: (
       <div>
@@ -492,46 +492,46 @@ const SECTIONS: DocSection[] = [
     group: 'Status Reports',
     content: (
       <div>
-        <H2>Modulo Status Report</H2>
+        <H2>Módulo Status Report</H2>
         <P>
-          O Status Report e uma ferramenta de comunicacao semanal que consolida o andamento dos trabalhos do squad em um relatorio
-          visual e exportavel. Diferente do modulo de Sprints (focado em execucao de testes QA), o Status Report tem foco em
-          <strong> visibilidade para stakeholders e gerencia</strong> — mostrando o que esta em andamento, o que foi entregue,
-          o que esta bloqueado e o que esta no backlog.
+          O Status Report é uma ferramenta de comunicação semanal que consolida o andamento dos trabalhos do squad em um relatório
+          visual e exportável. Diferente do módulo de Sprints (focado em execução de testes QA), o Status Report tem foco em
+          <strong> visibilidade para stakeholders e gerência</strong> — mostrando o que está em andamento, o que foi entregue,
+          o que está bloqueado e o que está no backlog.
         </P>
 
         <H3>Listagem de Reports</H3>
         <P>
-          A pagina inicial do modulo (<strong>/status-report</strong>) lista todos os reports criados, com filtros por status
-          (Ativos, Concluidos, Favoritos), busca por titulo/squad e filtro por data. Cada report mostra titulo, squad, quantidade
-          de itens e data da ultima atualizacao.
+          A página inicial do módulo (<strong>/status-report</strong>) lista todos os reports criados, com filtros por status
+          (Ativos, Concluídos, Favoritos), busca por título/squad e filtro por data. Cada report mostra título, squad, quantidade
+          de itens e data da última atualização.
         </P>
-        <P>Acoes disponiveis por report:</P>
+        <P>Ações disponíveis por report:</P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>Favoritar</strong> — marca o report com estrela para acesso rapido</li>
-          <li><strong>Concluir / Reativar</strong> — muda o status do report (concluido fica com borda verde)</li>
-          <li><strong>Duplicar</strong> — cria uma copia completa do report com todos os itens</li>
-          <li><strong>Migrar itens</strong> — copia ou move itens de um report para outro (ex: transicao de sprint)</li>
-          <li><strong>Excluir</strong> — remove permanentemente com confirmacao</li>
+          <li><strong>Favoritar</strong> — marca o report com estrela para acesso rápido</li>
+          <li><strong>Concluir / Reativar</strong> — muda o status do report (concluído fica com borda verde)</li>
+          <li><strong>Duplicar</strong> — cria uma cópia completa do report com todos os itens</li>
+          <li><strong>Migrar itens</strong> — copia ou move itens de um report para outro (ex: transição de sprint)</li>
+          <li><strong>Excluir</strong> — remove permanentemente com confirmação</li>
         </ul>
 
         <H3>Editor de Report</H3>
         <P>
-          Ao abrir um report, o editor organiza os itens em <strong>secoes customizaveis</strong> (ex: Sprint Atual, Implantados,
-          Debitos Tecnicos, Aguardando Producao, Fila de Teste, Backlog). Cada secao tem uma cor e pode ser posicionada na
+          Ao abrir um report, o editor organiza os itens em <strong>seções customizáveis</strong> (ex: Sprint Atual, Implantados,
+          Débitos Técnicos, Aguardando Produção, Fila de Teste, Backlog). Cada seção tem uma cor e pode ser posicionada na
           coluna esquerda ou direita do preview.
         </P>
         <P>
-          O editor permite criar, editar e mover itens entre secoes. As setas de mover ficam visiveis ao passar o mouse sobre um item.
-          Secoes podem ser criadas, renomeadas, recoloridas e reordenadas via o botao <strong>Gerenciar secoes</strong>.
+          O editor permite criar, editar e mover itens entre seções. As setas de mover ficam visíveis ao passar o mouse sobre um item.
+          Seções podem ser criadas, renomeadas, recoloridas e reordenadas via o botão <strong>Gerenciar seções</strong>.
         </P>
 
-        <H3>Secoes padrao</H3>
+        <H3>Seções padrão</H3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           <Chip label="Sprint Atual" color="#f59e0b" />
           <Chip label="Implantados" color="#10b981" />
-          <Chip label="Debitos Tecnicos" color="#ef4444" />
-          <Chip label="Aguardando Producao" color="#06b6d4" />
+          <Chip label="Débitos Técnicos" color="#ef4444" />
+          <Chip label="Aguardando Produção" color="#06b6d4" />
           <Chip label="Fila de Teste" color="#8b5cf6" />
           <Chip label="Backlog" color="#6b7280" />
         </div>

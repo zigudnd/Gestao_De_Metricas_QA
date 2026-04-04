@@ -654,7 +654,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
               startDate={startDate}
               endDate={state.config.endDate || ''}
               sprintDays={state.config.sprintDays || 20}
-              excludeWeekends={state.config.excludeWeekends ?? false}
+              excludeWeekends={state.config.excludeWeekends ?? true}
               mockupImage={feature.mockupImage}
             />
           )

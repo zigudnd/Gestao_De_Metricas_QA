@@ -262,6 +262,7 @@ app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*', l
     await supabaseAdmin.from('status_reports').upsert({
       id: payload.id,
       data: payload.data,
+      squad_id: payload.squad_id || null,
       status: payload.status || 'active',
       updated_at: new Date().toISOString(),
     });
@@ -316,6 +317,7 @@ app.post('/api/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '
     await supabaseAdmin.from('sprints').upsert({
       id: payload.id,
       data: payload.data,
+      squad_id: payload.squad_id || null,
       status: payload.status || 'ativa',
       updated_at: new Date().toISOString(),
     });

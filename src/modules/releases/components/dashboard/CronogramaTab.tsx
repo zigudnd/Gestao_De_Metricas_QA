@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, memo } from 'react'
-import type { Release, ReleaseStatus } from '../../types/release.types'
+import type { Release, ReleaseStatus, CalendarSlot } from '../../types/release.types'
 import { showToast } from '@/app/components/Toast'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -11,6 +11,12 @@ interface CronogramaTabProps {
   onDeleteRelease: (id: string) => void
   onUpdateRelease: (id: string, fields: Partial<Release>) => void
   onDuplicateRelease: (id: string) => void
+  // Calendar slots management
+  calendarSlots?: CalendarSlot[]
+  onAddCalendarSlot?: (slot: Omit<CalendarSlot, 'id' | 'createdAt'>) => void
+  onUpdateCalendarSlot?: (id: string, updates: Partial<CalendarSlot>) => void
+  onRemoveCalendarSlot?: (id: string) => void
+  onCreateReleaseFromSlot?: (slotId: string) => void
 }
 
 type Platform = 'iOS' | 'Android' | 'Front' | 'BFF' | 'Back' | 'Infra'
@@ -39,11 +45,9 @@ type PlatformFilter = 'todas' | Platform
 
 function fmtDate(iso: string): string {
   if (!iso) return '—'
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return '—'
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  return `${dd}/${mm}`
+  const parts = iso.split('-')
+  if (parts.length < 3) return '—'
+  return `${parts[2]}/${parts[1]}`
 }
 
 function fmtRange(start: string, end: string): string {
@@ -458,7 +462,7 @@ function parseImportCSV(text: string): ParsedRelease[] {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDeleteRelease, onUpdateRelease, onDuplicateRelease }: CronogramaTabProps) {
+export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDeleteRelease, onUpdateRelease, onDuplicateRelease, calendarSlots = [], onAddCalendarSlot, onUpdateCalendarSlot, onRemoveCalendarSlot, onCreateReleaseFromSlot }: CronogramaTabProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos')
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('todas')
   const [search, setSearch] = useState('')
@@ -479,6 +483,68 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
   const [addProd, setAddProd] = useState('')
   const [addPlatforms, setAddPlatforms] = useState<string[]>([])
   const importInputRef = useRef<HTMLInputElement>(null)
+
+  // Calendar slot management state
+  const [showSlotForm, setShowSlotForm] = useState(false)
+  const [editSlotId, setEditSlotId] = useState<string | null>(null)
+  const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null)
+  const [slotLabel, setSlotLabel] = useState('')
+  const [slotVersion, setSlotVersion] = useState('')
+  const [slotCutoff, setSlotCutoff] = useState('')
+  const [slotHomoStart, setSlotHomoStart] = useState('')
+  const [slotHomoEnd, setSlotHomoEnd] = useState('')
+  const [slotProd, setSlotProd] = useState('')
+
+  function resetSlotForm() {
+    setSlotLabel(''); setSlotVersion(''); setSlotCutoff('')
+    setSlotHomoStart(''); setSlotHomoEnd(''); setSlotProd('')
+    setEditSlotId(null); setShowSlotForm(false)
+  }
+
+  function openEditSlot(slot: CalendarSlot) {
+    setEditSlotId(slot.id)
+    setSlotLabel(slot.label)
+    setSlotVersion(slot.version)
+    setSlotCutoff(slot.cutoffDate)
+    setSlotHomoStart(slot.homologacaoStart)
+    setSlotHomoEnd(slot.homologacaoEnd)
+    setSlotProd(slot.productionDate)
+    setShowSlotForm(true)
+  }
+
+  function handleSaveSlot() {
+    if (!slotLabel.trim() || !slotVersion.trim() || !slotCutoff || !slotProd) return
+    if (editSlotId && onUpdateCalendarSlot) {
+      onUpdateCalendarSlot(editSlotId, {
+        label: slotLabel.trim(),
+        version: slotVersion.trim(),
+        cutoffDate: slotCutoff,
+        homologacaoStart: slotHomoStart,
+        homologacaoEnd: slotHomoEnd,
+        productionDate: slotProd,
+      })
+      showToast('Slot atualizado', 'success')
+    } else if (onAddCalendarSlot) {
+      onAddCalendarSlot({
+        label: slotLabel.trim(),
+        version: slotVersion.trim(),
+        cutoffDate: slotCutoff,
+        homologacaoStart: slotHomoStart,
+        homologacaoEnd: slotHomoEnd,
+        productionDate: slotProd,
+      })
+      showToast('Slot criado', 'success')
+    }
+    resetSlotForm()
+  }
+
+  function handleDeleteSlot(id: string) {
+    if (onRemoveCalendarSlot) {
+      onRemoveCalendarSlot(id)
+      showToast('Slot excluido', 'success')
+    }
+    setDeleteSlotId(null)
+  }
 
   function handleImportCSV(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -1054,6 +1120,245 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
           </table>
         </div>
       </div>
+
+      {/* ── Calendar Slots (Programacao Oficial) ────────────────────────── */}
+      {(calendarSlots.length > 0 || onAddCalendarSlot) && (
+        <div style={{ marginTop: 28 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 14,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>
+                Programacao de Releases
+              </span>
+              <span style={{
+                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+                background: 'var(--color-blue-light)', color: 'var(--color-blue-text)',
+              }}>
+                {calendarSlots.length}
+              </span>
+            </div>
+            {onAddCalendarSlot && !showSlotForm && (
+              <button
+                onClick={() => { resetSlotForm(); setShowSlotForm(true) }}
+                style={{
+                  padding: '7px 16px', borderRadius: 7, border: 'none',
+                  background: 'var(--color-blue)', color: '#fff',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                + Novo Slot
+              </button>
+            )}
+          </div>
+
+          {/* Slot form (add/edit) */}
+          {showSlotForm && (
+            <div style={{
+              background: 'var(--color-surface)', border: '1px solid var(--color-blue)',
+              borderRadius: 10, padding: '16px 18px', marginBottom: 14,
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12 }}>
+                {editSlotId ? 'Editar Slot' : 'Novo Slot de Release'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Nome *</label>
+                  <input value={slotLabel} onChange={(e) => setSlotLabel(e.target.value)} placeholder="Release App Marco" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Versao *</label>
+                  <input value={slotVersion} onChange={(e) => setSlotVersion(e.target.value)} placeholder="v4.2.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Corte *</label>
+                  <input type="date" value={slotCutoff} onChange={(e) => setSlotCutoff(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. inicio</label>
+                  <input type="date" value={slotHomoStart} onChange={(e) => setSlotHomoStart(e.target.value)} min={slotCutoff || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. fim</label>
+                  <input type="date" value={slotHomoEnd} onChange={(e) => setSlotHomoEnd(e.target.value)} min={slotHomoStart || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Producao *</label>
+                  <input type="date" value={slotProd} onChange={(e) => setSlotProd(e.target.value)} min={slotHomoEnd || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={resetSlotForm} style={{
+                  padding: '7px 14px', borderRadius: 7,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveSlot}
+                  disabled={!slotLabel.trim() || !slotVersion.trim() || !slotCutoff || !slotProd}
+                  style={{
+                    padding: '7px 18px', borderRadius: 7, border: 'none',
+                    background: slotLabel.trim() && slotVersion.trim() && slotCutoff && slotProd ? 'var(--color-blue)' : 'var(--color-border)',
+                    color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                  }}
+                >
+                  {editSlotId ? 'Salvar' : 'Criar Slot'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Delete slot confirmation */}
+          {deleteSlotId && (
+            <div style={{
+              padding: '12px 16px', marginBottom: 14, borderRadius: 8,
+              background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)',
+              display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <span style={{ fontSize: 13, color: 'var(--color-red)', fontWeight: 600, flex: 1 }}>
+                Excluir este slot permanentemente?
+              </span>
+              <button
+                onClick={() => handleDeleteSlot(deleteSlotId)}
+                style={{
+                  padding: '5px 14px', borderRadius: 6, border: 'none',
+                  background: 'var(--color-red)', color: '#fff',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Excluir
+              </button>
+              <button
+                onClick={() => setDeleteSlotId(null)}
+                style={{
+                  padding: '5px 14px', borderRadius: 6,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          {/* Slot list */}
+          {calendarSlots.length === 0 && !showSlotForm && (
+            <div style={{
+              textAlign: 'center', padding: '24px 16px',
+              color: 'var(--color-text-3)', fontSize: 13,
+            }}>
+              Nenhum slot de release programado. Clique em &quot;+ Novo Slot&quot; para planejar.
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {calendarSlots.map((slot) => {
+              const linkedRelease = releases.find((r) => r.id === slot.releaseId)
+              return (
+                <div key={slot.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderLeft: slot.releaseId ? '3px solid var(--color-green)' : '3px solid var(--color-blue)',
+                  borderRadius: 8,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+                        {slot.label}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-3)' }}>
+                        {slot.version}
+                      </span>
+                      {linkedRelease ? (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                          background: 'var(--color-green-light)', color: 'var(--color-green)',
+                        }}>
+                          Vinculada
+                        </span>
+                      ) : (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                          background: 'var(--color-surface-2)', color: 'var(--color-text-3)',
+                        }}>
+                          Planejado
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-2)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <span>Corte: {fmtDate(slot.cutoffDate)}</span>
+                      <span>Homolog: {fmtRange(slot.homologacaoStart, slot.homologacaoEnd)}</span>
+                      <span>Prod: {fmtDate(slot.productionDate)}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    {!slot.releaseId && onCreateReleaseFromSlot && (
+                      <button
+                        onClick={() => onCreateReleaseFromSlot(slot.id)}
+                        title="Criar release a partir deste slot"
+                        aria-label="Criar release a partir deste slot"
+                        className="cron-btn-edit"
+                        style={{
+                          padding: '4px 10px', borderRadius: 5, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: 'var(--color-blue)', fontSize: 11, fontWeight: 600,
+                          transition: 'background 0.15s',
+                        }}
+                      >
+                        Criar Release
+                      </button>
+                    )}
+                    {onUpdateCalendarSlot && (
+                      <button
+                        onClick={() => openEditSlot(slot)}
+                        title="Editar slot"
+                        aria-label="Editar slot"
+                        className="cron-btn-edit"
+                        style={{
+                          width: 26, height: 26, borderRadius: 5, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: 'var(--color-text-3)', fontSize: 12,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'background 0.15s, color 0.15s',
+                        }}
+                      >
+                        ✎
+                      </button>
+                    )}
+                    {onRemoveCalendarSlot && (
+                      <button
+                        onClick={() => setDeleteSlotId(slot.id)}
+                        title="Excluir slot"
+                        aria-label="Excluir slot"
+                        className="cron-btn-del"
+                        style={{
+                          width: 26, height: 26, borderRadius: 5, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: 'var(--color-text-3)', fontSize: 12,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'background 0.15s, color 0.15s',
+                        }}
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

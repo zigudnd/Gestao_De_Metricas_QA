@@ -208,8 +208,8 @@ export function BugsTab() {
                           if (newStatus === 'Resolvido') {
                             setResolveModal({ index: i, date: state.currentDate })
                           } else if (newStatus === 'Falhou') {
-                            updateBug(i, 'status', newStatus)
                             updateBug(i, 'retests', (b.retests ?? 0) + 1)
+                            updateBug(i, 'status', newStatus)
                           } else {
                             updateBug(i, 'status', newStatus)
                           }

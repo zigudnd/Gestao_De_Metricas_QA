@@ -28,11 +28,20 @@ export function ChangePasswordPage() {
       const { error: pwErr } = await supabase.auth.updateUser({ password })
       if (pwErr) throw pwErr
 
-      // Remove a flag must_change_password
-      const { error: metaErr } = await supabase.auth.updateUser({
-        data: { must_change_password: false },
-      })
-      if (metaErr) throw metaErr
+      // Remove a flag must_change_password (com retry para evitar loop infinito)
+      let metaUpdated = false
+      for (let attempt = 0; attempt < 3 && !metaUpdated; attempt++) {
+        const { error: metaErr } = await supabase.auth.updateUser({
+          data: { must_change_password: false },
+        })
+        if (!metaErr) {
+          metaUpdated = true
+        } else if (attempt === 2) {
+          // Senha já foi alterada — navega mesmo assim para evitar redirect loop.
+          // O usuário pode precisar trocar novamente se o flag persistir.
+          console.warn('[Auth] Failed to clear must_change_password flag after 3 attempts:', metaErr)
+        }
+      }
 
       navigate('/sprints', { replace: true })
     } catch (err: unknown) {

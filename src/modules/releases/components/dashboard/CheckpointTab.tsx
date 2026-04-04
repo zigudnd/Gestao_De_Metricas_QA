@@ -239,7 +239,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
   const groups = useMemo<ReleaseGroup[]>(() => {
     return visibleReleases
       .map((r) => ({
-        releaseNumber: `${extractReleaseNumber(r.version)}_${r.id}`,
+        releaseNumber: r.id,
         releases: [r],
       }))
       .sort((a, b) => {
@@ -452,7 +452,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                     <span style={{
                       fontSize: 14, fontWeight: 700, color: 'var(--color-text)',
                     }}>
-                      Release {group.releaseNumber}
+                      {group.releases[0]?.title || `Release ${versions.join(' / ')}`}
                     </span>
                     <span style={{
                       fontSize: 13, fontWeight: 500, color: 'var(--color-text-3)',

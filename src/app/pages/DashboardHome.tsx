@@ -227,7 +227,7 @@ export function DashboardHome() {
         <NavCard
           icon={<IconStatusReport />}
           title="Status Report"
-          description="Relatorios de status e visao geral dos projetos"
+          description="Relatórios de status e visão geral dos projetos"
           color="#f59e0b"
           stats={[
             { label: 'Reports', value: stats.reports.count },
@@ -239,7 +239,7 @@ export function DashboardHome() {
         <NavCard
           icon={<IconReleases />}
           title="Releases"
-          description="Calendario, homologacao e ciclo de releases"
+          description="Calendário, homologação e ciclo de releases"
           color="#06b6d4"
           stats={[
             { label: 'Gerenciar', value: '\u2192' },

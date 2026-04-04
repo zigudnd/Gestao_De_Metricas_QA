@@ -13,7 +13,6 @@ import { ReportPreview, generateClipboardText } from '../components/ReportPrevie
 import { GanttView } from '../components/GanttView'
 import { SectionManager } from '../components/SectionManager'
 import { showToast } from '@/app/components/Toast'
-import type { StatusReportItem } from '../types/statusReport.types'
 
 function formatPeriod(start: string, end: string): string {
   if (!start && !end) return ''
@@ -168,6 +167,7 @@ export function StatusReportPage() {
           <span style={{ fontSize: 11, color: 'var(--color-text-3)', whiteSpace: 'nowrap' }}>Período:</span>
           <input
             type="date" value={config.periodStart}
+            max={config.periodEnd || undefined}
             onChange={(e) => {
               const start = e.target.value
               const end = config.periodEnd
@@ -326,6 +326,7 @@ export function StatusReportPage() {
           onUpdate={updateItem}
           onDelete={(id) => {
             const deleted = items.find((i) => i.id === id)
+            const snapshotItems = [...items]
             deleteItem(id)
             setSelectedItem(null)
             if (deleted) {
@@ -333,7 +334,10 @@ export function StatusReportPage() {
                 duration: 5000,
                 action: {
                   label: 'Desfazer',
-                  onClick: () => addItem(deleted as Omit<StatusReportItem, 'id' | 'createdAt' | 'updatedAt'>),
+                  onClick: () => {
+                    const { _commit } = useStatusReportStore.getState()
+                    _commit({ items: snapshotItems })
+                  },
                 },
               })
             }

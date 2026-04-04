@@ -5,8 +5,6 @@ import { exportToImage, exportJSON, importFromJSON } from '@/modules/sprints/ser
 import { getMasterIndex, concludeSprint, reactivateSprint } from '@/modules/sprints/services/persistence'
 import { TermoConclusaoModal } from '@/app/components/TermoConclusaoModal'
 import { UserMenu } from '@/app/components/UserMenu'
-import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
-import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Topbar ──────────────────────────────────────────────────────────────────
 
@@ -20,13 +18,6 @@ export function Topbar() {
   const [showTermo, setShowTermo] = useState(false)
   const [isConcluida, setIsConcluida] = useState(false)
   const [showConfirmConcluir, setShowConfirmConcluir] = useState(false)
-
-  const globalRole = useAuthStore((s) => s.profile?.global_role)
-  const { squads: allSquads, activeSquadId, setActiveSquad, loadSquads } = useActiveSquadStore()
-  const squads = allSquads.filter((s) => !s.archived)
-  const isPrivileged = globalRole === 'admin' || globalRole === 'gerente'
-
-  useEffect(() => { loadSquads() }, []) // eslint-disable-line
 
   useEffect(() => {
     if (!params.sprintId) return
@@ -178,7 +169,7 @@ export function Topbar() {
       {/* Modal: confirmar conclusão */}
       {showConfirmConcluir && (
         <div
-          onClick={(e) => e.target === e.currentTarget && setShowConfirmConcluir(false)}
+          onClick={() => setShowConfirmConcluir(false)}
           style={{
             position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.4)',
@@ -186,7 +177,7 @@ export function Topbar() {
             zIndex: 1000,
           }}
         >
-          <div style={{
+          <div onClick={(e) => e.stopPropagation()} style={{
             background: 'var(--color-surface)',
             borderRadius: 14,
             padding: 24,

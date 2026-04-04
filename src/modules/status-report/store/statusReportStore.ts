@@ -68,7 +68,8 @@ if (typeof window !== 'undefined') {
         status: 'active',
         updated_at: new Date().toISOString(),
       })
-      navigator.sendBeacon?.('/api/status-report-flush', payload)
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon?.('/api/status-report-flush', blob)
     }
   })
 }

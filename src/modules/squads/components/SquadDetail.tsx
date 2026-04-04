@@ -144,7 +144,7 @@ export function SquadDetail({
                           <option value="stakeholder">Stakeholder</option>
                         </select>
                       ) : (
-                        <span style={roleBadge}>{isAdminMember ? 'Admin' : ROLE_LABEL[m.role]}</span>
+                        <span style={roleBadge}>{m.profile?.global_role === 'admin' ? 'Admin' : m.profile?.global_role === 'gerente' ? 'Gerente' : ROLE_LABEL[m.role]}</span>
                       )}
                       {canManage && !isAdminMember && (
                         <button onClick={() => isEditingP ? setEditingPermsMember(null) : startEditPerms(m)} style={{ ...btnGhost, color: isEditingP ? 'var(--color-blue)' : undefined }}>

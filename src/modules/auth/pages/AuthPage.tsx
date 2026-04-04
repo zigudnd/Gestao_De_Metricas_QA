@@ -34,15 +34,20 @@ export function AuthPage() {
 
     try {
       if (mode === 'login') {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
         if (err) throw err
-        navigate('/sprints', { replace: true })
+        const mustChange = data.user?.user_metadata?.must_change_password === true
+        navigate(mustChange ? '/change-password' : '/sprints', { replace: true })
       } else {
         if (!displayName.trim()) {
           setError('Informe seu nome.')
           setLoading(false)
           return
         }
+        if (password.length < 8) { setError('A senha deve ter pelo menos 8 caracteres.'); setLoading(false); return }
+        if (!/[A-Z]/.test(password)) { setError('A senha deve conter pelo menos uma letra maiúscula.'); setLoading(false); return }
+        if (!/[0-9]/.test(password)) { setError('A senha deve conter pelo menos um número.'); setLoading(false); return }
+        if (!/[^a-zA-Z0-9]/.test(password)) { setError('A senha deve conter pelo menos um caractere especial.'); setLoading(false); return }
         const { error: err } = await supabase.auth.signUp({
           email,
           password,
@@ -166,9 +171,9 @@ export function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'Mínimo 6 caracteres' : ''}
+                placeholder={mode === 'register' ? 'Mínimo 8 caracteres' : ''}
                 required
-                minLength={6}
+                minLength={8}
                 style={{ ...inputStyle, paddingRight: 38 }}
               />
               <button
@@ -336,7 +341,7 @@ function translateError(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.'
   if (msg.includes('Email not confirmed')) return 'Confirme seu e-mail antes de entrar.'
   if (msg.includes('User already registered')) return 'Este e-mail já está cadastrado.'
-  if (msg.includes('Password should be')) return 'A senha deve ter pelo menos 6 caracteres.'
+  if (msg.includes('Password should be')) return 'A senha deve ter pelo menos 8 caracteres.'
   if (msg.includes('Unable to validate email')) return 'E-mail inválido.'
   return msg
 }

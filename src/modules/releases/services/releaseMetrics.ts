@@ -13,7 +13,7 @@ function computeTotals(squad: ReleaseSquad): SnapshotTotals {
   let blockedTests = 0
 
   for (const f of squad.features) {
-    totalTests += f.tests || 0
+    totalTests += Math.max(f.tests || 0, f.cases.length)
     for (const c of f.cases) {
       if (c.status === 'Concluído') { executedTests++; passedTests++ }
       else if (c.status === 'Falhou') { executedTests++; failedTests++ }

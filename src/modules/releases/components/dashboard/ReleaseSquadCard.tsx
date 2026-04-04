@@ -52,10 +52,6 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
     (b) => (b.status === 'Aberto' || b.status === 'Em Andamento') && b.severity === 'Crítica',
   ).length
 
-  // Mandatory tests percentage
-  const mandatoryPct = metrics.coveragePct
-  const mandatoryBarColor = progressColor(mandatoryPct)
-
   return (
     <div
       onClick={onClick}
@@ -150,13 +146,13 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
         </div>
       </div>
 
-      {/* Section 2: OBRIGATÓRIOS */}
+      {/* Section 2: APROVACAO (pass rate) */}
       <div style={{ marginBottom: 8 }}>
         <div style={{
           fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
           textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4,
         }}>
-          OBRIGATORIOS
+          APROVACAO
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -164,17 +160,17 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
             background: 'var(--color-surface-2)',
           }}>
             <div style={{
-              width: `${Math.min(mandatoryPct, 100)}%`, height: '100%', borderRadius: 3,
-              background: mandatoryBarColor, transition: 'width 0.4s ease',
-              minWidth: mandatoryPct > 0 ? 4 : 0,
+              width: `${Math.min(metrics.passPct, 100)}%`, height: '100%', borderRadius: 3,
+              background: progressColor(metrics.passPct), transition: 'width 0.4s ease',
+              minWidth: metrics.passPct > 0 ? 4 : 0,
             }} />
           </div>
           <span style={{
-            fontSize: 14, fontWeight: 800, color: mandatoryBarColor,
+            fontSize: 14, fontWeight: 800, color: progressColor(metrics.passPct),
             fontFamily: 'var(--font-family-mono)',
             minWidth: 38, textAlign: 'right',
           }}>
-            {mandatoryPct}%
+            {metrics.passPct}%
           </span>
         </div>
         <div style={{ marginTop: 3 }}>
@@ -182,7 +178,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
             fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)',
             fontFamily: 'var(--font-family-mono)',
           }}>
-            {metrics.executedTests}/{metrics.totalTests}
+            {metrics.passedTests}/{metrics.totalTests} aprovados
           </span>
         </div>
       </div>

@@ -19,7 +19,7 @@ interface AuthState {
   loading: boolean
   profile: Profile | null
   setSession: (session: Session | null) => void
-  updateDisplayName: (name: string) => Promise<void>
+  updateDisplayName: (name: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
 
@@ -36,9 +36,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   updateDisplayName: async (name: string) => {
     const { user } = get()
-    if (!user) return
-    await supabase.from('profiles').update({ display_name: name }).eq('id', user.id)
+    if (!user) return { error: new Error('Usuário não autenticado.') }
+    const { error } = await supabase.from('profiles').update({ display_name: name }).eq('id', user.id)
+    if (error) {
+      const err = new Error(error.message)
+      throw err
+    }
     set((s) => ({ profile: s.profile ? { ...s.profile, display_name: name } : s.profile }))
+    return { error: null }
   },
 
   signOut: async () => {

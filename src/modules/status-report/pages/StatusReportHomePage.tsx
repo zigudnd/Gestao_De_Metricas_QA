@@ -117,19 +117,28 @@ export function StatusReportHomePage() {
     state.config.squad = selectedSquad?.name ?? ''
     state.config.date = new Date().toISOString().split('T')[0]
     saveToLocalStorage(state)
-    // Salvar squadId no index para filtragem
+    // Build index entry in a single pass (upsert + squadId together)
     const index = getMasterIndex()
-    const idx = index.findIndex((e) => e.id === id)
-    if (idx >= 0) index[idx].squadId = newSquadId || undefined
-    else {
-      upsertMasterIndex(state)
-      const newIndex = getMasterIndex()
-      const newIdx = newIndex.findIndex((e) => e.id === id)
-      if (newIdx >= 0) newIndex[newIdx].squadId = newSquadId || undefined
-      saveMasterIndex(newIndex)
+    const now = new Date().toISOString()
+    const newEntry = {
+      id: state.id,
+      title: state.config.title || 'S/ Titulo',
+      squad: state.config.squad || '',
+      itemCount: state.items.length,
+      updatedAt: state.updatedAt || now,
+      periodStart: state.config.periodStart || '',
+      periodEnd: state.config.periodEnd || '',
+      favorite: false,
+      status: 'active' as const,
+      squadId: newSquadId || undefined,
     }
-    if (idx >= 0) saveMasterIndex(index)
-    else upsertMasterIndex(state)
+    const idx = index.findIndex((e) => e.id === id)
+    if (idx >= 0) {
+      index[idx] = { ...index[idx], ...newEntry }
+    } else {
+      index.unshift(newEntry)
+    }
+    saveMasterIndex(index)
     setShowNew(false)
     setNewTitle('')
     setNewSquadId(activeSquadId && activeSquadId !== 'all' ? activeSquadId : '')

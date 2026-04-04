@@ -50,10 +50,18 @@ export function ProfilePage() {
       const { error: pwErr } = await supabase.auth.updateUser({ password })
       if (pwErr) throw pwErr
 
-      const { error: metaErr } = await supabase.auth.updateUser({
-        data: { must_change_password: false },
-      })
-      if (metaErr) throw metaErr
+      // Remove a flag must_change_password (com retry para evitar loop infinito)
+      let metaUpdated = false
+      for (let attempt = 0; attempt < 3 && !metaUpdated; attempt++) {
+        const { error: metaErr } = await supabase.auth.updateUser({
+          data: { must_change_password: false },
+        })
+        if (!metaErr) {
+          metaUpdated = true
+        } else if (attempt === 2) {
+          console.warn('[Auth] Failed to clear must_change_password flag after 3 attempts:', metaErr)
+        }
+      }
 
       setPassword('')
       setConfirm('')
@@ -169,8 +177,8 @@ export function ProfilePage() {
               type="password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setPwError('') }}
-              placeholder="Mínimo 6 caracteres"
-              minLength={6}
+              placeholder="Mínimo 8 caracteres"
+              minLength={8}
               style={inputStyle}
             />
           </div>
@@ -182,7 +190,7 @@ export function ProfilePage() {
               value={confirm}
               onChange={(e) => { setConfirm(e.target.value); setPwError('') }}
               placeholder="Repita a nova senha"
-              minLength={6}
+              minLength={8}
               style={inputStyle}
             />
           </div>

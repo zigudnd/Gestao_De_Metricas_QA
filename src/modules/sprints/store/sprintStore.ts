@@ -5,7 +5,7 @@ import type {
 } from '../types/sprint.types'
 import {
   computeFields, saveToStorage, upsertSprintInMasterIndex,
-  DEFAULT_STATE, normalizeState, persistToServer,
+  DEFAULT_STATE, normalizeState, persistToServer, getMasterIndex,
 } from '../services/persistence'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -47,12 +47,15 @@ function queueRemotePersist(sprintId: string, state: SprintState, delay = 2500, 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (_lastPendingState) {
+      const entry = getMasterIndex().find((s) => s.id === _lastPendingState!.sprintId)
       const payload = JSON.stringify({
         id: _lastPendingState.sprintId,
         data: _lastPendingState.state,
+        squad_id: entry?.squadId || null,
         status: 'ativa',
       })
-      navigator.sendBeacon?.('/api/sprint-flush', payload)
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon?.('/api/sprint-flush', blob)
     }
   })
 }
@@ -363,9 +366,9 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   addBugFull: (data) => {
     const { state, sprintId, _commit } = get()
     const newBug: Bug = {
+      ...data,
       id: `BUG-${String(Date.now()).slice(-6)}`,
       retests: 0,
-      ...data,
     }
     _commit({ ...state, bugs: [newBug, ...state.bugs] })
     logAudit('sprint', sprintId, 'create', { bug: { old: null, new: newBug.id } })

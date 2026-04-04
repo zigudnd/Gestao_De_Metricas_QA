@@ -97,7 +97,7 @@ export function OverviewTab() {
   })
 
   const sd = state.config.startDate
-  const excludeWeekends = state.config.excludeWeekends ?? false
+  const excludeWeekends = state.config.excludeWeekends ?? true
   const dayLabels = Array.from({ length: sprintDays }, (_, i) => {
     if (sd) {
       const d = sprintDayToDate(sd, i + 1, excludeWeekends)

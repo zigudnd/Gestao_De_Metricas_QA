@@ -209,23 +209,39 @@ export async function deleteFromServer(id: string): Promise<void> {
   }
 }
 
+const LAST_SYNC_KEY = 'statusReportLastSync'
+
+/**
+ * Incremental sync: fetches only status reports updated since the last sync timestamp.
+ * On first load (no timestamp), does a full sync for backward compatibility.
+ */
 export async function syncAllFromSupabase(): Promise<void> {
   try {
+    const lastSync = localStorage.getItem(LAST_SYNC_KEY) || '1970-01-01T00:00:00Z'
+    const now = new Date().toISOString()
+
     const PAGE_SIZE = 100
-    const remoteEntries: StatusReportIndexEntry[] = []
+    const localIndex = getMasterIndex()
     let offset = 0
+    let totalSynced = 0
 
     while (true) {
       const { data, error } = await supabase
         .from('status_reports')
         .select('id, data, updated_at')
+        .gt('updated_at', lastSync)
+        .order('updated_at', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1)
-      if (error || !data || data.length === 0) break
+
+      if (error) throw error
+      if (!data || data.length === 0) break
 
       for (const row of data) {
         const state = normalizeState(row.data)
         saveToLocalStorage(state)
-        remoteEntries.push({
+
+        const existing = localIndex.find((l) => l.id === state.id)
+        const entry: StatusReportIndexEntry = {
           id: state.id,
           title: state.config.title || 'S/ Titulo',
           squad: state.config.squad || '',
@@ -233,22 +249,24 @@ export async function syncAllFromSupabase(): Promise<void> {
           updatedAt: row.updated_at,
           periodStart: state.config.periodStart || '',
           periodEnd: state.config.periodEnd || '',
-        })
+          favorite: existing?.favorite,
+          status: existing?.status ?? 'active',
+        }
+
+        const idx = localIndex.findIndex((l) => l.id === state.id)
+        if (idx >= 0) localIndex[idx] = { ...localIndex[idx], ...entry }
+        else localIndex.unshift(entry)
       }
 
+      totalSynced += data.length
       if (data.length < PAGE_SIZE) break
       offset += PAGE_SIZE
     }
 
-    if (remoteEntries.length === 0) return
+    saveMasterIndex(localIndex)
+    localStorage.setItem(LAST_SYNC_KEY, now)
 
-    // Merge with local (preserve favorites, status)
-    const localIndex = getMasterIndex()
-    const merged = remoteEntries.map((remote) => {
-      const local = localIndex.find((l) => l.id === remote.id)
-      return local ? { ...local, ...remote } : remote
-    })
-    saveMasterIndex(merged)
+    if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} status report(s) sincronizado(s)`)
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[StatusReport] syncAllFromSupabase falhou — usando dados locais.', e)
   }
