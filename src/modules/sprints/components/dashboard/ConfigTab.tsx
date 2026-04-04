@@ -46,6 +46,7 @@ export function ConfigTab() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError] = useState('')
   const [confirming, setConfirming] = useState(false)
+  const [squadsLoading, setSquadsLoading] = useState(true)
 
   // Release vinculada
   const { releases: allReleases, load: loadReleases } = useReleaseStore()
@@ -58,7 +59,7 @@ export function ConfigTab() {
   const [pendingReleaseId, setPendingReleaseId] = useState('')
 
   useEffect(() => {
-    listMySquads().then(setSquads).catch(() => {})
+    listMySquads().then(setSquads).catch((e) => { if (import.meta.env.DEV) console.warn('[Sprints] Failed to load squads:', e) }).finally(() => setSquadsLoading(false))
     loadReleases()
   }, []) // eslint-disable-line
 
@@ -96,7 +97,8 @@ export function ConfigTab() {
         }
       }
       setShowSquadChangeModal(false)
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[Sprints] Failed to confirm squad change:', e)
       setConfirmError('Erro ao confirmar. Tente novamente.')
     } finally {
       setConfirming(false)
@@ -158,7 +160,11 @@ export function ConfigTab() {
           </FormGroup>
           <FormGroup label="Squad / Time">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {squads.length > 0 ? (
+              {squadsLoading ? (
+                <select disabled style={{ ...selectStyle, opacity: 0.6, cursor: 'not-allowed' }}>
+                  <option>Carregando squads...</option>
+                </select>
+              ) : squads.length > 0 ? (
                 <select
                   value={squads.find((s) => s.name === state.config.squad)?.id ?? ''}
                   onChange={(e) => handleSquadSelectChange(e.target.value)}
@@ -269,6 +275,7 @@ export function ConfigTab() {
               <button
                 onClick={() => removeResponsible(i)}
                 title="Remover"
+                aria-label="Remover responsável"
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text-2)', lineHeight: 1 }}
               >✕</button>
             </div>
@@ -276,6 +283,7 @@ export function ConfigTab() {
         </div>
         <button
           onClick={addResponsible}
+          aria-label="Adicionar responsável"
           style={{ padding: '7px 14px', border: '1px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
         >
           + Adicionar responsável
@@ -285,6 +293,8 @@ export function ConfigTab() {
       {/* Advanced weights accordion */}
       <button
         onClick={() => setShowWeights(!showWeights)}
+        aria-label={showWeights ? 'Ocultar pesos avançados' : 'Mostrar configurações avançadas'}
+        aria-expanded={showWeights}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           background: 'none', border: 'none', cursor: 'pointer',

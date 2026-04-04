@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { SaveToast } from './SaveToast'
 import { ToastContainer } from '@/app/components/Toast'
+import { ErrorBoundary } from '@/app/components/ErrorBoundary'
 import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
 import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
 import { syncAllReleases } from '@/modules/releases/services/releasePersistence'
@@ -14,6 +15,15 @@ export function AppShell() {
     syncAllFromSupabase()
     syncStatusReports()
     syncAllReleases()
+
+    // Re-sync when coming back online
+    function handleOnline() {
+      syncAllFromSupabase()
+      syncStatusReports()
+      syncAllReleases()
+    }
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
   }, [])
 
   return (
@@ -22,7 +32,9 @@ export function AppShell() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Topbar />
         <main style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-          <Outlet />
+          <ErrorBoundary moduleName="Página">
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
       <SaveToast />

@@ -40,7 +40,7 @@ export function createDefaultRelease(id: string): Release {
 export function normalizeRelease(raw: any): Release {
   const now = new Date().toISOString()
   const r: Release = raw
-    ? JSON.parse(JSON.stringify(raw))
+    ? structuredClone(raw)
     : createDefaultRelease('rel_' + Date.now())
 
   if (!r.id) r.id = 'rel_' + Date.now()
@@ -85,7 +85,7 @@ export function saveToLocalStorage(release: Release): void {
   try {
     localStorage.setItem(STORAGE_KEY(release.id), JSON.stringify(release))
   } catch (e) {
-    console.error('[Release] Erro ao salvar no localStorage:', e)
+    if (import.meta.env.DEV) console.error('[Release] Erro ao salvar no localStorage:', e)
   }
 }
 
@@ -94,7 +94,8 @@ export function loadFromLocalStorage(id: string): Release | null {
     const raw = localStorage.getItem(STORAGE_KEY(id))
     if (!raw) return null
     return normalizeRelease(JSON.parse(raw))
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Releases] Failed to load from localStorage:', e)
     return null
   }
 }
@@ -102,7 +103,7 @@ export function loadFromLocalStorage(id: string): Release | null {
 export function deleteFromLocalStorage(id: string): void {
   try {
     localStorage.removeItem(STORAGE_KEY(id))
-  } catch { /* ignore */ }
+  } catch (e) { if (import.meta.env.DEV) console.warn('[Releases] Failed to delete from localStorage:', e) }
 }
 
 // ─── Master Index ────────────────────────────────────────────────────────────
@@ -113,7 +114,8 @@ export function getMasterIndex(): ReleaseIndexEntry[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Releases] Failed to load master index:', e)
     return []
   }
 }
@@ -122,7 +124,7 @@ export function saveMasterIndex(index: ReleaseIndexEntry[]): void {
   try {
     localStorage.setItem(INDEX_KEY, JSON.stringify(index))
   } catch (e) {
-    console.error('[Release] Erro ao salvar indice:', e)
+    if (import.meta.env.DEV) console.error('[Release] Erro ao salvar indice:', e)
   }
 }
 
@@ -162,15 +164,19 @@ export function removeFromMasterIndex(id: string): void {
 
 // ─── Supabase ────────────────────────────────────────────────────────────────
 
-export async function persistToServer(release: Release): Promise<void> {
-  await supabase.from('releases').upsert({
+export async function persistToServer(release: Release, updatedAt?: string): Promise<void> {
+  const { error } = await supabase.from('releases').upsert({
     id: release.id,
     data: release,
     status: release.status,
     version: release.version || null,
     production_date: release.productionDate || null,
-    updated_at: new Date().toISOString(),
+    updated_at: updatedAt ?? new Date().toISOString(),
   })
+  if (error) {
+    if (import.meta.env.DEV) console.error('[Releases] persistToServer failed:', error.message)
+    throw error
+  }
 }
 
 export async function loadFromServer(id: string): Promise<Release | null> {
@@ -182,13 +188,18 @@ export async function loadFromServer(id: string): Promise<Release | null> {
       .single()
     if (error || !data) return null
     return normalizeRelease(data.data)
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Releases] Failed to load from server:', e)
     return null
   }
 }
 
 export async function deleteFromServer(id: string): Promise<void> {
-  await supabase.from('releases').delete().eq('id', id)
+  const { error } = await supabase.from('releases').delete().eq('id', id)
+  if (error) {
+    if (import.meta.env.DEV) console.error('[Releases] deleteFromServer failed:', error.message)
+    throw error
+  }
 }
 
 export async function syncAllReleases(): Promise<void> {
@@ -232,7 +243,7 @@ export async function syncAllReleases(): Promise<void> {
     })
     saveMasterIndex(merged)
   } catch (e) {
-    console.warn('[Release] syncAllReleases falhou — usando dados locais.', e)
+    if (import.meta.env.DEV) console.warn('[Release] syncAllReleases falhou — usando dados locais.', e)
   }
 }
 

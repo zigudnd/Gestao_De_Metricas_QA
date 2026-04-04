@@ -165,6 +165,23 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
   const [search, setSearch] = useState('')
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
 
+  // Cache all sprint details so each sprint is loaded from localStorage only once per render
+  const sprintDetailsCache = useMemo(() => {
+    const cache = new Map<string, SprintDetail>()
+    const allSprints = getMasterIndex()
+    for (const release of releases.filter((r) => r.status !== 'concluida')) {
+      const linked = allSprints.filter(
+        (s) => s.releaseId === release.id && (s.sprintType === 'regressivo' || s.sprintType === 'integrado'),
+      )
+      for (const sp of linked) {
+        if (!cache.has(sp.id)) {
+          cache.set(sp.id, computeSprintDetail(sp.id, sp))
+        }
+      }
+    }
+    return cache
+  }, [releases])
+
   // Build rows from releases + linked sprints
   const rows = useMemo<RegressivoRow[]>(() => {
     const allSprints = getMasterIndex()
@@ -180,7 +197,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
       if (linkedSprints.length === 0 && release.squads.length === 0) continue
 
       // Aggregate metrics from linked sprints (detailed)
-      const details = linkedSprints.map((s) => computeSprintDetail(s.id, s))
+      const details = linkedSprints.map((s) => sprintDetailsCache.get(s.id) || computeSprintDetail(s.id, s))
       const totalTests = details.reduce((a, d) => a + d.totalTests, 0)
       const executedTests = details.reduce((a, d) => a + d.executed, 0)
       const passed = details.reduce((a, d) => a + d.passed, 0)
@@ -220,7 +237,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
     }
 
     return result.sort((a, b) => a.daysLeft - b.daysLeft)
-  }, [releases])
+  }, [releases, sprintDetailsCache])
 
   // Filter + search
   const filtered = useMemo(() => {
@@ -346,7 +363,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                     cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center',
                     background: isOpen ? 'var(--color-blue-light)' : 'var(--color-surface)',
                   }}
-                  onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = '#f5f9ff' }}
+                  onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--color-blue-light)' }}
                   onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--color-surface)' }}
                 >
                   <div>
@@ -385,7 +402,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
 
                 {/* Expanded detail with full metrics */}
                 {isOpen && (
-                  <div style={{ padding: '16px 18px', background: '#f0f7ff', borderBottom: '1px solid var(--color-border)' }}>
+                  <div style={{ padding: '16px 18px', background: 'var(--color-blue-light)', borderBottom: '1px solid var(--color-border)' }}>
                     {/* KPIs detalhados */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 14 }}>
                       {[
@@ -429,7 +446,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 14 }}>
                       {row.sprints.map((sp) => {
-                        const detail = computeSprintDetail(sp.id, sp)
+                        const detail = sprintDetailsCache.get(sp.id)!
                         const spClr = progColor(detail.execPct)
                         const squadLabel = sp.squad || sp.title
                         const isConcluida = sp.status === 'concluida'
@@ -462,8 +479,8 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                               {sp.sprintType && (
                                 <span style={{
                                   fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 8,
-                                  background: sp.sprintType === 'regressivo' ? '#f9731618' : 'var(--color-blue-light)',
-                                  color: sp.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
+                                  background: sp.sprintType === 'regressivo' ? 'var(--color-amber-light)' : 'var(--color-blue-light)',
+                                  color: sp.sprintType === 'regressivo' ? 'var(--color-amber)' : 'var(--color-blue-text)',
                                   flexShrink: 0,
                                 }}>
                                   {sp.sprintType === 'regressivo' ? 'REG' : 'INT'}

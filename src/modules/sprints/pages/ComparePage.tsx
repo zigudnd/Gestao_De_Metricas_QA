@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { memo, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Chart as ChartJS,
@@ -16,6 +16,7 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { Line, Bar, Radar } from 'react-chartjs-2'
 import { loadSprintsForComparison, type SprintKPIs } from '../services/compareService'
+import { PALETTE, PALETTE_BG, colorHealth, colorExec, colorCapacidade, colorInverted, colorMttr, colorRetest, colorBlocked } from '@/lib/chartColors'
 
 ChartJS.register(
   CategoryScale, LinearScale, RadialLinearScale,
@@ -23,21 +24,6 @@ ChartJS.register(
   Title, Tooltip, Legend, Filler,
   ChartDataLabels,
 )
-
-// ─── Palette ──────────────────────────────────────────────────────────────────
-
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
-const PALETTE_BG = PALETTE.map((c) => c + '33')
-
-// ─── Color helpers ────────────────────────────────────────────────────────────
-
-function colorHealth(v: number)    { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
-function colorExec(v: number)      { return v >= 80 ? '#10b981' : v >= 50 ? '#f59e0b' : '#ef4444' }
-function colorCapacidade(v: number){ return v >= 90 ? '#10b981' : v >= 70 ? '#f59e0b' : '#ef4444' }
-function colorInverted(v: number)  { return v === 0 ? '#10b981' : v <= 3  ? '#f59e0b' : '#ef4444' }
-function colorMttr(v: number)      { return v === 0 ? '#10b981' : v <= 24 ? '#f59e0b' : '#ef4444' }
-function colorRetest(v: number)    { return v === 0 ? '#10b981' : v <= 20 ? '#f59e0b' : '#ef4444' }
-function colorBlocked(v: number)   { return v === 0 ? '#10b981' : v <= 8  ? '#f59e0b' : '#ef4444' }
 
 // ─── KPI row definitions ──────────────────────────────────────────────────────
 
@@ -82,9 +68,9 @@ function lineOptions(title: string, maxY?: number, unit = '') {
         ...BASE_DATALABEL,
         align: 'top' as const,
         anchor: 'center' as const,
-        color: (ctx: any) => ctx.dataset.borderColor as string,
+        color: (ctx: unknown) => (ctx as { dataset: { borderColor: string } }).dataset.borderColor,
         backgroundColor: 'rgba(255,255,255,0.85)',
-        borderColor: (ctx: any) => ctx.dataset.borderColor as string,
+        borderColor: (ctx: unknown) => (ctx as { dataset: { borderColor: string } }).dataset.borderColor,
         borderWidth: 1,
         formatter: (v: number) => `${v}${unit}`,
       },
@@ -160,7 +146,7 @@ function radarOptions(title: string) {
 
 // ─── ChartCard ────────────────────────────────────────────────────────────────
 
-function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
+const ChartCard = memo(function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
     <div style={{
       background: 'var(--color-surface)',
@@ -173,7 +159,7 @@ function ChartCard({ title, children, fullWidth }: { title: string; children: Re
       {children}
     </div>
   )
-}
+})
 
 // ─── ComparePage ─────────────────────────────────────────────────────────────
 

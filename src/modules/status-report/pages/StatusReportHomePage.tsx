@@ -150,7 +150,7 @@ export function StatusReportHomePage() {
     const newId = 'sr_' + Date.now()
     const now = new Date().toISOString()
     const cloned = normalizeState({
-      ...JSON.parse(JSON.stringify(source)),
+      ...structuredClone(source),
       id: newId,
       config: { ...source.config, title: source.config.title + ' (cópia)' },
       createdAt: now,
@@ -257,6 +257,14 @@ export function StatusReportHomePage() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <style>{`
+        .sr-home-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .sr-home-fav-hover:not([data-active="true"]):hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber-mid); }
+        .sr-home-btn-blue:hover { background: var(--color-blue-light); border-color: var(--color-blue); color: var(--color-blue-text); }
+        .sr-home-btn-green:hover { background: var(--color-green-light); border-color: var(--color-green-mid); color: var(--color-green); }
+        .sr-home-btn-amber:hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber); }
+        .sr-home-btn-red:hover { background: var(--color-red-light); border-color: var(--color-red-mid); color: var(--color-red); }
+      `}</style>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -448,8 +456,7 @@ export function StatusReportHomePage() {
                 transition: 'box-shadow 0.15s',
               }}
               onClick={() => navigate(`/status-report/${report.id}`)}
-              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+              className="sr-home-card-hover"
             >
               {/* Favorite star */}
               <button
@@ -466,20 +473,8 @@ export function StatusReportHomePage() {
                   fontSize: 14, padding: '0 8px',
                   transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                 }}
-                onMouseEnter={(e) => {
-                  if (!report.favorite) {
-                    e.currentTarget.style.background = 'var(--color-amber-light)'
-                    e.currentTarget.style.borderColor = 'var(--color-amber-mid)'
-                    e.currentTarget.style.color = 'var(--color-amber-mid)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!report.favorite) {
-                    e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.borderColor = 'transparent'
-                    e.currentTarget.style.color = 'var(--color-text-3)'
-                  }
-                }}
+                className="sr-home-fav-hover"
+                data-active={report.favorite ? 'true' : undefined}
               >
                 {report.favorite ? '★' : '☆'}
               </button>
@@ -531,8 +526,7 @@ export function StatusReportHomePage() {
                       fontSize: 12, fontWeight: 600, padding: '0 10px',
                       transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.borderColor = 'var(--color-blue)'; e.currentTarget.style.color = 'var(--color-blue-text)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                    className="sr-home-btn-blue"
                   >
                     <span style={{ fontSize: 14 }}>↩</span>
                     <span style={{ fontSize: 11 }}>Reativar</span>
@@ -549,8 +543,7 @@ export function StatusReportHomePage() {
                       fontSize: 12, fontWeight: 600, padding: '0 10px',
                       transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-green-light)'; e.currentTarget.style.borderColor = 'var(--color-green-mid)'; e.currentTarget.style.color = 'var(--color-green)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                    className="sr-home-btn-green"
                   >
                     <span style={{ fontSize: 14 }}>✓</span>
                     <span style={{ fontSize: 11 }}>Concluir</span>
@@ -567,8 +560,7 @@ export function StatusReportHomePage() {
                     fontSize: 12, fontWeight: 600, padding: '0 10px',
                     transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.borderColor = 'var(--color-blue)'; e.currentTarget.style.color = 'var(--color-blue-text)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  className="sr-home-btn-blue"
                 >
                   <span style={{ fontSize: 14 }}>⧉</span>
                   <span style={{ fontSize: 11 }}>Duplicar</span>
@@ -584,8 +576,7 @@ export function StatusReportHomePage() {
                     fontSize: 12, fontWeight: 600, padding: '0 10px',
                     transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-amber-light)'; e.currentTarget.style.borderColor = 'var(--color-amber-mid)'; e.currentTarget.style.color = 'var(--color-amber)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  className="sr-home-btn-amber"
                 >
                   <span style={{ fontSize: 14 }}>↗</span>
                   <span style={{ fontSize: 11 }}>Migrar</span>
@@ -601,8 +592,7 @@ export function StatusReportHomePage() {
                     fontSize: 12, fontWeight: 600, padding: '0 10px',
                     transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)'; e.currentTarget.style.borderColor = 'var(--color-red-mid)'; e.currentTarget.style.color = 'var(--color-red)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
+                  className="sr-home-btn-red"
                 >
                   <span style={{ fontSize: 13 }}>✕</span>
                   <span style={{ fontSize: 11 }}>Excluir</span>

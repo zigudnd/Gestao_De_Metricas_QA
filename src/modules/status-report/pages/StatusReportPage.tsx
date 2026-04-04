@@ -89,6 +89,8 @@ export function StatusReportPage() {
     const text = generateClipboardText(config, sections, items)
     navigator.clipboard.writeText(text).then(() => {
       showToast('Relatório copiado para a área de transferência', 'success', { duration: 2500 })
+    }).catch(() => {
+      showToast('Erro ao copiar para a área de transferência', 'error')
     })
   }
 

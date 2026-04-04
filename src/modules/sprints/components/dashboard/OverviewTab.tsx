@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, BarElement, LineElement, PointElement,
@@ -247,13 +248,13 @@ export function OverviewTab() {
               const active = filter.size === 0 || filter.has(String(suite.id))
               const cnt = state.features.filter((f) => String(f.suiteId) === String(suite.id)).length
               return (
-                <button key={suite.id} onClick={() => toggleSuiteFilter(String(suite.id))} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, border: `0.5px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`, background: active ? 'var(--color-blue)' : 'transparent', color: active ? '#fff' : 'var(--color-text-2)', fontWeight: 600, fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
+                <button key={suite.id} onClick={() => toggleSuiteFilter(String(suite.id))} aria-label={`Filtrar suite ${suite.name || 'Suite'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, border: `0.5px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`, background: active ? 'var(--color-blue)' : 'transparent', color: active ? '#fff' : 'var(--color-text-2)', fontWeight: 600, fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
                   {suite.name || 'Suite'} <span style={{ opacity: 0.75 }}>{cnt}f</span>
                 </button>
               )
             })}
             {filter.size > 0 && (
-              <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '0.5px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
+              <button onClick={clearSuiteFilter} aria-label="Limpar filtros de suite" style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '0.5px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
                 ✕ Todas
               </button>
             )}
@@ -403,7 +404,7 @@ export function OverviewTab() {
               plugins: {
                 legend: { position: 'top' as const, labels: LEGEND_LABELS },
                 datalabels: {
-                  display: (ctx: any) => ctx.datasetIndex === 1 && ctx.dataset.data[ctx.dataIndex] !== null,
+                  display: (ctx: { datasetIndex: number; dataIndex: number; dataset: { data: (number | null)[] } }) => ctx.datasetIndex === 1 && ctx.dataset.data[ctx.dataIndex] !== null,
                   anchor: 'end' as const, align: 'top' as const, offset: 2,
                   color: '#378ADD', font: { size: 9, weight: 'bold' as const },
                   formatter: (v: number | null) => v !== null && v >= 0 ? v : '',
@@ -759,7 +760,7 @@ export function OverviewTab() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
+const HeroCard = memo(function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
   label: string; value: string | number; sub?: string; valueColor?: string; barColor?: string; highlight?: boolean
 }) {
   return (
@@ -777,9 +778,9 @@ function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: barColor ?? '#6b7280' }} />
     </div>
   )
-}
+})
 
-function KpiCard({ label, value, sub, valueColor, borderColor }: {
+const KpiCard = memo(function KpiCard({ label, value, sub, valueColor, borderColor }: {
   label: string; value: string | number; sub?: string; valueColor?: string; borderColor?: string
 }) {
   return (
@@ -789,9 +790,9 @@ function KpiCard({ label, value, sub, valueColor, borderColor }: {
       {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 4 }}>{sub}</div>}
     </div>
   )
-}
+})
 
-function Card({ title, icon, pill, children }: { title: string; icon?: React.ReactNode; pill?: string; children: React.ReactNode }) {
+const Card = memo(function Card({ title, icon, pill, children }: { title: string; icon?: React.ReactNode; pill?: string; children: React.ReactNode }) {
   return (
     <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -808,9 +809,9 @@ function Card({ title, icon, pill, children }: { title: string; icon?: React.Rea
       <div style={{ padding: '12px 16px' }}>{children}</div>
     </div>
   )
-}
+})
 
-function Section({ title, icon, count, children }: { title: string; icon: string; count: number; children: React.ReactNode }) {
+const Section = memo(function Section({ title, icon, count, children }: { title: string; icon: string; count: number; children: React.ReactNode }) {
   return (
     <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -821,21 +822,21 @@ function Section({ title, icon, count, children }: { title: string; icon: string
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
     </div>
   )
-}
+})
 
-function EmptyOk({ label }: { label: string }) {
+const EmptyOk = memo(function EmptyOk({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: 'var(--color-green-light)', borderRadius: 8, border: '1px dashed var(--color-green-mid)', fontSize: 13 }}>
       ✅ {label}
     </div>
   )
-}
+})
 
-function Badge({ label, color }: { label: string; color: string }) {
+const Badge = memo(function Badge({ label, color }: { label: string; color: string }) {
   return (
     <span style={{ fontSize: 10, background: color, color: '#fff', padding: '3px 8px', borderRadius: 12, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0 }}>{label}</span>
   )
-}
+})
 
 function alertCard(bg: string, border: string, accent: string): React.CSSProperties {
   return { padding: '12px 14px', background: bg, border: `1px solid ${border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8 }

@@ -13,14 +13,11 @@ import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 import { useReleaseStore } from '@/modules/releases/store/releaseStore'
 import type { SprintType } from '../types/sprint.types'
 import { useAuthStore } from '@/modules/auth/store/authStore'
+import { SprintCard } from '../components/home/SprintCard'
+import { Modal } from '../components/home/Modal'
+import { FilterBar, type Filters } from '../components/home/FilterBar'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatDateBR(dateStr: string): string {
-  if (!dateStr) return ''
-  const [y, m, d] = dateStr.split('-')
-  return `${d}/${m}/${y}`
-}
 
 function sprintStatus(s: SprintIndexEntry): 'completed' | 'active' {
   if (s.status === 'concluida') return 'completed'
@@ -34,14 +31,6 @@ function sprintYear(s: SprintIndexEntry): string | null {
 }
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
-
-interface Filters {
-  squad: string
-  status: 'all' | 'active' | 'completed' | 'favorite'
-  year: string
-  search: string
-  tipo: 'all' | 'squad' | 'regressivo' | 'integrado'
-}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -64,6 +53,7 @@ export function HomePage() {
   const [newSprintType, setNewSprintType] = useState<SprintType>('squad')
   const [newReleaseId, setNewReleaseId] = useState('')
   const { releases: allReleases, load: loadReleases } = useReleaseStore()
+  const [loading, setLoading] = useState(true)
 
   // Trigger criado pela Topbar via DOM (manter compatibilidade)
   useEffect(() => {
@@ -76,11 +66,14 @@ export function HomePage() {
 
   useEffect(() => {
     setSprints(getMasterIndex())
-    listMySquads().then(setAvailableSquads).catch(() => {})
     loadReleases()
+    const promises: Promise<unknown>[] = [
+      listMySquads().then(setAvailableSquads).catch((e) => { if (import.meta.env.DEV) console.warn('[Sprints] Failed to load squads:', e) }),
+    ]
     if (!isAdmin) {
-      getMySquadIds().then(setMySquadIds).catch(() => setMySquadIds([]))
+      promises.push(getMySquadIds().then(setMySquadIds).catch((e) => { if (import.meta.env.DEV) console.warn('[Sprints] Failed to load squad IDs:', e); setMySquadIds([]) }))
     }
+    Promise.all(promises).finally(() => setLoading(false))
   }, []) // eslint-disable-line
 
   useEffect(() => {
@@ -96,7 +89,7 @@ export function HomePage() {
     const title = newTitle.trim()
     if (!title) return
     const sprintId = 'sprint_' + Date.now()
-    const newState = JSON.parse(JSON.stringify(DEFAULT_STATE))
+    const newState = structuredClone(DEFAULT_STATE)
     newState.config.title = title
     // Se selecionou um squad, usa o nome dele como texto; senão usa campo livre
     const selectedSquad = availableSquads.find((s) => s.id === newSquadId)
@@ -135,7 +128,7 @@ export function HomePage() {
       return
     }
     const newId = 'sprint_' + Date.now()
-    const cloned = JSON.parse(JSON.stringify(source))
+    const cloned = structuredClone(source)
     cloned.config.title = (source.config.title || 'Sprint') + ' (copia)'
     // Reset execution data
     for (const f of cloned.features) {
@@ -192,7 +185,7 @@ export function HomePage() {
       reload()
       navigate(`/sprints/${sprintId}`)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao importar sprint.')
+      if (import.meta.env.DEV) console.error(err instanceof Error ? err.message : 'Erro ao importar sprint.')
     } finally {
       if (importInputRef.current) importInputRef.current.value = ''
     }
@@ -272,8 +265,23 @@ export function HomePage() {
 
   const hasFilters = filters.squad !== 'all' || filters.status !== 'all' || filters.year !== 'all' || filters.search !== '' || filters.tipo !== 'all'
 
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+      <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
+    </div>
+  )
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <style>{`
+        .hp-new-sprint-hover:not([data-disabled="true"]):hover { border-color: var(--color-blue) !important; background: var(--color-blue-light) !important; }
+        .hp-fav-hover:not([data-active="true"]):hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber-mid); }
+        .hp-btn-blue:hover { background: var(--color-blue-light); border-color: var(--color-blue); color: var(--color-blue-text); }
+        .hp-btn-red:hover { background: var(--color-red-light); border-color: var(--color-red-mid); color: var(--color-red); }
+        .hp-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+        .hp-card-hover:hover .hp-drag-handle { opacity: 0.7 !important; }
+        .hp-card-hover:hover .hp-actions { opacity: 1 !important; }
+      `}</style>
       {/* Trigger oculto para o botão do Topbar */}
       <button id="create-sprint-trigger" onClick={() => setShowCreate(true)} style={{ display: 'none' }} aria-hidden />
 
@@ -303,7 +311,7 @@ export function HomePage() {
                 Selecione 2 ou mais sprints
               </button>
               {selectedIds.size >= 2 && (
-                <button onClick={handleCompare} style={btnPrimary}>
+                <button data-testid="sprint-btn-compare" onClick={handleCompare} style={btnPrimary}>
                   Comparar ({selectedIds.size})
                 </button>
               )}
@@ -324,125 +332,15 @@ export function HomePage() {
 
       {/* Filter bar */}
       {sprints.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            flexWrap: 'wrap',
-            padding: '10px 14px',
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 10,
-            marginBottom: 18,
-          }}
-        >
-          <div style={{ position: 'relative', minWidth: 200 }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar sprint..."
-              value={filters.search}
-              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '6px 10px 6px 32px',
-                fontSize: 13,
-                borderRadius: 8,
-                border: '1px solid var(--color-border-md)',
-                background: 'var(--color-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-
-          <FilterGroup
-            label="Squad"
-            value={filters.squad}
-            onChange={(v) => setFilters((f) => ({ ...f, squad: v }))}
-          >
-            <option value="all">Todos</option>
-            {squads.map((sq) => (
-              <option key={sq} value={sq}>{sq}</option>
-            ))}
-          </FilterGroup>
-
-          <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-
-          <FilterGroup
-            label="Status"
-            value={filters.status}
-            onChange={(v) => setFilters((f) => ({ ...f, status: v as Filters['status'] }))}
-          >
-            <option value="all">Todos</option>
-            <option value="active">Em Andamento</option>
-            <option value="completed">Concluída</option>
-            <option value="favorite">⭐ Favoritas</option>
-          </FilterGroup>
-
-          {years.length > 0 && (
-            <>
-              <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-              <FilterGroup
-                label="Ano"
-                value={filters.year}
-                onChange={(v) => setFilters((f) => ({ ...f, year: v }))}
-              >
-                <option value="all">Todos</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </FilterGroup>
-            </>
-          )}
-
-          <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-
-          <FilterGroup
-            label="Tipo"
-            value={filters.tipo}
-            onChange={(v) => setFilters((f) => ({ ...f, tipo: v as Filters['tipo'] }))}
-          >
-            <option value="all">Todos</option>
-            <option value="squad">🎯 Sprint Squad</option>
-            <option value="regressivo">🔄 Regressivo</option>
-            <option value="integrado">🔗 Integrado</option>
-          </FilterGroup>
-
-          {hasFilters && (
-            <button
-              onClick={() => setFilters({ squad: 'all', status: 'all', year: 'all', search: '', tipo: 'all' })}
-              style={{
-                marginLeft: 'auto',
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '4px 10px',
-                borderRadius: 20,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent',
-                color: 'var(--color-text-2)',
-                cursor: 'pointer',
-              }}
-            >
-              ✕ Limpar
-            </button>
-          )}
-
-          <span
-            style={{
-              marginLeft: hasFilters ? 0 : 'auto',
-              fontSize: 12,
-              color: 'var(--color-text-3)',
-            }}
-          >
-            {hasFilters
-              ? `${filtered.length} de ${sprints.length} sprints`
-              : `${sprints.length} sprint${sprints.length !== 1 ? 's' : ''}`}
-          </span>
-        </div>
+        <FilterBar
+          filters={filters}
+          setFilters={setFilters}
+          squads={squads}
+          years={years}
+          hasFilters={hasFilters}
+          filteredCount={filtered.length}
+          totalCount={sprints.length}
+        />
       )}
 
       {/* Empty state */}
@@ -486,6 +384,8 @@ export function HomePage() {
             {/* Nova sprint — compact */}
             <div
               onClick={() => { if (!compareMode) setShowCreate(true) }}
+              className="hp-new-sprint-hover"
+              data-disabled={compareMode ? 'true' : undefined}
               style={{
                 background: 'var(--color-surface)',
                 border: '1.5px dashed var(--color-border-md)',
@@ -497,16 +397,6 @@ export function HomePage() {
                 cursor: compareMode ? 'default' : 'pointer',
                 opacity: compareMode ? 0.4 : 1,
                 transition: 'border-color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                if (compareMode) return
-                e.currentTarget.style.borderColor = 'var(--color-blue)'
-                e.currentTarget.style.background = 'var(--color-blue-light)'
-              }}
-              onMouseLeave={(e) => {
-                if (compareMode) return
-                e.currentTarget.style.borderColor = 'var(--color-border-md)'
-                e.currentTarget.style.background = 'var(--color-surface)'
               }}
             >
               <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
@@ -536,6 +426,8 @@ export function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 16 }}>
           <div
             onClick={() => { if (!compareMode) setShowCreate(true) }}
+            className="hp-new-sprint-hover"
+            data-disabled={compareMode ? 'true' : undefined}
             style={{
               background: 'var(--color-surface)',
               border: '1.5px dashed var(--color-border-md)',
@@ -547,16 +439,6 @@ export function HomePage() {
               cursor: compareMode ? 'default' : 'pointer',
               opacity: compareMode ? 0.4 : 1,
               transition: 'border-color 0.15s, background 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              if (compareMode) return
-              e.currentTarget.style.borderColor = 'var(--color-blue)'
-              e.currentTarget.style.background = 'var(--color-blue-light)'
-            }}
-            onMouseLeave={(e) => {
-              if (compareMode) return
-              e.currentTarget.style.borderColor = 'var(--color-border-md)'
-              e.currentTarget.style.background = 'var(--color-surface)'
             }}
           >
             <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
@@ -608,6 +490,7 @@ export function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div
             onClick={() => setShowCreate(true)}
+            className="hp-new-sprint-hover"
             style={{
               background: 'var(--color-surface)',
               border: '1.5px dashed var(--color-border-md)',
@@ -618,14 +501,6 @@ export function HomePage() {
               gap: 10,
               cursor: 'pointer',
               transition: 'border-color 0.15s, background 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--color-blue)'
-              e.currentTarget.style.background = 'var(--color-blue-light)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--color-border-md)'
-              e.currentTarget.style.background = 'var(--color-surface)'
             }}
           >
             <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
@@ -761,391 +636,6 @@ export function HomePage() {
           </div>
         </Modal>
       )}
-    </div>
-  )
-}
-
-// ─── SprintCard (compact list style) ──────────────────────────────────────────
-
-interface SprintCardProps {
-  sprint: SprintIndexEntry
-  compareMode: boolean
-  isSelected: boolean
-  onClick: () => void
-  onDragStart: (e: React.DragEvent, id: string) => void
-  onDrop: (e: React.DragEvent, id: string) => void
-  onToggleFavorite: (e: React.MouseEvent, id: string) => void
-  onDuplicate: (e: React.MouseEvent) => void
-  onDelete: (e: React.MouseEvent) => void
-}
-
-function SprintCard({
-  sprint,
-  compareMode,
-  isSelected,
-  onClick,
-  onDragStart,
-  onDrop,
-  onToggleFavorite,
-  onDuplicate,
-  onDelete,
-}: SprintCardProps) {
-  const [hovered, setHovered] = useState(false)
-  const status = sprintStatus(sprint)
-  const pct = sprint.totalTests > 0 ? Math.round((sprint.totalExec / sprint.totalTests) * 100) : 0
-  const period =
-    sprint.startDate && sprint.endDate
-      ? `${formatDateBR(sprint.startDate)} — ${formatDateBR(sprint.endDate)}`
-      : 'Período não definido'
-
-  const dotColor = status === 'completed' ? 'var(--color-green)' : 'var(--color-blue)'
-
-  const subtitle = [
-    sprint.squad,
-    period,
-    `${pct}% · ${sprint.totalExec}/${sprint.totalTests} testes`,
-  ].filter(Boolean).join('  ·  ')
-
-  return (
-    <div
-      onClick={onClick}
-      onDragOver={(e) => { if (!compareMode) e.preventDefault() }}
-      onDrop={(e) => { if (!compareMode) onDrop(e, sprint.id) }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: 'var(--color-surface)',
-        border: isSelected
-          ? '1.5px solid var(--color-blue)'
-          : '0.5px solid var(--color-border)',
-        borderRadius: 10,
-        padding: '10px 16px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 10,
-        cursor: 'pointer',
-        transition: 'box-shadow 0.15s, border-color 0.15s',
-        boxShadow: isSelected
-          ? '0 0 0 3px rgba(59,130,246,0.12)'
-          : hovered ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-        position: 'relative',
-      }}
-    >
-      {/* Left: checkbox (compare) or drag handle + dot */}
-      {compareMode ? (
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onClick()}
-          onClick={(e) => e.stopPropagation()}
-          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-blue)', marginTop: 2, flexShrink: 0 }}
-        />
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginTop: 3 }}>
-          <span
-            draggable
-            onDragStart={(e) => { e.stopPropagation(); onDragStart(e, sprint.id) }}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              color: 'var(--color-text-3)',
-              cursor: 'grab',
-              fontSize: 10,
-              opacity: hovered ? 0.7 : 0,
-              transition: 'opacity 0.15s',
-              lineHeight: 1,
-            }}
-            title="Arrastar para reordenar"
-          >
-            ⠿
-          </span>
-          <div style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: dotColor, flexShrink: 0,
-          }} />
-        </div>
-      )}
-
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontSize: 13, fontWeight: 700, color: 'var(--color-text)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {sprint.title}
-          </span>
-          {sprint.sprintType && sprint.sprintType !== 'squad' && (
-            <span style={{
-              fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 8, flexShrink: 0,
-              background: sprint.sprintType === 'regressivo' ? '#f97316' + '18' : 'var(--color-blue-light)',
-              color: sprint.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
-              textTransform: 'uppercase',
-            }}>
-              {sprint.sprintType === 'regressivo' ? '🔄 REG' : '🔗 INT'}
-              {sprint.releaseVersion && ` · ${sprint.releaseVersion}`}
-            </span>
-          )}
-          {sprint.favorite && (
-            <span style={{ fontSize: 11, color: 'var(--color-amber-mid)', flexShrink: 0 }}>★</span>
-          )}
-          {compareMode && isSelected && (
-            <span style={{
-              fontSize: 10, fontWeight: 600, color: 'var(--color-blue-text)',
-              background: 'var(--color-blue-light)', padding: '1px 6px',
-              borderRadius: 10, flexShrink: 0,
-            }}>
-              selecionada
-            </span>
-          )}
-        </div>
-        <div style={{
-          fontSize: 12, color: 'var(--color-text-2)', marginTop: 2,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {subtitle}
-        </div>
-        {/* Mini progress bar */}
-        <div style={{
-          height: 3, borderRadius: 2,
-          background: 'var(--color-border)',
-          marginTop: 6, maxWidth: 180,
-        }}>
-          <div style={{
-            height: '100%', width: `${pct}%`,
-            background: dotColor, borderRadius: 2,
-            transition: 'width 0.3s',
-          }} />
-        </div>
-      </div>
-
-      {/* Right actions — always visible at low opacity, full on hover */}
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-          opacity: compareMode ? 0 : (hovered ? 1 : 0.4),
-          transition: 'opacity 0.15s',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Favoritar */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(e, sprint.id) }}
-          aria-label={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          aria-pressed={sprint.favorite}
-          style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
-            background: sprint.favorite ? 'var(--color-amber-light)' : 'transparent',
-            color: sprint.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 4,
-            fontSize: 14, padding: '0 8px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-          onMouseEnter={(e) => {
-            if (!sprint.favorite) {
-              e.currentTarget.style.background = 'var(--color-amber-light)'
-              e.currentTarget.style.borderColor = 'var(--color-amber-mid)'
-              e.currentTarget.style.color = 'var(--color-amber-mid)'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!sprint.favorite) {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.borderColor = 'transparent'
-              e.currentTarget.style.color = 'var(--color-text-3)'
-            }
-          }}
-        >
-          {sprint.favorite ? '★' : '☆'}
-        </button>
-
-        {/* Duplicar */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onDuplicate(e) }}
-          aria-label="Duplicar sprint"
-          style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
-            background: 'transparent',
-            color: 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontSize: 12, fontWeight: 600, padding: '0 10px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-blue-light)'
-            e.currentTarget.style.borderColor = 'var(--color-blue)'
-            e.currentTarget.style.color = 'var(--color-blue-text)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.borderColor = 'transparent'
-            e.currentTarget.style.color = 'var(--color-text-3)'
-          }}
-        >
-          <span style={{ fontSize: 14 }}>⧉</span>
-          <span style={{ fontSize: 11 }}>Duplicar</span>
-        </button>
-
-        {/* Excluir */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(e) }}
-          aria-label="Excluir sprint"
-          style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
-            background: 'transparent',
-            color: 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontSize: 12, fontWeight: 600, padding: '0 10px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-red-light)'
-            e.currentTarget.style.borderColor = 'var(--color-red-mid)'
-            e.currentTarget.style.color = 'var(--color-red)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.borderColor = 'transparent'
-            e.currentTarget.style.color = 'var(--color-text-3)'
-          }}
-        >
-          <span style={{ fontSize: 13 }}>✕</span>
-          <span style={{ fontSize: 11 }}>Excluir</span>
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function FilterGroup({
-  label,
-  value,
-  onChange,
-  children,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  children: React.ReactNode
-}) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: 'var(--color-text-3)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          fontSize: 12,
-          fontWeight: 500,
-          color: 'var(--color-text)',
-          background: 'var(--color-bg)',
-          border: '1px solid var(--color-border-md)',
-          borderRadius: 6,
-          padding: '3px 24px 3px 8px',
-          cursor: 'pointer',
-          fontFamily: 'var(--font-family-sans)',
-          appearance: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 8px center',
-        }}
-      >
-        {children}
-      </select>
-    </div>
-  )
-}
-
-function Modal({
-  title,
-  onClose,
-  danger,
-  children,
-}: {
-  title: string
-  onClose: () => void
-  danger?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: 'var(--color-surface)',
-          borderRadius: 14,
-          padding: 24,
-          width: '100%',
-          maxWidth: 440,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 18,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: danger ? 'var(--color-red)' : 'var(--color-text)',
-              margin: 0,
-            }}
-          >
-            {title}
-          </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 20,
-              color: 'var(--color-text-2)',
-              cursor: 'pointer',
-              lineHeight: 1,
-              padding: '0 4px',
-            }}
-          >
-            ×
-          </button>
-        </div>
-        {children}
-      </div>
     </div>
   )
 }

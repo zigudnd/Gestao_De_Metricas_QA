@@ -33,7 +33,7 @@ export function CombinadosTab() {
       {/* 1. DoR */}
       <SectionList
         title="Definition of Ready (DoR)"
-        color="#378ADD"
+        color="var(--color-blue)"
         items={dor}
         onAdd={addDorItem}
         onRemove={removeDorItem}
@@ -44,7 +44,7 @@ export function CombinadosTab() {
       {/* 2. DoD */}
       <SectionList
         title="Definition of Done (DoD)"
-        color="#10b981"
+        color="var(--color-green-mid)"
         items={dod}
         onAdd={addDodItem}
         onRemove={removeDodItem}
@@ -55,7 +55,7 @@ export function CombinadosTab() {
       {/* 3. Cerimonias */}
       <div style={{
         border: '0.5px solid var(--color-border)',
-        borderLeft: '4px solid #f59e0b',
+        borderLeft: '4px solid var(--color-yellow)',
         borderRadius: 10, overflow: 'hidden', marginBottom: 12,
       }}>
         <button
@@ -74,7 +74,7 @@ export function CombinadosTab() {
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Cerimonias</span>
           <span style={{
             fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 10,
-            background: '#f59e0b18', color: '#f59e0b',
+            background: 'var(--color-yellow-light)', color: 'var(--color-yellow)',
           }}>{cerimonias.length}</span>
         </button>
 
@@ -114,7 +114,7 @@ export function CombinadosTab() {
                 disabled={!cerNome.trim()}
                 style={{
                   padding: '6px 14px', borderRadius: 6, border: 'none',
-                  background: cerNome.trim() ? '#f59e0b' : 'var(--color-border)',
+                  background: cerNome.trim() ? 'var(--color-yellow)' : 'var(--color-border)',
                   color: '#fff', fontSize: 12, fontWeight: 600,
                   cursor: cerNome.trim() ? 'pointer' : 'not-allowed',
                   fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
@@ -130,7 +130,7 @@ export function CombinadosTab() {
       {/* 4. Story Points */}
       <div style={{
         border: '0.5px solid var(--color-border)',
-        borderLeft: '4px solid #8b5cf6',
+        borderLeft: '4px solid var(--color-blue)',
         borderRadius: 10, overflow: 'hidden', marginBottom: 12,
       }}>
         <button
@@ -164,7 +164,7 @@ export function CombinadosTab() {
       {/* 5. Acordos */}
       <SectionList
         title="Acordos de Trabalho"
-        color="#06b6d4"
+        color="var(--color-blue)"
         items={acordos}
         onAdd={addAcordo}
         onRemove={removeAcordo}

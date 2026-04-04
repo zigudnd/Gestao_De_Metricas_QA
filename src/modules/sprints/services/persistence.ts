@@ -80,10 +80,10 @@ export const DEFAULT_STATE: SprintState = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeState(rawState: any): SprintState {
   const s: SprintState = rawState
-    ? JSON.parse(JSON.stringify(rawState))
-    : JSON.parse(JSON.stringify(DEFAULT_STATE))
+    ? structuredClone(rawState)
+    : structuredClone(DEFAULT_STATE)
 
-  if (!s.config) s.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG))
+  if (!s.config) s.config = structuredClone(DEFAULT_CONFIG)
 
   // ── Migração: dados antigos sem suites ──────────────────────────────────────
   if (!Array.isArray(s.suites) || s.suites.length === 0) {
@@ -113,7 +113,7 @@ export function normalizeState(rawState: any): SprintState {
   if (s.notes.operationalNotes === undefined) s.notes.operationalNotes = ''
   if (!s.reports || typeof s.reports !== 'object') s.reports = {}
   if (!Array.isArray(s.alignments)) s.alignments = []
-  if (!Array.isArray(s.features)) s.features = JSON.parse(JSON.stringify(DEFAULT_STATE.features))
+  if (!Array.isArray(s.features)) s.features = structuredClone(DEFAULT_STATE.features)
   if (!Array.isArray(s.blockers)) s.blockers = []
   if (!Array.isArray(s.bugs)) s.bugs = []
   if (!Array.isArray(s.responsibles)) s.responsibles = []
@@ -272,7 +272,8 @@ export function loadFromStorage(sprintId: string): SprintState | null {
     const raw = localStorage.getItem(STORAGE_KEY(sprintId))
     if (!raw) return null
     return normalizeState(JSON.parse(raw))
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Sprints] Failed to load from localStorage:', e)
     return null
   }
 }
@@ -281,7 +282,7 @@ export function saveToStorage(sprintId: string, state: SprintState): void {
   try {
     localStorage.setItem(STORAGE_KEY(sprintId), JSON.stringify(state))
   } catch (e) {
-    console.error('Erro ao salvar no localStorage:', e)
+    if (import.meta.env.DEV) console.error('Erro ao salvar no localStorage:', e)
   }
 }
 
@@ -291,7 +292,8 @@ export function getMasterIndex(): SprintIndexEntry[] {
   try {
     const raw = localStorage.getItem(MASTER_KEY)
     return raw ? JSON.parse(raw) : []
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Sprints] Failed to load master index:', e)
     return []
   }
 }
@@ -300,7 +302,7 @@ export function saveMasterIndex(index: SprintIndexEntry[]): void {
   try {
     localStorage.setItem(MASTER_KEY, JSON.stringify(index))
   } catch (e) {
-    console.error('Erro ao salvar Master Index:', e)
+    if (import.meta.env.DEV) console.error('Erro ao salvar Master Index:', e)
   }
 }
 
@@ -361,7 +363,8 @@ export async function loadFromServer(sprintId: string): Promise<SprintState | nu
       .single()
     if (error || !data) return null
     return normalizeState(data.data)
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Sprints] Failed to load from server:', e)
     return null
   }
 }
@@ -369,71 +372,85 @@ export async function loadFromServer(sprintId: string): Promise<SprintState | nu
 /**
  * Salva uma sprint no Supabase (upsert). Chamado pelo sprintStore a cada _commit.
  */
-export async function persistToServer(sprintId: string, state: SprintState): Promise<void> {
+export async function persistToServer(sprintId: string, state: SprintState, updatedAt?: string): Promise<void> {
   const entry = getMasterIndex().find((s) => s.id === sprintId)
   const status = entry?.status ?? 'ativa'
   const squad_id = entry?.squadId ?? null
-  await supabase.from('sprints').upsert({
+  const { error } = await supabase.from('sprints').upsert({
     id: sprintId,
     data: state,
     status,
     squad_id,
-    updated_at: new Date().toISOString(),
+    updated_at: updatedAt ?? new Date().toISOString(),
   })
+  if (error) {
+    if (import.meta.env.DEV) console.error('[Sprints] persistToServer failed:', error.message)
+    throw error
+  }
 }
 
+const LAST_SYNC_KEY = 'qaDashboardLastSync'
+
 /**
- * Ao iniciar o app, puxa todas as sprints do Supabase e popula o localStorage.
- * Garante que qualquer usuário veja as sprints criadas por outras pessoas.
+ * Incremental sync: fetches only sprints updated since the last sync timestamp.
+ * On first load (no timestamp), does a full sync for backward compatibility.
  */
 export async function syncAllFromSupabase(): Promise<void> {
   try {
-    const PAGE_SIZE = 100
-    const remoteIndex: SprintIndexEntry[] = []
-    let offset = 0
+    const lastSync = localStorage.getItem(LAST_SYNC_KEY) || '1970-01-01T00:00:00Z'
+    const now = new Date().toISOString()
 
-    // Paginação para evitar estouro de memória em projetos grandes
-    while (true) {
-      const { data, error } = await supabase
-        .from('sprints')
-        .select('id, data, status, squad_id, updated_at')
-        .range(offset, offset + PAGE_SIZE - 1)
-      if (error || !data || data.length === 0) break
+    // Fetch only updated records since last sync
+    const { data, error } = await supabase
+      .from('sprints')
+      .select('id, data, status, squad_id, updated_at')
+      .gt('updated_at', lastSync)
+      .order('updated_at', { ascending: true })
+      .limit(200)
 
-      for (const row of data) {
-        const state = normalizeState(row.data)
-        saveToStorage(row.id, state)
-        const totalTests = state.features.reduce((a: number, f: { tests?: number }) => a + (f.tests || 0), 0)
-        const totalExec = state.features.reduce((a: number, f: { exec?: number }) => a + (f.exec || 0), 0)
-        remoteIndex.push({
-          id: row.id,
-          title: state.config.title || 'S/ Título',
-          squad: state.config.squad || '',
-          squadId: row.squad_id ?? undefined,
-          startDate: state.config.startDate || '',
-          endDate: state.config.endDate || '',
-          totalTests,
-          totalExec,
-          updatedAt: row.updated_at,
-          status: row.status as 'ativa' | 'concluida',
-        })
-      }
-
-      if (data.length < PAGE_SIZE) break
-      offset += PAGE_SIZE
+    if (error) throw error
+    if (!data || data.length === 0) {
+      localStorage.setItem(LAST_SYNC_KEY, now)
+      return
     }
 
-    if (remoteIndex.length === 0) return
-
-    // Preserva flags locais (favorito, ordem manual) e mescla com os dados remotos
     const localIndex = getMasterIndex()
-    const merged = remoteIndex.map((remote) => {
-      const local = localIndex.find((l) => l.id === remote.id)
-      return { ...remote, favorite: local?.favorite }
-    })
-    saveMasterIndex(merged)
+
+    for (const row of data) {
+      const state = normalizeState(row.data)
+      const computed = computeFields(state)
+      saveToStorage(row.id, computed)
+
+      // Update index entry
+      const existing = localIndex.find((s) => s.id === row.id)
+      const entry: SprintIndexEntry = {
+        id: row.id,
+        title: state.config.title || 'S/ Título',
+        squad: state.config.squad || '',
+        squadId: row.squad_id ?? existing?.squadId,
+        sprintType: existing?.sprintType,
+        releaseId: existing?.releaseId,
+        releaseVersion: existing?.releaseVersion,
+        startDate: state.config.startDate || '',
+        endDate: state.config.endDate || '',
+        totalTests: computed.features.reduce((a, f) => a + (f.tests || 0), 0),
+        totalExec: computed.features.reduce((a, f) => a + (f.exec || 0), 0),
+        updatedAt: row.updated_at,
+        favorite: existing?.favorite,
+        status: row.status as SprintIndexEntry['status'],
+      }
+
+      const idx = localIndex.findIndex((s) => s.id === row.id)
+      if (idx >= 0) localIndex[idx] = { ...localIndex[idx], ...entry }
+      else localIndex.unshift(entry)
+    }
+
+    saveMasterIndex(localIndex)
+    localStorage.setItem(LAST_SYNC_KEY, now)
+
+    if (import.meta.env.DEV) console.log(`[Sync] ${data.length} sprint(s) sincronizada(s)`)
   } catch (e) {
-    console.warn('[Supabase] syncAllFromSupabase falhou — usando dados locais.', e)
+    if (import.meta.env.DEV) console.warn('[Supabase] syncAllFromSupabase falhou:', e)
   }
 }
 
@@ -441,23 +458,29 @@ export async function syncAllFromSupabase(): Promise<void> {
  * Remove uma sprint do Supabase. Fire-and-forget.
  */
 export async function deleteSprintFromSupabase(sprintId: string): Promise<void> {
-  await supabase.from('sprints').delete().eq('id', sprintId)
+  const { error } = await supabase.from('sprints').delete().eq('id', sprintId)
+  if (error) {
+    if (import.meta.env.DEV) console.error('[Sprints] deleteSprintFromSupabase failed:', error.message)
+    throw error
+  }
 }
 
-export function concludeSprint(sprintId: string): void {
+export async function concludeSprint(sprintId: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((s) => s.id === sprintId)
   if (idx === -1) return
   index[idx] = { ...index[idx], status: 'concluida' }
   saveMasterIndex(index)
-  supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
+  const { error } = await supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
+  if (error && import.meta.env.DEV) console.error('[Sprints] concludeSprint server update failed:', error.message)
 }
 
-export function reactivateSprint(sprintId: string): void {
+export async function reactivateSprint(sprintId: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((s) => s.id === sprintId)
   if (idx === -1) return
   index[idx] = { ...index[idx], status: 'ativa' }
   saveMasterIndex(index)
-  supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
+  const { error } = await supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
+  if (error && import.meta.env.DEV) console.error('[Sprints] reactivateSprint server update failed:', error.message)
 }

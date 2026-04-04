@@ -22,7 +22,7 @@ async function doPersistToServer(state: SquadConfigState) {
   try {
     await persistToServer(state)
   } catch (e) {
-    console.error('[SquadConfig] Erro ao sincronizar:', e)
+    if (import.meta.env.DEV) console.error('[SquadConfig] Erro ao sincronizar:', e)
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued) queueRemotePersist(state, 2000)
@@ -129,8 +129,8 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
           }
         })
         normalized.membros = [...efetivos, ...temporarios]
-      } catch {
-        // Fallback: manter membros existentes se falhar ao buscar squad
+      } catch (e) {
+        if (import.meta.env.DEV) console.warn('[SquadConfig] Failed to fetch squad members, keeping existing:', e)
       }
     }
 

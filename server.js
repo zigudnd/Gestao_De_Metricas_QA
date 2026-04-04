@@ -9,6 +9,35 @@ const { createClient } = require('@supabase/supabase-js');
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
+
+// ── Validation Schemas ──────────────────────────────────────────────────────
+const createUserSchema = z.object({
+  email: z.string().email('Email inválido').max(255),
+  display_name: z.string().min(1, 'Nome é obrigatório').max(100),
+});
+
+const resetPasswordSchema = z.object({
+  user_id: z.string().uuid('user_id deve ser UUID válido'),
+});
+
+const dashboardPayloadSchema = z.object({
+  payload: z.record(z.unknown()).refine(val => !Array.isArray(val), 'Payload não pode ser array'),
+});
+
+function validateBody(schema) {
+  return (req, res, next) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        details: result.error.issues.map(i => i.message),
+      });
+    }
+    req.validatedBody = result.data;
+    next();
+  };
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +86,30 @@ app.use('/api/', rateLimit({ windowMs: 60_000, max: 100 }));
 const adminLimiter = rateLimit({ windowMs: 60_000, max: 10 });
 const flushLimiter = rateLimit({ windowMs: 60_000, max: 30 });
 
+// ── Middleware: autenticação admin (requer global_role admin ou gerente) ──────
+async function requireAdminAuth(req, res, next) {
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token de autenticação não fornecido.' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+    if (authErr || !caller) return res.status(401).json({ error: 'Token inválido ou expirado.' });
+    const { data: callerProfile } = await supabaseAdmin.from('profiles').select('global_role').eq('id', caller.id).single();
+    if (!callerProfile || (callerProfile.global_role !== 'admin' && callerProfile.global_role !== 'gerente')) {
+      return res.status(403).json({ error: 'Apenas administradores podem executar esta ação.' });
+    }
+    req.caller = caller;
+    req.callerProfile = callerProfile;
+    next();
+  } catch (err) {
+    console.error('[requireAdminAuth] Falha:', err);
+    return res.status(401).json({ error: 'Falha na autenticação.' });
+  }
+}
+
 const KEY_REGEX = /^[a-zA-Z0-9_-]{1,80}$/;
 function validateKey(req, res, next) {
   if (!KEY_REGEX.test(req.params.projectKey)) {
@@ -94,7 +147,7 @@ app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return res.status(404).json({ message: 'Dashboard não encontrado no Supabase.' });
+      if (!data) return res.status(404).json({ error: 'Dashboard não encontrado no Supabase.' });
       
       return res.json(data);
     } else {
@@ -105,25 +158,21 @@ app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
         return res.json(JSON.parse(fileData));
       } catch (err) {
         if (err.code === 'ENOENT') {
-          return res.status(404).json({ message: 'Dashboard não encontrado localmente.' });
+          return res.status(404).json({ error: 'Dashboard não encontrado localmente.' });
         }
         throw err;
       }
     }
   } catch (error) {
     console.error(`Erro ao buscar dashboard (${STORAGE_TYPE}):`, error);
-    return res.status(500).json({ message: 'Erro ao buscar dashboard.' });
+    return res.status(500).json({ error: 'Erro ao buscar dashboard.' });
   }
 });
 
-app.put('/api/dashboard/:projectKey', validateKey, async (req, res) => {
+app.put('/api/dashboard/:projectKey', validateKey, validateBody(dashboardPayloadSchema), async (req, res) => {
   try {
     const { projectKey } = req.params;
-    const payload = req.body?.payload;
-
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      return res.status(400).json({ message: 'Payload inválido.' });
-    }
+    const { payload } = req.validatedBody;
 
     const row = {
       project_key: projectKey,
@@ -148,41 +197,13 @@ app.put('/api/dashboard/:projectKey', validateKey, async (req, res) => {
     }
   } catch (error) {
     console.error(`Erro ao salvar dashboard (${STORAGE_TYPE}):`, error);
-    return res.status(500).json({ message: 'Erro ao salvar dashboard.' });
+    return res.status(500).json({ error: 'Erro ao salvar dashboard.' });
   }
 });
 
 // ── Admin: criar usuário via Supabase Auth Admin API ─────────────────────────
-app.post('/api/admin/create-user', adminLimiter, async (req, res) => {
-  if (!supabaseAdmin) {
-    return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
-  }
-
-  // Verificar autenticação: extrair token do header Authorization
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token de autenticação não fornecido.' });
-  }
-  const token = authHeader.split(' ')[1];
-  const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-  if (authErr || !caller) {
-    return res.status(401).json({ error: 'Token inválido ou expirado.' });
-  }
-
-  // Verificar se é admin
-  const { data: callerProfile } = await supabaseAdmin
-    .from('profiles')
-    .select('global_role')
-    .eq('id', caller.id)
-    .single();
-  if (!callerProfile || callerProfile.global_role !== 'admin') {
-    return res.status(403).json({ error: 'Apenas administradores podem criar usuários.' });
-  }
-
-  const { email, display_name } = req.body;
-  if (!email || !display_name) {
-    return res.status(400).json({ error: 'email e display_name são obrigatórios.' });
-  }
+app.post('/api/admin/create-user', adminLimiter, requireAdminAuth, validateBody(createUserSchema), async (req, res) => {
+  const { email, display_name } = req.validatedBody;
   // Gerar senha temporária aleatória (16 chars, base64)
   const password = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
 
@@ -206,34 +227,8 @@ app.post('/api/admin/create-user', adminLimiter, async (req, res) => {
 });
 
 // ── Admin: resetar senha de usuário ──────────────────────────────────────────
-app.post('/api/admin/reset-password', adminLimiter, async (req, res) => {
-  if (!supabaseAdmin) {
-    return res.status(503).json({ error: 'Supabase não configurado no servidor.' });
-  }
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token de autenticação não fornecido.' });
-  }
-  const token = authHeader.split(' ')[1];
-  const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-  if (authErr || !caller) {
-    return res.status(401).json({ error: 'Token inválido ou expirado.' });
-  }
-
-  const { data: callerProfile } = await supabaseAdmin
-    .from('profiles')
-    .select('global_role')
-    .eq('id', caller.id)
-    .single();
-  if (!callerProfile || callerProfile.global_role !== 'admin') {
-    return res.status(403).json({ error: 'Apenas administradores podem resetar senhas.' });
-  }
-
-  const { user_id } = req.body;
-  if (!user_id) {
-    return res.status(400).json({ error: 'user_id é obrigatório.' });
-  }
+app.post('/api/admin/reset-password', adminLimiter, requireAdminAuth, validateBody(resetPasswordSchema), async (req, res) => {
+  const { user_id } = req.validatedBody;
 
   try {
     const newPassword = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
@@ -252,7 +247,7 @@ app.post('/api/admin/reset-password', adminLimiter, async (req, res) => {
 });
 
 // ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
-app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*' }), async (req, res) => {
+app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
@@ -280,7 +275,7 @@ app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*' })
   }
 });
 
-app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*' }), async (req, res) => {
+app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
@@ -304,6 +299,30 @@ app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*' }), asyn
       return res.status(400).json({ error: 'JSON inválido.' });
     }
     console.error('[release-flush] Erro:', e);
+    return res.status(500).json({ error: 'Erro ao persistir.' });
+  }
+});
+
+app.post('/api/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
+  try {
+    const payload = JSON.parse(req.body);
+    if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+      return res.status(400).json({ error: 'Data inválido.' });
+    }
+    await supabaseAdmin.from('sprints').upsert({
+      id: payload.id,
+      data: payload.data,
+      status: payload.status || 'ativa',
+      updated_at: new Date().toISOString(),
+    });
+    return res.json({ ok: true });
+  } catch (e) {
+    if (e instanceof SyntaxError) return res.status(400).json({ error: 'JSON inválido.' });
+    console.error('[sprint-flush] Erro:', e);
     return res.status(500).json({ error: 'Erro ao persistir.' });
   }
 });

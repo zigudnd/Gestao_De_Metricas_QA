@@ -3,7 +3,7 @@ import { normalizeState, saveToStorage, upsertSprintInMasterIndex } from './pers
 
 export async function exportToImage(): Promise<void> {
   const el = document.getElementById('overview-tab-content')
-  if (!el) { alert('Dashboard executivo não encontrado.'); return }
+  if (!el) { if (import.meta.env.DEV) console.error('Dashboard executivo não encontrado.'); return }
 
   try {
     const html2canvas = (await import('html2canvas')).default
@@ -27,8 +27,8 @@ export async function exportToImage(): Promise<void> {
       0.85,
     )
   } catch (e) {
-    console.error('Erro ao exportar imagem:', e)
-    alert('Erro ao exportar imagem. Verifique o console.')
+    if (import.meta.env.DEV) console.error('Erro ao exportar imagem:', e)
+    if (import.meta.env.DEV) console.error('Erro ao exportar imagem. Verifique o console.')
   }
 }
 
@@ -43,7 +43,8 @@ export function importFromJSON(file: File): Promise<string> {
         saveToStorage(sprintId, normalized)
         upsertSprintInMasterIndex(sprintId, normalized)
         resolve(sprintId)
-      } catch {
+      } catch (e) {
+        if (import.meta.env.DEV) console.warn('[Sprints] Failed to import sprint file:', e)
         reject(new Error('Arquivo inválido. Certifique-se de importar um JSON exportado pelo ToStatos.'))
       }
     }
@@ -107,7 +108,7 @@ export function exportSuiteAsCSV(suiteName: string, features: SprintState['featu
   }
 
   if (rows.length === 1) {
-    alert('Nenhum caso de teste encontrado nesta suite.')
+    if (import.meta.env.DEV) console.error('Nenhum caso de teste encontrado nesta suite.')
     return
   }
 

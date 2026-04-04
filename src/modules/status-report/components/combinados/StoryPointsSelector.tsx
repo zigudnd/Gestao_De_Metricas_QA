@@ -28,9 +28,9 @@ export function StoryPointsSelector({ selected, notas, onSelect, onNotasChange }
             style={{
               padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-              border: selected === m ? '2px solid #8b5cf6' : '1px solid var(--color-border-md)',
-              background: selected === m ? '#8b5cf618' : 'transparent',
-              color: selected === m ? '#8b5cf6' : 'var(--color-text-2)',
+              border: selected === m ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
+              background: selected === m ? 'var(--color-blue-light)' : 'transparent',
+              color: selected === m ? 'var(--color-blue)' : 'var(--color-text-2)',
               transition: 'all 0.15s',
             }}
           >

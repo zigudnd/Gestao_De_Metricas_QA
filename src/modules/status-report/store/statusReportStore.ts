@@ -19,31 +19,41 @@ let _remotePersistInFlight = false
 let _remotePersistQueued = false
 let _cleanupRealtime: (() => void) | null = null
 let _lastPendingState: StatusReportState | null = null
+let _lastPersistedAt: string | null = null
 
-async function doPersistToServer(state: StatusReportState) {
+// ─── Active squad helper ──────────────────────────────────────────────────────
+
+function getActiveSquadId(): string | null {
+  try {
+    const saved = localStorage.getItem('activeSquadId')
+    return saved || null
+  } catch { return null }
+}
+
+async function doPersistToServer(state: StatusReportState, squadId?: string | null, updatedAt?: string) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
   _lastPendingState = null
   try {
-    await persistToServer(state)
+    await persistToServer(state, squadId ?? undefined, updatedAt)
   } catch (e) {
-    console.error('[StatusReport] Erro ao sincronizar:', e)
+    if (import.meta.env.DEV) console.error('[StatusReport] Erro ao sincronizar:', e)
     _lastPendingState = state // guardar para flush no beforeunload
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued && _lastPendingState) {
-      queueRemotePersist(_lastPendingState, 2000)
+      queueRemotePersist(_lastPendingState, 2000, squadId)
     } else if (_remotePersistQueued) {
-      queueRemotePersist(state, 2000)
+      queueRemotePersist(state, 2000, squadId)
     }
   }
 }
 
-function queueRemotePersist(state: StatusReportState, delay = 700) {
+function queueRemotePersist(state: StatusReportState, delay = 2500, squadId?: string | null, updatedAt?: string) {
   if (_remotePersistTimeout) clearTimeout(_remotePersistTimeout)
   _lastPendingState = state
-  _remotePersistTimeout = setTimeout(() => doPersistToServer(state), delay)
+  _remotePersistTimeout = setTimeout(() => doPersistToServer(state, squadId, updatedAt), delay)
 }
 
 // Flush pendente antes de fechar a aba (Risco 1: crash perde dados)
@@ -54,6 +64,7 @@ if (typeof window !== 'undefined') {
       const payload = JSON.stringify({
         id: _lastPendingState.id,
         data: _lastPendingState,
+        squad_id: getActiveSquadId() || null,
         status: 'active',
         updated_at: new Date().toISOString(),
       })
@@ -179,7 +190,7 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
     const normalized = normalizeState(state)
     saveToLocalStorage(normalized)
     upsertMasterIndex(normalized)
-    queueRemotePersist(normalized)
+    queueRemotePersist(normalized, 2500, getActiveSquadId())
 
     set({
       reportId: normalized.id,
@@ -194,6 +205,8 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
     // Realtime
     if (_cleanupRealtime) _cleanupRealtime()
     _cleanupRealtime = initRealtimeSubscription(reportId, (incoming) => {
+      // Ignora echo da nossa própria persistência
+      if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
       set({
         config: incoming.config,
         sections: incoming.sections,
@@ -240,7 +253,8 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
     }
     saveToLocalStorage(state)
     upsertMasterIndex(state)
-    queueRemotePersist(state)
+    queueRemotePersist(state, 2500, getActiveSquadId(), updatedAt)
+    _lastPersistedAt = updatedAt
     set({
       config: state.config,
       sections: state.sections,
@@ -307,7 +321,7 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
     const { items, _commit } = get()
     // Previne ciclo antes de criar (Risco 4)
     if (wouldCreateCycle(items, itemId, dependsOnId)) {
-      console.warn(`[StatusReport] Dependência bloqueada: ${dependsOnId} → ${itemId} criaria ciclo`)
+      if (import.meta.env.DEV) console.warn(`[StatusReport] Dependência bloqueada: ${dependsOnId} → ${itemId} criaria ciclo`)
       return
     }
     const updated = items.map((item) => {

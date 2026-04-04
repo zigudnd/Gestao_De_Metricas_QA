@@ -16,22 +16,22 @@ function renderItem(item: StatusReportItem, index: number) {
 
   return (
     <div key={item.id} style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 13, color: '#111', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.5 }}>
         <strong>{index + 1}.</strong>{' '}
         {item.title}
-        {item.pct > 0 && <span style={{ color: '#666' }}> ({item.pct}%)</span>}
-        {item.resp && <span style={{ color: '#888' }}> · {item.resp}</span>}
+        {item.pct > 0 && <span style={{ color: 'var(--color-text-2)' }}> ({item.pct}%)</span>}
+        {item.resp && <span style={{ color: 'var(--color-text-3)' }}> · {item.resp}</span>}
         {stacks && (
           <span style={{
             marginLeft: 6, fontSize: 10, padding: '1px 5px',
-            borderRadius: 3, background: '#eee', color: '#555',
+            borderRadius: 3, background: 'var(--color-surface-2)', color: 'var(--color-text-2)',
           }}>
             {stacks}
           </span>
         )}
       </div>
       {subItems.map((line, i) => (
-        <div key={i} style={{ fontSize: 12, color: '#444', paddingLeft: 18, lineHeight: 1.5 }}>
+        <div key={i} style={{ fontSize: 12, color: 'var(--color-text-2)', paddingLeft: 18, lineHeight: 1.5 }}>
           • {line}
         </div>
       ))}
@@ -46,7 +46,7 @@ function SectionBlock({ label, color, sectionItems }: {
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{
-        fontSize: 13, fontWeight: 700, color: '#111',
+        fontSize: 13, fontWeight: 700, color: 'var(--color-text)',
         borderBottom: `2px solid ${color}`,
         paddingBottom: 4, marginBottom: 8,
       }}>
@@ -65,7 +65,7 @@ export function ReportPreview({ config, sections, items }: ReportPreviewProps) {
     <div
       id="statusReportExportArea"
       style={{
-        background: '#ffffff', color: '#111',
+        background: '#ffffff', color: 'var(--color-text)',
         padding: 32, maxWidth: 900, margin: '0 auto',
         fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
         border: '1px solid var(--color-border)', borderRadius: 8,
@@ -73,10 +73,10 @@ export function ReportPreview({ config, sections, items }: ReportPreviewProps) {
     >
       {/* Header */}
       <div style={{ marginBottom: 20, borderBottom: '2px solid var(--color-blue)', paddingBottom: 12 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
           {config.title || 'Status Report'} – {config.date || '—'}
         </div>
-        <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+        <div style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 4 }}>
           {config.squad}{config.squad && config.period ? ' · ' : ''}{config.period}
         </div>
       </div>

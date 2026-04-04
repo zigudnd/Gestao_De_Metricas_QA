@@ -24,7 +24,7 @@ export function createDefaultState(id: string): StatusReportState {
   return {
     id,
     config: { ...DEFAULT_CONFIG },
-    sections: JSON.parse(JSON.stringify(DEFAULT_SECTIONS)),
+    sections: structuredClone(DEFAULT_SECTIONS),
     items: [],
     createdAt: now,
     updatedAt: now,
@@ -37,7 +37,7 @@ export function createDefaultState(id: string): StatusReportState {
 export function normalizeState(raw: any): StatusReportState {
   const now = new Date().toISOString()
   const s: StatusReportState = raw
-    ? JSON.parse(JSON.stringify(raw))
+    ? structuredClone(raw)
     : createDefaultState('sr_' + Date.now())
 
   if (!s.id) s.id = 'sr_' + Date.now()
@@ -49,7 +49,7 @@ export function normalizeState(raw: any): StatusReportState {
   if (s.config.periodStart === undefined) s.config.periodStart = ''
   if (s.config.periodEnd === undefined) s.config.periodEnd = ''
   if (!Array.isArray(s.sections) || s.sections.length === 0) {
-    s.sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS))
+    s.sections = structuredClone(DEFAULT_SECTIONS)
   }
   if (!Array.isArray(s.items)) s.items = []
   if (!s.createdAt) s.createdAt = now
@@ -77,7 +77,7 @@ export function saveToLocalStorage(state: StatusReportState): void {
   try {
     localStorage.setItem(STORAGE_KEY(state.id), JSON.stringify(state))
   } catch (e) {
-    console.error('[StatusReport] Erro ao salvar no localStorage:', e)
+    if (import.meta.env.DEV) console.error('[StatusReport] Erro ao salvar no localStorage:', e)
   }
 }
 
@@ -86,7 +86,8 @@ export function loadFromLocalStorage(id: string): StatusReportState | null {
     const raw = localStorage.getItem(STORAGE_KEY(id))
     if (!raw) return null
     return normalizeState(JSON.parse(raw))
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[StatusReport] Failed to load from localStorage:', e)
     return null
   }
 }
@@ -94,7 +95,7 @@ export function loadFromLocalStorage(id: string): StatusReportState | null {
 export function deleteFromLocalStorage(id: string): void {
   try {
     localStorage.removeItem(STORAGE_KEY(id))
-  } catch { /* ignore */ }
+  } catch (e) { if (import.meta.env.DEV) console.warn('[StatusReport] Failed to delete from localStorage:', e) }
 }
 
 // ─── Master Index ────────────────────────────────────────────────────────────
@@ -105,7 +106,8 @@ export function getMasterIndex(): StatusReportIndexEntry[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[StatusReport] Failed to load master index:', e)
     return []
   }
 }
@@ -114,7 +116,7 @@ export function saveMasterIndex(index: StatusReportIndexEntry[]): void {
   try {
     localStorage.setItem(INDEX_KEY, JSON.stringify(index))
   } catch (e) {
-    console.error('[StatusReport] Erro ao salvar indice:', e)
+    if (import.meta.env.DEV) console.error('[StatusReport] Erro ao salvar indice:', e)
   }
 }
 
@@ -170,13 +172,18 @@ export function removeFromMasterIndex(id: string): void {
 
 // ─── Supabase ────────────────────────────────────────────────────────────────
 
-export async function persistToServer(state: StatusReportState): Promise<void> {
-  await supabase.from('status_reports').upsert({
+export async function persistToServer(state: StatusReportState, squadId?: string, updatedAt?: string): Promise<void> {
+  const { error } = await supabase.from('status_reports').upsert({
     id: state.id,
     data: state,
+    squad_id: squadId || null,
     status: 'active',
-    updated_at: new Date().toISOString(),
+    updated_at: updatedAt ?? new Date().toISOString(),
   })
+  if (error) {
+    if (import.meta.env.DEV) console.error('[StatusReport] persistToServer failed:', error.message)
+    throw error
+  }
 }
 
 export async function loadFromServer(id: string): Promise<StatusReportState | null> {
@@ -188,13 +195,18 @@ export async function loadFromServer(id: string): Promise<StatusReportState | nu
       .single()
     if (error || !data) return null
     return normalizeState(data.data)
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[StatusReport] Failed to load from server:', e)
     return null
   }
 }
 
 export async function deleteFromServer(id: string): Promise<void> {
-  await supabase.from('status_reports').delete().eq('id', id)
+  const { error } = await supabase.from('status_reports').delete().eq('id', id)
+  if (error) {
+    if (import.meta.env.DEV) console.error('[StatusReport] deleteFromServer failed:', error.message)
+    throw error
+  }
 }
 
 export async function syncAllFromSupabase(): Promise<void> {
@@ -238,7 +250,7 @@ export async function syncAllFromSupabase(): Promise<void> {
     })
     saveMasterIndex(merged)
   } catch (e) {
-    console.warn('[StatusReport] syncAllFromSupabase falhou — usando dados locais.', e)
+    if (import.meta.env.DEV) console.warn('[StatusReport] syncAllFromSupabase falhou — usando dados locais.', e)
   }
 }
 

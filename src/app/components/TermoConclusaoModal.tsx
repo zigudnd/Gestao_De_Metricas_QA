@@ -74,36 +74,22 @@ export function TermoConclusaoModal({ onClose }: Props) {
   }
 
   function handlePrint() {
-    const content = printRef.current?.innerHTML
-    if (!content) return
+    const el = printRef.current
+    if (!el) return
     const win = window.open('', '_blank', 'width=900,height=700')
     if (!win) return
-    win.document.write(`
-      <!DOCTYPE html><html><head>
-        <meta charset="utf-8" />
-        <title>Termo de Conclusão — ${cfg.title || 'Sprint'}</title>
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 32px; background: #fff; }
-          h1 { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; }
-          h2 { font-size: 14px; font-weight: 700; margin: 18px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-          h3 { font-size: 13px; font-weight: 700; margin: 12px 0 6px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
-          th { background: #f3f4f6; padding: 7px 10px; text-align: left; font-weight: 700; border: 1px solid #d1d5db; }
-          td { padding: 6px 10px; border: 1px solid #d1d5db; vertical-align: top; }
-          .center { text-align: center; }
-          .subtitle { text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 24px; }
-          .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
-          .kpi { border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px; text-align: center; }
-          .kpi-val { font-size: 22px; font-weight: 800; }
-          .kpi-lbl { font-size: 11px; color: #6b7280; margin-top: 2px; }
-          .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-right: 4px; }
-          .footer { text-align: center; font-size: 10px; color: #9ca3af; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
-          ul { padding-left: 16px; line-height: 1.8; }
-          @media print { body { padding: 20px; } }
-        </style>
-      </head><body>${content}</body></html>
-    `)
+
+    // Clone the content safely (no raw innerHTML injection)
+    const clone = el.cloneNode(true) as HTMLElement
+
+    // Remove any script tags from cloned content
+    clone.querySelectorAll('script').forEach((s) => s.remove())
+
+    win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Termo de Conclusão</title>')
+    win.document.write('<style>body{font-family:"IBM Plex Sans",system-ui,sans-serif;padding:32px;color:#1a1a18;font-size:14px;line-height:1.6}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}h2{margin-top:24px}</style>')
+    win.document.write('</head><body>')
+    win.document.write(clone.innerHTML)
+    win.document.write('</body></html>')
     win.document.close()
     win.focus()
     setTimeout(() => { win.print(); win.close() }, 400)

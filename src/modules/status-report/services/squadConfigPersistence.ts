@@ -47,7 +47,7 @@ export function getDefaultState(squadId: string): SquadConfigState {
 // ─── Normalize ───────────────────────────────────────────────────────────────
 
 export function normalizeState(raw: unknown): SquadConfigState {
-  const s = (raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : getDefaultState('default')) as SquadConfigState
+  const s = (raw && typeof raw === 'object' ? structuredClone(raw) : getDefaultState('default')) as SquadConfigState
   if (!s.squadId) s.squadId = 'default'
   if (!Array.isArray(s.dor)) s.dor = []
   if (!Array.isArray(s.dod)) s.dod = []
@@ -74,7 +74,7 @@ export function saveToLocalStorage(state: SquadConfigState): void {
     else idx.push(entry)
     localStorage.setItem(INDEX_KEY, JSON.stringify(idx))
   } catch (e) {
-    console.error('[SquadConfig] Erro ao salvar localStorage:', e)
+    if (import.meta.env.DEV) console.error('[SquadConfig] Erro ao salvar localStorage:', e)
   }
 }
 
@@ -83,7 +83,8 @@ export function loadFromLocalStorage(squadId: string): SquadConfigState | null {
     const raw = localStorage.getItem(STORAGE_KEY(squadId))
     if (!raw) return null
     return normalizeState(JSON.parse(raw))
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[SquadConfig] Failed to load from localStorage:', e)
     return null
   }
 }
@@ -93,7 +94,8 @@ function getIndex(): { squadId: string; updatedAt: string }[] {
     const raw = localStorage.getItem(INDEX_KEY)
     if (!raw) return []
     return JSON.parse(raw) as { squadId: string; updatedAt: string }[]
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[SquadConfig] Failed to load index from localStorage:', e)
     return []
   }
 }
@@ -119,7 +121,8 @@ export async function loadFromServer(squadId: string): Promise<SquadConfigState 
       .single()
     if (error || !data) return null
     return normalizeState(data.data)
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[SquadConfig] Failed to load from server:', e)
     return null
   }
 }

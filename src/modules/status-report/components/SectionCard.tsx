@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { SectionDef, StatusReportItem, ComputedDatesMap, SectionId } from '../types/statusReport.types'
 import { ItemRow } from './ItemRow'
 
@@ -13,7 +14,7 @@ interface SectionCardProps {
   onMoveItem: (id: string, targetSection: SectionId) => void
 }
 
-export function SectionCard({
+export const SectionCard = memo(function SectionCard({
   section, allSections, items, computedDates, isCollapsed,
   onToggle, onItemClick, onAddItem, onMoveItem,
 }: SectionCardProps) {
@@ -107,4 +108,4 @@ export function SectionCard({
       )}
     </div>
   )
-}
+})

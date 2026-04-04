@@ -8,6 +8,7 @@ export function ChangePasswordPage() {
   const { user } = useAuthStore()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -61,7 +62,7 @@ export function ChangePasswordPage() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <div style={{
-            width: 34, height: 34, background: '#0c447c', borderRadius: 9,
+            width: 34, height: 34, background: 'var(--color-blue-text)', borderRadius: 9,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: '-0.5px', flexShrink: 0,
           }}>TS</div>
@@ -77,14 +78,46 @@ export function ChangePasswordPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>NOVA SENHA</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>NOVA SENHA</span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-3)', fontSize: 11, fontWeight: 500,
+                  fontFamily: 'var(--font-family-sans)',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-3)' }}
+              >
+                {showPassword ? (
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3l14 14" />
+                    <path d="M10 5c-4 0-7 3-8 5 .5 1 1.5 2.3 3 3.5" />
+                    <path d="M10 15c4 0 7-3 8-5-.5-1-1.5-2.3-3-3.5" />
+                    <circle cx="10" cy="10" r="2.5" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5z" />
+                    <circle cx="10" cy="10" r="2.5" />
+                  </svg>
+                )}
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               required
-              minLength={6}
+              minLength={8}
               autoFocus
               style={inputStyle}
             />
@@ -93,18 +126,18 @@ export function ChangePasswordPage() {
           <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>CONFIRMAR SENHA</span>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Repita a nova senha"
               required
-              minLength={6}
+              minLength={8}
               style={inputStyle}
             />
           </label>
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: '#E24B4A', background: '#FCEBEB', border: '1px solid #F7C1C1', borderRadius: 6, padding: '8px 12px' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-red-mid)', background: 'var(--color-red-light)', border: '1px solid #F7C1C1', borderRadius: 6, padding: '8px 12px' }}>
               {error}
             </p>
           )}
@@ -114,7 +147,7 @@ export function ChangePasswordPage() {
             disabled={loading}
             style={{
               marginTop: 4, padding: '10px 0',
-              background: loading ? '#5a8fc5' : '#185FA5',
+              background: loading ? '#5a8fc5' : 'var(--color-blue)',
               color: '#fff', border: 'none', borderRadius: 7,
               fontSize: 14, fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',

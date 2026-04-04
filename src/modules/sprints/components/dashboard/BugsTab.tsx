@@ -114,6 +114,11 @@ export function BugsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <style>{`
+        .bug-id-input:hover { border-bottom: 1px solid var(--color-border-md) !important; }
+        .bug-action-btn:hover { background: var(--color-bg) !important; }
+        .bug-action-btn-danger:hover { background: var(--color-red-light) !important; color: var(--color-red) !important; }
+      `}</style>
       {/* Filter Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
         <FilterGroup label="Status" field="status" value={filters.status} options={['Todos', 'Aberto', 'Em Andamento', 'Falhou', 'Resolvido']} onChange={(v) => setFilters((f) => ({ ...f, status: v }))} />
@@ -124,7 +129,7 @@ export function BugsTab() {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 400 }}>{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
           {hasFilters && (
-            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: 'var(--color-red-light)', color: 'var(--color-red)', cursor: 'pointer' }}>
+            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} aria-label="Limpar filtros" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: 'var(--color-red-light)', color: 'var(--color-red)', cursor: 'pointer' }}>
               ✕ Limpar
             </button>
           )}
@@ -146,7 +151,7 @@ export function BugsTab() {
           })}
         </div>
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-        <button onClick={() => setShowNewModal(true)} style={btnPrimary}>+ Novo Bug</button>
+        <button onClick={() => setShowNewModal(true)} aria-label="Adicionar novo bug" style={btnPrimary}>+ Novo Bug</button>
       </div>
 
       {/* Table */}
@@ -315,16 +320,16 @@ export function BugsTab() {
 
 function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => void }) {
   const [local, setLocal] = useState(id)
-  const [hovered, setHovered] = useState(false)
 
   return (
     <input
+      className="bug-id-input"
       type="text"
       value={local}
       onChange={(e) => setLocal(e.target.value)}
       onBlur={(e) => {
         e.currentTarget.style.border = '1px solid transparent'
-        e.currentTarget.style.borderBottom = hovered ? '1px solid var(--color-border-md)' : '1px dashed var(--color-border-md)'
+        e.currentTarget.style.borderBottom = '1px dashed var(--color-border-md)'
         if (local.trim() && local !== id) onCommit(local.trim())
         else setLocal(id)
       }}
@@ -333,8 +338,6 @@ function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => v
         if (e.key === 'Escape') { setLocal(id); e.currentTarget.blur() }
       }}
       onFocus={(e) => (e.currentTarget.style.border = '1px solid var(--color-border-md)')}
-      onMouseEnter={(e) => { setHovered(true); e.currentTarget.style.borderBottom = '1px solid var(--color-border-md)' }}
-      onMouseLeave={(e) => { setHovered(false); if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderBottom = '1px dashed var(--color-border-md)' }}
       aria-label="ID do bug"
       style={{
         fontFamily: 'var(--font-family-mono)',
@@ -438,23 +441,21 @@ function IcoSortDesc() {
 }
 
 function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
-  const [hov, setHov] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
       aria-label={title}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      className={danger ? 'bug-action-btn-danger' : 'bug-action-btn'}
       style={{
-        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
+        background: 'none',
         border: 'none',
         padding: 8,
         minWidth: 32,
         minHeight: 32,
         borderRadius: 8,
         cursor: 'pointer',
-        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
+        color: 'var(--color-text-2)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

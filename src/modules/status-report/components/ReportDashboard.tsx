@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, memo } from 'react'
 import type { StatusReportItem, SectionDef, ComputedDatesMap } from '../types/statusReport.types'
 
 interface ReportDashboardProps {
@@ -99,7 +99,7 @@ function computeMetrics(items: StatusReportItem[], computedDates: ComputedDatesM
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, accent }: {
+const KpiCard = memo(function KpiCard({ label, value, sub, accent }: {
   label: string; value: string | number; sub?: string; accent: string
 }) {
   return (
@@ -123,9 +123,9 @@ function KpiCard({ label, value, sub, accent }: {
       )}
     </div>
   )
-}
+})
 
-function ProgressRing({ pct, size = 48 }: { pct: number; size?: number }) {
+const ProgressRing = memo(function ProgressRing({ pct, size = 48 }: { pct: number; size?: number }) {
   const stroke = 5
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
@@ -147,9 +147,9 @@ function ProgressRing({ pct, size = 48 }: { pct: number; size?: number }) {
       />
     </svg>
   )
-}
+})
 
-function HBar({ label, value, max, color }: {
+const HBar = memo(function HBar({ label, value, max, color }: {
   label: string; value: number; max: number; color: string
 }) {
   const pct = max > 0 ? (value / max) * 100 : 0
@@ -176,7 +176,7 @@ function HBar({ label, value, max, color }: {
       </span>
     </div>
   )
-}
+})
 
 // ─── Main component ───────────────────────────────────────────────────────────
 

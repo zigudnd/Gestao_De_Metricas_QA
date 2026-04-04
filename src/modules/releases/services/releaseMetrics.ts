@@ -57,12 +57,6 @@ export function computeSquadMetrics(squad: ReleaseSquad, _release: Release): Squ
   }
 }
 
-// ─── isFeatureBlocking ──────────────────────────────────────────────────────
-
-export function isFeatureBlocking(featureId: string, nonBlockingIds: string[]): boolean {
-  return !nonBlockingIds.includes(featureId)
-}
-
 // ─── computeSquadStatus ─────────────────────────────────────────────────────
 
 function daysUntil(dateStr: string): number {

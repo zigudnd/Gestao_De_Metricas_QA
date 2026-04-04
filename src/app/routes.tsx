@@ -1,19 +1,32 @@
 import { createHashRouter } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AppShell } from './layout/AppShell'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from '@/modules/auth/pages/AuthPage'
 import { DashboardHome } from '@/app/pages/DashboardHome'
 import { HomePage } from '@/modules/sprints/pages/HomePage'
 import { SprintDashboard } from '@/modules/sprints/pages/SprintDashboard'
-import { DocsPage } from '@/app/pages/DocsPage'
-import { ComparePage } from '@/modules/sprints/pages/ComparePage'
-import { SquadsPage } from '@/modules/squads/pages/SquadsPage'
-import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
 import { ChangePasswordPage } from '@/modules/auth/pages/ChangePasswordPage'
 import { StatusReportHomePage } from '@/modules/status-report/pages/StatusReportHomePage'
-import { StatusReportPage } from '@/modules/status-report/pages/StatusReportPage'
 import { ReleasesPage } from '@/modules/releases/pages/ReleasesPage'
-import { ReleaseDashboard } from '@/modules/releases/pages/ReleaseDashboard'
+import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
+
+// Lazy loaded — heavy or rarely visited routes
+const ComparePage = lazy(() => import('@/modules/sprints/pages/ComparePage').then(m => ({ default: m.ComparePage })))
+const ReleaseDashboard = lazy(() => import('@/modules/releases/pages/ReleaseDashboard').then(m => ({ default: m.ReleaseDashboard })))
+const StatusReportPage = lazy(() => import('@/modules/status-report/pages/StatusReportPage').then(m => ({ default: m.StatusReportPage })))
+const SquadsPage = lazy(() => import('@/modules/squads/pages/SquadsPage').then(m => ({ default: m.SquadsPage })))
+const DocsPage = lazy(() => import('@/app/pages/DocsPage').then(m => ({ default: m.DocsPage })))
+
+const LazyFallback = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
+    <span style={{ color: 'var(--color-text-2)', fontSize: 14 }}>Carregando...</span>
+  </div>
+)
+
+function SuspenseWrap({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LazyFallback />}>{children}</Suspense>
+}
 
 export const router = createHashRouter([
   // Tela de autenticação (pública)
@@ -41,15 +54,15 @@ export const router = createHashRouter([
     children: [
       { index: true, element: <DashboardHome /> },
       { path: 'sprints', element: <HomePage /> },
-      { path: 'sprints/compare', element: <ComparePage /> },
+      { path: 'sprints/compare', element: <SuspenseWrap><ComparePage /></SuspenseWrap> },
       { path: 'sprints/:sprintId', element: <SprintDashboard /> },
-      { path: 'squads', element: <SquadsPage /> },
+      { path: 'squads', element: <SuspenseWrap><SquadsPage /></SuspenseWrap> },
       { path: 'status-report', element: <StatusReportHomePage /> },
-      { path: 'status-report/:reportId', element: <StatusReportPage /> },
+      { path: 'status-report/:reportId', element: <SuspenseWrap><StatusReportPage /></SuspenseWrap> },
       { path: 'releases', element: <ReleasesPage /> },
-      { path: 'releases/:releaseId', element: <ReleaseDashboard /> },
+      { path: 'releases/:releaseId', element: <SuspenseWrap><ReleaseDashboard /></SuspenseWrap> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'docs', element: <DocsPage /> },
+      { path: 'docs', element: <SuspenseWrap><DocsPage /></SuspenseWrap> },
     ],
   },
 ])

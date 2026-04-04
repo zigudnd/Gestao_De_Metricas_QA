@@ -39,7 +39,7 @@ export function SprintDashboard() {
       // Try server first, fallback to localStorage
       let raw = await loadFromServer(sprintId)
       if (!raw) raw = loadFromStorage(sprintId)
-      if (!cancelled) initSprint(sprintId, raw ?? JSON.parse(JSON.stringify(DEFAULT_STATE)))
+      if (!cancelled) initSprint(sprintId, raw ?? structuredClone(DEFAULT_STATE))
       if (!cancelled) setLoading(false)
     }
 
@@ -74,6 +74,7 @@ export function SprintDashboard() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            data-testid={`sprint-tab-${tab.id}`}
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}

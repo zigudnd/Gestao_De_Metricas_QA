@@ -44,7 +44,8 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
       set({ squads, isLoading: false })
       if (activeId) await get().setActiveSquad(activeId)
       else set({ activeSquadId: null, myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[Squads] Failed to load squads:', e)
       set({ squads: [], isLoading: false })
     }
   },
@@ -64,7 +65,8 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
       }
 
       set({ myRole: role, myPermissions: permissions })
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[Squads] Failed to load role/permissions:', e)
       set({ myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
     }
   },

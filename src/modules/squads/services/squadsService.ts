@@ -124,6 +124,26 @@ export interface SquadMember {
   }
 }
 
+// ─── Supabase aggregation/join types ──────────────────────────────────────────
+
+interface SquadWithCount {
+  id: string
+  name: string
+  description: string
+  color: string
+  created_by: string
+  created_at: string
+  archived?: boolean
+  squad_members: { count: number }[]
+}
+
+interface MembershipWithSquad {
+  user_id: string
+  squad_id: string
+  role: string
+  squad: { name: string } | null
+}
+
 // ─── Squads ───────────────────────────────────────────────────────────────────
 
 export async function listMySquads(includeArchived = false): Promise<Squad[]> {
@@ -134,7 +154,7 @@ export async function listMySquads(includeArchived = false): Promise<Squad[]> {
   if (error) throw error
   const mapped = (data ?? []).map((s) => ({
     ...s,
-    member_count: (s.squad_members as unknown as { count: number }[])?.[0]?.count ?? 0,
+    member_count: (s as unknown as SquadWithCount).squad_members?.[0]?.count ?? 0,
     squad_members: undefined,
   })) as Squad[]
   // Enriquecer com fallback local para archived
@@ -194,7 +214,7 @@ function getArchivedLocal(): Set<string> {
   try {
     const raw = localStorage.getItem(ARCHIVED_LS_KEY)
     return new Set(raw ? JSON.parse(raw) : [])
-  } catch { return new Set() }
+  } catch (e) { if (import.meta.env.DEV) console.warn('[Squads] Failed to load archived squads from localStorage:', e); return new Set() }
 }
 
 function saveArchivedLocal(squadId: string, archived: boolean): void {
@@ -297,6 +317,11 @@ export interface UserWithSquads extends Profile {
 }
 
 export async function createUser(email: string, displayName: string): Promise<{ id: string; email: string }> {
+  // Client-side validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) throw new Error('Formato de email inválido')
+  if (!displayName.trim()) throw new Error('Nome é obrigatório')
+
   const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch('/api/admin/create-user', {
     method: 'POST',
@@ -337,7 +362,7 @@ export async function listAllUsersWithSquads(): Promise<UserWithSquads[]> {
       .filter((m) => m.user_id === u.id)
       .map((m) => ({
         squad_id: m.squad_id,
-        squad_name: (m.squad as unknown as { name: string })?.name ?? '',
+        squad_name: (m as unknown as MembershipWithSquad).squad?.name ?? '',
         role: m.role as SquadRole,
       }))
     return { ...u, active: u.active ?? true, squads: userMemberships } as UserWithSquads

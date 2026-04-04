@@ -13,8 +13,8 @@ const TIPO_LABEL: Record<TipoOff, string> = {
 }
 
 const ALERTA_BG: Record<AlertaProximidade, string | undefined> = {
-  warn7:     '#FDE8D8',
-  warn30:    '#FAEEDA',
+  warn7:     'var(--color-red-light)',
+  warn30:    'var(--color-amber-light)',
   ativo:     'var(--color-green-light)',
   encerrado: undefined,
   normal:    undefined,
@@ -23,8 +23,8 @@ const ALERTA_BG: Record<AlertaProximidade, string | undefined> = {
 const ALERTA_BADGE: Record<AlertaProximidade, { label: string; bg: string; color: string }> = {
   encerrado: { label: 'Encerrado',  bg: 'var(--color-surface-2)', color: 'var(--color-text-3)' },
   ativo:     { label: 'Em curso',   bg: 'var(--color-green-light)', color: 'var(--color-green)' },
-  warn7:     { label: 'Em 7 dias',  bg: '#FDE8D8', color: '#C2410C' },
-  warn30:    { label: 'Em 30 dias', bg: '#FAEEDA', color: '#92400E' },
+  warn7:     { label: 'Em 7 dias',  bg: 'var(--color-red-light)', color: 'var(--color-red)' },
+  warn30:    { label: 'Em 30 dias', bg: 'var(--color-amber-light)', color: 'var(--color-amber)' },
   normal:    { label: 'Agendado',   bg: 'var(--color-green-light)', color: 'var(--color-green)' },
 }
 
@@ -132,8 +132,8 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
 
       {/* Legenda */}
       <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11, color: 'var(--color-text-3)' }}>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#FAEEDA', marginRight: 4 }} />Ferias em ate 30 dias</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#FDE8D8', marginRight: 4 }} />Ferias em ate 7 dias</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-light)', marginRight: 4 }} />Ferias em ate 30 dias</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-red-light)', marginRight: 4 }} />Ferias em ate 7 dias</span>
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green-light)', marginRight: 4 }} />Periodo ativo ou agendado</span>
       </div>
     </div>

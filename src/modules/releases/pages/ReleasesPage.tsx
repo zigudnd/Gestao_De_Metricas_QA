@@ -77,12 +77,13 @@ export function ReleasesPage() {
   } = useReleaseStore()
 
   const [homeTab, setHomeTab] = useState<HomeTab>('checkpoint')
+  const [loading, setLoading] = useState(true)
 
   // Events state (localStorage)
   const EVENTS_KEY = 'releaseCalendarEvents'
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => {
     const raw = localStorage.getItem(EVENTS_KEY)
-    if (raw) { try { return JSON.parse(raw) } catch { /* ignore */ } }
+    if (raw) { try { return JSON.parse(raw) } catch (e) { if (import.meta.env.DEV) console.warn('[Releases] Failed to parse calendar events:', e) } }
     return DEFAULT_EVENTS
   })
   function saveEvents(next: CalendarEvent[]) {
@@ -108,6 +109,7 @@ export function ReleasesPage() {
   useEffect(() => {
     load()
     loadCalendarSlots()
+    setLoading(false)
   }, []) // eslint-disable-line
 
   // ── Sorted releases ─────────────────────────────────────────────────────
@@ -246,6 +248,12 @@ export function ReleasesPage() {
 
   const deleteTarget = releases.find((r) => r.id === deleteId)
 
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+      <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
+    </div>
+  )
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
@@ -370,7 +378,7 @@ export function ReleasesPage() {
             if (!source) return
             const now = new Date().toISOString()
             const newRelease: Release = {
-              ...JSON.parse(JSON.stringify(source)),
+              ...structuredClone(source),
               id: `release_${Date.now()}`,
               title: source.title + ' (cópia)',
               status: 'planejada' as const,

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { StatusReportItem, ComputedDates } from '../types/statusReport.types'
 
 interface ItemRowProps {
@@ -28,7 +29,7 @@ function formatDate(iso: string): string {
   return `${d}/${m}`
 }
 
-export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMoveDown }: ItemRowProps) {
+export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMoveDown }: ItemRowProps) {
 
   return (
     <div
@@ -173,4 +174,4 @@ export function ItemRow({ item, computed, onClick, sectionColor, onMoveUp, onMov
       `}</style>
     </div>
   )
-}
+})

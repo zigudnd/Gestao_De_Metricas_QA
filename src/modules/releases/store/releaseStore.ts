@@ -25,16 +25,17 @@ let _remotePersistInFlight = false
 let _remotePersistQueued = false
 let _cleanupRealtime: (() => void) | null = null
 let _lastPendingState: Release | null = null
+let _lastPersistedAt: string | null = null
 
-async function doPersistToServer(release: Release) {
+async function doPersistToServer(release: Release, updatedAt?: string) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
   _lastPendingState = null
   try {
-    await persistToServer(release)
+    await persistToServer(release, updatedAt)
   } catch (e) {
-    console.error('[Release] Erro ao sincronizar:', e)
+    if (import.meta.env.DEV) console.error('[Release] Erro ao sincronizar:', e)
     _lastPendingState = release
   } finally {
     _remotePersistInFlight = false
@@ -46,10 +47,10 @@ async function doPersistToServer(release: Release) {
   }
 }
 
-function queueRemotePersist(release: Release, delay = 700) {
+function queueRemotePersist(release: Release, delay = 2500, updatedAt?: string) {
   if (_remotePersistTimeout) clearTimeout(_remotePersistTimeout)
   _lastPendingState = release
-  _remotePersistTimeout = setTimeout(() => doPersistToServer(release), delay)
+  _remotePersistTimeout = setTimeout(() => doPersistToServer(release, updatedAt), delay)
 }
 
 // Flush pendente antes de fechar a aba
@@ -171,7 +172,7 @@ function loadSlotsFromLS(): CalendarSlot[] {
   try {
     const raw = localStorage.getItem(CALENDAR_LS_KEY)
     return raw ? JSON.parse(raw) as CalendarSlot[] : []
-  } catch { return [] }
+  } catch (e) { if (import.meta.env.DEV) console.warn('[Releases] Failed to load calendar slots from localStorage:', e); return [] }
 }
 
 function saveSlotsToLS(slots: CalendarSlot[]): void {
@@ -221,7 +222,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
 
   // Single-release state
   releaseId: null,
-  release: JSON.parse(JSON.stringify(EMPTY_RELEASE)),
+  release: structuredClone(EMPTY_RELEASE),
   isLoading: false,
   lastSaved: 0,
 
@@ -240,7 +241,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   addRelease: (release) => {
     saveToLocalStorage(release)
     upsertMasterIndex(release)
-    persistToServer(release).catch(() => {})
+    persistToServer(release).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to persist new release:', e) })
     const releases = [...get().releases, release]
     const index = getMasterIndex()
     set({ releases, index })
@@ -252,7 +253,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       const updated = { ...r, ...fields, updatedAt: new Date().toISOString() }
       saveToLocalStorage(updated)
       upsertMasterIndex(updated)
-      persistToServer(updated).catch(() => {})
+      persistToServer(updated).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to persist update:', e) })
       return updated
     })
     const index = getMasterIndex()
@@ -262,7 +263,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   deleteRelease: (id) => {
     deleteFromLocalStorage(id)
     removeFromMasterIndex(id)
-    deleteFromServer(id).catch(() => {})
+    deleteFromServer(id).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to delete from server:', e) })
     const releases = get().releases.filter((r) => r.id !== id)
     const index = getMasterIndex()
     set({ releases, index })
@@ -278,7 +279,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       const updated = { ...r, squads: [...r.squads, squad], updatedAt: new Date().toISOString() }
       saveToLocalStorage(updated)
       upsertMasterIndex(updated)
-      persistToServer(updated).catch(() => {})
+      persistToServer(updated).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to persist squad addition:', e) })
       return updated
     })
     const index = getMasterIndex()
@@ -295,7 +296,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       }
       saveToLocalStorage(updated)
       upsertMasterIndex(updated)
-      persistToServer(updated).catch(() => {})
+      persistToServer(updated).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to persist squad removal:', e) })
       return updated
     })
     const index = getMasterIndex()
@@ -325,6 +326,8 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     // Realtime subscription
     if (_cleanupRealtime) _cleanupRealtime()
     _cleanupRealtime = initRealtimeSubscription(id, (incoming) => {
+      // Ignora echo da nossa própria persistência
+      if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
       set({ release: incoming })
     })
   },
@@ -336,7 +339,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     }
     set({
       releaseId: null,
-      release: JSON.parse(JSON.stringify(EMPTY_RELEASE)),
+      release: structuredClone(EMPTY_RELEASE),
       isLoading: false,
     })
   },
@@ -344,10 +347,12 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   // ── Internal commit ────────────────────────────────────────────────────────
 
   _commit: (next: Release) => {
-    const updated = { ...next, updatedAt: new Date().toISOString() }
+    const updatedAt = new Date().toISOString()
+    const updated = { ...next, updatedAt }
     saveToLocalStorage(updated)
     upsertMasterIndex(updated)
-    queueRemotePersist(updated)
+    queueRemotePersist(updated, 2500, updatedAt)
+    _lastPersistedAt = updatedAt
     set({ release: updated, lastSaved: Date.now() })
   },
 

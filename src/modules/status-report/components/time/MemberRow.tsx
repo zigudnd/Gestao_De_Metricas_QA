@@ -8,23 +8,23 @@ interface MemberRowProps {
 }
 
 const PAPEL_CORES: Record<string, { bg: string; text: string }> = {
-  'Dev Mobile iOS':     { bg: '#E6F1FB', text: '#0C447C' },
-  'Dev Mobile Android': { bg: '#EAF3DE', text: '#27500A' },
-  'Dev Backend':        { bg: '#FAEEDA', text: '#633806' },
-  'Dev BFF':            { bg: '#E1F5EE', text: '#085041' },
-  'QA':                 { bg: '#EEEDFE', text: '#3C3489' },
-  'Tech Lead':          { bg: '#FCEBEB', text: '#791F1F' },
-  'Scrum Master':       { bg: '#FBEAF0', text: '#72243E' },
-  'Product Owner':      { bg: '#FAECE7', text: '#712B13' },
-  'Designer':           { bg: '#F1EFE8', text: '#444441' },
+  'Dev Mobile iOS':     { bg: 'var(--color-blue-light)', text: 'var(--color-blue-text)' },
+  'Dev Mobile Android': { bg: 'var(--color-green-light)', text: 'var(--color-green)' },
+  'Dev Backend':        { bg: 'var(--color-amber-light)', text: 'var(--color-amber)' },
+  'Dev BFF':            { bg: 'var(--color-green-light)', text: 'var(--color-green)' },
+  'QA':                 { bg: 'var(--color-blue-light)', text: 'var(--color-blue)' },
+  'Tech Lead':          { bg: 'var(--color-red-light)', text: 'var(--color-red)' },
+  'Scrum Master':       { bg: 'var(--color-red-light)', text: 'var(--color-red)' },
+  'Product Owner':      { bg: 'var(--color-amber-light)', text: 'var(--color-amber)' },
+  'Designer':           { bg: 'var(--color-surface-2)', text: 'var(--color-text-2)' },
 }
 
 const FALLBACK_CORES = [
-  { bg: '#E6F1FB', text: '#0C447C' },
-  { bg: '#EAF3DE', text: '#27500A' },
-  { bg: '#FAEEDA', text: '#633806' },
-  { bg: '#EEEDFE', text: '#3C3489' },
-  { bg: '#FCEBEB', text: '#791F1F' },
+  { bg: 'var(--color-blue-light)', text: 'var(--color-blue-text)' },
+  { bg: 'var(--color-green-light)', text: 'var(--color-green)' },
+  { bg: 'var(--color-amber-light)', text: 'var(--color-amber)' },
+  { bg: 'var(--color-blue-light)', text: 'var(--color-blue)' },
+  { bg: 'var(--color-red-light)', text: 'var(--color-red)' },
 ]
 
 const ROLE_LABEL: Record<string, string> = {

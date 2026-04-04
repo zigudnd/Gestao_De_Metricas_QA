@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, memo } from 'react'
 import type { Release, ReleaseStatus } from '../../types/release.types'
 import { showToast } from '@/app/components/Toast'
 
@@ -154,7 +154,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: ReleaseStatus }) {
+const StatusBadge = memo(function StatusBadge({ status }: { status: ReleaseStatus }) {
   const colors = STATUS_COLORS[status] ?? { bg: 'var(--color-surface-2)', text: 'var(--color-text-2)' }
   const label = STATUS_LABEL[status] ?? status
   return (
@@ -171,9 +171,9 @@ function StatusBadge({ status }: { status: ReleaseStatus }) {
       {label}
     </span>
   )
-}
+})
 
-function KpiCard({ label, value, accentColor }: {
+const KpiCard = memo(function KpiCard({ label, value, accentColor }: {
   label: string
   value: number
   accentColor: string
@@ -194,9 +194,9 @@ function KpiCard({ label, value, accentColor }: {
       </div>
     </div>
   )
-}
+})
 
-function FilterPill({ label, active, onClick }: {
+const FilterPill = memo(function FilterPill({ label, active, onClick }: {
   label: string
   active: boolean
   onClick: () => void
@@ -221,11 +221,11 @@ function FilterPill({ label, active, onClick }: {
       {label}
     </button>
   )
-}
+})
 
 // ─── Detail Panel ────────────────────────────────────────────────────────────
 
-function DetailPanel({ row, onClose }: { row: CronogramaRow; onClose: () => void }) {
+const DetailPanel = memo(function DetailPanel({ row, onClose }: { row: CronogramaRow; onClose: () => void }) {
   const detailItems: [string, string][] = [
     ['Release', row.releaseTitle],
     ['Plataforma', row.platform],
@@ -290,7 +290,7 @@ function DetailPanel({ row, onClose }: { row: CronogramaRow; onClose: () => void
       </div>
     </div>
   )
-}
+})
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -465,7 +465,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
   const [sortCol, setSortCol] = useState<SortColumn | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
   const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null)
-  const [hoveredRowIdx, setHoveredRowIdx] = useState<number | null>(null)
+  // Row hover handled by CSS class .cron-row
   const [showAddForm, setShowAddForm] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   // Add form fields
@@ -627,6 +627,12 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
 
   return (
     <div>
+      <style>{`
+        .cron-row:hover { background: var(--color-blue-light) !important; }
+        .cron-btn-edit:hover { background: var(--color-blue-light) !important; color: var(--color-blue) !important; }
+        .cron-btn-dup:hover { background: var(--color-blue-light) !important; color: var(--color-blue) !important; }
+        .cron-btn-del:hover { background: var(--color-red-light) !important; color: var(--color-red) !important; }
+      `}</style>
       {/* ── Toolbar ────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
@@ -926,12 +932,10 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               ) : (
                 filteredRows.map((row, idx) => {
                   const isSelected = selectedRowIdx === idx
-                  const isHovered = hoveredRowIdx === idx
                   const isEmRegressivo = row.status === 'em_regressivo'
 
                   let bgColor = 'transparent'
                   if (isSelected) bgColor = 'var(--color-amber-light)'
-                  else if (isHovered) bgColor = 'var(--color-blue-light)'
                   else if (isEmRegressivo) bgColor = 'var(--color-blue-light)'
 
                   const hasNote = !!row.note
@@ -939,9 +943,8 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                   return (
                     <tr
                       key={`${row.releaseId}-${row.platform}-${idx}`}
+                      className="cron-row"
                       onClick={() => handleRowClick(idx)}
-                      onMouseEnter={() => setHoveredRowIdx(idx)}
-                      onMouseLeave={() => setHoveredRowIdx(null)}
                       style={{
                         cursor: 'pointer',
                         background: bgColor,
@@ -1003,6 +1006,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                       <td style={{ ...tdStyle, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                           <button
+                            className="cron-btn-edit"
                             onClick={() => onReleaseClick(row.releaseId)}
                             title="Editar release"
                             aria-label="Editar release"
@@ -1013,10 +1017,9 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'background 0.15s, color 0.15s',
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.color = 'var(--color-blue)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                           >✎</button>
                           <button
+                            className="cron-btn-dup"
                             onClick={() => onDuplicateRelease(row.releaseId)}
                             title="Duplicar release"
                             aria-label="Duplicar release"
@@ -1027,10 +1030,9 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'background 0.15s, color 0.15s',
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.color = 'var(--color-blue)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                           >⧉</button>
                           <button
+                            className="cron-btn-del"
                             onClick={() => setDeleteConfirmId(row.releaseId)}
                             title="Excluir release"
                             aria-label="Excluir release"
@@ -1041,8 +1043,6 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'background 0.15s, color 0.15s',
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)'; e.currentTarget.style.color = 'var(--color-red)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                           >🗑</button>
                         </div>
                       </td>

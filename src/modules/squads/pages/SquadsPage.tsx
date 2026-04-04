@@ -15,6 +15,10 @@ import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { showToast } from '@/app/components/Toast'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 import type { Profile } from '@/modules/auth/store/authStore'
+import { PermissionsEditor } from '../components/PermissionsEditor'
+import { ProfilesPanel } from '../components/ProfilesPanel'
+import { UsersPanel } from '../components/UsersPanel'
+import { SquadDetail } from '../components/SquadDetail'
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -33,96 +37,6 @@ const SQUAD_COLORS = ['#185FA5', '#7C3AED', '#0891B2', '#059669', '#D97706', '#D
 const roleBadge: React.CSSProperties = {
   fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8,
   background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)',
-}
-
-// ─── PermissionsEditor ────────────────────────────────────────────────────────
-
-function PermissionsEditor({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: MemberPermissions
-  onChange: (p: MemberPermissions) => void
-  disabled?: boolean
-}) {
-  function toggleGroup(group: PermissionGroup, checked: boolean) {
-    const updates: Partial<MemberPermissions> = {}
-    for (const res of PERMISSION_RESOURCES) {
-      const key = `${group}_${res}` as keyof MemberPermissions
-      updates[key] = checked
-    }
-    onChange({ ...value, ...updates })
-  }
-
-  function isGroupAllChecked(group: PermissionGroup): boolean {
-    return PERMISSION_RESOURCES.every((res) => value[`${group}_${res}` as keyof MemberPermissions])
-  }
-
-  return (
-    <div style={{
-      padding: '12px 14px',
-      background: 'var(--color-bg)',
-      border: '0.5px solid var(--color-border)',
-      borderRadius: 8,
-    }}>
-      <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 8, display: 'block' }}>
-        Permissoes
-      </span>
-
-      {/* Grid header */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr repeat(3, 64px)',
-        gap: 0, alignItems: 'center',
-        borderBottom: '1px solid var(--color-border)',
-        paddingBottom: 6, marginBottom: 6,
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Recurso</span>
-        {PERMISSION_GROUPS.map((g) => (
-          <label key={g.id} style={{ textAlign: 'center', cursor: disabled ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <input
-              type="checkbox"
-              checked={isGroupAllChecked(g.id)}
-              disabled={disabled}
-              onChange={(e) => toggleGroup(g.id, e.target.checked)}
-              style={{ width: 13, height: 13, accentColor: g.color, cursor: disabled ? 'default' : 'pointer' }}
-            />
-            <span style={{ fontSize: 10, fontWeight: 600, color: g.color }}>{g.label}</span>
-          </label>
-        ))}
-      </div>
-
-      {/* Grid rows */}
-      {PERMISSION_RESOURCES.map((res) => (
-        <div key={res} style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr repeat(3, 64px)',
-          gap: 0, alignItems: 'center',
-          padding: '5px 0',
-          borderBottom: '0.5px solid var(--color-border)',
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--color-text)', fontWeight: 500 }}>
-            {RESOURCE_LABELS[res]}
-          </span>
-          {PERMISSION_GROUPS.map((g) => {
-            const key = `${g.id}_${res}` as keyof MemberPermissions
-            return (
-              <div key={g.id} style={{ textAlign: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={value[key] ?? false}
-                  disabled={disabled}
-                  onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
-                  style={{ width: 14, height: 14, accentColor: g.color, cursor: disabled ? 'default' : 'pointer' }}
-                />
-              </div>
-            )
-          })}
-        </div>
-      ))}
-    </div>
-  )
 }
 
 // ─── SquadsPage ────────────────────────────────────────────────────────────────
@@ -250,7 +164,7 @@ export function SquadsPage() {
 
   // ── Load permission profiles independently ─────────────────────────────────
   useEffect(() => {
-    listPermissionProfiles().then(setProfiles).catch(() => {})
+    listPermissionProfiles().then(setProfiles).catch((e) => { if (import.meta.env.DEV) console.warn('[Squads] Failed to load permission profiles:', e) })
   }, [])
 
   // ── Load members + all users when squad changes ──────────────────────────────
@@ -402,7 +316,7 @@ export function SquadsPage() {
     try {
       const data = await listArchivedSquads()
       setArchivedSquads(data)
-    } catch { /* ignore */ }
+    } catch (e) { if (import.meta.env.DEV) console.warn('[Squads] Failed to load archived squads:', e) }
   }
 
   useEffect(() => {
@@ -491,7 +405,7 @@ export function SquadsPage() {
     let fail = 0
     for (const id of selectedUserIds) {
       try { await resetUserPassword(id); ok++ }
-      catch { fail++ }
+      catch (e) { if (import.meta.env.DEV) console.warn('[Squads] Failed to reset password for user:', id, e); fail++ }
     }
     setBatchResetting(false)
     setShowBatchResetConfirm(false)
@@ -618,6 +532,11 @@ export function SquadsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <style>{`
+        .sq-btn-archive:hover { background: var(--color-red-light) !important; }
+        .sq-btn-remove:hover { background: var(--color-red-light) !important; }
+        .sq-dropdown-item:hover { background: var(--color-surface-2) !important; }
+      `}</style>
 
       {/* ── Tabs ──────────────────────────────────────────────────────────────── */}
       <div style={{ padding: '0 24px', display: 'flex', gap: 0, borderBottom: '1px solid var(--color-border)' }}>
@@ -775,8 +694,7 @@ export function SquadsPage() {
                           <button
                             onClick={() => setArchiveSquadTarget(s)}
                             style={btnDestructive}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                            className="sq-btn-archive"
                           >Arquivar</button>
                         </div>
                       )}
@@ -785,192 +703,44 @@ export function SquadsPage() {
 
                     {/* Painel expandido — membros + adicionar */}
                     {isOpen && (
-                      <div style={{ borderTop: '0.5px solid var(--color-border)', padding: '16px 18px' }}>
-                        {membersLoading ? (
-                          <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: 0 }}>Carregando...</p>
-                        ) : (
-                          <>
-                            {/* Lista de membros */}
-                            {members.length === 0 ? (
-                              <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic', margin: '0 0 14px' }}>Nenhum membro além de você.</p>
-                            ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                                {members.map((m) => {
-                                  const isMe = m.user_id === user?.id
-                                  const isAdminMember = m.profile?.global_role === 'admin' || m.profile?.global_role === 'gerente'
-                                  const isEditingP = editingPermsMember === m.id
-                                  return (
-                                    <div key={m.id}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                                        <div style={avatarStyle(m.role, isAdminMember)}>
-                                          {(m.profile?.display_name ?? '?')[0].toUpperCase()}
-                                        </div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>
-                                            {m.profile?.display_name ?? '—'}
-                                          </span>
-                                          {isMe && <span style={{ fontSize: 11, color: 'var(--color-text-3)', marginLeft: 4 }}>(você)</span>}
-                                          <span style={{ fontSize: 11, color: 'var(--color-text-3)', marginLeft: 8 }}>{m.profile?.email}</span>
-                                        </div>
-                                        {canManage && !isMe && !isAdminMember ? (
-                                          <select value={m.role} onChange={(e) => handleRoleChange(m, e.target.value as SquadRole)} style={{
-                                            ...roleBadge, cursor: 'pointer', outline: 'none', appearance: 'none',
-                                            paddingRight: 20,
-                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-                                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
-                                          }}>
-                                            <option value="qa_lead">QA Lead</option>
-                                            <option value="qa">QA</option>
-                                            <option value="stakeholder">Stakeholder</option>
-                                          </select>
-                                        ) : (
-                                          <span style={roleBadge}>{isAdminMember ? 'Admin' : ROLE_LABEL[m.role]}</span>
-                                        )}
-                                        {canManage && !isAdminMember && (
-                                          <button onClick={() => isEditingP ? setEditingPermsMember(null) : startEditPerms(m)} style={{ ...btnGhost, color: isEditingP ? '#185FA5' : undefined }}>
-                                            {isEditingP ? 'Fechar' : 'Permissões'}
-                                          </button>
-                                        )}
-                                        {(canManage || isMe) && !isAdminMember && (
-                                          <button
-                                            onClick={() => setDeleteMemberTarget(m)}
-                                            title={isMe ? 'Sair' : 'Remover'}
-                                            style={{ background: 'none', border: 'none', color: '#A32D2D', width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', flexShrink: 0 }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-red-light)' }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-                                          >×</button>
-                                        )}
-                                      </div>
-                                      {isEditingP && (
-                                        <div style={{ marginLeft: 38, marginTop: 6, marginBottom: 8 }}>
-                                          <PermissionsEditor value={editingPerms} onChange={setEditingPerms} />
-                                          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                                            <button onClick={() => savePerms(m.id)} disabled={savingPerms} style={btnPrimary}>
-                                              {savingPerms ? 'Salvando...' : 'Salvar'}
-                                            </button>
-                                            <button onClick={() => setEditingPermsMember(null)} style={btnGhost}>Cancelar</button>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
-
-                            {/* Adicionar membro — toggle */}
-                            {canManage && (
-                              <div style={{ borderTop: '0.5px solid var(--color-border)', paddingTop: 14 }}>
-                                {!showAddMemberForm ? (
-                                  <button onClick={() => setShowAddMemberForm(true)} style={{ ...btnGhost, color: '#185FA5', fontSize: 13, padding: '6px 0' }}>
-                                    + Adicionar membro
-                                  </button>
-                                ) : (
-                                <div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                  <span style={labelSm}>Adicionar membro</span>
-                                  <button onClick={() => setShowAddMemberForm(false)} style={btnGhost}>Fechar</button>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                  {/* Busca com autocomplete */}
-                                  <div ref={dropdownRef} style={{ position: 'relative' }}>
-                                    <input
-                                      value={userSearch}
-                                      onChange={(e) => handleUserSearchChange(e.target.value)}
-                                      onKeyDown={handleUserSearchKeyDown}
-                                      onFocus={() => { if (!addUserId) setShowUserDropdown(true) }}
-                                      placeholder="Buscar por nome ou e-mail..."
-                                      style={{
-                                        ...inputStyle,
-                                        ...(addUserId ? { borderColor: '#185FA5', background: 'var(--color-blue-light)' } : {}),
-                                      }}
-                                    />
-                                    {addUserId && (
-                                      <button
-                                        type="button"
-                                        onClick={() => { setAddUserId(''); setUserSearch(''); setShowUserDropdown(true) }}
-                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-3)', fontSize: 14, lineHeight: 1, padding: '2px 4px' }}
-                                      >×</button>
-                                    )}
-                                    {showUserDropdown && userSearch.length > 0 && !addUserId && availableUsers.length > 0 && (
-                                      <div style={{
-                                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                                        marginTop: 4, border: '0.5px solid var(--color-border)',
-                                        borderRadius: 8, overflow: 'hidden', maxHeight: 200, overflowY: 'auto',
-                                        background: 'var(--color-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                                      }}>
-                                        {availableUsers.slice(0, 8).map((u) => (
-                                          <div
-                                            key={u.id}
-                                            onClick={() => selectUser(u)}
-                                            style={{
-                                              display: 'flex', alignItems: 'center', gap: 8,
-                                              width: '100%', padding: '8px 12px',
-                                              background: 'var(--color-bg)',
-                                              borderBottom: '0.5px solid var(--color-border)',
-                                              cursor: 'pointer',
-                                            }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-2)' }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-bg)' }}
-                                          >
-                                            <div style={{ ...avatarBase, width: 24, height: 24, fontSize: 10 }}>
-                                              {u.display_name[0].toUpperCase()}
-                                            </div>
-                                            <div style={{ minWidth: 0 }}>
-                                              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</div>
-                                              <div style={{ fontSize: 11, color: 'var(--color-text-3)' }}>{u.email}</div>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                  {/* Role + Perfil + botão */}
-                                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <select
-                                      value={addRole}
-                                      onChange={(e) => setAddRole(e.target.value as SquadRole)}
-                                      style={{ ...selectStyle, width: 'auto', minWidth: 120 }}
-                                    >
-                                      <option value="qa_lead">QA Lead</option>
-                                      <option value="qa">QA</option>
-                                      <option value="stakeholder">Stakeholder</option>
-                                    </select>
-                                    <select
-                                      value={addProfileId}
-                                      onChange={(e) => {
-                                        setAddProfileId(e.target.value)
-                                        const found = profiles.find((p) => p.id === e.target.value)
-                                        if (found) setAddPerms({ ...found.permissions })
-                                        else setAddPerms({ ...DEFAULT_PERMISSIONS })
-                                      }}
-                                      style={{ ...selectStyle, width: 'auto', flex: 1 }}
-                                    >
-                                      <option value="">Perfil: Sem perfil</option>
-                                      {profiles.map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name}{p.is_system ? ' ★' : ''}</option>
-                                      ))}
-                                    </select>
-                                    <button
-                                      type="button"
-                                      disabled={adding || !addUserId}
-                                      onClick={handleAddMember}
-                                      style={{ ...btnPrimary, opacity: adding || !addUserId ? 0.5 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}
-                                    >
-                                      {adding ? 'Adicionando...' : '+ Adicionar'}
-                                    </button>
-                                  </div>
-                                </div>
-                                {addError && (
-                                  <p style={{ margin: '6px 0 0', fontSize: 12, color: '#A32D2D' }}>{addError}</p>
-                                )}
-                                </div>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
+                      <SquadDetail
+                        activeSquad={activeSquad!}
+                        members={members}
+                        membersLoading={membersLoading}
+                        currentUserId={user?.id}
+                        canManage={canManage}
+                        editingPermsMember={editingPermsMember}
+                        editingPerms={editingPerms}
+                        setEditingPerms={setEditingPerms}
+                        setEditingPermsMember={setEditingPermsMember}
+                        startEditPerms={startEditPerms}
+                        savePerms={savePerms}
+                        savingPerms={savingPerms}
+                        handleRoleChange={handleRoleChange}
+                        setDeleteMemberTarget={setDeleteMemberTarget}
+                        showAddMemberForm={showAddMemberForm}
+                        setShowAddMemberForm={setShowAddMemberForm}
+                        userSearch={userSearch}
+                        handleUserSearchChange={handleUserSearchChange}
+                        handleUserSearchKeyDown={handleUserSearchKeyDown}
+                        addUserId={addUserId}
+                        setAddUserId={setAddUserId}
+                        setUserSearch={setUserSearch}
+                        showUserDropdown={showUserDropdown}
+                        setShowUserDropdown={setShowUserDropdown}
+                        availableUsers={availableUsers}
+                        selectUser={selectUser}
+                        addRole={addRole}
+                        setAddRole={setAddRole}
+                        addProfileId={addProfileId}
+                        setAddProfileId={setAddProfileId}
+                        setAddPerms={setAddPerms}
+                        profiles={profiles}
+                        adding={adding}
+                        handleAddMember={handleAddMember}
+                        addError={addError}
+                        dropdownRef={dropdownRef}
+                      />
                     )}
                   </div>
                 )
@@ -1043,243 +813,45 @@ export function SquadsPage() {
 
         {/* ════ Tab: Perfis de Acesso ════ */}
         {tab === 'profiles' && (
-          <div style={{ maxWidth: 560 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-2)' }}>
-                Perfis definem conjuntos de permissões reutilizáveis.
-              </p>
-              {isAdmin && (
-                <button onClick={openNewProfile} style={{ ...btnPrimary, flexShrink: 0, marginLeft: 12 }}>+ Novo Perfil</button>
-              )}
-            </div>
-            {profiles.length > 0 && (
-              <div style={{ position: 'relative', marginBottom: 14, maxWidth: 320 }}>
-                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
-                <input
-                  type="text"
-                  placeholder="Buscar perfil..."
-                  value={profileSearch}
-                  onChange={(e) => setProfileSearch(e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
-                />
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {profiles.filter((p) => {
-                if (!profileSearch.trim()) return true
-                const q = profileSearch.toLowerCase().trim()
-                return p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)
-              }).map((p) => (
-                <div key={p.id} style={{
-                  background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
-                  borderLeft: p.is_system ? '3px solid #185FA5' : '3px solid var(--color-border)',
-                  borderRadius: 12, padding: '14px 18px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{p.name}</span>
-                        {p.is_system && <span style={badgeNeutral}>PADRÃO</span>}
-                      </div>
-                      {p.description && <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-text-2)' }}>{p.description}</p>}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {PERMISSION_GROUPS.map((g) => {
-                          const active = PERMISSION_RESOURCES.filter((res) => p.permissions[`${g.id}_${res}` as keyof MemberPermissions])
-                          if (active.length === 0) return null
-                          return (
-                            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: g.color, minWidth: 42 }}>{g.label}:</span>
-                              {active.map((res) => (
-                                <span key={res} style={{ ...badgeActive, borderColor: g.color + '44', color: g.color, background: g.color + '12' }}>
-                                  {RESOURCE_LABELS[res]}
-                                </span>
-                              ))}
-                            </div>
-                          )
-                        })}
-                        {PERMISSION_GROUPS.every((g) => PERMISSION_RESOURCES.every((res) => !p.permissions[`${g.id}_${res}` as keyof MemberPermissions])) && (
-                          <span style={badgeNeutral}>Somente leitura</span>
-                        )}
-                      </div>
-                    </div>
-                    {isAdmin && (
-                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        <button onClick={() => openEditProfile(p)} style={btnGhost}>Editar</button>
-                        {!p.is_system && (
-                          <button onClick={() => setDeleteProfileTarget(p)} style={btnDestructive}>Excluir</button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ProfilesPanel
+            profiles={profiles}
+            isAdmin={isAdmin}
+            profileSearch={profileSearch}
+            setProfileSearch={setProfileSearch}
+            openNewProfile={openNewProfile}
+            openEditProfile={openEditProfile}
+            setDeleteProfileTarget={setDeleteProfileTarget}
+          />
         )}
 
         {/* ════ Tab: Usuários ════ */}
         {tab === 'users' && isAdmin && (
-          <div style={{ maxWidth: 860 }}>
-            {/* Botão + form de criar usuário */}
-            <div style={{ marginBottom: 16 }}>
-              {!showCreateUser ? (
-                <button onClick={() => setShowCreateUser(true)} style={btnPrimary}>+ Novo Usuário</button>
-              ) : (
-                <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '16px 18px' }}>
-                  <form onSubmit={handleCreateUser} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: 140 }}>
-                      <label style={labelSm}>Nome</label>
-                      <input autoFocus value={newUserName} onChange={(e) => setNewUserName(e.target.value)} style={inputStyle} required placeholder="Nome completo" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 160 }}>
-                      <label style={labelSm}>E-mail</label>
-                      <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} style={inputStyle} required placeholder="email@empresa.com" />
-                    </div>
-                    <button type="submit" disabled={creatingUser} style={{ ...btnPrimary, opacity: creatingUser ? 0.5 : 1, whiteSpace: 'nowrap' }}>
-                      {creatingUser ? 'Criando...' : 'Criar'}
-                    </button>
-                    <button type="button" onClick={() => setShowCreateUser(false)} style={btnGhost}>Cancelar</button>
-                  </form>
-                  <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
-                    * Senha padrão: <strong style={{ color: 'var(--color-text-2)' }}>Mudar@123</strong> — o usuário será solicitado a trocar no primeiro login.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {usersLoading ? (
-              <p style={{ fontSize: 13, color: 'var(--color-text-2)' }}>Carregando...</p>
-            ) : (
-              <>
-              {usersTab.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-                  {/* Search */}
-                  <div style={{ position: 'relative', minWidth: 200, flex: 1, maxWidth: 320 }}>
-                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
-                    <input
-                      type="text"
-                      placeholder="Buscar usuário..."
-                      value={userTabSearch}
-                      onChange={(e) => setUserTabSearch(e.target.value)}
-                      style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
-                    />
-                  </div>
-                  {/* Filter: role */}
-                  <select value={userFilterRole} onChange={(e) => setUserFilterRole(e.target.value as 'all' | 'admin' | 'gerente' | 'user')} style={{ ...selectStyle, width: 'auto' }}>
-                    <option value="all">Todos os perfis</option>
-                    <option value="admin">Admin</option>
-                    <option value="gerente">Gerente</option>
-                    <option value="user">Usuario</option>
-                  </select>
-                  {/* Filter: status */}
-                  <select value={userFilterStatus} onChange={(e) => setUserFilterStatus(e.target.value as 'all' | 'active' | 'inactive')} style={{ ...selectStyle, width: 'auto' }}>
-                    <option value="all">Todos os status</option>
-                    <option value="active">Ativos</option>
-                    <option value="inactive">Inativos</option>
-                  </select>
-                  <span style={{ fontSize: 12, color: 'var(--color-text-3)', marginLeft: 'auto' }}>
-                    {usersTab.length} usuário{usersTab.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
-              {/* Toolbar de ações em lote */}
-              {selectedUserIds.size > 0 && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 16px', marginBottom: 10,
-                  background: 'var(--color-blue-light)',
-                  border: '1px solid var(--color-blue)',
-                  borderRadius: 10,
-                }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-blue-text)' }}>
-                    {selectedUserIds.size} selecionado{selectedUserIds.size !== 1 ? 's' : ''}
-                  </span>
-                  <button
-                    onClick={() => setShowBatchResetConfirm(true)}
-                    style={{
-                      padding: '5px 14px', borderRadius: 7, border: 'none',
-                      background: 'var(--color-blue)', color: '#fff',
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      fontFamily: 'var(--font-family-sans)',
-                    }}
-                  >
-                    🔑 Resetar senha ({selectedUserIds.size})
-                  </button>
-                  <button
-                    onClick={() => setSelectedUserIds(new Set())}
-                    style={{
-                      padding: '5px 12px', borderRadius: 7,
-                      border: '1px solid var(--color-blue)',
-                      background: 'transparent', color: 'var(--color-blue-text)',
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      fontFamily: 'var(--font-family-sans)',
-                    }}
-                  >
-                    Limpar seleção
-                  </button>
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {usersTab.filter((u) => {
-                  if (userFilterRole !== 'all' && u.global_role !== userFilterRole) return false
-                  if (userFilterStatus === 'active' && !u.active) return false
-                  if (userFilterStatus === 'inactive' && u.active) return false
-                  if (!userTabSearch.trim()) return true
-                  const q = userTabSearch.toLowerCase().trim()
-                  return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-                    || u.squads.some((sq) => sq.squad_name.toLowerCase().includes(q))
-                }).map((u) => (
-                  <div key={u.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '12px 16px',
-                    background: 'var(--color-bg)',
-                    border: '0.5px solid var(--color-border)',
-                    borderRadius: 12,
-                    opacity: u.active ? 1 : 0.5,
-                  }}>
-                    {/* Checkbox para seleção em lote */}
-                    {u.id !== user?.id && (
-                      <input
-                        type="checkbox"
-                        checked={selectedUserIds.has(u.id)}
-                        onChange={() => toggleUserSelection(u.id)}
-                        aria-label={`Selecionar ${u.display_name}`}
-                        style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0, accentColor: 'var(--color-blue)' }}
-                      />
-                    )}
-                    {/* Avatar + info */}
-                    <div style={avatarBase}>{u.display_name[0]?.toUpperCase() ?? '?'}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</span>
-                        <span style={badgeNeutral}>{u.global_role === 'admin' ? 'Admin' : u.global_role === 'gerente' ? 'Gerente' : 'Usuario'}</span>
-                        <span style={u.active ? badgeActive : badgeInactive}>{u.active ? 'Ativo' : 'Inativo'}</span>
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 2 }}>{u.email}</div>
-                      {u.squads.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-                          {u.squads.map((sq) => <span key={sq.squad_id} style={badgeNeutral}>{sq.squad_name}</span>)}
-                        </div>
-                      )}
-                    </div>
-                    {/* Ações */}
-                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => openEditUser(u)} style={btnGhost}>Editar</button>
-                      {u.id !== user?.id && (
-                        <>
-                          <button onClick={() => setResetPasswordTarget(u)} style={btnGhost} title="Resetar senha para Mudar@123">🔑 Resetar</button>
-                          <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: '#3B6D11' }}>
-                            {u.active ? 'Desativar' : 'Ativar'}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              </>
-            )}
-          </div>
+          <UsersPanel
+            usersTab={usersTab}
+            usersLoading={usersLoading}
+            currentUserId={user?.id}
+            showCreateUser={showCreateUser}
+            setShowCreateUser={setShowCreateUser}
+            newUserName={newUserName}
+            setNewUserName={setNewUserName}
+            newUserEmail={newUserEmail}
+            setNewUserEmail={setNewUserEmail}
+            creatingUser={creatingUser}
+            handleCreateUser={handleCreateUser}
+            userTabSearch={userTabSearch}
+            setUserTabSearch={setUserTabSearch}
+            userFilterRole={userFilterRole}
+            setUserFilterRole={setUserFilterRole}
+            userFilterStatus={userFilterStatus}
+            setUserFilterStatus={setUserFilterStatus}
+            selectedUserIds={selectedUserIds}
+            toggleUserSelection={toggleUserSelection}
+            setSelectedUserIds={setSelectedUserIds}
+            setShowBatchResetConfirm={setShowBatchResetConfirm}
+            openEditUser={openEditUser}
+            setResetPasswordTarget={setResetPasswordTarget}
+            handleToggleActive={handleToggleActive}
+          />
         )}
       </div>
 

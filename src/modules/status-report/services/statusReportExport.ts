@@ -24,6 +24,6 @@ export async function exportStatusReportToImage(reportTitle: string): Promise<vo
       0.95,
     )
   } catch (e) {
-    console.error('[StatusReport] Erro ao exportar imagem:', e)
+    if (import.meta.env.DEV) console.error('[StatusReport] Erro ao exportar imagem:', e)
   }
 }

@@ -16,6 +16,7 @@ const PAPEIS = [
 
 export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberFormProps) {
   const [allUsers, setAllUsers] = useState<Profile[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
   const [papel, setPapel] = useState('QA')
@@ -23,7 +24,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    listAllUsers().then(setAllUsers).catch(() => {})
+    listAllUsers().then(setAllUsers).catch((e) => { if (import.meta.env.DEV) console.warn('[StatusReport] Failed to load users:', e) }).finally(() => setUsersLoading(false))
   }, [])
 
   // Fechar dropdown ao clicar fora
@@ -93,6 +94,11 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
       {/* Busca de usuario */}
       <div style={{ marginBottom: 14 }}>
         <label style={labelSm}>Buscar usuario</label>
+        {usersLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+            <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
+          </div>
+        ) : (
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <input
             autoFocus
@@ -160,6 +166,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Papel (visível após selecionar usuario) */}

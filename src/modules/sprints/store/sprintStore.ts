@@ -17,25 +17,44 @@ let _remotePersistTimeout: ReturnType<typeof setTimeout> | null = null
 let _remotePersistInFlight = false
 let _remotePersistQueued = false
 let _realtimeChannel: RealtimeChannel | null = null
+let _lastPersistedAt: string | null = null
+let _lastPendingState: { sprintId: string; state: SprintState } | null = null
 
-async function doPersistToServer(sprintId: string, state: SprintState) {
+async function doPersistToServer(sprintId: string, state: SprintState, updatedAt?: string) {
   if (!sprintId) return
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
+  _lastPendingState = null
   try {
-    await persistToServer(sprintId, state)
+    await persistToServer(sprintId, state, updatedAt)
   } catch (e) {
-    console.error('[Supabase] Erro ao sincronizar sprint:', e)
+    if (import.meta.env.DEV) console.error('[Supabase] Erro ao sincronizar sprint:', e)
+    _lastPendingState = { sprintId, state }
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued) queueRemotePersist(sprintId, state, 2000)
   }
 }
 
-function queueRemotePersist(sprintId: string, state: SprintState, delay = 700) {
+function queueRemotePersist(sprintId: string, state: SprintState, delay = 2500, updatedAt?: string) {
   if (_remotePersistTimeout) clearTimeout(_remotePersistTimeout)
-  _remotePersistTimeout = setTimeout(() => doPersistToServer(sprintId, state), delay)
+  _lastPendingState = { sprintId, state }
+  _remotePersistTimeout = setTimeout(() => doPersistToServer(sprintId, state, updatedAt), delay)
+}
+
+// Flush pendente antes de fechar a aba
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (_lastPendingState) {
+      const payload = JSON.stringify({
+        id: _lastPendingState.sprintId,
+        data: _lastPendingState.state,
+        status: 'ativa',
+      })
+      navigator.sendBeacon?.('/api/sprint-flush', payload)
+    }
+  })
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -119,7 +138,7 @@ interface SprintStore {
 
 export const useSprintStore = create<SprintStore>((set, get) => ({
   sprintId: '',
-  state: JSON.parse(JSON.stringify(DEFAULT_STATE)),
+  state: structuredClone(DEFAULT_STATE),
   activeSuiteFilter: new Set(),
   lastSaved: 0,
 
@@ -141,6 +160,9 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
         (payload) => {
           // Ignora se o payload não tiver dados
           if (!payload.new?.data) return
+          // Ignora echo da nossa própria persistência
+          const incomingUpdatedAt = (payload.new as Record<string, unknown>).updated_at as string | undefined
+          if (incomingUpdatedAt && incomingUpdatedAt === _lastPersistedAt) return
           const incoming = normalizeState(payload.new.data)
           const recomputed = computeFields(incoming)
           saveToStorage(sprintId, recomputed)
@@ -156,15 +178,17 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
       supabase.removeChannel(_realtimeChannel)
       _realtimeChannel = null
     }
-    set({ sprintId: '', state: JSON.parse(JSON.stringify(DEFAULT_STATE)), activeSuiteFilter: new Set() })
+    set({ sprintId: '', state: structuredClone(DEFAULT_STATE), activeSuiteFilter: new Set() })
   },
 
   _commit: (next) => {
     const computed = computeFields(next)
     const { sprintId } = get()
+    const updatedAt = new Date().toISOString()
     saveToStorage(sprintId, computed)
     upsertSprintInMasterIndex(sprintId, computed)
-    queueRemotePersist(sprintId, computed)
+    queueRemotePersist(sprintId, computed, 2500, updatedAt)
+    _lastPersistedAt = updatedAt
     set({ state: computed, lastSaved: Date.now() })
   },
 
@@ -222,7 +246,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const suiteFeatures = state.features.filter((f) => String(f.suiteId) === String(suite.id))
     const now = Date.now()
     const copiedFeatures = suiteFeatures.map((f, i) => ({
-      ...JSON.parse(JSON.stringify(f)),
+      ...structuredClone(f),
       id: now + i + 1,
       suiteId: newSuiteId,
     }))

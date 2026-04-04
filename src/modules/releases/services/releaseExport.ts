@@ -24,6 +24,6 @@ export async function exportReleaseToImage(releaseName: string): Promise<void> {
       0.95,
     )
   } catch (e) {
-    console.error('[Release] Erro ao exportar imagem:', e)
+    if (import.meta.env.DEV) console.error('[Release] Erro ao exportar imagem:', e)
   }
 }

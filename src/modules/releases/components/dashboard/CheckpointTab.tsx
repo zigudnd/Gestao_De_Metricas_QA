@@ -189,7 +189,7 @@ function getVisibleIds(): Set<string> {
   try {
     const raw = localStorage.getItem(CP_VISIBLE_KEY)
     return new Set(raw ? JSON.parse(raw) : [])
-  } catch { return new Set() }
+  } catch (e) { if (import.meta.env.DEV) console.warn('[Releases] Failed to load visible checkpoint IDs:', e); return new Set() }
 }
 
 function saveVisibleIds(ids: Set<string>) {
@@ -285,6 +285,8 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.35); opacity: 0.7; }
         }
+        .cp-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+        .cp-release-hover:hover { background: var(--color-blue-light) !important; }
       `}</style>
 
       {/* Filter bar */}
@@ -410,7 +412,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
           return (
             <div
               key={group.releaseNumber}
-              className="anim-fade-up"
+              className="anim-fade-up cp-card-hover"
               style={{
                 background: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
@@ -431,12 +433,6 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                   padding: '14px 18px',
                   cursor: 'pointer',
                   userSelect: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget.parentElement as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget.parentElement as HTMLElement).style.boxShadow = 'none'
                 }}
               >
                 {/* Platform icons badge */}
@@ -503,6 +499,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                     return (
                       <div
                         key={release.id}
+                        className="cp-release-hover"
                         onClick={() => onReleaseClick(release.id)}
                         style={{
                           cursor: 'pointer',
@@ -510,12 +507,6 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                           borderRadius: 8,
                           background: 'var(--color-surface-2)',
                           transition: 'background 0.15s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'var(--color-blue-light)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'var(--color-surface-2)'
                         }}
                       >
                         {/* Squad/platform header */}
