@@ -66,8 +66,16 @@ export function Topbar() {
     if (isHome) return [{ label: 'Início' }]
     if (isDashboard && sprintTitle) return [home, { label: 'Cobertura QA', path: '/sprints' }, { label: sprintTitle }]
     if (location.pathname === '/sprints' || location.pathname === '/sprints/compare') return [home, { label: 'Cobertura QA' }]
-    if (isStatusReport) return [home, { label: 'Status Report' }]
-    if (isReleases) return [home, { label: 'Releases' }]
+    if (isStatusReport) {
+      const isDetail = location.pathname.match(/^\/status-report\/[^/]+$/)
+      if (isDetail) return [home, { label: 'Status Report', path: '/status-report' }, { label: 'Editando Report' }]
+      return [home, { label: 'Status Report' }]
+    }
+    if (isReleases) {
+      const isDetail = location.pathname.match(/^\/releases\/[^/]+$/)
+      if (isDetail) return [home, { label: 'Releases', path: '/releases' }, { label: 'Dashboard Release' }]
+      return [home, { label: 'Releases' }]
+    }
     if (isSquads) return [home, { label: 'Cadastros' }]
     if (isDocs) return [home, { label: 'Documentação' }]
     if (isProfile) return [home, { label: 'Perfil' }]
@@ -103,9 +111,6 @@ export function Topbar() {
       </nav>
 
       <div style={{ flex: 1 }} />
-
-      {/* User menu — canto superior direito */}
-      <UserMenu />
 
       {/* Ações contextuais */}
       {isDashboard && (
@@ -163,6 +168,9 @@ export function Topbar() {
 
         </div>
       )}
+
+      {/* User menu — canto superior direito (sempre último) */}
+      <UserMenu />
 
       {showTermo && <TermoConclusaoModal onClose={() => setShowTermo(false)} />}
 

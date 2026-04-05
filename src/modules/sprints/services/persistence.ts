@@ -440,7 +440,7 @@ export async function syncAllFromSupabase(): Promise<void> {
           totalTests: computed.features.reduce((a, f) => a + (f.tests || 0), 0),
           totalExec: computed.features.reduce((a, f) => a + (f.exec || 0), 0),
           updatedAt: row.updated_at,
-          favorite: existing?.favorite,
+          favorite: existing?.favorite ?? false,
           status: row.status as SprintIndexEntry['status'],
         }
 

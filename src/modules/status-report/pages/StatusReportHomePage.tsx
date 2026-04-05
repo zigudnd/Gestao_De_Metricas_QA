@@ -207,13 +207,23 @@ export function StatusReportHomePage() {
     const target = loadFromLocalStorage(migrateToId)
     if (!source || !target) return
     const now = new Date().toISOString()
-    const copiedItems: StatusReportItem[] = source.items.map((item) => ({
-      ...item,
-      id: 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      dependsOn: [],
-      createdAt: now,
-      updatedAt: now,
-    }))
+    const idMap = new Map<string, string>()
+    const copiedItems: StatusReportItem[] = source.items.map((item) => {
+      const newId = 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+      idMap.set(item.id, newId)
+      return {
+        ...item,
+        id: newId,
+        createdAt: now,
+        updatedAt: now,
+      }
+    })
+    // Remap dependsOn using idMap (only remap deps that are in the migrated set)
+    copiedItems.forEach((item) => {
+      item.dependsOn = item.dependsOn
+        .map((depId) => idMap.get(depId) ?? depId)
+        .filter((depId) => idMap.has(depId) || target.items.some((t) => t.id === depId))
+    })
     target.items = [...target.items, ...copiedItems]
     target.updatedAt = now
     for (const sec of source.sections) {

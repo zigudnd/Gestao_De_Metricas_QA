@@ -249,7 +249,7 @@ export async function syncAllFromSupabase(): Promise<void> {
           updatedAt: row.updated_at,
           periodStart: state.config.periodStart || '',
           periodEnd: state.config.periodEnd || '',
-          favorite: existing?.favorite,
+          favorite: existing?.favorite ?? false,
           status: existing?.status ?? 'active',
         }
 

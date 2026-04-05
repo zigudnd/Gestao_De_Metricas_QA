@@ -10,6 +10,8 @@ const { createClient } = require('@supabase/supabase-js');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
 // ── Validation Schemas ──────────────────────────────────────────────────────
 const createUserSchema = z.object({
@@ -119,6 +121,43 @@ function validateKey(req, res, next) {
 }
 app.use(express.static(path.join(__dirname, 'public')));
 
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'ToStatos — QA Dashboard API',
+      version: '1.0.0',
+      description: 'API do ToStatos para gestão de métricas QA, sprints, status reports e releases.',
+    },
+    servers: [{ url: `http://localhost:${process.env.PORT || 3000}` }],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      },
+    },
+  },
+  apis: ['./server.js'],
+});
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'ToStatos API Docs',
+}));
+
+/**
+ * @openapi
+ * /config.js:
+ *   get:
+ *     tags: [Sistema]
+ *     summary: Configuração do frontend
+ *     description: Retorna JavaScript com variáveis de configuração para o frontend (projectKey, storageType).
+ *     responses:
+ *       200:
+ *         description: JavaScript com window.__QA_DASHBOARD_CONFIG__
+ *         content:
+ *           application/javascript:
+ *             schema: { type: string }
+ */
 app.get('/config.js', (req, res) => {
   const config = {
     projectKey: DEFAULT_PROJECT_KEY,
@@ -131,10 +170,60 @@ app.get('/config.js', (req, res) => {
   res.send(`window.__QA_DASHBOARD_CONFIG__ = ${JSON.stringify(config)};`);
 });
 
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags: [Sistema]
+ *     summary: Health check
+ *     description: Verifica se a API está respondendo e qual tipo de storage está configurado.
+ *     responses:
+ *       200:
+ *         description: API funcionando
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, example: true }
+ *                 service: { type: string, example: "qa-dashboard-api" }
+ *                 storage: { type: string, enum: [local, supabase], example: "local" }
+ */
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'qa-dashboard-api', storage: STORAGE_TYPE });
 });
 
+/**
+ * @openapi
+ * /api/dashboard/{projectKey}:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Buscar dashboard por projectKey
+ *     description: Retorna o estado completo de um dashboard QA (sprints, bugs, features, etc).
+ *     parameters:
+ *       - in: path
+ *         name: projectKey
+ *         required: true
+ *         schema: { type: string, pattern: "^[a-zA-Z0-9_-]{1,80}$" }
+ *         description: Chave do projeto (ex sprint_1234567890)
+ *     responses:
+ *       200:
+ *         description: Dashboard encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 project_key: { type: string }
+ *                 payload: { type: object }
+ *                 updated_at: { type: string, format: date-time }
+ *       400:
+ *         description: projectKey inválido
+ *       404:
+ *         description: Dashboard não encontrado
+ *       500:
+ *         description: Erro interno
+ */
 app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
   try {
     const { projectKey } = req.params;
@@ -169,6 +258,45 @@ app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/dashboard/{projectKey}:
+ *   put:
+ *     tags: [Dashboard]
+ *     summary: Salvar/atualizar dashboard
+ *     description: Upsert do estado completo de um dashboard QA. Cria se não existir.
+ *     parameters:
+ *       - in: path
+ *         name: projectKey
+ *         required: true
+ *         schema: { type: string, pattern: "^[a-zA-Z0-9_-]{1,80}$" }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [payload]
+ *             properties:
+ *               payload:
+ *                 type: object
+ *                 description: Estado completo do dashboard (JSON livre)
+ *     responses:
+ *       200:
+ *         description: Dashboard salvo com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 project_key: { type: string }
+ *                 payload: { type: object }
+ *                 updated_at: { type: string, format: date-time }
+ *       400:
+ *         description: Payload inválido
+ *       500:
+ *         description: Erro interno
+ */
 app.put('/api/dashboard/:projectKey', validateKey, validateBody(dashboardPayloadSchema), async (req, res) => {
   try {
     const { projectKey } = req.params;
@@ -202,6 +330,41 @@ app.put('/api/dashboard/:projectKey', validateKey, validateBody(dashboardPayload
 });
 
 // ── Admin: criar usuário via Supabase Auth Admin API ─────────────────────────
+/**
+ * @openapi
+ * /api/admin/create-user:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Criar novo usuário
+ *     description: Cria usuário via Supabase Auth Admin API com senha temporária e flag must_change_password. Requer Bearer token de admin/gerente.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, display_name]
+ *             properties:
+ *               email: { type: string, format: email, example: "qa@empresa.com" }
+ *               display_name: { type: string, example: "Maria Silva", maxLength: 100 }
+ *     responses:
+ *       200:
+ *         description: Usuário criado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, format: uuid }
+ *                 email: { type: string }
+ *                 temporaryPassword: { type: string }
+ *       400: { description: Dados inválidos ou email já cadastrado }
+ *       401: { description: Token ausente ou inválido }
+ *       403: { description: Acesso negado — requer admin/gerente }
+ *       503: { description: Supabase não configurado }
+ */
 app.post('/api/admin/create-user', adminLimiter, requireAdminAuth, validateBody(createUserSchema), async (req, res) => {
   const { email, display_name } = req.validatedBody;
   // Gerar senha temporária aleatória (16 chars, base64)
@@ -227,6 +390,39 @@ app.post('/api/admin/create-user', adminLimiter, requireAdminAuth, validateBody(
 });
 
 // ── Admin: resetar senha de usuário ──────────────────────────────────────────
+/**
+ * @openapi
+ * /api/admin/reset-password:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Resetar senha de usuário
+ *     description: Gera nova senha temporária e marca must_change_password. Requer Bearer token de admin/gerente.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [user_id]
+ *             properties:
+ *               user_id: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Senha resetada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, example: true }
+ *                 temporaryPassword: { type: string }
+ *       400: { description: user_id inválido }
+ *       401: { description: Token ausente ou inválido }
+ *       403: { description: Acesso negado }
+ *       503: { description: Supabase não configurado }
+ */
 app.post('/api/admin/reset-password', adminLimiter, requireAdminAuth, validateBody(resetPasswordSchema), async (req, res) => {
   const { user_id } = req.validatedBody;
 
@@ -247,6 +443,34 @@ app.post('/api/admin/reset-password', adminLimiter, requireAdminAuth, validateBo
 });
 
 // ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
+/**
+ * @openapi
+ * /api/status-report-flush:
+ *   post:
+ *     tags: [Flush]
+ *     summary: Flush de status report (sendBeacon)
+ *     description: Persiste dados de status report enviados via navigator.sendBeacon ao fechar a aba. Aceita text/plain com JSON stringificado.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         text/plain:
+ *           schema:
+ *             type: string
+ *             description: "JSON stringificado com { id, data, squad_id?, status? }"
+ *     responses:
+ *       200:
+ *         description: Dados persistidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, example: true }
+ *       400:
+ *         description: JSON inválido ou ID ausente
+ *       503:
+ *         description: Supabase não configurado
+ */
 app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
@@ -276,6 +500,32 @@ app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*', l
   }
 });
 
+/**
+ * @openapi
+ * /api/release-flush:
+ *   post:
+ *     tags: [Flush]
+ *     summary: Flush de release (sendBeacon)
+ *     description: Persiste dados de release enviados via navigator.sendBeacon ao fechar a aba.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         text/plain:
+ *           schema:
+ *             type: string
+ *             description: "JSON stringificado com { id, data, status?, version?, production_date? }"
+ *     responses:
+ *       200:
+ *         description: Dados persistidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, example: true }
+ *       400: { description: JSON inválido ou ID ausente }
+ *       503: { description: Supabase não configurado }
+ */
 app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
@@ -304,6 +554,32 @@ app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*', limit: 
   }
 });
 
+/**
+ * @openapi
+ * /api/sprint-flush:
+ *   post:
+ *     tags: [Flush]
+ *     summary: Flush de sprint (sendBeacon)
+ *     description: Persiste dados de sprint enviados via navigator.sendBeacon ao fechar a aba.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         text/plain:
+ *           schema:
+ *             type: string
+ *             description: "JSON stringificado com { id, data, squad_id?, status? }"
+ *     responses:
+ *       200:
+ *         description: Dados persistidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok: { type: boolean, example: true }
+ *       400: { description: JSON inválido ou ID ausente }
+ *       503: { description: Supabase não configurado }
+ */
 app.post('/api/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '10kb' }), async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {

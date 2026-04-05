@@ -4,7 +4,6 @@ import { useSprintStore } from '../../store/sprintStore'
 import { upsertSprintInMasterIndex, getMasterIndex } from '../../services/persistence'
 import type { SprintConfig } from '../../types/sprint.types'
 import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
-import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 import { useReleaseStore } from '@/modules/releases/store/releaseStore'
 import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
@@ -40,7 +39,6 @@ export function ConfigTab() {
   // Weights accordion
   const [showWeights, setShowWeights] = useState(false)
 
-  const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
   const [squads, setSquads] = useState<Squad[]>([])
   const [showSquadChangeModal, setShowSquadChangeModal] = useState(false)
   const [pendingSquadId, setPendingSquadId] = useState('')
@@ -65,7 +63,7 @@ export function ConfigTab() {
   }, []) // eslint-disable-line
 
   function handleSquadSelectChange(newSquadId: string) {
-    if (!newSquadId || newSquadId === activeSquadId) return
+    if (!newSquadId || newSquadId === sprintEntry?.squadId) return
     setPendingSquadId(newSquadId)
     setConfirmPassword('')
     setConfirmError('')

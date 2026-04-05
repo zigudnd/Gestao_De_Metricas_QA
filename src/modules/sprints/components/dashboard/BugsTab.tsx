@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Bug, BugStatus, BugSeverity, BugStack } from '../../types/sprint.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -320,6 +320,8 @@ export function BugsTab() {
 
 function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => void }) {
   const [local, setLocal] = useState(id)
+
+  useEffect(() => { setLocal(id) }, [id])
 
   return (
     <input

@@ -396,7 +396,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
 
   duplicateBug: (index) => {
     const { state, _commit } = get()
-    const copy = { ...state.bugs[index], id: `BUG-${String(Date.now()).slice(-6)}` }
+    const copy = { ...structuredClone(state.bugs[index]), id: `BUG-${String(Date.now()).slice(-6)}` }
     const bugs = [...state.bugs]
     bugs.splice(index + 1, 0, copy)
     _commit({ ...state, bugs })

@@ -186,8 +186,7 @@ export async function archiveSquad(squadId: string): Promise<void> {
       throw error
     }
   } catch (e) {
-    saveArchivedLocal(squadId, true)
-    throw e
+    throw e  // Don't save local state on network/RLS errors
   }
 }
 
@@ -202,8 +201,7 @@ export async function unarchiveSquad(squadId: string): Promise<void> {
       throw error
     }
   } catch (e) {
-    saveArchivedLocal(squadId, false)
-    throw e
+    throw e  // Don't save local state on network/RLS errors
   }
 }
 

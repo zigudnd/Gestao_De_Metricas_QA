@@ -245,6 +245,7 @@ export function SquadsPage() {
     if (!trimmed) return
     // Validar nome duplicado
     const exists = squads.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())
+      || archivedSquads.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())
     if (exists) {
       setNewNameError('Já existe um squad com este nome.')
       return

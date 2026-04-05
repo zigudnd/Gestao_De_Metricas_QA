@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface ToastData {
   id: number
@@ -35,18 +35,25 @@ const TYPE_STYLES: Record<string, { bg: string; color: string; border: string }>
 
 export function ToastContainer() {
   const [toasts, setToasts] = useState<ToastData[]>([])
+  const timeoutIds = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
 
   useEffect(() => {
     const handler = (t: ToastData) => {
       setToasts((prev) => [...prev, t])
       if (t.duration && t.duration > 0) {
-        setTimeout(() => {
+        const tid = setTimeout(() => {
           setToasts((prev) => prev.filter((x) => x.id !== t.id))
+          timeoutIds.current.delete(t.id)
         }, t.duration)
+        timeoutIds.current.set(t.id, tid)
       }
     }
     _listeners.push(handler)
-    return () => { _listeners = _listeners.filter((fn) => fn !== handler) }
+    return () => {
+      _listeners = _listeners.filter((fn) => fn !== handler)
+      timeoutIds.current.forEach((tid) => clearTimeout(tid))
+      timeoutIds.current.clear()
+    }
   }, [])
 
   if (toasts.length === 0) return null
