@@ -34,6 +34,7 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
   return (
     <div
       onClick={onClick}
+      className="sr-item-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 12px',
@@ -45,8 +46,6 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
         transition: 'box-shadow 0.15s',
         position: 'relative',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}
     >
       {/* Title + stacks */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -170,6 +169,7 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
 
       {/* Inline CSS for hover */}
       <style>{`
+        .sr-item-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
         div:hover > .move-arrows { opacity: 1 !important; }
       `}</style>
     </div>

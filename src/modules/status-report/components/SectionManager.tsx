@@ -47,6 +47,9 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
         <div
           ref={modalRef}
           tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Gerenciar Seções"
           onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
           style={{
           background: 'var(--color-surface)',
@@ -68,11 +71,13 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
             </div>
             <button
               onClick={onClose}
+              aria-label="Fechar"
               style={{
                 width: 28, height: 28, borderRadius: 6, border: 'none',
                 background: 'var(--color-surface-2)', cursor: 'pointer',
                 fontSize: 14, color: 'var(--color-text-2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
               }}
             >
               ×
@@ -154,10 +159,12 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                       <button
                         onClick={() => setEditingId(sec.id)}
                         title="Editar"
+                        aria-label="Editar"
                         style={{
                           width: 24, height: 24, borderRadius: 5, border: 'none',
                           background: 'transparent', cursor: 'pointer',
                           fontSize: 12, color: 'var(--color-text-3)',
+                          transition: 'all 0.15s',
                         }}
                       >
                         ✏️
@@ -165,12 +172,14 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                       <button
                         onClick={() => setDeleteId(sec.id)}
                         title="Excluir"
+                        aria-label="Excluir"
                         disabled={sections.length <= 1}
                         style={{
                           width: 24, height: 24, borderRadius: 5, border: 'none',
                           background: 'transparent', cursor: sections.length > 1 ? 'pointer' : 'not-allowed',
                           fontSize: 12, color: 'var(--color-text-3)',
                           opacity: sections.length > 1 ? 1 : 0.3,
+                          transition: 'all 0.15s',
                         }}
                       >
                         🗑
@@ -239,6 +248,7 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                   cursor: newLabel.trim() ? 'pointer' : 'not-allowed',
                   fontFamily: 'var(--font-family-sans)',
                   whiteSpace: 'nowrap',
+                  transition: 'all 0.15s',
                 }}
               >
                 + Adicionar

@@ -84,7 +84,7 @@ export function BlockersTab() {
                   <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                     <button
                       onClick={() => setDeleteTarget({ index: i, reason: b.reason || 'Sem motivo' })}
-                      style={{ padding: '5px 10px', color: 'var(--color-red)', border: '1px solid var(--color-red)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-family-sans)' }}
+                      style={{ padding: '5px 10px', color: 'var(--color-red)', border: '1px solid var(--color-red)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-family-sans)', transition: 'all 0.15s' }}
                     >
                       Remover
                     </button>
@@ -148,4 +148,5 @@ const btnPrimary: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }

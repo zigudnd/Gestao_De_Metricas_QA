@@ -130,7 +130,7 @@ export function StatusReportPage() {
             background: 'var(--color-surface-2)', cursor: 'pointer',
             fontSize: 16, color: 'var(--color-text-2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
+            flexShrink: 0, transition: 'all 0.15s',
           }}
         >
           ←
@@ -234,7 +234,7 @@ export function StatusReportPage() {
                 color: '#fff',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font-family-sans)',
-                marginBottom: 4, transition: 'background 0.2s',
+                marginBottom: 4, transition: 'all 0.15s',
               }}
             >
               Copiar relatório
@@ -251,6 +251,7 @@ export function StatusReportPage() {
                 cursor: exporting ? 'not-allowed' : 'pointer',
                 fontFamily: 'var(--font-family-sans)',
                 marginBottom: 4, marginLeft: 4,
+                transition: 'all 0.15s',
               }}
             >
               {exporting ? 'Gerando...' : 'Exportar JPG'}
@@ -271,6 +272,7 @@ export function StatusReportPage() {
                 background: 'transparent', color: 'var(--color-text-2)',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font-family-sans)',
+                transition: 'all 0.15s',
               }}
             >
               ⚙ Gerenciar seções

@@ -8,9 +8,9 @@ interface AddOffFormProps {
 }
 
 const TIPO_OPTIONS: { value: TipoOff; label: string }[] = [
-  { value: 'ferias', label: 'Ferias' },
+  { value: 'ferias', label: 'Férias' },
   { value: 'off', label: 'Day off' },
-  { value: 'licenca', label: 'Licenca' },
+  { value: 'licenca', label: 'Licença' },
   { value: 'feriado', label: 'Feriado' },
 ]
 
@@ -57,7 +57,7 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
           </select>
         </div>
         <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={labelSm}>Inicio</label>
+          <label style={labelSm}>Início</label>
           <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} style={inputSm} />
         </div>
         <div style={{ flex: 1, minWidth: 120 }}>

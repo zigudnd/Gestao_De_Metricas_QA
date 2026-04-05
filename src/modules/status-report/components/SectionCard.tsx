@@ -85,25 +85,22 @@ export const SectionCard = memo(function SectionCard({
           <button
             onClick={onAddItem}
             aria-label={`Adicionar item na seção ${section.label}`}
+            className="sr-add-item-btn"
             style={{
+              '--section-color': section.color,
               width: '100%', padding: '8px 0',
               background: 'none', border: '1px dashed var(--color-border-md)',
               borderRadius: 6, cursor: 'pointer',
               fontSize: 12, color: 'var(--color-text-3)',
               fontFamily: 'var(--font-family-sans)',
               transition: 'border-color 0.15s, color 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = section.color
-              e.currentTarget.style.color = section.color
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--color-border-md)'
-              e.currentTarget.style.color = 'var(--color-text-3)'
-            }}
+            } as React.CSSProperties}
           >
             + Adicionar item
           </button>
+          <style>{`
+            .sr-add-item-btn:hover { border-color: var(--section-color) !important; color: var(--section-color) !important; }
+          `}</style>
         </div>
       )}
     </div>

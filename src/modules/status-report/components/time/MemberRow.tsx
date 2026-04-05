@@ -31,7 +31,7 @@ const ROLE_LABEL: Record<string, string> = {
   qa_lead: 'QA Lead', qa: 'QA', stakeholder: 'Stakeholder',
 }
 
-const MOTIVOS = ['Rotacao', 'Reforco', 'Suporte tecnico', 'Cobertura de ferias']
+const MOTIVOS = ['Rotação', 'Reforço', 'Suporte técnico', 'Cobertura de férias']
 
 function getCorPapel(papel: string, id: string): { bg: string; text: string } {
   if (PAPEL_CORES[papel]) return PAPEL_CORES[papel]
@@ -41,6 +41,7 @@ function getCorPapel(papel: string, id: string): { bg: string; text: string } {
 }
 
 function getIniciais(nome: string): string {
+  if (!nome.trim()) return '??'
   const parts = nome.trim().split(/\s+/)
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
   return nome.slice(0, 2).toUpperCase()
@@ -114,7 +115,7 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
                 background: 'var(--color-amber-light)', color: 'var(--color-amber)',
                 border: '0.5px solid var(--color-amber-mid)',
               }}>
-                Temporario
+                Temporário
               </span>
             )}
           </div>
@@ -150,20 +151,25 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
           </button>
         )}
         {isTemp && onRemove && (
-          <button
-            onClick={() => onRemove(membro.id)}
-            style={{
-              width: 22, height: 22, borderRadius: 4, border: 'none',
-              background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
-              fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-red)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--color-text-3)' }}
-            title="Remover membro temporario"
-          >
-            ×
-          </button>
+          <>
+            <button
+              onClick={() => onRemove(membro.id)}
+              className="time-member-remove"
+              style={{
+                width: 22, height: 22, borderRadius: 4, border: 'none',
+                background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
+                fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
+              }}
+              title="Remover membro temporario"
+              aria-label="Remover membro temporario"
+            >
+              ×
+            </button>
+            <style>{`
+              .time-member-remove:hover { opacity: 1 !important; color: var(--color-red) !important; }
+            `}</style>
+          </>
         )}
       </div>
 
@@ -183,11 +189,11 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
               </select>
             </div>
             <div style={{ flex: 1, minWidth: 120 }}>
-              <label style={labelSm}>Periodo inicio</label>
+              <label style={labelSm}>Período início</label>
               <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} style={inputSm} />
             </div>
             <div style={{ flex: 1, minWidth: 120 }}>
-              <label style={labelSm}>Periodo fim</label>
+              <label style={labelSm}>Período fim</label>
               <input type="date" value={periodoFim} min={periodoInicio || undefined} onChange={(e) => setPeriodoFim(e.target.value)} style={inputSm} />
             </div>
           </div>

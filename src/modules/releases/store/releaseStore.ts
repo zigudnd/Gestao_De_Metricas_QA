@@ -31,18 +31,20 @@ async function doPersistToServer(release: Release, updatedAt?: string) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
+  // Save and clear pending state locally — new calls may set it again while we await
+  const pendingSnapshot = _lastPendingState
   _lastPendingState = null
   try {
     await persistToServer(release, updatedAt)
   } catch (e) {
     if (import.meta.env.DEV) console.error('[Release] Erro ao sincronizar:', e)
-    _lastPendingState = release
+    _lastPendingState = _lastPendingState ?? release
   } finally {
     _remotePersistInFlight = false
-    if (_remotePersistQueued && _lastPendingState) {
-      queueRemotePersist(_lastPendingState, 2000)
-    } else if (_remotePersistQueued) {
-      queueRemotePersist(release, 2000)
+    if (_remotePersistQueued) {
+      // Use _lastPendingState (set by a newer incoming call) instead of the stale `release` parameter
+      const next = _lastPendingState ?? pendingSnapshot ?? release
+      queueRemotePersist(next, 2000)
     }
   }
 }

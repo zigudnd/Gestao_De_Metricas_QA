@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { supabase } from '@/lib/supabase'
 import { showToast } from '@/app/components/Toast'
@@ -15,6 +15,17 @@ export function ProfilePage() {
   const [confirm, setConfirm] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (profile?.display_name) setName(profile.display_name)
+  }, [profile?.display_name])
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
 
   const initial = (profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()
 
@@ -29,7 +40,8 @@ export function ProfilePage() {
       setError(err.message)
     } else {
       setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaved(false), 2500)
     }
     setSaving(false)
   }
@@ -83,7 +95,7 @@ export function ProfilePage() {
         <div style={{
           width: 64, height: 64, borderRadius: '50%',
           background: 'var(--color-blue-light)', color: 'var(--color-blue)',
-          border: '2px solid #B5D4F4',
+          border: '2px solid var(--color-blue-light)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 26, fontWeight: 700, flexShrink: 0,
         }}>
@@ -265,6 +277,7 @@ const btnPrimary: React.CSSProperties = {
   fontWeight: 600,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }
 
 const errorStyle: React.CSSProperties = {

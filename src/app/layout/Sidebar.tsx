@@ -166,6 +166,7 @@ export function Sidebar() {
         <button
           onClick={() => navigate('/')}
           title="Início"
+          className="sidebar-logo"
           style={{
             width: 32, height: 32, background: 'var(--color-blue-text)',
             borderRadius: 9, display: 'flex',
@@ -175,8 +176,6 @@ export function Sidebar() {
             border: 'none', cursor: 'pointer',
             transition: 'opacity 0.15s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
         >
           TS
         </button>
@@ -225,6 +224,7 @@ export function Sidebar() {
       <button
         onClick={() => setExpanded(!expanded)}
         title={expanded ? 'Recolher menu' : 'Expandir menu'}
+        className="sidebar-toggle"
         style={{
           width: expanded ? 'calc(100% - 16px)' : 36,
           height: 30, borderRadius: 7,
@@ -239,17 +239,13 @@ export function Sidebar() {
           alignSelf: expanded ? 'stretch' : 'center',
           margin: expanded ? '0 8px' : 0,
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--color-surface-2)'
-          e.currentTarget.style.color = 'var(--color-text-2)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent'
-          e.currentTarget.style.color = 'var(--color-text-3)'
-        }}
       >
         <IconChevron direction={expanded ? 'left' : 'right'} />
       </button>
+      <style>{`
+        .sidebar-logo:hover { opacity: 0.85 !important; }
+        .sidebar-toggle:hover { background: var(--color-surface-2) !important; color: var(--color-text-2) !important; }
+      `}</style>
     </aside>
   )
 }

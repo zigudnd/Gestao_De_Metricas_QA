@@ -11,11 +11,11 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
   planejada: 'Planejada',
   em_desenvolvimento: 'Em Desenvolvimento',
   corte: 'Corte',
-  em_homologacao: 'Em Homologacao',
+  em_homologacao: 'Em Homologação',
   em_regressivo: 'Em Regressivo',
   aprovada: 'Aprovada',
-  em_producao: 'Em Producao',
-  concluida: 'Concluida',
+  em_producao: 'Em Produção',
+  concluida: 'Concluída',
   uniu_escopo: 'Uniu Escopo',
 }
 
@@ -29,6 +29,18 @@ const STATUS_COLORS: Record<ReleaseStatus, string> = {
   em_producao: '#06b6d4',
   concluida: 'var(--color-green)',
   uniu_escopo: '#8b5cf6',
+}
+
+const STATUS_BG_COLORS: Record<ReleaseStatus, string> = {
+  planejada: 'var(--color-surface-2)',
+  em_desenvolvimento: 'var(--color-blue-light)',
+  corte: '#ede9fe',
+  em_homologacao: 'var(--color-amber-light)',
+  em_regressivo: '#fff7ed',
+  aprovada: 'var(--color-green-light)',
+  em_producao: '#ecfeff',
+  concluida: 'var(--color-green-light)',
+  uniu_escopo: '#ede9fe',
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
@@ -77,7 +89,7 @@ export function ReleaseDashboard() {
     return (
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 20px', textAlign: 'center' }}>
         <div style={{ fontSize: 14, color: 'var(--color-text-3)' }}>
-          Release nao encontrada.
+          Release não encontrada.
         </div>
         <button
           onClick={() => navigate('/releases')}
@@ -133,7 +145,7 @@ export function ReleaseDashboard() {
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
-            {release.title || 'Release sem titulo'}
+            {release.title || 'Release sem título'}
           </h1>
           <span style={{
             fontSize: 11, fontWeight: 700, padding: '3px 10px',
@@ -144,7 +156,7 @@ export function ReleaseDashboard() {
           </span>
           <span style={{
             fontSize: 10, fontWeight: 700, padding: '3px 10px',
-            borderRadius: 4, background: `${statusColor}18`, color: statusColor,
+            borderRadius: 4, background: STATUS_BG_COLORS[release.status], color: statusColor,
           }}>
             {statusLabel}
           </span>
@@ -169,17 +181,17 @@ export function ReleaseDashboard() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
           <div>
-            <label style={labelStyle}>Titulo</label>
+            <label style={labelStyle}>Título</label>
             <input
               value={release.title}
               onChange={(e) => handleField('title', e.target.value)}
               disabled={isConcluida}
-              placeholder="Ex: Release App Marco"
+              placeholder="Ex: Release App Março"
               style={{ ...inputStyle, opacity: isConcluida ? 0.6 : 1 }}
             />
           </div>
           <div>
-            <label style={labelStyle}>Versao</label>
+            <label style={labelStyle}>Versão</label>
             <input
               value={release.version}
               onChange={(e) => handleField('version', e.target.value)}
@@ -238,7 +250,7 @@ export function ReleaseDashboard() {
         {/* Status history */}
         {release.statusHistory.length > 0 && (
           <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--color-border)' }}>
-            <div style={{ ...labelStyle, marginBottom: 8 }}>Historico de transicoes</div>
+            <div style={{ ...labelStyle, marginBottom: 8 }}>Histórico de transições</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {release.statusHistory.slice().reverse().map((h, i) => (
                 <div key={i} style={{ fontSize: 12, color: 'var(--color-text-2)', display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -254,7 +266,7 @@ export function ReleaseDashboard() {
                   <span style={{ color: 'var(--color-text-3)' }}>→</span>
                   <span style={{
                     fontSize: 10, padding: '1px 6px', borderRadius: 4,
-                    background: `${STATUS_COLORS[h.to]}18`, color: STATUS_COLORS[h.to],
+                    background: STATUS_BG_COLORS[h.to], color: STATUS_COLORS[h.to],
                     fontWeight: 600,
                   }}>
                     {STATUS_LABELS[h.to] || h.to}

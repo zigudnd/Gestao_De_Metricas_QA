@@ -143,7 +143,7 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
     if (_cleanupRealtime) _cleanupRealtime()
     _cleanupRealtime = initRealtimeSubscription(squadId, (incoming) => {
       // Ignora echo da nossa própria persistência
-      if (incoming.updatedAt && _lastPersistedAt && incoming.updatedAt <= _lastPersistedAt) return
+      if (incoming.updatedAt && _lastPersistedAt && incoming.updatedAt === _lastPersistedAt) return
       set({ ...incoming })
     })
   },

@@ -17,11 +17,11 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
   planejada: 'Planejada',
   em_desenvolvimento: 'Em Desenvolvimento',
   corte: 'Corte',
-  em_homologacao: 'Em Homologacao',
+  em_homologacao: 'Em Homologação',
   em_regressivo: 'Em Regressivo',
   aprovada: 'Aprovada',
-  em_producao: 'Em Producao',
-  concluida: 'Concluida',
+  em_producao: 'Em Produção',
+  concluida: 'Concluída',
   uniu_escopo: 'Uniu Escopo',
 }
 
@@ -154,7 +154,7 @@ export function ReleasesPage() {
 
   function openEdit(release: Release) {
     if (release.status === 'concluida') {
-      showToast('Release concluida nao pode ser editada', 'error')
+      showToast('Release concluída não pode ser editada', 'error')
       return
     }
     setEditId(release.id)
@@ -170,22 +170,22 @@ export function ReleasesPage() {
 
   function validateForm(): string[] {
     const errors: string[] = []
-    if (!formName.trim()) errors.push('Nome e obrigatorio')
-    if (!formVersion.trim()) errors.push('Versao e obrigatoria')
-    if (!formCutoff) errors.push('Data de corte e obrigatoria')
-    if (!formHomoStart) errors.push('Inicio da homologacao e obrigatorio')
-    if (!formHomoEnd) errors.push('Fim da homologacao e obrigatorio')
-    if (!formProdDate) errors.push('Data de producao e obrigatoria')
+    if (!formName.trim()) errors.push('Nome é obrigatório')
+    if (!formVersion.trim()) errors.push('Versão é obrigatória')
+    if (!formCutoff) errors.push('Data de corte é obrigatória')
+    if (!formHomoStart) errors.push('Início da homologação é obrigatório')
+    if (!formHomoEnd) errors.push('Fim da homologação é obrigatório')
+    if (!formProdDate) errors.push('Data de produção é obrigatória')
 
     // Chronological order
     if (formCutoff && formHomoStart && formCutoff > formHomoStart) {
-      errors.push('Data de corte deve ser anterior ao inicio da homologacao')
+      errors.push('Data de corte deve ser anterior ao início da homologação')
     }
     if (formHomoStart && formHomoEnd && formHomoStart > formHomoEnd) {
-      errors.push('Inicio deve ser anterior ao fim da homologacao')
+      errors.push('Início deve ser anterior ao fim da homologação')
     }
     if (formHomoEnd && formProdDate && formHomoEnd > formProdDate) {
-      errors.push('Fim da homologacao deve ser anterior a data de producao')
+      errors.push('Fim da homologação deve ser anterior à data de produção')
     }
     return errors
   }
@@ -243,7 +243,7 @@ export function ReleasesPage() {
   function handleDelete(id: string) {
     deleteRelease(id)
     setDeleteId(null)
-    showToast('Release excluida', 'success')
+    showToast('Release excluída', 'success')
   }
 
   const deleteTarget = releases.find((r) => r.id === deleteId)
@@ -266,7 +266,7 @@ export function ReleasesPage() {
             Releases
           </h1>
           <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
-            Acompanhe o ciclo de homologacao e producao das suas releases
+            Acompanhe o ciclo de homologação e produção das suas releases
           </p>
         </div>
       </div>
@@ -280,7 +280,7 @@ export function ReleasesPage() {
         {([
           { id: 'checkpoint' as HomeTab, label: 'Checkpoint' },
           { id: 'regressivos' as HomeTab, label: 'Regressivos' },
-          { id: 'historico' as HomeTab, label: 'Historico' },
+          { id: 'historico' as HomeTab, label: 'Histórico' },
           { id: 'cronograma' as HomeTab, label: 'Cronograma' },
           { id: 'eventos' as HomeTab, label: 'Eventos' },
         ]).map((tab) => (
@@ -309,7 +309,7 @@ export function ReleasesPage() {
         <CheckpointTab
           releases={sorted.filter((r) => r.status !== 'concluida')}
           onReleaseClick={(id) => navigate(`/releases/${id}`)}
-          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluida', 'success') }}
+          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluída', 'success') }}
           onConcludeRelease={(id) => {
             updateRelease(id, {
               status: 'concluida',
@@ -318,7 +318,7 @@ export function ReleasesPage() {
                 { from: releases.find((r) => r.id === id)?.status ?? 'planejada', to: 'concluida', timestamp: new Date().toISOString(), reason: 'Concluída via checkpoint' },
               ],
             })
-            showToast('Release concluida e movida para Historico', 'success')
+            showToast('Release concluída e movida para Histórico', 'success')
           }}
         />
       )}
@@ -336,7 +336,7 @@ export function ReleasesPage() {
         <CheckpointTab
           releases={sorted.filter((r) => r.status === 'concluida')}
           onReleaseClick={(id) => navigate(`/releases/${id}`)}
-          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluida', 'success') }}
+          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluída', 'success') }}
           onConcludeRelease={() => {}}
         />
       )}
@@ -464,7 +464,7 @@ export function ReleasesPage() {
 
             {/* Version */}
             <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Versao *</label>
+              <label style={labelStyle}>Versão *</label>
               <input
                 value={formVersion}
                 onChange={(e) => setFormVersion(e.target.value)}
@@ -489,7 +489,7 @@ export function ReleasesPage() {
                 />
               </div>
               <div>
-                <label style={labelStyle}>Inicio Homologacao *</label>
+                <label style={labelStyle}>Início Homologação *</label>
                 <input
                   type="date" value={formHomoStart}
                   onChange={(e) => setFormHomoStart(e.target.value)}
@@ -498,7 +498,7 @@ export function ReleasesPage() {
                 />
               </div>
               <div>
-                <label style={labelStyle}>Fim Homologacao *</label>
+                <label style={labelStyle}>Fim Homologação *</label>
                 <input
                   type="date" value={formHomoEnd}
                   onChange={(e) => setFormHomoEnd(e.target.value)}
@@ -507,7 +507,7 @@ export function ReleasesPage() {
                 />
               </div>
               <div>
-                <label style={labelStyle}>Data Producao *</label>
+                <label style={labelStyle}>Data Produção *</label>
                 <input
                   type="date" value={formProdDate}
                   onChange={(e) => setFormProdDate(e.target.value)}
@@ -551,7 +551,7 @@ export function ReleasesPage() {
       {deleteId && deleteTarget && (
         <ConfirmModal
           title="Excluir Release"
-          description={`Tem certeza que deseja excluir "${deleteTarget.title}" (${deleteTarget.version})? Todos os dados serao removidos permanentemente.`}
+          description={`Tem certeza que deseja excluir "${deleteTarget.title}" (${deleteTarget.version})? Todos os dados serão removidos permanentemente.`}
           onConfirm={() => handleDelete(deleteId)}
           onCancel={() => setDeleteId(null)}
         />

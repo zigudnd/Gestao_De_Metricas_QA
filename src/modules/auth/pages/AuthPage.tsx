@@ -182,6 +182,7 @@ export function AuthPage() {
                 tabIndex={-1}
                 title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                className="auth-pwd-toggle"
                 style={{
                   position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
@@ -189,8 +190,6 @@ export function AuthPage() {
                   lineHeight: 1, transition: 'color 0.15s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-3)' }}
               >
                 {showPassword ? (
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -227,14 +226,15 @@ export function AuthPage() {
             style={{
               marginTop: 4,
               padding: '10px 0',
-              background: loading ? 'var(--color-blue)' : 'var(--color-blue)',
+              opacity: loading ? 0.65 : 1,
+              background: 'var(--color-blue)',
               color: '#fff',
               border: 'none',
               borderRadius: 7,
               fontSize: 14,
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'background 0.15s',
+              transition: 'all 0.15s',
             }}
           >
             {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
@@ -256,6 +256,7 @@ export function AuthPage() {
             <button
               onClick={handleSSOLogin}
               disabled={ssoLoading}
+              className="auth-sso-btn"
               style={{
                 width: '100%',
                 padding: '10px 0',
@@ -273,16 +274,6 @@ export function AuthPage() {
                 transition: 'background 0.15s, border-color 0.15s',
                 fontFamily: 'var(--font-family-sans)',
               }}
-              onMouseEnter={(e) => {
-                if (!ssoLoading) {
-                  e.currentTarget.style.background = 'var(--color-blue-light)'
-                  e.currentTarget.style.borderColor = 'var(--color-blue)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--color-surface)'
-                e.currentTarget.style.borderColor = 'var(--color-border-md)'
-              }}
             >
               <span style={{ fontSize: 16 }}>{SSO_ICONS[SSO_PROVIDER] || '🔑'}</span>
               {ssoLoading ? 'Redirecionando...' : SSO_LABEL}
@@ -295,7 +286,7 @@ export function AuthPage() {
           {mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}{' '}
           <button
             data-testid="auth-link-toggle"
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setInfo('') }}
+            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setPassword(''); setError(''); setInfo('') }}
             style={{
               background: 'none',
               border: 'none',
@@ -304,11 +295,16 @@ export function AuthPage() {
               fontWeight: 600,
               fontSize: 13,
               padding: 0,
+              transition: 'all 0.15s',
             }}
           >
             {mode === 'login' ? 'Criar conta' : 'Fazer login'}
           </button>
         </p>
+        <style>{`
+          .auth-pwd-toggle:hover { color: var(--color-text) !important; }
+          .auth-sso-btn:hover:not(:disabled) { background: var(--color-blue-light) !important; border-color: var(--color-blue) !important; }
+        `}</style>
       </div>
     </div>
   )
@@ -328,6 +324,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box' as const,
   padding: '9px 11px',
   background: 'var(--color-bg)',
   border: '1px solid var(--color-border-md)',

@@ -73,7 +73,7 @@ export function ItemDetailPanel({
     <>
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.15)', zIndex: 900 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 900 }}
       />
       <div
         ref={panelRef}
@@ -99,21 +99,25 @@ export function ItemDetailPanel({
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => setShowDeleteConfirm(true)}
+              aria-label="Excluir"
               style={{
                 padding: '5px 10px', borderRadius: 6, border: 'none',
                 background: 'var(--color-red-light)', color: 'var(--color-red)', fontSize: 11,
                 fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                transition: 'all 0.15s',
               }}
             >
               Excluir
             </button>
             <button
               onClick={onClose}
+              aria-label="Fechar"
               style={{
                 width: 28, height: 28, borderRadius: 6, border: 'none',
                 background: 'var(--color-surface-2)', cursor: 'pointer',
                 fontSize: 14, color: 'var(--color-text-2)', display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
               }}
             >
               ×
@@ -305,6 +309,7 @@ export function ItemDetailPanel({
                     {dep.title.slice(0, 30)}{dep.title.length > 30 ? '…' : ''}
                     <button
                       onClick={() => onRemoveDependency(item.id, dep.id)}
+                      aria-label="Remover predecessor"
                       style={{
                         border: 'none', background: 'none', cursor: 'pointer',
                         color: 'var(--color-blue-text)', fontSize: 12, padding: 0,

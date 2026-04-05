@@ -25,15 +25,21 @@ async function doPersistToServer(sprintId: string, state: SprintState, updatedAt
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
+  // Save and clear pending state locally — new calls may set it again while we await
+  const pendingSnapshot = _lastPendingState
   _lastPendingState = null
   try {
     await persistToServer(sprintId, state, updatedAt)
   } catch (e) {
     if (import.meta.env.DEV) console.error('[Supabase] Erro ao sincronizar sprint:', e)
-    _lastPendingState = { sprintId, state }
+    _lastPendingState = _lastPendingState ?? { sprintId, state }
   } finally {
     _remotePersistInFlight = false
-    if (_remotePersistQueued) queueRemotePersist(sprintId, state, 2000)
+    if (_remotePersistQueued) {
+      // Use _lastPendingState (set by a newer incoming call) instead of the stale `state` parameter
+      const next = _lastPendingState ?? pendingSnapshot ?? { sprintId, state }
+      queueRemotePersist(next.sprintId, next.state, 2000)
+    }
   }
 }
 
@@ -196,8 +202,9 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const computed = computeFields(next)
     const { sprintId } = get()
     const updatedAt = new Date().toISOString()
+    const existingEntry = getMasterIndex().find((s) => s.id === sprintId)
     saveToStorage(sprintId, computed)
-    upsertSprintInMasterIndex(sprintId, computed)
+    upsertSprintInMasterIndex(sprintId, computed, existingEntry?.squadId)
     queueRemotePersist(sprintId, computed, 2500, updatedAt)
     _lastPersistedAt = updatedAt
     set({ state: computed, lastSaved: Date.now() })

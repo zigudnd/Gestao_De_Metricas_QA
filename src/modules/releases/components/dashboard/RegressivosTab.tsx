@@ -158,6 +158,11 @@ const STATUS_COLORS = {
   liberado: 'var(--color-green)', pendente: 'var(--color-text-3)',
 }
 
+const STATUS_BG_COLORS = {
+  bloqueado: 'var(--color-red-light)', andamento: 'var(--color-amber-light)',
+  liberado: 'var(--color-green-light)', pendente: 'var(--color-surface-2)',
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps) {
@@ -336,12 +341,12 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
             borderBottom: '1px solid var(--color-border)',
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.35px', color: 'var(--color-text-2)',
           }}>
-            <span>Versao</span>
+            <span>Versão</span>
             <span>Plataforma</span>
             <span>Execucao regressivo</span>
             <span>Sprints</span>
             <span>Status</span>
-            <span>Producao</span>
+            <span>Produção</span>
             <span />
           </div>
 
@@ -357,14 +362,13 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                 {/* Main row */}
                 <div
                   onClick={() => setExpandedIdx(isOpen ? null : idx)}
+                  className={isOpen ? '' : 'regressivos-row'}
                   style={{
                     display: 'grid', gridTemplateColumns: '140px 80px 1fr 90px 100px 90px 36px',
                     padding: '11px 14px', borderBottom: '1px solid var(--color-border)',
                     cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center',
                     background: isOpen ? 'var(--color-blue-light)' : 'var(--color-surface)',
                   }}
-                  onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--color-blue-light)' }}
-                  onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--color-surface)' }}
                 >
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>{row.version}</div>
@@ -383,7 +387,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', fontFamily: 'var(--font-family-mono)' }}>{row.sprints.length}</span>
                   <span style={{
                     display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '3px 11px', borderRadius: 20,
-                    background: stColor + '15', color: stColor, whiteSpace: 'nowrap',
+                    background: STATUS_BG_COLORS[row.status], color: stColor, whiteSpace: 'nowrap',
                   }}>
                     {STATUS_LABELS[row.status]}
                   </span>
@@ -619,6 +623,9 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
           })}
         </div>
       )}
+      <style>{`
+        .regressivos-row:hover { background: var(--color-blue-light) !important; }
+      `}</style>
     </div>
   )
 }

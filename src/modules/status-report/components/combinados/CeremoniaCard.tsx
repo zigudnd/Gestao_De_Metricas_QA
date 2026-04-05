@@ -53,13 +53,13 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
           />
           <input
             value={dia} onChange={(e) => setDia(e.target.value)}
-            placeholder="Dia/horario"
+            placeholder="Dia/horário"
             style={{ ...inputSm, flex: 3, minWidth: 140 }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
           />
           <input
             value={duracao} onChange={(e) => setDuracao(e.target.value)}
-            placeholder="Duracao"
+            placeholder="Duração"
             style={{ ...inputSm, flex: 1, minWidth: 70 }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
           />
@@ -106,37 +106,39 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
           {cerimonia.nome}
         </div>
         <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
-          {cerimonia.dia} · {cerimonia.duracao}
+          {[cerimonia.dia, cerimonia.duracao].filter(Boolean).join(' · ')}
         </div>
       </div>
       <button
         onClick={() => setEditing(true)}
+        className="cerimonia-edit-btn"
         style={{
           width: 22, height: 22, borderRadius: 4, border: 'none',
           background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
           fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-yellow)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--color-text-3)' }}
         title="Editar"
       >
         &#9998;
       </button>
       <button
         onClick={() => onRemove(cerimonia.id)}
+        className="cerimonia-delete-btn"
         style={{
           width: 22, height: 22, borderRadius: 4, border: 'none',
           background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
           fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-red)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--color-text-3)' }}
         title="Remover"
       >
         ×
       </button>
+      <style>{`
+        .cerimonia-edit-btn:hover { opacity: 1 !important; color: var(--color-yellow) !important; }
+        .cerimonia-delete-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
+      `}</style>
     </div>
   )
 }

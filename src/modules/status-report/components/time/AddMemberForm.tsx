@@ -46,7 +46,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
     .filter((u) => {
       if (!search.trim()) return true
       const q = search.toLowerCase()
-      return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      return (u.display_name || '').toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     })
 
   function selectUser(u: Profile) {
@@ -83,7 +83,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
-          Convidar membro temporario
+          Convidar membro temporário
         </span>
         <button type="button" onClick={onCancel} style={{
           background: 'none', border: 'none', cursor: 'pointer',
@@ -93,7 +93,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
 
       {/* Busca de usuario */}
       <div style={{ marginBottom: 14 }}>
-        <label style={labelSm}>Buscar usuario</label>
+        <label style={labelSm}>Buscar usuário</label>
         {usersLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
             <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
@@ -128,21 +128,21 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
             }}>
               {filtered.length === 0 && (
                 <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--color-text-3)' }}>
-                  Nenhum usuario encontrado
+                  Nenhum usuário encontrado
                 </div>
               )}
               {filtered.slice(0, 10).map((u) => (
                 <div
                   key={u.id}
                   onClick={() => selectUser(u)}
+                  className="time-addmember-item"
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 14px', cursor: 'pointer',
                     borderBottom: '0.5px solid var(--color-border)',
+                    background: 'var(--color-surface)',
                     transition: 'background 0.1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-2)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface)' }}
                 >
                   <div style={{
                     width: 28, height: 28, borderRadius: '50%',
@@ -202,6 +202,9 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
           </button>
         </div>
       )}
+      <style>{`
+        .time-addmember-item:hover { background: var(--color-surface-2) !important; }
+      `}</style>
     </form>
   )
 }

@@ -149,20 +149,44 @@ export function toggleFavorite(id: string): void {
   saveMasterIndex(index)
 }
 
-export function concludeReport(id: string): void {
+export async function concludeReport(id: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((e) => e.id === id)
   if (idx === -1) return
+  const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'concluded' }
   saveMasterIndex(index)
+  const { error } = await supabase.from('status_reports').update({ status: 'concluded' }).eq('id', id)
+  if (error) {
+    const rollbackIndex = getMasterIndex()
+    const rollbackIdx = rollbackIndex.findIndex((e) => e.id === id)
+    if (rollbackIdx >= 0) {
+      rollbackIndex[rollbackIdx] = previousEntry
+      saveMasterIndex(rollbackIndex)
+    }
+    if (import.meta.env.DEV) console.error('[StatusReport] concludeReport server update failed:', error.message)
+    throw error
+  }
 }
 
-export function reactivateReport(id: string): void {
+export async function reactivateReport(id: string): Promise<void> {
   const index = getMasterIndex()
   const idx = index.findIndex((e) => e.id === id)
   if (idx === -1) return
+  const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'active' }
   saveMasterIndex(index)
+  const { error } = await supabase.from('status_reports').update({ status: 'active' }).eq('id', id)
+  if (error) {
+    const rollbackIndex = getMasterIndex()
+    const rollbackIdx = rollbackIndex.findIndex((e) => e.id === id)
+    if (rollbackIdx >= 0) {
+      rollbackIndex[rollbackIdx] = previousEntry
+      saveMasterIndex(rollbackIndex)
+    }
+    if (import.meta.env.DEV) console.error('[StatusReport] reactivateReport server update failed:', error.message)
+    throw error
+  }
 }
 
 export function removeFromMasterIndex(id: string): void {
@@ -173,11 +197,13 @@ export function removeFromMasterIndex(id: string): void {
 // ─── Supabase ────────────────────────────────────────────────────────────────
 
 export async function persistToServer(state: StatusReportState, squadId?: string, updatedAt?: string): Promise<void> {
+  const entry = getMasterIndex().find((e) => e.id === state.id)
+  const status = entry?.status ?? 'active'
   const { error } = await supabase.from('status_reports').upsert({
     id: state.id,
     data: state,
-    squad_id: squadId || null,
-    status: 'active',
+    squad_id: squadId ?? entry?.squadId ?? null,
+    status,
     updated_at: updatedAt ?? new Date().toISOString(),
   })
   if (error) {
@@ -228,7 +254,7 @@ export async function syncAllFromSupabase(): Promise<void> {
     while (true) {
       const { data, error } = await supabase
         .from('status_reports')
-        .select('id, data, updated_at')
+        .select('id, data, squad_id, status, updated_at')
         .gt('updated_at', lastSync)
         .order('updated_at', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1)
@@ -245,12 +271,13 @@ export async function syncAllFromSupabase(): Promise<void> {
           id: state.id,
           title: state.config.title || 'S/ Titulo',
           squad: state.config.squad || '',
+          squadId: row.squad_id ?? existing?.squadId,
           itemCount: state.items.length,
           updatedAt: row.updated_at,
           periodStart: state.config.periodStart || '',
           periodEnd: state.config.periodEnd || '',
           favorite: existing?.favorite ?? false,
-          status: existing?.status ?? 'active',
+          status: (row.status as StatusReportIndexEntry['status']) ?? existing?.status ?? 'active',
         }
 
         const idx = localIndex.findIndex((l) => l.id === state.id)

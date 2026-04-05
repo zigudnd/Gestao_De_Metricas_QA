@@ -22,20 +22,20 @@ interface EventsTabProps {
 
 export const DEFAULT_EVENTS: CalendarEvent[] = [
   { id: 'evt-1', name: 'Come cotas', date: '2026-05-29', dateEnd: '2026-11-27', dateLabel: '29/05 e 27/11', type: 'event' },
-  { id: 'evt-2', name: 'Semana do consumidor', date: '2026-03-09', dateEnd: '2026-03-14', dateLabel: 'De 09 a 14 de marco', type: 'event' },
+  { id: 'evt-2', name: 'Semana do consumidor', date: '2026-03-09', dateEnd: '2026-03-14', dateLabel: 'De 09 a 14 de março', type: 'event' },
   { id: 'evt-3', name: 'Black Friday', date: '2026-11-27', dateLabel: '27 de novembro', type: 'event' },
-  { id: 'hol-01', name: 'Confraternizacao Universal', date: '2026-01-01', dateLabel: '01 de janeiro (quinta-feira)', type: 'holiday' },
+  { id: 'hol-01', name: 'Confraternização Universal', date: '2026-01-01', dateLabel: '01 de janeiro (quinta-feira)', type: 'holiday' },
   { id: 'hol-02', name: 'Carnaval', date: '2026-02-16', dateEnd: '2026-02-17', dateLabel: '16 e 17 de fevereiro', type: 'holiday' },
-  { id: 'hol-03', name: 'Sexta-Feira da Paixao', date: '2026-04-03', dateLabel: '03 de abril (sexta-feira)', type: 'holiday' },
-  { id: 'hol-04', name: 'Dia de Tiradentes', date: '2026-04-21', dateLabel: '21 de abril (terca-feira)', type: 'holiday' },
+  { id: 'hol-03', name: 'Sexta-Feira da Paixão', date: '2026-04-03', dateLabel: '03 de abril (sexta-feira)', type: 'holiday' },
+  { id: 'hol-04', name: 'Dia de Tiradentes', date: '2026-04-21', dateLabel: '21 de abril (terça-feira)', type: 'holiday' },
   { id: 'hol-05', name: 'Dia do Trabalhador', date: '2026-05-01', dateLabel: '01 de maio (sexta-feira)', type: 'holiday' },
   { id: 'hol-06', name: 'Corpus Christi', date: '2026-06-04', dateLabel: '04 de junho (quinta-feira)', type: 'holiday' },
-  { id: 'hol-07', name: 'Revolucao Constitucionalista', date: '2026-07-09', dateLabel: '09 de julho (quinta-feira)', type: 'holiday' },
-  { id: 'hol-08', name: 'Independencia do Brasil', date: '2026-09-07', dateLabel: '07 de setembro (segunda-feira)', type: 'holiday' },
+  { id: 'hol-07', name: 'Revolução Constitucionalista', date: '2026-07-09', dateLabel: '09 de julho (quinta-feira)', type: 'holiday' },
+  { id: 'hol-08', name: 'Independência do Brasil', date: '2026-09-07', dateLabel: '07 de setembro (segunda-feira)', type: 'holiday' },
   { id: 'hol-09', name: 'Nossa Sra. Aparecida', date: '2026-10-12', dateLabel: '12 de outubro (segunda-feira)', type: 'holiday' },
   { id: 'hol-10', name: 'Dia de Finados', date: '2026-11-02', dateLabel: '02 de novembro (segunda-feira)', type: 'holiday' },
-  { id: 'hol-11', name: 'Proclamacao da Republica', date: '2026-11-15', dateLabel: '15 de novembro (domingo)', type: 'holiday' },
-  { id: 'hol-12', name: 'Dia da Consciencia Negra', date: '2026-11-20', dateLabel: '20 de novembro (sexta-feira)', type: 'holiday' },
+  { id: 'hol-11', name: 'Proclamação da República', date: '2026-11-15', dateLabel: '15 de novembro (domingo)', type: 'holiday' },
+  { id: 'hol-12', name: 'Dia da Consciência Negra', date: '2026-11-20', dateLabel: '20 de novembro (sexta-feira)', type: 'holiday' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ function proximityBadge(dateStr: string, dateEnd?: string): { label: string; bg:
 
   if (daysToEnd < 0) return { label: 'Encerrado', bg: 'var(--color-surface-2)', color: 'var(--color-text-3)' }
   if (daysToStart <= 0 && daysToEnd >= 0) return { label: 'Hoje', bg: 'var(--color-green-light)', color: 'var(--color-green)' }
-  if (daysToStart <= 7) return { label: `Em ${daysToStart}d`, bg: 'var(--color-amber-light)', color: 'var(--color-amber)' }
+  if (daysToStart <= 7) return { label: `Em ${daysToStart}d`, bg: '#fff7ed', color: '#c2410c' }
   if (daysToStart <= 30) return { label: `Em ${daysToStart}d`, bg: 'var(--color-amber-light)', color: 'var(--color-amber)' }
   return null
 }
@@ -142,7 +142,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
                   placeholder="Ex: Black Friday" style={inputSm} />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
-                <label style={labelSm}>Data inicio *</label>
+                <label style={labelSm}>Data início *</label>
                 <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} style={inputSm} />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
@@ -193,8 +193,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
                 )}
                 <button onClick={() => onRemove(evt.id)} style={btnRemove}
                   aria-label="Remover evento"
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.3' }}
+                  className="events-remove-btn"
                 >×</button>
               </div>
             )
@@ -273,8 +272,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
                 )}
                 <button onClick={() => onRemove(hol.id)} style={btnRemove}
                   aria-label="Remover feriado"
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.3' }}
+                  className="events-remove-btn"
                 >×</button>
               </div>
             )
@@ -285,7 +283,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
       {/* Legend */}
       <div style={{ display: 'flex', gap: 14, marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
         {[
-          { bg: 'var(--color-amber-light)', color: 'var(--color-amber)', label: 'Em 7 dias' },
+          { bg: '#fff7ed', color: '#c2410c', label: 'Em 7 dias' },
           { bg: 'var(--color-amber-light)', color: 'var(--color-amber)', label: 'Em 30 dias' },
           { bg: 'var(--color-green-light)', color: 'var(--color-green)', label: 'Hoje/Ativo' },
           { bg: 'var(--color-surface-2)', color: 'var(--color-text-3)', label: 'Encerrado' },
@@ -296,6 +294,9 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
           </div>
         ))}
       </div>
+      <style>{`
+        .events-remove-btn:hover { opacity: 1 !important; }
+      `}</style>
     </div>
   )
 }

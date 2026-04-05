@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
 import { parseFeatureText, parseCSVText } from '../../services/importService'
@@ -102,32 +103,36 @@ function IconAttach() {
 
 // Ghost action button with hover
 function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean; 'aria-label'?: string }>) {
-  const [hov, setHov] = useState(false)
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={ariaLabel}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 8,
-        minWidth: 32,
-        minHeight: 32,
-        borderRadius: 8,
-        cursor: 'pointer',
-        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        onClick={onClick}
+        title={title}
+        aria-label={ariaLabel}
+        className={danger ? 'feat-action-btn-danger' : 'feat-action-btn'}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 8,
+          minWidth: 32,
+          minHeight: 32,
+          borderRadius: 8,
+          cursor: 'pointer',
+          color: 'var(--color-text-2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background 0.15s, color 0.15s',
+          flexShrink: 0,
+        }}
+      >
+        {children}
+      </button>
+      <style>{`
+        .feat-action-btn:hover { background: var(--color-bg) !important; }
+        .feat-action-btn-danger:hover { background: var(--color-red-light) !important; color: var(--color-red) !important; }
+      `}</style>
+    </>
   )
 }
 
@@ -668,7 +673,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
         </button>
       </div>}
 
-      {blockModal && (
+      {blockModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setBlockModal(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
@@ -712,15 +717,16 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
-      {cancelModal && (
+      {cancelModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setCancelModal(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid #6b7280', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-text-3)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>⛔ Cancelar Funcionalidade</div>
             <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
               Registre o alinhamento técnico referente ao cancelamento de <strong>"{feature.name || 'Sem nome'}"</strong>.
@@ -755,13 +761,14 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   addAlignmentFull(`[Cancelamento] ${feature.name || 'Funcionalidade'}: ${cancelAlignment.trim()}`)
                   setCancelModal(false)
                 }}
-                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#6b7280', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelAlignment.trim() ? 'pointer' : 'not-allowed', opacity: cancelAlignment.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-text-3)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelAlignment.trim() ? 'pointer' : 'not-allowed', opacity: cancelAlignment.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
               >
                 Confirmar Cancelamento
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {confirmRemove && (
@@ -912,7 +919,7 @@ function TestCaseCard({
             title={!startDate ? 'Configure a Data de Início para ativar' : 'Data de execução'}
           />
           {testCase.executionDay && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-blue)', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-blue)', background: 'var(--color-blue-light)', border: '1px solid var(--color-blue)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>
               {testCase.executionDay}
             </span>
           )}

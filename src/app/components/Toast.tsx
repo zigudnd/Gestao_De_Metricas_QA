@@ -59,7 +59,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div style={{
+    <div role="status" style={{
       position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
       zIndex: 5000, display: 'flex', flexDirection: 'column', gap: 8,
       pointerEvents: 'none',

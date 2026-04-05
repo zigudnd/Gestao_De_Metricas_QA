@@ -275,7 +275,7 @@ export function ConfigTab() {
                 onClick={() => removeResponsible(i)}
                 title="Remover"
                 aria-label="Remover responsável"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text-2)', lineHeight: 1 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text-2)', lineHeight: 1, transition: 'all 0.15s' }}
               >✕</button>
             </div>
           ))}
@@ -283,7 +283,7 @@ export function ConfigTab() {
         <button
           onClick={addResponsible}
           aria-label="Adicionar responsável"
-          style={{ padding: '7px 14px', border: '1px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+          style={{ padding: '7px 14px', border: '1px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', transition: 'all 0.15s' }}
         >
           + Adicionar responsável
         </button>
@@ -300,6 +300,7 @@ export function ConfigTab() {
           fontSize: 12, fontWeight: 600, color: 'var(--color-blue-text)',
           padding: '4px 0', marginTop: 8,
           fontFamily: 'var(--font-family-sans)',
+          transition: 'all 0.15s',
         }}
       >
         <span style={{
@@ -392,10 +393,10 @@ export function ConfigTab() {
             }}>
               <strong style={{ display: 'block', marginBottom: 4 }}>Atenção — esta ação tem impacto:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
-                <li>A sprint sera movida para outro squad</li>
-                <li>Membros do squad anterior perderao acesso a esta sprint</li>
-                <li>Membros do novo squad passarao a ver e editar esta sprint</li>
-                <li>Dados da sprint (testes, bugs, reports) serao preservados</li>
+                <li>A sprint será movida para outro squad</li>
+                <li>Membros do squad anterior perderão acesso a esta sprint</li>
+                <li>Membros do novo squad passarão a ver e editar esta sprint</li>
+                <li>Dados da sprint (testes, bugs, reports) serão preservados</li>
               </ul>
             </div>
 
@@ -441,6 +442,7 @@ export function ConfigTab() {
                   border: '1px solid var(--color-border-md)',
                   background: 'transparent', color: 'var(--color-text-2)',
                   fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
                 }}
               >
                 Cancelar
@@ -454,9 +456,10 @@ export function ConfigTab() {
                   color: '#fff', fontSize: 13, fontWeight: 600,
                   cursor: confirming ? 'not-allowed' : 'pointer',
                   fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
                 }}
               >
-                {confirming ? 'Verificando...' : 'Confirmar alteracao'}
+                {confirming ? 'Verificando...' : 'Confirmar alteração'}
               </button>
             </div>
           </div>
@@ -490,12 +493,12 @@ export function ConfigTab() {
               background: 'var(--color-amber-light)', border: '1px solid var(--color-amber-mid)',
               fontSize: 13, color: 'var(--color-amber)', lineHeight: 1.6,
             }}>
-              <strong style={{ display: 'block', marginBottom: 4 }}>Atencao — esta acao tem impacto:</strong>
+              <strong style={{ display: 'block', marginBottom: 4 }}>Atenção — esta ação tem impacto:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Esta sprint sera desvinculada da release atual</li>
-                <li>Os dados de testes da sprint NAO serao alterados</li>
-                <li>A aba Regressivos da release anterior deixara de contabilizar esta sprint</li>
-                <li>A nova release passara a incluir esta sprint nas metricas consolidadas</li>
+                <li>Esta sprint será desvinculada da release atual</li>
+                <li>Os dados de testes da sprint NÃO serão alterados</li>
+                <li>A aba Regressivos da release anterior deixará de contabilizar esta sprint</li>
+                <li>A nova release passará a incluir esta sprint nas métricas consolidadas</li>
               </ul>
             </div>
 
@@ -522,6 +525,7 @@ export function ConfigTab() {
                   border: '1px solid var(--color-border-md)',
                   background: 'transparent', color: 'var(--color-text-2)',
                   fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
                 }}
               >
                 Cancelar
@@ -533,9 +537,10 @@ export function ConfigTab() {
                   background: 'var(--color-amber-mid)',
                   color: '#fff', fontSize: 13, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
                 }}
               >
-                Confirmar alteracao
+                Confirmar alteração
               </button>
             </div>
           </div>

@@ -64,7 +64,7 @@ export function ChangePasswordPage() {
         width: '100%',
         maxWidth: 380,
         background: 'var(--color-surface)',
-        border: '0.5px solid var(--color-border)',
+        border: '1px solid var(--color-border)',
         borderRadius: 12,
         padding: '32px 28px',
       }}>
@@ -94,6 +94,7 @@ export function ChangePasswordPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                className="chpwd-toggle"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: 'var(--color-text-3)', fontSize: 11, fontWeight: 500,
@@ -101,8 +102,6 @@ export function ChangePasswordPage() {
                   display: 'flex', alignItems: 'center', gap: 4,
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-3)' }}
               >
                 {showPassword ? (
                   <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -146,7 +145,7 @@ export function ChangePasswordPage() {
           </label>
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-red-mid)', background: 'var(--color-red-light)', border: '1px solid #F7C1C1', borderRadius: 6, padding: '8px 12px' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-red-mid)', background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)', borderRadius: 6, padding: '8px 12px' }}>
               {error}
             </p>
           )}
@@ -156,24 +155,30 @@ export function ChangePasswordPage() {
             disabled={loading}
             style={{
               marginTop: 4, padding: '10px 0',
-              background: loading ? '#5a8fc5' : 'var(--color-blue)',
+              background: 'var(--color-blue)',
               color: '#fff', border: 'none', borderRadius: 7,
               fontSize: 14, fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             {loading ? 'Salvando...' : 'Salvar nova senha'}
           </button>
         </form>
+        <style>{`
+          .chpwd-toggle:hover { color: var(--color-text) !important; }
+        `}</style>
       </div>
     </div>
   )
 }
 
 const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box' as const,
   padding: '9px 11px',
   background: 'var(--color-bg)',
-  border: '0.5px solid var(--color-border)',
+  border: '1px solid var(--color-border)',
   borderRadius: 8,
   fontSize: 14,
   color: 'var(--color-text)',

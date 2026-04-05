@@ -111,15 +111,13 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
                 )}
                 <button
                   onClick={() => onRemove(idx)}
-                  className="section-list-remove"
+                  className="combinados-remove-btn"
                   style={{
                     width: 22, height: 22, borderRadius: 4, border: 'none',
                     background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
                     fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-red)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                   title="Remover"
                 >
                   ×
@@ -157,6 +155,9 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
           </div>
         </div>
       )}
+      <style>{`
+        .combinados-remove-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
+      `}</style>
     </div>
   )
 }

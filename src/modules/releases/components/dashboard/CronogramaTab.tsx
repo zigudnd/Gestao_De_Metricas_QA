@@ -839,11 +839,11 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Titulo *</label>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Título *</label>
               <input value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="Release App v4.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Versao *</label>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Versão *</label>
               <input value={addVersion} onChange={(e) => setAddVersion(e.target.value)} placeholder="v4.0.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
             <div>
@@ -855,7 +855,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               <input type="date" value={addBuild} onChange={(e) => setAddBuild(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. inicio</label>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. início</label>
               <input type="date" value={addHomoStart} onChange={(e) => setAddHomoStart(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
             <div>
@@ -867,7 +867,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               <input type="date" value={addBeta} onChange={(e) => setAddBeta(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Producao *</label>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Produção *</label>
               <input type="date" value={addProd} onChange={(e) => setAddProd(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
             </div>
           </div>
@@ -1170,7 +1170,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                   <input value={slotLabel} onChange={(e) => setSlotLabel(e.target.value)} placeholder="Release App Marco" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Versao *</label>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Versão *</label>
                   <input value={slotVersion} onChange={(e) => setSlotVersion(e.target.value)} placeholder="v4.2.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
                 <div>
@@ -1178,7 +1178,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                   <input type="date" value={slotCutoff} onChange={(e) => setSlotCutoff(e.target.value)} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. inicio</label>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Homolog. início</label>
                   <input type="date" value={slotHomoStart} onChange={(e) => setSlotHomoStart(e.target.value)} min={slotCutoff || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
                 <div>
@@ -1186,7 +1186,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                   <input type="date" value={slotHomoEnd} onChange={(e) => setSlotHomoEnd(e.target.value)} min={slotHomoStart || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Producao *</label>
+                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Produção *</label>
                   <input type="date" value={slotProd} onChange={(e) => setSlotProd(e.target.value)} min={slotHomoEnd || undefined} style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
                 </div>
               </div>

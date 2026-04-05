@@ -17,6 +17,7 @@ const swaggerUi = require('swagger-ui-express');
 const createUserSchema = z.object({
   email: z.string().email('Email inválido').max(255),
   display_name: z.string().min(1, 'Nome é obrigatório').max(100),
+  global_role: z.enum(['admin', 'gerente', 'user']).optional(),
 });
 
 const resetPasswordSchema = z.object({
@@ -80,6 +81,7 @@ if (STORAGE_TYPE === 'supabase') {
   console.log('✅ Back-end configurado para usar: LOCAL (Pasta data/)');
 }
 
+app.set('trust proxy', 1);
 app.use(helmet());
 const allowedOrigins = (process.env.CORS_ORIGINS || `http://localhost:5173,http://localhost:${PORT}`).split(',').map(s => s.trim());
 app.use(cors({ origin: allowedOrigins }));
@@ -99,7 +101,11 @@ async function requireAdminAuth(req, res, next) {
   try {
     const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
     if (authErr || !caller) return res.status(401).json({ error: 'Token inválido ou expirado.' });
-    const { data: callerProfile } = await supabaseAdmin.from('profiles').select('global_role').eq('id', caller.id).single();
+    const { data: callerProfile, error: profileErr } = await supabaseAdmin.from('profiles').select('global_role').eq('id', caller.id).single();
+    if (profileErr) {
+      console.error('[requireAdminAuth] Erro ao buscar profile:', profileErr);
+      return res.status(500).json({ error: 'Erro ao verificar perfil do usuário.' });
+    }
     if (!callerProfile || (callerProfile.global_role !== 'admin' && callerProfile.global_role !== 'gerente')) {
       return res.status(403).json({ error: 'Apenas administradores podem executar esta ação.' });
     }
@@ -297,7 +303,7 @@ app.get('/api/dashboard/:projectKey', validateKey, async (req, res) => {
  *       500:
  *         description: Erro interno
  */
-app.put('/api/dashboard/:projectKey', validateKey, validateBody(dashboardPayloadSchema), async (req, res) => {
+app.put('/api/dashboard/:projectKey', validateKey, requireAdminAuth, validateBody(dashboardPayloadSchema), async (req, res) => {
   try {
     const { projectKey } = req.params;
     const { payload } = req.validatedBody;
@@ -366,16 +372,19 @@ app.put('/api/dashboard/:projectKey', validateKey, validateBody(dashboardPayload
  *       503: { description: Supabase não configurado }
  */
 app.post('/api/admin/create-user', adminLimiter, requireAdminAuth, validateBody(createUserSchema), async (req, res) => {
-  const { email, display_name } = req.validatedBody;
+  const { email, display_name, global_role } = req.validatedBody;
   // Gerar senha temporária aleatória (16 chars, base64)
   const password = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
 
   try {
+    const metadata = { display_name, must_change_password: true };
+    if (global_role) metadata.global_role = global_role;
+
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { display_name, must_change_password: true },
+      user_metadata: metadata,
     });
 
     if (error) {
@@ -427,6 +436,22 @@ app.post('/api/admin/reset-password', adminLimiter, requireAdminAuth, validateBo
   const { user_id } = req.validatedBody;
 
   try {
+    // Prevent self-reset
+    if (user_id === req.caller.id) {
+      return res.status(403).json({ error: 'Não é permitido resetar a própria senha por este endpoint.' });
+    }
+
+    // Fetch target user's profile to check role
+    const { data: targetProfile, error: targetErr } = await supabaseAdmin.from('profiles').select('global_role').eq('id', user_id).single();
+    if (targetErr || !targetProfile) {
+      return res.status(404).json({ error: 'Usuário alvo não encontrado.' });
+    }
+
+    // Prevent gerente from resetting admin passwords
+    if (req.callerProfile.global_role === 'gerente' && targetProfile.global_role === 'admin') {
+      return res.status(403).json({ error: 'Gerentes não podem resetar senhas de administradores.' });
+    }
+
     const newPassword = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
       password: newPassword,
@@ -617,8 +642,19 @@ app.post('/api/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '
   }
 });
 
+// ── API 404 catch-all (antes do SPA) ─────────────────────────────────────────
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint não encontrado.' });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ── Global error handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[unhandled]', err);
+  res.status(500).json({ error: 'Erro interno do servidor.' });
 });
 
 app.listen(PORT, () => {

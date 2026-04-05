@@ -73,11 +73,11 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
       onClick={(e) => e.target === e.currentTarget && onCancel()}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, width: '100%', maxWidth: 520, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div role="dialog" aria-modal="true" aria-label="Novo Bug" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, width: '100%', maxWidth: 520, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>🐞 Novo Bug</div>
-          <button onClick={onCancel} style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-2)', lineHeight: 1 }}>✕</button>
+          <button onClick={onCancel} aria-label="Fechar" style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-2)', lineHeight: 1 }}>✕</button>
         </div>
 
         {/* Body */}
@@ -220,6 +220,7 @@ const btnPrimary: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
   flexShrink: 0,
+  transition: 'all 0.15s',
 }
 
 const btnOutline: React.CSSProperties = {
@@ -232,6 +233,7 @@ const btnOutline: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }
 
 const btnConfirmSmall: React.CSSProperties = {

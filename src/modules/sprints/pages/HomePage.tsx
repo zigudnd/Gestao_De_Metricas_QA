@@ -653,6 +653,7 @@ const btnPrimary: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
   flexShrink: 0,
+  transition: 'all 0.15s',
 }
 
 const btnOutline: React.CSSProperties = {
@@ -665,6 +666,7 @@ const btnOutline: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }
 
 const btnDanger: React.CSSProperties = {
@@ -677,6 +679,7 @@ const btnDanger: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }
 
 const labelStyle: React.CSSProperties = {

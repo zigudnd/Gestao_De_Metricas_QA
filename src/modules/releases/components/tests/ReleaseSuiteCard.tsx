@@ -78,8 +78,9 @@ export function ReleaseSuiteCard({
           cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap',
         }}
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
       >
-        <span style={{ color: 'var(--color-blue)', fontWeight: 700, fontSize: 14 }}>{open ? '▾' : '▸'}</span>
+        <span role="img" aria-hidden="true" style={{ color: 'var(--color-blue)', fontWeight: 700, fontSize: 14 }}>{open ? '▾' : '▸'}</span>
         <span style={{ width: 4, height: 20, background: 'var(--color-blue)', borderRadius: 4, flexShrink: 0 }} />
 
         {editingName ? (
@@ -189,7 +190,7 @@ export function ReleaseSuiteCard({
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Suite"
-          description={`Tem certeza que deseja excluir a suite "${suite.name || 'Sem nome'}" e todas as suas funcionalidades? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir a suite "${suite.name || 'Sem nome'}" e todas as suas funcionalidades? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Suite"
           onConfirm={() => { onRemoveSuite(suiteIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
@@ -207,6 +208,7 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{

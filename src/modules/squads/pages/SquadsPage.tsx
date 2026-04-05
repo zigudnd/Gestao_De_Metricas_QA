@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  listMySquads, createSquad, updateSquad, deleteSquad,
+  listMySquads, createSquad, updateSquad,
   listSquadMembers, addMember, updateMemberRole, updateMemberPermissions,
   removeMember, getMyRole, listAllUsers,
   listAllUsersWithSquads, createUser, updateUserProfile, toggleUserActive, resetUserPassword,
@@ -92,7 +92,6 @@ export function SquadsPage() {
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editColor, setEditColor] = useState('#185FA5')
-  const [deleteSquadTarget, setDeleteSquadTarget] = useState<Squad | null>(null)
   const [archiveSquadTarget, setArchiveSquadTarget] = useState<Squad | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [archivedSquads, setArchivedSquads] = useState<Squad[]>([])
@@ -196,7 +195,7 @@ export function SquadsPage() {
       setMembersLoading(false)
       setError(errMsg(e))
     })
-  }, [activeSquad])
+  }, [activeSquad?.id])
 
   const canManage = isAdmin || myRole === 'qa_lead'
 
@@ -277,18 +276,6 @@ export function SquadsPage() {
       setEditingSquad(null)
       showToast('Squad atualizado', 'success')
     } catch (e) { setError(errMsg(e)) }
-  }
-
-  async function handleDeleteSquad() {
-    if (!deleteSquadTarget) return
-    try {
-      await deleteSquad(deleteSquadTarget.id)
-      const updated = squads.filter((s) => s.id !== deleteSquadTarget.id)
-      setSquads(updated)
-      if (activeSquad?.id === deleteSquadTarget.id) setActiveSquad(updated[0] ?? null)
-      showToast('Squad excluído', 'info')
-    } catch (e) { setError(errMsg(e)) }
-    finally { setDeleteSquadTarget(null) }
   }
 
   // ── Archive squad ───────────────────────────────────────────────────────────
@@ -548,9 +535,9 @@ export function SquadsPage() {
         ] as const).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', background: 'none', border: 'none',
-            borderBottom: tab === t ? '2px solid #185FA5' : '2px solid transparent',
+            borderBottom: tab === t ? '2px solid var(--color-blue)' : '2px solid transparent',
             marginBottom: -1,
-            color: tab === t ? '#185FA5' : 'var(--color-text-2)',
+            color: tab === t ? 'var(--color-blue)' : 'var(--color-text-2)',
             fontWeight: tab === t ? 600 : 400,
             fontSize: 13, cursor: 'pointer',
           }}>
@@ -662,7 +649,7 @@ export function SquadsPage() {
                   <div key={s.id} style={{
                     background: 'var(--color-bg)',
                     border: '0.5px solid var(--color-border)',
-                    borderLeft: `3px solid ${s.color || '#185FA5'}`,
+                    borderLeft: `3px solid ${s.color || 'var(--color-blue)'}`,
                     borderRadius: 12, overflow: 'hidden',
                   }}>
                     {/* Card header — clicável */}
@@ -902,7 +889,7 @@ export function SquadsPage() {
               <div><label style={labelSm}>E-mail</label><input value={editingUser.email} style={{ ...inputStyle, opacity: 0.5 }} disabled /></div>
               <div><label style={labelSm}>Perfil global</label>
                 <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'admin' | 'gerente' | 'user')} style={selectStyle}>
-                  <option value="user">Usuario</option><option value="gerente">Gerente</option><option value="admin">Admin</option>
+                  <option value="user">Usuário</option><option value="gerente">Gerente</option><option value="admin">Admin</option>
                 </select>
               </div>
               {editingUser.squads.length > 0 && (
@@ -924,8 +911,7 @@ export function SquadsPage() {
         </div>
       )}
 
-      {deleteSquadTarget && <ConfirmModal title="Excluir Squad" description={`Excluir "${deleteSquadTarget.name}" permanentemente? Todos os membros serao removidos. Considere arquivar em vez de excluir.`} confirmLabel="Excluir" onConfirm={handleDeleteSquad} onCancel={() => setDeleteSquadTarget(null)} />}
-      {archiveSquadTarget && <ConfirmModal title="Arquivar Squad" description={`Arquivar "${archiveSquadTarget.name}"? O squad nao aparecera mais nas listas. Somente membros do squad e admins poderao visualizar os dados antigos. Voce podera restaurar a qualquer momento.`} confirmLabel="Arquivar" onConfirm={handleArchiveSquad} onCancel={() => setArchiveSquadTarget(null)} />}
+      {archiveSquadTarget && <ConfirmModal title="Arquivar Squad" description={`Arquivar "${archiveSquadTarget.name}"? O squad não aparecerá mais nas listas. Somente membros do squad e admins poderão visualizar os dados antigos. Você poderá restaurar a qualquer momento.`} confirmLabel="Arquivar" onConfirm={handleArchiveSquad} onCancel={() => setArchiveSquadTarget(null)} />}
       {deleteMemberTarget && <ConfirmModal title={deleteMemberTarget.user_id === user?.id ? 'Sair do Squad' : 'Remover Membro'} description={deleteMemberTarget.user_id === user?.id ? `Sair do squad "${activeSquad?.name}"?` : `Remover ${deleteMemberTarget.profile?.display_name ?? 'este membro'} do squad?`} confirmLabel={deleteMemberTarget.user_id === user?.id ? 'Sair' : 'Remover'} onConfirm={handleRemoveMember} onCancel={() => setDeleteMemberTarget(null)} />}
 
       {showProfileForm && (
@@ -962,7 +948,7 @@ export function SquadsPage() {
       {error && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)', color: 'var(--color-red)', borderRadius: 8, padding: '10px 14px', fontSize: 13, zIndex: 9999, maxWidth: 300 }}>
           {error}
-          <button onClick={() => setError('')} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#A32D2D', fontWeight: 700 }}>×</button>
+          <button onClick={() => setError('')} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-red)', fontWeight: 700 }}>×</button>
         </div>
       )}
     </div>
@@ -971,9 +957,9 @@ export function SquadsPage() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const btnPrimary: React.CSSProperties = { padding: '7px 16px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }
+const btnPrimary: React.CSSProperties = { padding: '7px 16px', background: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }
 const btnGhost: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-text-2)', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }
-const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: '#A32D2D', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
+const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-red)', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', outline: 'none' }
 const selectStyle: React.CSSProperties = {
   ...inputStyle, padding: '8px 28px 8px 12px', cursor: 'pointer', appearance: 'none',

@@ -20,7 +20,7 @@ type HomeTabId = 'reports' | 'combinados' | 'time'
 const HOME_TABS: { id: HomeTabId; label: string; icon: string }[] = [
   { id: 'reports',    label: 'Reports',             icon: '📄' },
   { id: 'combinados', label: 'Combinados do time',  icon: '🤝' },
-  { id: 'time',       label: 'Time & Calendario',   icon: '👥' },
+  { id: 'time',       label: 'Time & Calendário',   icon: '👥' },
 ]
 
 type FilterStatus = 'all' | 'active' | 'concluded' | 'favorites'
@@ -189,16 +189,26 @@ export function StatusReportHomePage() {
     refreshList()
   }
 
-  function handleConclude(id: string) {
-    concludeReport(id)
-    refreshList()
-    showToast('Report concluído', 'success')
+  async function handleConclude(id: string) {
+    try {
+      await concludeReport(id)
+      refreshList()
+      showToast('Report concluído', 'success')
+    } catch {
+      refreshList()
+      showToast('Erro ao concluir report no servidor', 'error')
+    }
   }
 
-  function handleReactivate(id: string) {
-    reactivateReport(id)
-    refreshList()
-    showToast('Report reativado', 'info')
+  async function handleReactivate(id: string) {
+    try {
+      await reactivateReport(id)
+      refreshList()
+      showToast('Report reativado', 'info')
+    } catch {
+      refreshList()
+      showToast('Erro ao reativar report no servidor', 'error')
+    }
   }
 
   function handleMigrate() {
@@ -261,14 +271,17 @@ export function StatusReportHomePage() {
 
   const deleteTarget = reports.find((r) => r.id === deleteId)
   const migrateSource = reports.find((r) => r.id === migrateFromId)
-  const activeCount = reports.filter((r) => r.status !== 'concluded').length
-  const concludedCount = reports.filter((r) => r.status === 'concluded').length
-  const favCount = reports.filter((r) => r.favorite).length
+  const squadFiltered = activeSquadId && activeSquadId !== 'all'
+    ? reports.filter((r) => r.squadId === activeSquadId)
+    : reports
+  const activeCount = squadFiltered.filter((r) => r.status !== 'concluded').length
+  const concludedCount = squadFiltered.filter((r) => r.status === 'concluded').length
+  const favCount = squadFiltered.filter((r) => r.favorite).length
 
   // ── Filter chips ──────────────────────────────────────────────────────────
 
   const FILTERS: { id: FilterStatus; label: string; count: number }[] = [
-    { id: 'all', label: 'Todos', count: reports.length },
+    { id: 'all', label: 'Todos', count: squadFiltered.length },
     { id: 'active', label: 'Ativos', count: activeCount },
     { id: 'concluded', label: 'Concluídos', count: concludedCount },
     { id: 'favorites', label: 'Favoritos', count: favCount },
@@ -294,7 +307,7 @@ export function StatusReportHomePage() {
             Status Reports
           </h1>
           <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
-            Gerencie os relatorios de status dos seus times
+            Gerencie os relatórios de status dos seus times
           </p>
         </div>
         {homeTab === 'reports' && (

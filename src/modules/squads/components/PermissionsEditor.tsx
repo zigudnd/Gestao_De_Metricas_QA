@@ -35,7 +35,7 @@ export function PermissionsEditor({
       borderRadius: 8,
     }}>
       <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 8, display: 'block' }}>
-        Permissoes
+        Permissões
       </span>
 
       {/* Grid header */}

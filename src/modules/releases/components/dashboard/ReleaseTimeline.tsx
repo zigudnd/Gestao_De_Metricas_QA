@@ -168,7 +168,7 @@ export function ReleaseTimeline({
           padding: '2px 8px', borderRadius: 4, marginBottom: 10,
           background: 'var(--color-green-light)', color: 'var(--color-green)',
         }}>
-          Concluida
+          Concluída
         </div>
       )}
 

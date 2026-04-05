@@ -5,10 +5,10 @@ import { ConfirmModal } from '@/app/components/ConfirmModal'
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  Pendente: '#B4B2A9',
-  'Concluído': '#639922',
-  Falhou: '#E24B4A',
-  Bloqueado: '#BA7517',
+  Pendente: 'var(--color-text-3)',
+  'Concluído': 'var(--color-green-mid)',
+  Falhou: 'var(--color-red-mid)',
+  Bloqueado: 'var(--color-amber-mid)',
 }
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
@@ -72,7 +72,7 @@ export function ReleaseTestCaseRow({
           type="text"
           value={testCase.name}
           onChange={(e) => onUpdate(caseIndex, 'name', e.target.value)}
-          placeholder="Titulo do Caso de Teste"
+          placeholder="Título do Caso de Teste"
           style={{ ...inputSm, flexGrow: 1, minWidth: 200, fontWeight: 600 }}
         />
         <select
@@ -106,7 +106,7 @@ export function ReleaseTestCaseRow({
           }}
         >
           <option value="Pendente">Pendente</option>
-          <option value="Concluído">Concluido</option>
+          <option value="Concluído">Concluído</option>
           <option value="Falhou">Falhou</option>
           <option value="Bloqueado">Bloqueado</option>
         </select>
@@ -116,7 +116,7 @@ export function ReleaseTestCaseRow({
           onChange={(e) => onUpdate(caseIndex, 'executionDay', e.target.value)}
           placeholder="Ex: D1, D2..."
           style={{ ...inputSm, width: 100 }}
-          title="Dia de execucao"
+          title="Dia de execução"
         />
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
           <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger>
@@ -129,7 +129,7 @@ export function ReleaseTestCaseRow({
         <textarea
           value={testCase.gherkin}
           onChange={(e) => onUpdate(caseIndex, 'gherkin', e.target.value)}
-          placeholder="Escreva o cenario em Gherkin..."
+          placeholder="Escreva o cenário em Gherkin..."
           rows={4}
           style={{
             fontFamily: 'var(--font-family-mono)',
@@ -147,7 +147,7 @@ export function ReleaseTestCaseRow({
         />
         {mockupImage && (
           <div style={{ flexShrink: 0, width: 'clamp(100px, 30%, 220px)' }}>
-            <div style={{ fontSize: 10, color: 'var(--color-text-3)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Referencia</div>
+            <div style={{ fontSize: 10, color: 'var(--color-text-3)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Referência</div>
             <img src={mockupImage} alt="Mockup" style={{ width: '100%', borderRadius: 6, border: '1px solid var(--color-border)', objectFit: 'contain', maxHeight: 130, background: '#fff' }} />
           </div>
         )}
@@ -156,7 +156,7 @@ export function ReleaseTestCaseRow({
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Caso de Teste"
-          description={`Tem certeza que deseja excluir o caso "${testCase.name || 'Sem titulo'}"? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir o caso "${testCase.name || 'Sem título'}"? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Caso"
           onConfirm={() => { onRemove(caseIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}

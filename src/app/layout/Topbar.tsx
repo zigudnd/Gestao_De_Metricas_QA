@@ -95,9 +95,8 @@ export function Topbar() {
             {crumb.path ? (
               <span
                 onClick={() => navigate(crumb.path!)}
-                style={{ cursor: 'pointer', fontWeight: 500 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-2)')}
+                className="topbar-breadcrumb-link"
+                style={{ cursor: 'pointer', fontWeight: 500, transition: 'color 0.15s' }}
               >
                 {crumb.label}
               </span>
@@ -185,7 +184,7 @@ export function Topbar() {
             zIndex: 1000,
           }}
         >
-          <div onClick={(e) => e.stopPropagation()} style={{
+          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Concluir Sprint" style={{
             background: 'var(--color-surface)',
             borderRadius: 14,
             padding: 24,
@@ -199,6 +198,7 @@ export function Topbar() {
               </h2>
               <button
                 onClick={() => setShowConfirmConcluir(false)}
+                aria-label="Fechar"
                 style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--color-text-2)', cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
               >
                 ×
@@ -221,6 +221,14 @@ export function Topbar() {
           </div>
         </div>
       )}
+      <style>{`
+        .topbar-breadcrumb-link:hover { color: var(--color-text) !important; }
+        .topbar-btn-ghost:hover { background: var(--color-bg) !important; }
+        .topbar-btn-secondary:hover { background: var(--color-border) !important; }
+        .topbar-btn-outline:hover { background: var(--color-bg) !important; }
+        .topbar-btn-primary:hover { background: var(--color-blue-text) !important; }
+        .topbar-btn-group-item:hover { background: var(--color-border) !important; }
+      `}</style>
     </header>
   )
 }
@@ -228,18 +236,17 @@ export function Topbar() {
 // ─── Micro-components ─────────────────────────────────────────────────────────
 
 function BtnGhost({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  const [hovered, setHovered] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="topbar-btn-ghost"
       style={{
         ...btnBase,
-        background: hovered ? 'var(--color-bg)' : 'transparent',
+        background: 'transparent',
         color: 'var(--color-text-2)',
         border: 'none',
+        transition: 'background 0.12s',
       }}
     >
       {children}
@@ -248,18 +255,17 @@ function BtnGhost({ children, onClick, title }: React.PropsWithChildren<{ onClic
 }
 
 function BtnSecondary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  const [hovered, setHovered] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="topbar-btn-secondary"
       style={{
         ...btnBase,
-        background: hovered ? 'var(--color-border)' : 'var(--color-bg)',
+        background: 'var(--color-bg)',
         color: 'var(--color-text)',
         border: '0.5px solid var(--color-border)',
+        transition: 'background 0.12s',
       }}
     >
       {children}
@@ -268,18 +274,17 @@ function BtnSecondary({ children, onClick, title }: React.PropsWithChildren<{ on
 }
 
 function BtnOutlineSubtle({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  const [hovered, setHovered] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="topbar-btn-outline"
       style={{
         ...btnBase,
-        background: hovered ? 'var(--color-bg)' : 'transparent',
+        background: 'transparent',
         color: 'var(--color-text-2)',
         border: '0.5px solid var(--color-border)',
+        transition: 'background 0.12s',
       }}
     >
       {children}
@@ -288,19 +293,18 @@ function BtnOutlineSubtle({ children, onClick, title }: React.PropsWithChildren<
 }
 
 function BtnFilledPrimary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  const [hovered, setHovered] = useState(false)
   return (
     <button
       onClick={onClick}
       title={title}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="topbar-btn-primary"
       style={{
         ...btnBase,
-        background: hovered ? 'var(--color-blue-text)' : 'var(--color-blue)',
+        background: 'var(--color-blue)',
         color: '#fff',
         border: 'none',
         fontWeight: 600,
+        transition: 'background 0.12s',
       }}
     >
       {children}
@@ -316,16 +320,14 @@ type BtnGroupItemProps = React.PropsWithChildren<{
 }>
 
 function BtnGroupItem({ children, onClick, title, position, as: Tag = 'button' }: BtnGroupItemProps) {
-  const [hovered, setHovered] = useState(false)
   return (
     <Tag
       onClick={onClick}
       title={title}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="topbar-btn-group-item"
       style={{
         ...btnBase,
-        background: hovered ? 'var(--color-border)' : 'var(--color-bg)',
+        background: 'var(--color-bg)',
         color: 'var(--color-text)',
         border: 'none',
         ...(position === 'left'
@@ -335,6 +337,7 @@ function BtnGroupItem({ children, onClick, title, position, as: Tag = 'button' }
         display: 'inline-flex',
         alignItems: 'center',
         userSelect: 'none' as const,
+        transition: 'background 0.12s',
       }}
     >
       {children}

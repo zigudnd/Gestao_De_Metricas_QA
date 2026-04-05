@@ -52,7 +52,7 @@ export function CombinadosTab() {
         placeholder="Ex: Codigo revisado por pelo menos 1 dev..."
       />
 
-      {/* 3. Cerimonias */}
+      {/* 3. Cerimônias */}
       <div style={{
         border: '0.5px solid var(--color-border)',
         borderLeft: '4px solid var(--color-yellow)',
@@ -71,7 +71,7 @@ export function CombinadosTab() {
             transform: cerCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
             color: 'var(--color-text-3)',
           }}>▼</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Cerimonias</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Cerimônias</span>
           <span style={{
             fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 10,
             background: 'var(--color-yellow-light)', color: 'var(--color-yellow)',
@@ -82,7 +82,7 @@ export function CombinadosTab() {
           <div style={{ padding: '0 16px 14px' }}>
             {cerimonias.length === 0 && (
               <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic', margin: '0 0 10px' }}>
-                Nenhuma cerimonia cadastrada.
+                Nenhuma cerimônia cadastrada.
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -101,12 +101,12 @@ export function CombinadosTab() {
               />
               <input
                 value={cerDia} onChange={(e) => setCerDia(e.target.value)}
-                placeholder="Dia/horario (ex: Seg a Sex — 09h30)"
+                placeholder="Dia/horário (ex: Seg a Sex — 09h30)"
                 style={{ ...inputSm, flex: 3, minWidth: 180 }}
               />
               <input
                 value={cerDuracao} onChange={(e) => setCerDuracao(e.target.value)}
-                placeholder="Duracao (ex: 15 min)"
+                placeholder="Duração (ex: 15 min)"
                 style={{ ...inputSm, flex: 1, minWidth: 80 }}
               />
               <button

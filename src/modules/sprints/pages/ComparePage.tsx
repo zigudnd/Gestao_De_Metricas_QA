@@ -509,6 +509,7 @@ const btnOutline: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
   flexShrink: 0,
+  transition: 'all 0.15s',
 }
 
 const btnPrimary: React.CSSProperties = {
@@ -521,6 +522,7 @@ const btnPrimary: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }
 
 const thStyle: React.CSSProperties = {

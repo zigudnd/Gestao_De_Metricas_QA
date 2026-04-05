@@ -1,7 +1,7 @@
 import type { UserWithSquads } from '../services/squadsService'
 import { inputStyle, selectStyle, btnPrimary, btnGhost, labelSm, avatarBase } from '@/styles/shared'
 
-const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: '#A32D2D', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
+const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-red)', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
 const badgeNeutral: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
 const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' }
 const badgeInactive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)' }
@@ -110,7 +110,7 @@ export function UsersPanel({
               <option value="all">Todos os perfis</option>
               <option value="admin">Admin</option>
               <option value="gerente">Gerente</option>
-              <option value="user">Usuario</option>
+              <option value="user">Usuário</option>
             </select>
             {/* Filter: status */}
             <select value={userFilterStatus} onChange={(e) => setUserFilterStatus(e.target.value as 'all' | 'active' | 'inactive')} style={{ ...selectStyle, width: 'auto' }}>
@@ -193,7 +193,7 @@ export function UsersPanel({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</span>
-                  <span style={badgeNeutral}>{u.global_role === 'admin' ? 'Admin' : u.global_role === 'gerente' ? 'Gerente' : 'Usuario'}</span>
+                  <span style={badgeNeutral}>{u.global_role === 'admin' ? 'Admin' : u.global_role === 'gerente' ? 'Gerente' : 'Usuário'}</span>
                   <span style={u.active ? badgeActive : badgeInactive}>{u.active ? 'Ativo' : 'Inativo'}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 2 }}>{u.email}</div>

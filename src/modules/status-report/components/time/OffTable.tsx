@@ -6,9 +6,9 @@ interface OffTableProps {
 }
 
 const TIPO_LABEL: Record<TipoOff, string> = {
-  ferias:  'Ferias',
+  ferias:  'Férias',
   off:     'Day off',
-  licenca: 'Licenca',
+  licenca: 'Licença',
   feriado: 'Feriado',
 }
 
@@ -45,7 +45,7 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
     return (
       <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--color-text-3)' }}>
         <p style={{ fontSize: 13, margin: 0 }}>
-          Nenhum periodo registrado. Clique em &quot;+ Registrar periodo&quot; para comecar.
+          Nenhum período registrado. Clique em &quot;+ Registrar período&quot; para começar.
         </p>
       </div>
     )
@@ -69,7 +69,7 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
         }}>
           <span>Membro</span>
           <span>Tipo</span>
-          <span>Inicio</span>
+          <span>Início</span>
           <span>Fim</span>
           <span>Dias</span>
           <span>Faltam</span>
@@ -113,14 +113,13 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
               </span>
               <button
                 onClick={() => onRemove(off.id)}
+                className="time-off-delete"
                 style={{
                   width: 22, height: 22, borderRadius: 4, border: 'none',
                   background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
                   fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-red)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--color-text-3)' }}
                 title="Remover"
               >
                 ×
@@ -132,10 +131,13 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
 
       {/* Legenda */}
       <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11, color: 'var(--color-text-3)' }}>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-light)', marginRight: 4 }} />Ferias em ate 30 dias</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-red-light)', marginRight: 4 }} />Ferias em ate 7 dias</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green-light)', marginRight: 4 }} />Periodo ativo ou agendado</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-light)', marginRight: 4 }} />Férias em até 30 dias</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-red-light)', marginRight: 4 }} />Férias em até 7 dias</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green-light)', marginRight: 4 }} />Período ativo ou agendado</span>
       </div>
+      <style>{`
+        .time-off-delete:hover { opacity: 1 !important; color: var(--color-red) !important; }
+      `}</style>
     </div>
   )
 }

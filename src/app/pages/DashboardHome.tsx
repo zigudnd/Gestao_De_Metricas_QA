@@ -114,7 +114,10 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
   return (
     <button
       onClick={onClick}
+      aria-label={title}
+      className="home-nav-card"
       style={{
+        '--card-color': color,
         display: 'flex', flexDirection: 'column',
         padding: 20,
         background: 'var(--color-surface)',
@@ -127,15 +130,7 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
         position: 'relative',
         overflow: 'hidden',
         minHeight: 160,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'
-        e.currentTarget.style.borderColor = color
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = 'none'
-        e.currentTarget.style.borderColor = 'var(--color-border)'
-      }}
+      } as React.CSSProperties}
     >
       {/* Color bar top */}
       <div style={{
@@ -147,7 +142,7 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <div style={{
           width: 44, height: 44, borderRadius: 10,
-          background: color + '15',
+          background: `color-mix(in srgb, ${color} 12%, transparent)`,
           color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
@@ -178,6 +173,9 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
           </div>
         ))}
       </div>
+      <style>{`
+        .home-nav-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; border-color: var(--card-color) !important; }
+      `}</style>
     </button>
   )
 }
@@ -219,7 +217,7 @@ export function DashboardHome() {
           color="var(--color-blue)"
           stats={[
             { label: 'Ativas', value: stats.sprints.active },
-            { label: 'Concluidas', value: stats.sprints.concluded },
+            { label: 'Concluídas', value: stats.sprints.concluded },
           ]}
           onClick={() => navigate('/sprints')}
         />
@@ -228,7 +226,7 @@ export function DashboardHome() {
           icon={<IconStatusReport />}
           title="Status Report"
           description="Relatórios de status e visão geral dos projetos"
-          color="#f59e0b"
+          color="var(--color-amber-mid)"
           stats={[
             { label: 'Reports', value: stats.reports.count },
             { label: 'Itens', value: stats.reports.totalItems },
@@ -240,7 +238,7 @@ export function DashboardHome() {
           icon={<IconReleases />}
           title="Releases"
           description="Calendário, homologação e ciclo de releases"
-          color="#06b6d4"
+          color="var(--color-blue)"
           stats={[
             { label: 'Gerenciar', value: '\u2192' },
           ]}
@@ -251,7 +249,7 @@ export function DashboardHome() {
           icon={<IconSquads />}
           title="Cadastros"
           description="Squads, membros, perfis de acesso e usuários"
-          color="#10b981"
+          color="var(--color-green-mid)"
           stats={[
             { label: 'Squads', value: stats.cadastros.squads },
             { label: 'Usuários', value: stats.cadastros.users },
@@ -263,7 +261,7 @@ export function DashboardHome() {
           icon={<IconDocs />}
           title="Documentação"
           description="Guia do sistema"
-          color="#8b5cf6"
+          color="var(--color-blue)"
           stats={[
             { label: 'Consultar', value: '→' },
           ]}

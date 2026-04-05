@@ -6,7 +6,7 @@ import { ConfirmModal } from '@/app/components/ConfirmModal'
 
 const SEVERITY_COLORS: Record<string, string> = {
   'Crítica': 'var(--color-red)',
-  Alta: '#dc6b1e',
+  Alta: 'var(--color-amber-mid)',
   'Média': 'var(--color-amber)',
   Baixa: 'var(--color-text-3)',
 }
@@ -56,6 +56,7 @@ export function ReleaseBugsList({ bugs, onAddBug, onRemoveBug, onUpdateBug }: Pr
         <div style={{ flex: 1 }} />
         <button
           onClick={(e) => { e.stopPropagation(); onAddBug() }}
+          aria-label="Adicionar bug"
           style={{
             padding: '4px 12px', borderRadius: 6, border: '1px solid var(--color-border-md)',
             background: 'transparent', color: 'var(--color-text-2)',
@@ -179,6 +180,7 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{

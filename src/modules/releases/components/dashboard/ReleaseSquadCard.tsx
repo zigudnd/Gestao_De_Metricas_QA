@@ -14,7 +14,7 @@ interface ReleaseSquadCardProps {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SQUAD_STATUS_LABELS: Record<ReleaseSquadStatus, string> = {
-  not_started: 'Nao iniciado',
+  not_started: 'Não iniciado',
   testing: 'Em Andamento',
   em_regressivo: 'Em Regressivo',
   blocked: 'Bloqueado',
@@ -29,6 +29,15 @@ const SQUAD_STATUS_COLORS: Record<ReleaseSquadStatus, string> = {
   blocked: 'var(--color-red)',
   approved: 'var(--color-green)',
   rejected: 'var(--color-red)',
+}
+
+const SQUAD_STATUS_BG_COLORS: Record<ReleaseSquadStatus, string> = {
+  not_started: 'var(--color-surface-2)',
+  testing: 'var(--color-blue-light)',
+  em_regressivo: '#fff7ed',
+  blocked: 'var(--color-red-light)',
+  approved: 'var(--color-green-light)',
+  rejected: 'var(--color-red-light)',
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -58,7 +67,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="anim-fade-up"
+      className="anim-fade-up release-squad-card"
       style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
@@ -68,8 +77,6 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
         transition: 'box-shadow 0.15s ease',
         animationDelay: `${index * 0.05}s`,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}
     >
       {/* Header: name + status badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -78,7 +85,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
         </span>
         <span style={{
           fontSize: 10, fontWeight: 700, padding: '2px 8px',
-          borderRadius: 4, background: `${statusColor}18`, color: statusColor,
+          borderRadius: 4, background: SQUAD_STATUS_BG_COLORS[squad.status], color: statusColor,
           whiteSpace: 'nowrap',
         }}>
           {statusLabel}
@@ -108,7 +115,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
           textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4,
         }}>
-          EXECUCAO GERAL
+          EXECUÇÃO GERAL
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -152,7 +159,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
           textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4,
         }}>
-          APROVACAO
+          APROVAÇÃO
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -188,7 +195,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
         Bugs: {metrics.openBugs}
         {criticalBugs > 0 && (
           <span style={{ color: 'var(--color-red)', fontWeight: 700 }}>
-            {' '}({criticalBugs} critico{criticalBugs !== 1 ? 's' : ''})
+            {' '}({criticalBugs} crítico{criticalBugs !== 1 ? 's' : ''})
           </span>
         )}
       </div>
@@ -208,7 +215,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
               fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
               textTransform: 'uppercase', letterSpacing: '0.5px',
             }}>
-              DISTRIBUICAO
+              DISTRIBUIÇÃO
             </span>
             <span style={{
               fontSize: 14, fontWeight: 800,
@@ -236,7 +243,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           </div>
           {rolloutPct! >= 100 && (
             <div style={{ fontSize: 10, color: 'var(--color-green)', fontWeight: 600, marginTop: 3 }}>
-              100% distribuido
+              100% distribuído
             </div>
           )}
         </div>
@@ -252,6 +259,9 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           {squad.notes}
         </div>
       )}
+      <style>{`
+        .release-squad-card:hover { box-shadow: var(--shadow-md) !important; }
+      `}</style>
     </div>
   )
 }

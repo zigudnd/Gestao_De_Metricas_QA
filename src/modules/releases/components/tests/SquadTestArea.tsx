@@ -11,7 +11,7 @@ type FilterChip = 'all' | 'pending' | 'passed' | 'failed'
 const FILTER_CHIPS: { id: FilterChip; label: string }[] = [
   { id: 'all', label: 'Todos' },
   { id: 'pending', label: 'Pendente' },
-  { id: 'passed', label: 'Concluido' },
+  { id: 'passed', label: 'Concluído' },
   { id: 'failed', label: 'Falhou' },
 ]
 
@@ -41,7 +41,7 @@ interface Props {
   // Import
   onImportFile: (suiteId: number, file: File) => void
   // Import features in bulk (for adding parsed features)
-  onImportFeatures: (suiteId: number, features: Array<Omit<Feature, 'id'>>) => void
+  onImportFeatures?: (suiteId: number, features: Array<Omit<Feature, 'id'>>) => void
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -119,6 +119,7 @@ export function SquadTestArea({
               <button
                 key={chip.id}
                 onClick={() => setActiveFilter(chip.id)}
+                aria-pressed={activeFilter === chip.id}
                 style={{
                   padding: '5px 12px',
                   border: 'none',

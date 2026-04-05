@@ -37,7 +37,7 @@ export function TimeTab() {
             </h3>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
               {efetivos.length} efetivo{efetivos.length !== 1 ? 's' : ''}
-              {temporarios.length > 0 && ` + ${temporarios.length} temporario${temporarios.length !== 1 ? 's' : ''}`}
+              {temporarios.length > 0 && ` + ${temporarios.length} temporário${temporarios.length !== 1 ? 's' : ''}`}
             </p>
           </div>
           {!showAddMember && (
@@ -90,7 +90,7 @@ export function TimeTab() {
               display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--color-amber)',
               textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8,
             }}>
-              Temporarios / Rotacao
+              Temporários / Rotação
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {temporarios.map((m) => (
@@ -107,7 +107,7 @@ export function TimeTab() {
               Nenhum membro no time.
             </p>
             <p style={{ fontSize: 12, margin: 0 }}>
-              Membros efetivos aparecem automaticamente do cadastro do squad. Use &quot;Convidar membro&quot; para adicionar temporarios.
+              Membros efetivos aparecem automaticamente do cadastro do squad. Use &quot;Convidar membro&quot; para adicionar temporários.
             </p>
           </div>
         )}
@@ -121,10 +121,10 @@ export function TimeTab() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
-              Periodos de Off / Ferias
+              Períodos de Off / Férias
             </h3>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
-              {offsEnriquecidos.length} {offsEnriquecidos.length === 1 ? 'periodo' : 'periodos'}
+              {offsEnriquecidos.length} {offsEnriquecidos.length === 1 ? 'período' : 'períodos'}
             </p>
           </div>
           {!showAddOff && (
@@ -137,7 +137,7 @@ export function TimeTab() {
                 fontFamily: 'var(--font-family-sans)',
               }}
             >
-              + Registrar periodo
+              + Registrar período
             </button>
           )}
         </div>

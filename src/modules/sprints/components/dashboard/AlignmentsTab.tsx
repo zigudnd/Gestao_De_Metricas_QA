@@ -46,7 +46,7 @@ export function AlignmentsTab() {
               />
               <button
                 onClick={() => removeAlignment(i)}
-                style={{ background: 'transparent', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-red)', fontSize: 13, flexShrink: 0 }}
+                style={{ background: 'transparent', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-red)', fontSize: 13, flexShrink: 0, transition: 'all 0.15s' }}
               >
                 🗑
               </button>
@@ -68,4 +68,5 @@ const btnPrimary: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
 }

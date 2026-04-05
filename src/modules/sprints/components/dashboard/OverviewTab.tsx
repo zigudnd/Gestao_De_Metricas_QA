@@ -263,7 +263,7 @@ export function OverviewTab() {
       </div>
 
       {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
         <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
@@ -335,7 +335,7 @@ export function OverviewTab() {
       </div>
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         <KpiCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" />
         <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />

@@ -87,7 +87,7 @@ export function ReleaseFeatureRow({
           >
             {feature.name || 'Funcionalidade sem nome'}
           </span>
-          {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#E24B4A', flexShrink: 0, display: 'inline-block' }} />}
+          {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, display: 'inline-block' }} />}
           {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
           {isNonBlocking && (
             <span style={{
@@ -98,7 +98,7 @@ export function ReleaseFeatureRow({
               flexShrink: 0,
               whiteSpace: 'nowrap',
             }}>
-              Nao impeditivo
+              Não impeditivo
             </span>
           )}
         </span>
@@ -179,7 +179,7 @@ export function ReleaseFeatureRow({
           {/* Test cases */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
-              Cenarios Gherkin ({cases.length})
+              Cenários Gherkin ({cases.length})
             </h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <label style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>Filtrar:</label>
@@ -197,7 +197,7 @@ export function ReleaseFeatureRow({
               >
                 <option value="Todos">Todos</option>
                 <option value="Pendente">Pendentes</option>
-                <option value="Concluído">Concluidos</option>
+                <option value="Concluído">Concluídos</option>
                 <option value="Falhou">Falharam</option>
                 <option value="Bloqueado">Bloqueados</option>
               </select>
@@ -235,7 +235,7 @@ export function ReleaseFeatureRow({
           onClick={(e) => e.target === e.currentTarget && setBlockModal(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div role="dialog" aria-modal="true" aria-label="Bloquear Funcionalidade" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>Bloquear Funcionalidade</div>
             <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
               Informe o motivo do bloqueio de <strong>&quot;{feature.name || 'Sem nome'}&quot;</strong>.
@@ -283,7 +283,7 @@ export function ReleaseFeatureRow({
           onClick={(e) => e.target === e.currentTarget && setCancelModal(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid #6b7280', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div role="dialog" aria-modal="true" aria-label="Cancelar Funcionalidade" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-text-3)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>Cancelar Funcionalidade</div>
             <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
               Registre o motivo do cancelamento de <strong>&quot;{feature.name || 'Sem nome'}&quot;</strong>.
@@ -316,7 +316,7 @@ export function ReleaseFeatureRow({
                   onUpdate(featureIndex, 'blockReason', cancelReason.trim())
                   setCancelModal(false)
                 }}
-                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#6b7280', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', opacity: cancelReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-text-3)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', opacity: cancelReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
               >
                 Confirmar Cancelamento
               </button>
@@ -328,7 +328,7 @@ export function ReleaseFeatureRow({
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Funcionalidade"
-          description={`Tem certeza que deseja excluir "${feature.name || 'Sem nome'}" e todos os seus casos de teste? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir "${feature.name || 'Sem nome'}" e todos os seus casos de teste? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Funcionalidade"
           onConfirm={() => { onRemove(featureIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
@@ -346,6 +346,7 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{

@@ -23,7 +23,7 @@ export function SaveToast() {
         alignItems: 'center',
         gap: 8,
         padding: '10px 18px',
-        background: '#1a1a2e',
+        background: 'var(--color-bg-2)',
         color: '#fff',
         borderRadius: 10,
         fontSize: 13,
@@ -36,7 +36,7 @@ export function SaveToast() {
         transition: 'opacity 0.2s ease, transform 0.2s ease',
       }}
     >
-      <span style={{ color: '#4ade80', fontSize: 15 }}>✓</span>
+      <span style={{ color: 'var(--color-green)', fontSize: 15 }}>✓</span>
       Salvo
     </div>
   )

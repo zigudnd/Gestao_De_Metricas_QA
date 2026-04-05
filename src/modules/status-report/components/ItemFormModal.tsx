@@ -371,6 +371,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
               background: 'transparent', color: 'var(--color-text-2)',
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
             }}
           >
             Cancelar
@@ -383,6 +384,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
               background: title.trim() ? 'var(--color-blue)' : '#ccc',
               color: '#fff', fontSize: 13, fontWeight: 600, cursor: title.trim() ? 'pointer' : 'not-allowed',
               fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
             }}
           >
             Adicionar
