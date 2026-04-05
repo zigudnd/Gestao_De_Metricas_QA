@@ -1,4 +1,4 @@
-import type { Release, ReleaseIndexEntry } from '../types/release.types'
+import type { Release, ReleaseIndexEntry, CalendarSlot } from '../types/release.types'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -6,6 +6,57 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export const STORAGE_KEY = (id: string) => `releaseData_${id}`
 export const INDEX_KEY = 'releaseMasterIndex'
+const CALENDAR_LS_KEY = 'releaseCalendarSlots'
+
+// ─── Offline Queue ───────────────────────────────────────────────────────────
+
+const OFFLINE_QUEUE_KEY = 'releaseOfflineQueue'
+
+interface OfflineAction {
+  type: 'upsert' | 'delete'
+  entityId: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any
+  timestamp: number
+  retryCount: number
+}
+
+function getOfflineQueue(): OfflineAction[] {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') }
+  catch { return [] }
+}
+
+function saveOfflineQueue(queue: OfflineAction[]) {
+  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue))
+}
+
+function enqueueOffline(action: OfflineAction) {
+  const queue = getOfflineQueue()
+  const idx = queue.findIndex(a => a.entityId === action.entityId && a.type === action.type)
+  if (idx >= 0) queue[idx] = action
+  else queue.push(action)
+  saveOfflineQueue(queue)
+}
+
+export async function flushOfflineQueue() {
+  const queue = getOfflineQueue()
+  if (!queue.length) return
+  const remaining: OfflineAction[] = []
+  for (const action of queue) {
+    try {
+      if (action.type === 'upsert') {
+        await _persistToServerOnline(action.data as Release, undefined)
+      } else if (action.type === 'delete') {
+        const { error } = await supabase.from('releases').delete().eq('id', action.entityId)
+        if (error) throw error
+      }
+    } catch {
+      action.retryCount++
+      if (action.retryCount < 5) remaining.push(action)
+    }
+  }
+  saveOfflineQueue(remaining)
+}
 
 // ─── Default State ───────────────────────────────────────────────────────────
 
@@ -164,7 +215,8 @@ export function removeFromMasterIndex(id: string): void {
 
 // ─── Supabase ────────────────────────────────────────────────────────────────
 
-export async function persistToServer(release: Release, updatedAt?: string): Promise<void> {
+/** Internal: persist directly (assumes online). Used by flushOfflineQueue. */
+async function _persistToServerOnline(release: Release, updatedAt?: string): Promise<void> {
   const { error } = await supabase.from('releases').upsert({
     id: release.id,
     data: release,
@@ -177,6 +229,14 @@ export async function persistToServer(release: Release, updatedAt?: string): Pro
     if (import.meta.env.DEV) console.error('[Releases] persistToServer failed:', error.message)
     throw error
   }
+}
+
+export async function persistToServer(release: Release, updatedAt?: string): Promise<void> {
+  if (!navigator.onLine) {
+    enqueueOffline({ type: 'upsert', entityId: release.id, data: release, timestamp: Date.now(), retryCount: 0 })
+    return
+  }
+  await _persistToServerOnline(release, updatedAt)
 }
 
 export async function loadFromServer(id: string): Promise<Release | null> {
@@ -195,6 +255,10 @@ export async function loadFromServer(id: string): Promise<Release | null> {
 }
 
 export async function deleteFromServer(id: string): Promise<void> {
+  if (!navigator.onLine) {
+    enqueueOffline({ type: 'delete', entityId: id, data: null, timestamp: Date.now(), retryCount: 0 })
+    return
+  }
   const { error } = await supabase.from('releases').delete().eq('id', id)
   if (error) {
     if (import.meta.env.DEV) console.error('[Releases] deleteFromServer failed:', error.message)
@@ -259,6 +323,9 @@ export async function syncAllReleases(): Promise<void> {
     localStorage.setItem(LAST_SYNC_KEY, now)
 
     if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} release(s) sincronizada(s)`)
+
+    // Flush any actions queued while offline
+    await flushOfflineQueue()
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[Release] syncAllReleases falhou — usando dados locais.', e)
   }
@@ -290,5 +357,52 @@ export function initRealtimeSubscription(
 
   return () => {
     supabase.removeChannel(channel)
+  }
+}
+
+// ─── Calendar Slots (localStorage + Supabase via dashboard_states) ──────────
+
+export function loadCalendarSlots(): CalendarSlot[] {
+  try {
+    const raw = localStorage.getItem(CALENDAR_LS_KEY)
+    return raw ? JSON.parse(raw) as CalendarSlot[] : []
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[Releases] Failed to load calendar slots from localStorage:', e)
+    return []
+  }
+}
+
+export function saveSlotsToLS(slots: CalendarSlot[]): void {
+  localStorage.setItem(CALENDAR_LS_KEY, JSON.stringify(slots))
+}
+
+export async function syncCalendarSlots(): Promise<CalendarSlot[]> {
+  if (!navigator.onLine) return loadCalendarSlots()
+  try {
+    const { data, error } = await supabase
+      .from('dashboard_states')
+      .select('payload')
+      .eq('project_key', 'calendarSlots')
+      .single()
+    if (!error && data?.payload?.slots) {
+      const slots = data.payload.slots as CalendarSlot[]
+      saveSlotsToLS(slots)
+      return slots
+    }
+  } catch { /* fallback to local */ }
+  return loadCalendarSlots()
+}
+
+export async function persistCalendarSlots(slots: CalendarSlot[]): Promise<void> {
+  saveSlotsToLS(slots)
+  if (!navigator.onLine) return
+  try {
+    await supabase.from('dashboard_states').upsert({
+      project_key: 'calendarSlots',
+      payload: { slots },
+      updated_at: new Date().toISOString(),
+    })
+  } catch {
+    // silent — localStorage is already saved
   }
 }

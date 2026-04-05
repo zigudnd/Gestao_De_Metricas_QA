@@ -6,6 +6,7 @@ import type {
 import {
   computeFields, saveToStorage, upsertSprintInMasterIndex,
   DEFAULT_STATE, normalizeState, persistToServer, getMasterIndex,
+  flushOfflineQueue, syncAllFromSupabase,
 } from '../services/persistence'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -63,6 +64,12 @@ if (typeof window !== 'undefined') {
       const blob = new Blob([payload], { type: 'application/json' })
       navigator.sendBeacon?.('/api/sprint-flush', blob)
     }
+  })
+
+  window.addEventListener('online', () => {
+    syncAllFromSupabase().then(() => flushOfflineQueue()).catch(() => {
+      // Errors are logged inside each function
+    })
   })
 }
 
