@@ -223,7 +223,7 @@ export function OverviewTab() {
   const todayReport = state.reports?.[state.currentDate] ?? ''
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
 
       {/* -- Status Bar -- */}
       <div className="card-sm flex items-center gap-3 flex-wrap" style={{ padding: '14px 20px' }}>
@@ -263,7 +263,7 @@ export function OverviewTab() {
       </div>
 
       {/* -- Hero Cards -- */}
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saude geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
         <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executaveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
@@ -271,7 +271,7 @@ export function OverviewTab() {
       </div>
 
       {/* -- Alert Strips -- */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div className="card-sm flex items-start gap-2.5" style={{ background: 'var(--color-green-light)', border: '0.5px solid var(--color-green-mid)' }}>
           <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-green-mid)' }} />
@@ -303,7 +303,7 @@ export function OverviewTab() {
       </div>
 
       {/* -- Faixas Qualitativas -- */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div className="card-sm flex items-start gap-2.5">
           <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-blue)' }} />
@@ -335,7 +335,7 @@ export function OverviewTab() {
       </div>
 
       {/* -- KPI Cards -- */}
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         <KpiCard label="Testes Executaveis" value={testesExecutaveis} sub="possiveis de executar agora" />
         <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessivel" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />

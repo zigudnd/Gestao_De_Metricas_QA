@@ -83,6 +83,7 @@ export function SprintDashboard() {
 
       {/* Tab Content */}
       {/* OverviewTab sempre montado para permitir exportação independente da aba ativa */}
+      <div className="pt-1" />
       <div
         id="overview-tab-content"
         style={activeTab !== 'overview' ? { position: 'absolute', left: '-9999px', top: '-9999px', width: 1200 } : {}}

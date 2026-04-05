@@ -799,7 +799,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12 }}>
             Adicionar Release ao Cronograma
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
             <div>
               <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Título *</label>
               <input value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="Release App v4.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
@@ -834,7 +834,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
             </div>
           </div>
           {/* Plataformas */}
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 6, textTransform: 'uppercase' }}>Plataformas</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {ALL_PLATFORMS.map((p) => (
@@ -911,6 +911,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         border: '1px solid var(--color-border)',
         overflow: 'hidden',
         background: 'var(--color-surface)',
+        marginBottom: 24,
       }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -1059,9 +1060,12 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         </div>
       </div>
 
+      {/* ── Divider ── */}
+      <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 24 }} />
+
       {/* ── Calendar Slots (Programacao Oficial) ────────────────────────── */}
       {(calendarSlots.length > 0 || onAddCalendarSlot) && (
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 0 }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: 14,
@@ -1093,7 +1097,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12 }}>
                 {editSlotId ? 'Editar Slot' : 'Novo Slot de Release'}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Nome *</label>
                   <input value={slotLabel} onChange={(e) => setSlotLabel(e.target.value)} placeholder="Release App Marco" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />

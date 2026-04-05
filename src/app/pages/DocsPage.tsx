@@ -13,11 +13,11 @@ interface DocSection {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="heading-lg mb-3 !mt-0">{children}</h2>
+  return <h2 className="heading-lg mb-4 !mt-0">{children}</h2>
 }
 
 function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="heading-sm mb-[6px] mt-4">{children}</h3>
+  return <h3 className="heading-sm mb-4 mt-8">{children}</h3>
 }
 
 function P({ children }: { children: React.ReactNode }) {
@@ -26,7 +26,7 @@ function P({ children }: { children: React.ReactNode }) {
 
 function MetricCard({ name, icon, what, why, how }: { name: string; icon: string; what: string; why: string; how?: string }) {
   return (
-    <div className="card-sm mb-3" style={{ background: 'var(--color-bg)' }}>
+    <div className="card-sm mb-4" style={{ background: 'var(--color-bg)' }}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[20px]">{icon}</span>
         <strong className="text-[14px] text-text">{name}</strong>

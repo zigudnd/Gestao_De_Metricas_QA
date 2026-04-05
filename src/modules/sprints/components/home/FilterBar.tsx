@@ -26,7 +26,7 @@ export function FilterBar({
   totalCount,
 }: FilterBarProps) {
   return (
-    <div className="card-sm flex items-center gap-4 flex-wrap mb-[18px]">
+    <div className="card-sm flex items-center gap-4 flex-wrap mb-6">
       <div className="relative min-w-[200px]">
         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-3)] pointer-events-none">🔍</span>
         <input

@@ -344,7 +344,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
       )}
 
       {/* Cards */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-4">
         {filtered.map((group) => {
           const isOpen = openCards.has(group.releaseNumber)
           const allStatuses = group.releases.map((r) => r.status)
@@ -432,7 +432,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 <div style={{
                   borderTop: '1px solid var(--color-border)',
                   padding: '16px 18px',
-                  display: 'flex', flexDirection: 'column', gap: 18,
+                  display: 'flex', flexDirection: 'column', gap: 12,
                 }}>
                   {group.releases.map((release) => {
                     const relPlatforms = getReleasePlatforms(release)

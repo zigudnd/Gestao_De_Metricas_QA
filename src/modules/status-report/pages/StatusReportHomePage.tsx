@@ -289,7 +289,7 @@ export function StatusReportHomePage() {
         .sr-home-btn-red:hover { background: var(--color-red-light); border-color: var(--color-red-mid); color: var(--color-red); }
       `}</style>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="heading-lg" style={{ margin: 0 }}>
             Status Reports
@@ -311,7 +311,7 @@ export function StatusReportHomePage() {
       {/* Home tabs */}
       <div role="tablist" aria-label="Abas de Status Reports" className="flex" style={{
         borderBottom: '1px solid var(--color-border)',
-        margin: '16px 0 20px',
+        margin: '0 0 20px',
       }}>
         {HOME_TABS.map((tab) => (
           <button
@@ -346,7 +346,7 @@ export function StatusReportHomePage() {
 
       {/* Filters bar */}
       {reports.length > 0 && (
-        <div className="flex items-center gap-2 mb-3.5 flex-wrap">
+        <div className="flex items-center gap-2 mb-5 flex-wrap">
           {/* Status chips */}
           {FILTERS.map((f) => (
             <button
@@ -430,7 +430,7 @@ export function StatusReportHomePage() {
       )}
 
       {/* List */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {filtered.map((report) => {
           const isConcluded = report.status === 'concluded'
           return (

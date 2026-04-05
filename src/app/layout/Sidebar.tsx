@@ -134,7 +134,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="shrink-0 bg-surface border-r border-border flex flex-col py-3 gap-[2px] overflow-hidden transition-[width] duration-200 ease-out"
+      className="shrink-0 bg-surface border-r border-border flex flex-col py-3 gap-1 overflow-hidden transition-[width] duration-200 ease-out"
       style={{
         width: expanded ? EXPANDED_W : COLLAPSED_W,
         alignItems: expanded ? 'stretch' : 'center',
@@ -142,7 +142,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div
-        className="flex items-center gap-[10px] mb-3"
+        className="flex items-center gap-[10px] mb-4"
         style={{
           padding: expanded ? '0 12px' : '0',
           justifyContent: expanded ? 'flex-start' : 'center',

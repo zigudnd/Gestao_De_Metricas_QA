@@ -136,7 +136,7 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
           <div className="text-[15px] font-bold text-text">
             {title}
           </div>
-          <div className="text-[12px] text-text-3 mt-[1px]">
+          <div className="text-[12px] text-text-3 mt-1">
             {description}
           </div>
         </div>
@@ -175,7 +175,7 @@ export function DashboardHome() {
   return (
     <div className="max-w-[900px] mx-auto">
       {/* Greeting */}
-      <div className="mb-7">
+      <div className="mb-8">
         <h1 className="heading-lg" style={{ fontSize: 22 }}>
           Olá, {firstName}
         </h1>
@@ -185,7 +185,7 @@ export function DashboardHome() {
       </div>
 
       {/* Cards grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-[14px]">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
         <NavCard
           icon={<IconSprints />}
           title="Cobertura QA"

@@ -88,7 +88,7 @@ export function Topbar() {
   return (
     <header className="h-[52px] bg-surface border-b border-border flex items-center justify-between px-6 shrink-0">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-[6px] text-[13px] text-text-2">
+      <nav className="flex items-center gap-[6px] text-[13px] text-text-2 pl-1">
         {crumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-[6px]">
             {i > 0 && <span className="opacity-35">/</span>}
@@ -115,7 +115,7 @@ export function Topbar() {
 
       {/* Ações contextuais */}
       {isDashboard && (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
 
           {/* 1. Voltar — ghost */}
           <button onClick={() => navigate('/sprints')} className="btn btn-ghost">← Voltar</button>

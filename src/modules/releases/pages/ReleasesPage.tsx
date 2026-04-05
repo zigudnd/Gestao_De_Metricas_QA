@@ -401,7 +401,7 @@ export function ReleasesPage() {
             )}
 
             {/* Name */}
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 16 }}>
               <label className="label-field">Nome *</label>
               <input
                 value={formName}
@@ -418,7 +418,7 @@ export function ReleasesPage() {
             </div>
 
             {/* Version */}
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 16 }}>
               <label className="label-field">Versão *</label>
               <input
                 value={formVersion}
@@ -434,7 +434,7 @@ export function ReleasesPage() {
             </div>
 
             {/* Dates in grid */}
-            <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 16 }}>
+            <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 20 }}>
               <div>
                 <label className="label-field">Data Corte *</label>
                 <input

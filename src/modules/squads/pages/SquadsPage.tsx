@@ -541,7 +541,7 @@ export function SquadsPage() {
       </div>
 
       {/* ── Conteúdo ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto py-5 px-6">
+      <div className="flex-1 overflow-y-auto pt-5 pb-5 px-6">
 
         {/* ════ Tab: Squads ════ */}
         {tab === 'squads' && (
@@ -572,7 +572,7 @@ export function SquadsPage() {
 
             {/* Inline new squad form */}
             {showNewSquadForm && (
-              <form onSubmit={handleCreate} className="card flex flex-col gap-2.5 mb-3.5" style={{ border: '1px solid var(--color-blue)' }}>
+              <form onSubmit={handleCreate} className="card flex flex-col gap-4 mb-3.5" style={{ border: '1px solid var(--color-blue)' }}>
                 <div className="heading-sm">Novo Squad</div>
                 <div>
                   <input
@@ -812,7 +812,7 @@ export function SquadsPage() {
         <div className="modal-backdrop modal-backdrop-high" onClick={() => setEditingSquad(null)}>
           <div className="modal-container" style={{ width: 420 }} onClick={(e) => e.stopPropagation()}>
             <h3 className="heading-md mb-4">Editar Squad</h3>
-            <form onSubmit={handleEditSquad} className="flex flex-col gap-3.5">
+            <form onSubmit={handleEditSquad} className="flex flex-col gap-4">
               <div className="flex gap-2.5">
                 <div className="flex-1">
                   <label className="label-field">Nome</label>
@@ -846,7 +846,7 @@ export function SquadsPage() {
         <div className="modal-backdrop modal-backdrop-high" onClick={() => setEditingUser(null)}>
           <div className="modal-container modal-sm" onClick={(e) => e.stopPropagation()}>
             <h3 className="heading-md mb-4">Editar Usuário</h3>
-            <form onSubmit={handleSaveUser} className="flex flex-col gap-3.5">
+            <form onSubmit={handleSaveUser} className="flex flex-col gap-4">
               <div><label className="label-field">Nome</label><input autoFocus value={editUserName} onChange={(e) => setEditUserName(e.target.value)} className="input-field" required /></div>
               <div><label className="label-field">E-mail</label><input value={editingUser.email} className="input-field opacity-50" disabled /></div>
               <div><label className="label-field">Perfil global</label>
@@ -880,7 +880,7 @@ export function SquadsPage() {
         <div className="modal-backdrop modal-backdrop-high" onClick={() => setShowProfileForm(false)}>
           <div className="modal-container" style={{ width: 460 }} onClick={(e) => e.stopPropagation()}>
             <h3 className="heading-md mb-4">{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
-            <form onSubmit={handleSaveProfile} className="flex flex-col gap-3.5">
+            <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
               <div><label className="label-field">Nome</label><input autoFocus value={profileName} onChange={(e) => setProfileName(e.target.value)} className="input-field" required placeholder="Ex: QA Júnior, Stakeholder Avançado" /></div>
               <div><label className="label-field">Descrição</label><input value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} className="input-field" placeholder="Opcional" /></div>
               <PermissionsEditor value={profilePerms} onChange={setProfilePerms} />

@@ -239,6 +239,8 @@ export function ConfigTab() {
         </div>
       </Card>
 
+      <div className="divider-sm" />
+
       {/* Outros Responsaveis */}
       <Card title="Outros Responsaveis">
         <p className="text-body" style={{ marginBottom: 16 }}>
@@ -285,6 +287,8 @@ export function ConfigTab() {
           + Adicionar responsavel
         </button>
       </Card>
+
+      <div className="divider-sm" />
 
       {/* Advanced weights accordion */}
       <button

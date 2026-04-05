@@ -111,7 +111,7 @@ export function SquadDetail({
           {members.length === 0 ? (
             <p className="text-small text-muted italic mb-3.5">Nenhum membro além de você.</p>
           ) : (
-            <div className="flex flex-col gap-1.5 mb-4">
+            <div className="flex flex-col gap-3 mb-4">
               {members.map((m) => {
                 const isMe = m.user_id === currentUserId
                 const isAdminMember = m.profile?.global_role === 'admin' || m.profile?.global_role === 'gerente'

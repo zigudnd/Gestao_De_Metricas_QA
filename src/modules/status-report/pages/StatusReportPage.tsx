@@ -145,6 +145,8 @@ export function StatusReportPage() {
           }
         </span>
 
+        <div style={{ width: 1, height: 20, background: 'var(--color-border)', margin: '0 4px', flexShrink: 0 }} />
+
         <div className="flex items-center gap-1">
           <span className="text-small text-muted" style={{ whiteSpace: 'nowrap' }}>Período:</span>
           <input
@@ -242,6 +244,7 @@ export function StatusReportPage() {
               <p className="text-body" style={{ margin: 0 }}>Clique em <strong>+ Adicionar item</strong> dentro de uma seção para começar.</p>
             </div>
           )}
+          <div className="flex flex-col gap-4">
           {sections.map((sec) => (
             <SectionCard
               key={sec.id}
@@ -256,6 +259,10 @@ export function StatusReportPage() {
               onMoveItem={(id, target) => moveItemToSection(id, target)}
             />
           ))}
+          </div>
+
+          {/* Divider before section actions */}
+          <div style={{ height: 1, background: 'var(--color-border)', margin: '8px 0 4px' }} />
         </div>
       )}
 

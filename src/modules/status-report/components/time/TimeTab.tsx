@@ -63,7 +63,7 @@ export function TimeTab() {
 
         {/* Efetivos */}
         {efetivos.length > 0 && (
-          <div style={{ marginBottom: temporarios.length > 0 ? 16 : 0 }}>
+          <div className="mb-6">
             <span className="section-label" style={{ marginBottom: 8 }}>
               Efetivos do squad
             </span>
@@ -75,9 +75,14 @@ export function TimeTab() {
           </div>
         )}
 
+        {/* Divider between efetivos and temporarios */}
+        {efetivos.length > 0 && temporarios.length > 0 && (
+          <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 24 }} />
+        )}
+
         {/* Temporarios */}
         {temporarios.length > 0 && (
-          <div>
+          <div className="mb-6">
             <span className="section-label" style={{ color: 'var(--color-amber)', marginBottom: 8 }}>
               Temporários / Rotação
             </span>

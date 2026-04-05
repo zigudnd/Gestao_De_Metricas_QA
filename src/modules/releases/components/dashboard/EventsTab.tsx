@@ -117,7 +117,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
   return (
     <div style={{ maxWidth: 700 }}>
       {/* ── Eventos ── */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2.5">
             <span className="heading-sm">Eventos</span>
@@ -195,6 +195,9 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
         </div>
       </div>
 
+      {/* ── Divider ── */}
+      <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 24 }} />
+
       {/* ── Feriados ── */}
       <div>
         <div className="flex items-center justify-between mb-3.5">
@@ -269,7 +272,7 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
       </div>
 
       {/* Legend */}
-      <div className="flex gap-3.5 flex-wrap" style={{ marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
+      <div className="flex gap-3.5 flex-wrap" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
         {[
           { bg: '#fff7ed', color: '#c2410c', label: 'Em 7 dias' },
           { bg: 'var(--color-amber-light)', color: 'var(--color-amber)', label: 'Em 30 dias' },

@@ -21,7 +21,7 @@ export const SectionCard = memo(function SectionCard({
   const sectionIdx = allSections.findIndex((s) => s.id === section.id)
 
   return (
-    <div className="mb-3" style={{
+    <div style={{
       border: '1px solid var(--color-border)',
       borderRadius: 10,
       overflow: 'hidden',
@@ -33,7 +33,7 @@ export const SectionCard = memo(function SectionCard({
         aria-label={`${isCollapsed ? 'Expandir' : 'Recolher'} seção ${section.label}`}
         className="w-full flex items-center gap-2.5"
         style={{
-          padding: '10px 14px',
+          padding: '12px 16px',
           background: 'var(--color-surface)',
           border: 'none', cursor: 'pointer',
           borderBottom: isCollapsed ? 'none' : '1px solid var(--color-border)',
@@ -64,7 +64,7 @@ export const SectionCard = memo(function SectionCard({
 
       {/* Content */}
       {!isCollapsed && (
-        <div className="flex flex-col gap-1.5" style={{ padding: '8px 10px' }}>
+        <div className="flex flex-col gap-2" style={{ padding: '10px 12px' }}>
           {items.length === 0 && (
             <div className="text-small text-muted text-center" style={{ padding: 12 }}>
               Nenhum item nesta seção

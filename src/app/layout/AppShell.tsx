@@ -53,7 +53,7 @@ export function AppShell() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-5 px-[22px]">
+        <main className="flex-1 overflow-y-auto pt-6 pb-5 px-6">
           <ErrorBoundary moduleName="Página">
             <Outlet />
           </ErrorBoundary>

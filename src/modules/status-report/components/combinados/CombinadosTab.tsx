@@ -53,7 +53,7 @@ export function CombinadosTab() {
       />
 
       {/* 3. Cerimônias */}
-      <div className="mb-3" style={{
+      <div className="mb-6" style={{
         border: '0.5px solid var(--color-border)',
         borderLeft: '4px solid var(--color-yellow)',
         borderRadius: 10, overflow: 'hidden',
@@ -125,7 +125,7 @@ export function CombinadosTab() {
       </div>
 
       {/* 4. Story Points */}
-      <div className="mb-3" style={{
+      <div className="mb-6" style={{
         border: '0.5px solid var(--color-border)',
         borderLeft: '4px solid var(--color-blue)',
         borderRadius: 10, overflow: 'hidden',

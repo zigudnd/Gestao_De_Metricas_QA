@@ -112,7 +112,7 @@ export function ReleaseDashboard() {
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Top bar */}
-      <div className="mb-5">
+      <div className="mb-6">
         <button
           onClick={() => navigate('/releases')}
           aria-label="Voltar para lista de releases"
@@ -140,14 +140,18 @@ export function ReleaseDashboard() {
       </div>
 
       {/* Pipeline de fases */}
-      <ReleasePhasesPanel
-        release={release}
-        onUpdateField={handleField}
-        onTransition={handleStatusTransition}
-      />
+      <div className="mb-6">
+        <ReleasePhasesPanel
+          release={release}
+          onUpdateField={handleField}
+          onTransition={handleStatusTransition}
+        />
+      </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 24 }} />
 
       {/* Dados da Release — formulário de edição */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card" style={{ marginBottom: 24 }}>
         <div className="heading-sm" style={{ fontSize: 13, marginBottom: 16 }}>
           Dados da Release
         </div>

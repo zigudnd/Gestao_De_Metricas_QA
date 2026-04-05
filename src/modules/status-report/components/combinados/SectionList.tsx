@@ -33,7 +33,7 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
   }
 
   return (
-    <div className="mb-3" style={{
+    <div className="mb-6" style={{
       border: '0.5px solid var(--color-border)',
       borderLeft: `4px solid ${color}`,
       borderRadius: 10, overflow: 'hidden',

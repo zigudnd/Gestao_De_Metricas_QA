@@ -185,7 +185,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-2);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 /* Badges */
@@ -210,9 +210,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* Cards */
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-md);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
 }
 .card-sm { padding: 12px 14px; border-radius: var(--radius-md); }
 
@@ -238,7 +239,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 .modal-sm { width: 360px; }
 .modal-md { width: 520px; }
@@ -246,7 +247,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* Table */
 .table-header {
-  padding: 10px 12px;
+  padding: 12px 14px;
   text-align: left;
   font-size: 11px;
   font-weight: 600;
@@ -255,7 +256,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   border: 0.5px solid var(--color-border);
 }
 .table-cell {
-  padding: 9px 12px;
+  padding: 12px 14px;
   font-size: 12px;
   color: var(--color-text);
   border-bottom: 0.5px solid var(--color-border);
@@ -314,3 +315,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   flex-shrink: 0;
 }
 .avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 16px 0;
+}
+.divider-sm {
+  height: 1px;
+  background: var(--color-border);
+  margin: 10px 0;
+}
+
+/* Page-level spacing */
+.page-header {
+  margin-bottom: 24px;
+}
+.page-section {
+  margin-bottom: 24px;
+}

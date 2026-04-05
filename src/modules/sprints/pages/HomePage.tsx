@@ -357,13 +357,13 @@ export function HomePage() {
       {filteredActive.length > 0 && (
         <>
           {filteredCompleted.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-6">
               <span className="section-label">
                 Em Andamento
               </span>
             </div>
           )}
-          <div className={`flex flex-col gap-1.5 ${filteredCompleted.length > 0 ? 'mb-7' : ''}`}>
+          <div className={`flex flex-col gap-3 ${filteredCompleted.length > 0 ? 'mb-7' : ''}`}>
             {/* Nova sprint — compact */}
             <div
               onClick={() => { if (!compareMode) setShowCreate(true) }}
@@ -417,7 +417,8 @@ export function HomePage() {
       {/* Seção: Concluídas */}
       {filteredCompleted.length > 0 && (
         <>
-          <div className="flex items-center gap-3 mb-3">
+          <div className="divider" />
+          <div className="flex items-center gap-3 mb-6">
             <span className="section-label !mb-0">
               Concluídas
             </span>
@@ -426,7 +427,7 @@ export function HomePage() {
               {filteredCompleted.length} sprint{filteredCompleted.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-3">
             {filteredCompleted.map((sprint) => (
               <SprintCard
                 key={sprint.id}
@@ -462,7 +463,7 @@ export function HomePage() {
       {showCreate && (
         <Modal onClose={() => setShowCreate(false)} title="Nova Sprint">
           <form onSubmit={handleCreate}>
-            <div className="mb-3.5">
+            <div className="mb-4">
               <label className="label-field">Título da Sprint *</label>
               <input
                 ref={titleInputRef}
@@ -474,7 +475,7 @@ export function HomePage() {
                 className="input-field"
               />
             </div>
-            <div className="mb-3.5">
+            <div className="mb-4">
               <label className="label-field">Tipo</label>
               <div className="flex gap-1.5">
                 {([
@@ -500,7 +501,7 @@ export function HomePage() {
 
             {/* Release vinculada — só para regressivo/integrado */}
             {(newSprintType === 'regressivo' || newSprintType === 'integrado') && (
-              <div className="mb-3.5">
+              <div className="mb-4">
                 <label className="label-field">Release vinculada</label>
                 <select
                   value={newReleaseId}
