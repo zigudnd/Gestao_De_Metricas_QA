@@ -1,6 +1,6 @@
-# ToStatos — QA Metrics & Release Management Dashboard
+# ToStatos — Hub de Qualidade | Plataforma de Inteligência de Qualidade de Software
 
-Plataforma completa de gestao de metricas QA, status reports e releases para times de qualidade. Centraliza KPIs de sprints, gestao de bugs, impedimentos, alinhamentos, status reports semanais com Gantt, pipeline de releases multi-fase e cadastro de squads com permissoes granulares. Suporta uso individual (offline), colaborativo local (Docker) e cloud (Supabase Cloud) com sincronizacao em tempo real.
+Hub de Qualidade completo para times de QA e engenharia de software. Centraliza KPIs de sprints, gestao de bugs, impedimentos, alinhamentos, status reports semanais com Gantt, pipeline de releases multi-fase e cadastro de squads com permissoes granulares. Suporta uso individual (offline), colaborativo local (Docker) e cloud (Supabase Cloud) com sincronizacao em tempo real. Tambem referenciado como QA Metrics Dashboard.
 
 **Stack:** React 19 + TypeScript 5.9 + Vite 6 + Tailwind CSS v4 + Zustand 5 + Chart.js 4 + Supabase (PostgreSQL + Auth + Realtime) + Express 4 + Playwright 1.58
 

@@ -200,7 +200,7 @@ export function DashboardHome() {
           Olá, {firstName}
         </h1>
         <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
-          O que deseja fazer hoje?
+          Hub de Qualidade — O que deseja fazer hoje?
         </p>
       </div>
 

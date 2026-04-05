@@ -1,4 +1,4 @@
-# CLAUDE.md — Gestão de Métricas QA (ToStatos)
+# CLAUDE.md — ToStatos | Hub de Qualidade (Plataforma de Inteligência de Qualidade de Software)
 
 ## Stack
 - Frontend: React 19 + TypeScript + Vite + Tailwind CSS v4

@@ -1,4 +1,4 @@
-# Contexto Completo do Projeto — ToStatos QA Dashboard
+# Contexto Completo do Projeto — ToStatos | Hub de Qualidade
 
 > **Objetivo deste documento:** Fornecer contexto completo para onboarding rapido em novas conversas.
 > Leia este arquivo antes de iniciar qualquer tarefa no projeto.
@@ -8,7 +8,7 @@
 
 ## 1. O que e o ToStatos
 
-Plataforma de gestao de metricas QA para acompanhamento de sprints ageis, releases e status reports. Centraliza KPIs, progresso de execucao de testes, bugs, bloqueios, alinhamentos tecnicos, status reports semanais, releases com pipeline de 5 fases, e notas operacionais em um unico dashboard colaborativo.
+**ToStatos** e um **Hub de Qualidade** — uma Plataforma de Inteligencia de Qualidade de Software para acompanhamento de sprints ageis, releases e status reports. Centraliza KPIs, progresso de execucao de testes, bugs, bloqueios, alinhamentos tecnicos, status reports semanais, releases com pipeline de 5 fases, e notas operacionais em um unico dashboard colaborativo (QA Metrics Dashboard).
 
 **Modos de operacao:**
 1. **Offline** — localStorage apenas, sem servidor, usuario unico

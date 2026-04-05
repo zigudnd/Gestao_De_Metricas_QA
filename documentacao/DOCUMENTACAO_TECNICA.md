@@ -1,4 +1,4 @@
-# Documentação Técnica — QA Dashboard (Versão Legada)
+# Documentação Técnica — ToStatos Hub de Qualidade (Versão Legada)
 
 > **ATENÇÃO — DOCUMENTO LEGADO**
 > Este arquivo descreve a versão anterior do sistema, construída em HTML/CSS/JavaScript Vanilla com `model.js`, `view.js` e `controller.js`.

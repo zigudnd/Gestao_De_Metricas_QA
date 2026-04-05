@@ -58,15 +58,15 @@ const SECTIONS: DocSection[] = [
     group: 'Geral',
     content: (
       <div>
-        <H2>ToStatos — QA Metrics Dashboard</H2>
+        <H2>ToStatos — Hub de Qualidade</H2>
         <P>
-          O <strong>ToStatos</strong> é uma plataforma de gestão de métricas de qualidade de software voltada para
-          times de QA. Centraliza o acompanhamento de sprints, casos de teste, bugs, impedimentos e indicadores
+          O <strong>ToStatos</strong> é um <strong>Hub de Qualidade</strong> — uma Plataforma de Inteligência de Qualidade de Software voltada para
+          times de QA e engenharia. Centraliza o acompanhamento de sprints, casos de teste, bugs, impedimentos e indicadores
           de saúde do processo de testes — tudo em tempo real, com persistência local e suporte a sincronização remota.
         </P>
         <P>
           Foi projetado para eliminar o uso de planilhas manuais no acompanhamento de QA, oferecendo uma visão
-          estruturada e baseada em dados sobre a qualidade de cada entrega.
+          estruturada e baseada em dados sobre a qualidade de cada entrega (QA Metrics Dashboard).
         </P>
         <H3>Principais funcionalidades</H3>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
@@ -942,7 +942,7 @@ const SECTIONS: DocSection[] = [
             </div>
             <P>
               Profissional de Qualidade de Software com experiência em processos de QA, automação de testes e gestão de métricas em times ágeis.
-              O ToStatos nasceu da necessidade real de uma ferramenta que centralizasse e tornasse visual o trabalho diário de um QA em sprints.
+              O ToStatos nasceu da necessidade real de um Hub de Qualidade que centralizasse e tornasse visual o trabalho diário de um QA em sprints.
             </P>
             <P>
               O sistema foi construído com foco em praticidade: sem dependência de internet para uso básico, sem necessidade de conta ou cadastro,
