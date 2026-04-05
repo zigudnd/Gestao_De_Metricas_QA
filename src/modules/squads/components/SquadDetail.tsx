@@ -232,7 +232,7 @@ export function SquadDetail({
                           }}
                         >
                           <div style={{ ...avatarBase, width: 24, height: 24, fontSize: 10 }}>
-                            {u.display_name[0].toUpperCase()}
+                            {(u.display_name ?? '?')[0]?.toUpperCase() ?? '?'}
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</div>

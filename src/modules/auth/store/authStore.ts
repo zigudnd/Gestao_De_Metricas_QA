@@ -39,8 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user) return { error: new Error('Usuário não autenticado.') }
     const { error } = await supabase.from('profiles').update({ display_name: name }).eq('id', user.id)
     if (error) {
-      const err = new Error(error.message)
-      throw err
+      return { error: new Error(error.message) }
     }
     set((s) => ({ profile: s.profile ? { ...s.profile, display_name: name } : s.profile }))
     return { error: null }

@@ -498,6 +498,7 @@ const SECTIONS: DocSection[] = [
           visual e exportável. Diferente do módulo de Sprints (focado em execução de testes QA), o Status Report tem foco em
           <strong> visibilidade para stakeholders e gerência</strong> — mostrando o que está em andamento, o que foi entregue,
           o que está bloqueado e o que está no backlog.
+
         </P>
 
         <H3>Listagem de Reports</H3>
@@ -505,6 +506,7 @@ const SECTIONS: DocSection[] = [
           A página inicial do módulo (<strong>/status-report</strong>) lista todos os reports criados, com filtros por status
           (Ativos, Concluídos, Favoritos), busca por título/squad e filtro por data. Cada report mostra título, squad, quantidade
           de itens e data da última atualização.
+
         </P>
         <P>Ações disponíveis por report:</P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
@@ -547,25 +549,25 @@ const SECTIONS: DocSection[] = [
       <div>
         <H2>Itens do Status Report</H2>
         <P>
-          Cada item representa uma entrega, tarefa ou demanda que precisa ser acompanhada. Os itens sao o nucleo do Status Report —
-          e a partir deles que o sistema calcula progresso, atrasos, dependencias e gera o relatorio visual.
+          Cada item representa uma entrega, tarefa ou demanda que precisa ser acompanhada. Os itens são o núcleo do Status Report —
+          é a partir deles que o sistema calcula progresso, atrasos, dependências e gera o relatório visual.
         </P>
 
         <H3>Campos de um Item</H3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
-            ['Titulo', 'Nome descritivo da tarefa ou entrega'],
-            ['Secao', 'Em qual secao o item esta (Sprint, Backlog, etc.)'],
-            ['Prioridade', 'Alta, Media ou Baixa — define a borda colorida do item'],
+            ['Título', 'Nome descritivo da tarefa ou entrega'],
+            ['Seção', 'Em qual seção o item está (Sprint, Backlog, etc.)'],
+            ['Prioridade', 'Alta, Média ou Baixa — define a borda colorida do item'],
             ['Stacks', 'Plataformas envolvidas: iOS, Android, BFF, Back'],
-            ['% Conclusao', 'Progresso de 0 a 100% (slider com step de 5)'],
-            ['Responsavel', 'Pessoa ou time responsavel pelo item'],
-            ['Duracao (dias)', 'Estimativa em dias corridos'],
-            ['Data de Inicio', 'Inicio manual ou calculado por predecessores'],
-            ['Deadline', 'Data limite fixa (sobrescreve calculo automatico)'],
-            ['Predecessores', 'Itens que precisam terminar antes deste comecar'],
-            ['Notas', 'Sub-itens ou observacoes (cada linha = sub-item no preview)'],
-            ['Link Jira', 'Referencia ao ticket no Jira ou ferramenta de gestao'],
+            ['% Conclusão', 'Progresso de 0 a 100% (slider com step de 5)'],
+            ['Responsável', 'Pessoa ou time responsável pelo item'],
+            ['Duração (dias)', 'Estimativa em dias corridos'],
+            ['Data de Início', 'Início manual ou calculado por predecessores'],
+            ['Deadline', 'Data limite fixa (sobrescreve cálculo automático)'],
+            ['Predecessores', 'Itens que precisam terminar antes deste começar'],
+            ['Notas', 'Sub-itens ou observações (cada linha = sub-item no preview)'],
+            ['Link Jira', 'Referência ao ticket no Jira ou ferramenta de gestão'],
           ].map(([field, desc]) => (
             <div key={field} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
               <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{field}</strong>
@@ -578,25 +580,25 @@ const SECTIONS: DocSection[] = [
         <P>A borda esquerda de cada item indica sua prioridade:</P>
         <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
           <div style={{ padding: '8px 14px', borderLeft: '4px solid #ef4444', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Alta</div>
-          <div style={{ padding: '8px 14px', borderLeft: '4px solid #f59e0b', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Media</div>
+          <div style={{ padding: '8px 14px', borderLeft: '4px solid #f59e0b', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Média</div>
           <div style={{ padding: '8px 14px', borderLeft: '4px solid #10b981', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Baixa</div>
         </div>
 
-        <H3>Dependencias e Gantt</H3>
+        <H3>Dependências e Gantt</H3>
         <P>
-          Itens podem ter <strong>predecessores</strong> — outros itens que precisam terminar antes dele comecar.
-          Quando um item tem predecessores, sua data de inicio e calculada automaticamente como o dia seguinte ao fim
-          do ultimo predecessor. Se a cadeia de dependencias forma um ciclo, o sistema detecta e sinaliza com badge <Chip label="CICLO" color="#b45309" />.
+          Itens podem ter <strong>predecessores</strong> — outros itens que precisam terminar antes dele começar.
+          Quando um item tem predecessores, sua data de início é calculada automaticamente como o dia seguinte ao fim
+          do último predecessor. Se a cadeia de dependências forma um ciclo, o sistema detecta e sinaliza com badge <Chip label="CICLO" color="#b45309" />.
         </P>
         <P>
           A aba <strong>Gantt</strong> exibe todos os itens com datas em uma timeline visual, com barras de progresso,
-          linhas de dependencia (curvas Bezier) e indicador do dia atual (linha vermelha). Itens atrasados recebem badge <Chip label="ATRASO" color="var(--color-red)" />.
+          linhas de dependência (curvas Bezier) e indicador do dia atual (linha vermelha). Itens atrasados recebem badge <Chip label="ATRASO" color="var(--color-red)" />.
         </P>
 
-        <H3>Formulario de criacao</H3>
+        <H3>Formulário de criação</H3>
         <P>
-          Ao adicionar um item, o formulario exibe campos essenciais (titulo, secao, prioridade, stacks, %, responsavel)
-          e um toggle <strong>Mais opcoes</strong> que revela campos avancados (datas, predecessores, notas, Jira).
+          Ao adicionar um item, o formulário exibe campos essenciais (título, seção, prioridade, stacks, %, responsável)
+          e um toggle <strong>Mais opções</strong> que revela campos avançados (datas, predecessores, notas, Jira).
           Atalhos: <Chip label="Enter" color="var(--color-blue)" /> confirma, <Chip label="Ctrl+Enter" color="var(--color-blue)" /> submete, <Chip label="Esc" color="#6b7280" /> cancela.
         </P>
       </div>
@@ -612,34 +614,34 @@ const SECTIONS: DocSection[] = [
         <H2>Dashboard de KPIs do Status Report</H2>
         <P>
           O dashboard aparece no topo do editor e mostra indicadores derivados automaticamente dos itens cadastrados.
-          E colapsavel — clique no header para expandir/recolher. Quando colapsado, ainda mostra o resumo (total de itens + % concluido).
+          É colapsável — clique no header para expandir/recolher. Quando colapsado, ainda mostra o resumo (total de itens + % concluído).
         </P>
 
         <H3>Indicadores</H3>
         <MetricCard
           name="Progresso Geral"
           icon="🎯"
-          what="Media percentual de conclusao de todos os itens do report."
-          why="Resposta imediata para 'estamos no prazo?' — a metrica mais pedida em cerimonias."
-          how="Media aritmetica de item.pct de todos os itens."
+          what="Média percentual de conclusão de todos os itens do report."
+          why="Resposta imediata para 'estamos no prazo?' — a métrica mais pedida em cerimônias."
+          how="Média aritmética de item.pct de todos os itens."
         />
         <MetricCard
           name="Itens Atrasados"
           icon="🔴"
-          what="Quantidade de itens cuja data de fim calculada ja passou e o progresso esta abaixo de 100%."
-          why="Alerta visual que muda o tom da conversa de status para plano de acao."
+          what="Quantidade de itens cuja data de fim calculada já passou e o progresso está abaixo de 100%."
+          why="Alerta visual que muda o tom da conversa de status para plano de ação."
         />
         <MetricCard
           name="Sem Data"
           icon="⚠️"
-          what="Itens sem data de inicio e sem deadline definido."
-          why="Item sem prazo e item invisivel no Gantt — parece controlado mas ninguem esta cobrando."
+          what="Itens sem data de início e sem deadline definido."
+          why="Item sem prazo é item invisível no Gantt — parece controlado mas ninguém está cobrando."
         />
         <MetricCard
           name="Risco Cadeia"
           icon="🔗"
-          what="Itens que dependem de outros itens que estao atrasados."
-          why="Efeito cascata — um atraso contamina N itens downstream. Permite acao preventiva."
+          what="Itens que dependem de outros itens que estão atrasados."
+          why="Efeito cascata — um atraso contamina N itens downstream. Permite ação preventiva."
         />
         <MetricCard
           name="Alta Prioridade Parados"
@@ -649,10 +651,10 @@ const SECTIONS: DocSection[] = [
         />
 
         <H3>Barras horizontais</H3>
-        <P>O dashboard tambem exibe tres colunas de barras horizontais:</P>
+        <P>O dashboard também exibe três colunas de barras horizontais:</P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>Por Secao</strong> — distribuicao de itens entre as secoes (cores da secao)</li>
-          <li><strong>Por Responsavel</strong> — carga de trabalho por pessoa (top 6, com "+N outros")</li>
+          <li><strong>Por Seção</strong> — distribuição de itens entre as seções (cores da seção)</li>
+          <li><strong>Por Responsável</strong> — carga de trabalho por pessoa (top 6, com "+N outros")</li>
           <li><strong>Por Stack</strong> — cobertura por plataforma (iOS, Android, BFF, Back)</li>
         </ul>
       </div>
@@ -665,30 +667,30 @@ const SECTIONS: DocSection[] = [
     group: 'Status Reports',
     content: (
       <div>
-        <H2>Preview e Exportacao do Report</H2>
+        <H2>Preview e Exportação do Report</H2>
 
         <H3>Preview Report</H3>
         <P>
-          A aba <strong>Preview Report</strong> mostra o relatorio em formato visual de 2 colunas (esquerda/direita),
-          pronto para compartilhar. Secoes sem itens sao ocultadas automaticamente. Cada item e numerado dentro da secao
-          e mostra: titulo, progresso %, responsavel e stacks.
+          A aba <strong>Preview Report</strong> mostra o relatório em formato visual de 2 colunas (esquerda/direita),
+          pronto para compartilhar. Seções sem itens são ocultadas automaticamente. Cada item é numerado dentro da seção
+          e mostra: título, progresso %, responsável e stacks.
         </P>
 
-        <H3>Copiar relatorio</H3>
+        <H3>Copiar relatório</H3>
         <P>
-          O botao <strong>Copiar relatorio</strong> gera texto formatado para clipboard, pronto para colar em
-          Slack, Teams ou email. O formato e texto puro com secoes, itens numerados e sub-itens.
+          O botão <strong>Copiar relatório</strong> gera texto formatado para clipboard, pronto para colar em
+          Slack, Teams ou email. O formato é texto puro com seções, itens numerados e sub-itens.
         </P>
 
         <H3>Exportar JPG</H3>
         <P>
-          O botao <strong>Exportar JPG</strong> captura a area do preview como imagem via html2canvas.
-          Durante a geracao, o botao exibe "Gerando..." e fica desabilitado. A imagem e baixada automaticamente.
+          O botão <strong>Exportar JPG</strong> captura a área do preview como imagem via html2canvas.
+          Durante a geração, o botão exibe "Gerando..." e fica desabilitado. A imagem é baixada automaticamente.
         </P>
 
-        <H3>Indicador de sincronizacao</H3>
+        <H3>Indicador de sincronização</H3>
         <P>
-          No header do editor, ao lado do titulo, um indicador mostra o estado de sincronizacao:
+          No header do editor, ao lado do título, um indicador mostra o estado de sincronização:
         </P>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
@@ -697,7 +699,7 @@ const SECTIONS: DocSection[] = [
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-mid)' }} />
-            <span style={{ color: 'var(--color-text-2)' }}>Salvando... — persistencia em andamento</span>
+            <span style={{ color: 'var(--color-text-2)' }}>Salvando... — persistência em andamento</span>
           </div>
         </div>
       </div>
@@ -712,41 +714,41 @@ const SECTIONS: DocSection[] = [
       <div>
         <H2>Combinados do Time</H2>
         <P>
-          A aba <strong>Combinados do time</strong> documenta os acordos e padroes de trabalho do squad.
-          Esses dados sao <strong>globais do squad</strong> — compartilhados entre todos os reports, nao pertencem
-          a um report especifico. Servem como referencia rapida para onboarding de novos membros e para
-          manter a consistencia entre sprints.
+          A aba <strong>Combinados do time</strong> documenta os acordos e padrões de trabalho do squad.
+          Esses dados são <strong>globais do squad</strong> — compartilhados entre todos os reports, não pertencem
+          a um report específico. Servem como referência rápida para onboarding de novos membros e para
+          manter a consistência entre sprints.
         </P>
 
-        <H3>Secoes</H3>
+        <H3>Seções</H3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #378ADD', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
             <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Definition of Ready (DoR)</strong>
-            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Criterios que uma historia precisa atender antes de entrar na sprint. Ex: "Historia tem criterios de aceite definidos e aprovados pelo PO".</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Critérios que uma história precisa atender antes de entrar na sprint. Ex: "História tem critérios de aceite definidos e aprovados pelo PO".</span>
           </div>
           <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #10b981', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
             <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Definition of Done (DoD)</strong>
-            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Criterios que definem quando uma historia esta realmente pronta. Ex: "Codigo revisado, testes unitarios passando, smoke test pelo QA".</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Critérios que definem quando uma história está realmente pronta. Ex: "Código revisado, testes unitários passando, smoke test pelo QA".</span>
           </div>
           <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #f59e0b', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
             <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Cerimonias</strong>
-            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Reunioes recorrentes do squad com nome, dia/horario e duracao. Ex: "Daily — Seg a Sex, 09h30, 15 min".</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Reuniões recorrentes do squad com nome, dia/horário e duração. Ex: "Daily — Seg a Sex, 09h30, 15 min".</span>
           </div>
           <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #8b5cf6', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
             <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Story Points</strong>
-            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Escala de estimativa adotada pelo time. Opcoes: Fibonacci, T-Shirt, Linear, Powers of 2, Planning Poker. Apenas uma ativa por vez.</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Escala de estimativa adotada pelo time. Opções: Fibonacci, T-Shirt, Linear, Powers of 2, Planning Poker. Apenas uma ativa por vez.</span>
           </div>
           <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #06b6d4', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
             <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Acordos de Trabalho</strong>
-            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Regras de convivencia e processo do time. Ex: "PR respondidos em ate 4h", "Daily com maximo de 15 min".</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Regras de convivência e processo do time. Ex: "PR respondidos em até 4h", "Daily com máximo de 15 min".</span>
           </div>
         </div>
 
         <H3>Como funciona</H3>
         <P>
-          Todas as secoes sao colapsaveis independentemente. Itens podem ser adicionados via campo inline + Enter ou botao + Add.
-          Itens podem ser editados clicando no texto e removidos com o botao × que aparece no hover.
+          Todas as seções são colapsáveis independentemente. Itens podem ser adicionados via campo inline + Enter ou botão + Add.
+          Itens podem ser editados clicando no texto e removidos com o botão × que aparece no hover.
           Os dados persistem no localStorage e sincronizam com Supabase em tempo real.
         </P>
       </div>
@@ -755,14 +757,14 @@ const SECTIONS: DocSection[] = [
   {
     id: 'sr-time',
     icon: '👥',
-    title: 'Time e Calendario',
+    title: 'Time e Calendário',
     group: 'Status Reports',
     content: (
       <div>
-        <H2>Time e Calendario</H2>
+        <H2>Time e Calendário</H2>
         <P>
-          A aba <strong>Time e Calendario</strong> registra os membros do squad e seus periodos de ausencia.
-          Assim como os Combinados, esses dados sao <strong>globais do squad</strong>.
+          A aba <strong>Time e Calendário</strong> registra os membros do squad e seus períodos de ausência.
+          Assim como os Combinados, esses dados são <strong>globais do squad</strong>.
         </P>
 
         <H3>Membros do Time</H3>
@@ -771,27 +773,27 @@ const SECTIONS: DocSection[] = [
           O avatar exibe as 2 iniciais do nome com cor baseada no papel.
           Membros podem ser adicionados e removidos a qualquer momento.
         </P>
-        <P>Papeis disponiveis:</P>
+        <P>Papéis disponíveis:</P>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {['Dev Mobile iOS', 'Dev Mobile Android', 'Dev Backend', 'Dev BFF', 'QA', 'Tech Lead', 'Scrum Master', 'Product Owner', 'Designer'].map((p) => (
             <Chip key={p} label={p} color="var(--color-blue)" />
           ))}
         </div>
 
-        <H3>Periodos de Off / Ferias</H3>
+        <H3>Períodos de Off / Férias</H3>
         <P>
-          Registra ausencias planejadas dos membros (ferias, day off, licenca, feriado).
-          Cada periodo tem membro, tipo, data de inicio e data de fim.
-          A tabela exibe automaticamente alertas visuais baseados na proximidade do periodo:
+          Registra ausências planejadas dos membros (férias, day off, licença, feriado).
+          Cada período tem membro, tipo, data de início e data de fim.
+          A tabela exibe automaticamente alertas visuais baseados na proximidade do período:
         </P>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {[
-            ['Agendado', 'Verde', 'Periodo agendado com mais de 30 dias de antecedencia', 'var(--color-green-light)', 'var(--color-green)'],
-            ['Em 30 dias', 'Amarelo', 'Faltam 30 dias ou menos para o inicio do periodo', '#FAEEDA', '#92400E'],
+            ['Agendado', 'Verde', 'Período agendado com mais de 30 dias de antecedência', 'var(--color-green-light)', 'var(--color-green)'],
+            ['Em 30 dias', 'Amarelo', 'Faltam 30 dias ou menos para o início do período', '#FAEEDA', '#92400E'],
             ['Em 7 dias', 'Laranja', 'Faltam 7 dias ou menos — urgente para planejamento', '#FDE8D8', '#C2410C'],
-            ['Em curso', 'Verde', 'Periodo ativo — membro esta ausente agora', 'var(--color-green-light)', 'var(--color-green)'],
-            ['Encerrado', 'Cinza', 'Periodo ja terminou (linha com opacidade reduzida)', 'var(--color-surface-2)', 'var(--color-text-3)'],
+            ['Em curso', 'Verde', 'Período ativo — membro está ausente agora', 'var(--color-green-light)', 'var(--color-green)'],
+            ['Encerrado', 'Cinza', 'Período já terminou (linha com opacidade reduzida)', 'var(--color-surface-2)', 'var(--color-text-3)'],
           ].map(([label, , desc, bg, color]) => (
             <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
               <span style={{
@@ -805,14 +807,14 @@ const SECTIONS: DocSection[] = [
 
         <H3>Coluna "Faltam"</H3>
         <P>
-          Mostra quantos dias faltam para o inicio do periodo: <strong>Xd</strong> para dias no futuro,
-          <strong> hoje</strong> quando o periodo comeca no dia atual, e <strong>—</strong> para periodos encerrados.
+          Mostra quantos dias faltam para o início do período: <strong>Xd</strong> para dias no futuro,
+          <strong> hoje</strong> quando o período começa no dia atual, e <strong>—</strong> para períodos encerrados.
         </P>
 
-        <H3>Ordenacao</H3>
+        <H3>Ordenação</H3>
         <P>
-          A tabela e ordenada por data de inicio (proximas ferias primeiro). Periodos encerrados ficam no final da lista
-          e sao automaticamente removidos apos 30 dias do fim.
+          A tabela é ordenada por data de início (próximas férias primeiro). Períodos encerrados ficam no final da lista
+          e são automaticamente removidos após 30 dias do fim.
         </P>
       </div>
     ),
@@ -824,30 +826,30 @@ const SECTIONS: DocSection[] = [
     group: 'Cadastros',
     content: (
       <div>
-        <H2>Squads — Gestao de Equipes</H2>
+        <H2>Squads — Gestão de Equipes</H2>
         <P>
-          Squads sao equipes que agrupam membros e sprints. Cada squad tem nome, descricao e cor personalizada.
-          <strong> Use quando:</strong> voce precisa organizar quem tem acesso a quais sprints e reports,
-          controlar permissoes de exclusao por membro, ou separar visibilidade entre equipes diferentes.
+          Squads são equipes que agrupam membros e sprints. Cada squad tem nome, descrição e cor personalizada.
+          <strong> Use quando:</strong> você precisa organizar quem tem acesso a quais sprints e reports,
+          controlar permissões de exclusão por membro, ou separar visibilidade entre equipes diferentes.
         </P>
 
         <H3>Como funciona</H3>
         <P>
-          A pagina de Squads (<strong>/squads</strong>) tem 3 abas:
+          A página de Squads (<strong>/squads</strong>) tem 3 abas:
         </P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>👥 Squads</strong> — cards expansiveis com membros, roles e permissoes inline</li>
-          <li><strong>🔐 Perfis de Acesso</strong> — templates de permissao reutilizaveis (4 de sistema + custom)</li>
-          <li><strong>👤 Usuarios</strong> — somente admin: criar, editar, ativar/desativar, resetar senha</li>
+          <li><strong>👥 Squads</strong> — cards expansíveis com membros, roles e permissões inline</li>
+          <li><strong>🔐 Perfis de Acesso</strong> — templates de permissão reutilizáveis (4 de sistema + custom)</li>
+          <li><strong>👤 Usuários</strong> — somente admin: criar, editar, ativar/desativar, resetar senha</li>
         </ul>
 
-        <H3>Roles e Permissoes</H3>
+        <H3>Roles e Permissões</H3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {[
-            ['Admin (global)', 'Acesso total ao sistema: criar usuarios, gerenciar todos os squads, alterar roles globais. Definido no perfil do usuario, nao no squad.', 'var(--color-amber)'],
-            ['QA Lead (squad)', 'Lider do squad: pode adicionar/remover membros, editar permissoes, excluir o squad. Atribuido automaticamente ao criador do squad.', 'var(--color-blue)'],
-            ['QA (squad)', 'Membro padrao: executa operacoes dentro do squad conforme suas permissoes individuais. Pode sair do squad por conta propria.', 'var(--color-green)'],
-            ['Stakeholder (squad)', 'Visibilidade: acesso de leitura ao squad e seus dados. Sem permissoes de exclusao por padrao.', 'var(--color-text-3)'],
+            ['Admin (global)', 'Acesso total ao sistema: criar usuários, gerenciar todos os squads, alterar roles globais. Definido no perfil do usuário, não no squad.', 'var(--color-amber)'],
+            ['QA Lead (squad)', 'Líder do squad: pode adicionar/remover membros, editar permissões, excluir o squad. Atribuído automaticamente ao criador do squad.', 'var(--color-blue)'],
+            ['QA (squad)', 'Membro padrão: executa operações dentro do squad conforme suas permissões individuais. Pode sair do squad por conta própria.', 'var(--color-green)'],
+            ['Stakeholder (squad)', 'Visibilidade: acesso de leitura ao squad e seus dados. Sem permissões de exclusão por padrão.', 'var(--color-text-3)'],
           ].map(([role, desc, color]) => (
             <div key={role as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, flexShrink: 0, marginTop: 4 }} />
@@ -859,9 +861,9 @@ const SECTIONS: DocSection[] = [
           ))}
         </div>
 
-        <H3>Permissoes Granulares</H3>
+        <H3>Permissões Granulares</H3>
         <P>
-          Cada membro de um squad tem 7 permissoes individuais de exclusao que controlam o que ele pode apagar:
+          Cada membro de um squad tem 7 permissões individuais de exclusão que controlam o que ele pode apagar:
         </P>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {['Sprints', 'Bugs', 'Funcionalidades', 'Casos de Teste', 'Suites', 'Bloqueios', 'Alinhamentos'].map((p) => (
@@ -869,18 +871,18 @@ const SECTIONS: DocSection[] = [
           ))}
         </div>
         <P>
-          <strong>Dica:</strong> use os Perfis de Acesso para aplicar conjuntos de permissoes predefinidos ao adicionar membros,
-          em vez de configurar cada permissao individualmente.
+          <strong>Dica:</strong> use os Perfis de Acesso para aplicar conjuntos de permissões predefinidos ao adicionar membros,
+          em vez de configurar cada permissão individualmente.
         </P>
 
         <H3>Perfis de Acesso (templates)</H3>
-        <P>O sistema vem com 4 perfis de sistema (nao editaveis):</P>
+        <P>O sistema vem com 4 perfis de sistema (não editáveis):</P>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           {[
-            ['Somente Leitura', 'Nenhuma permissao de exclusao. Ideal para stakeholders.'],
-            ['QA Padrao', 'Pode excluir bugs, casos de teste, bloqueios e alinhamentos.'],
-            ['QA Senior', 'Pode excluir tudo exceto sprints.'],
-            ['Acesso Total', 'Todas as permissoes. Equivalente a QA Lead.'],
+            ['Somente Leitura', 'Nenhuma permissão de exclusão. Ideal para stakeholders.'],
+            ['QA Padrão', 'Pode excluir bugs, casos de teste, bloqueios e alinhamentos.'],
+            ['QA Sênior', 'Pode excluir tudo exceto sprints.'],
+            ['Acesso Total', 'Todas as permissões. Equivalente a QA Lead.'],
           ].map(([name, desc]) => (
             <div key={name} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
               <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{name}</strong>
@@ -890,22 +892,22 @@ const SECTIONS: DocSection[] = [
         </div>
         <P>Admins podem criar perfis customizados na aba Perfis de Acesso.</P>
 
-        <H3>Gestao de Usuarios (Admin)</H3>
+        <H3>Gestão de Usuários (Admin)</H3>
         <P>
-          Na aba Usuarios (visivel apenas para admins), e possivel:
+          Na aba Usuários (visível apenas para admins), é possível:
         </P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>Criar usuario</strong> — com senha temporaria (troca obrigatoria no primeiro login)</li>
-          <li><strong>Resetar senha</strong> — gera nova senha temporaria com flag de troca obrigatoria</li>
+          <li><strong>Criar usuário</strong> — com senha temporária (troca obrigatória no primeiro login)</li>
+          <li><strong>Resetar senha</strong> — gera nova senha temporária com flag de troca obrigatória</li>
           <li><strong>Editar</strong> — alterar nome e role global (admin/user)</li>
-          <li><strong>Ativar/Desativar</strong> — desativar sem excluir (preserva historico)</li>
+          <li><strong>Ativar/Desativar</strong> — desativar sem excluir (preserva histórico)</li>
           <li><strong>Filtrar</strong> — por role (Admin/User), status (Ativo/Inativo) e busca por nome/email/squad</li>
         </ul>
 
         <H3>Visibilidade de Sprints</H3>
         <P>
-          Sprints vinculadas a um squad so sao visiveis para membros daquele squad.
-          Admins veem todas as sprints. Sprints sem squad (pessoais/legado) sao visiveis para todos os usuarios autenticados.
+          Sprints vinculadas a um squad só são visíveis para membros daquele squad.
+          Admins veem todas as sprints. Sprints sem squad (pessoais/legado) são visíveis para todos os usuários autenticados.
         </P>
       </div>
     ),
@@ -962,7 +964,7 @@ const SECTIONS: DocSection[] = [
   {
     id: 'license',
     icon: '📜',
-    title: 'Licenca de Uso',
+    title: 'Licença de Uso',
     group: 'Sobre',
     content: (
       <div>

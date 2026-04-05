@@ -483,13 +483,17 @@ app.post('/api/status-report-flush', flushLimiter, express.text({ type: '*/*', l
       return res.status(400).json({ error: 'Data inválido.' });
     }
     // Não confiar em timestamps do client
-    await supabaseAdmin.from('status_reports').upsert({
+    const { error: dbError } = await supabaseAdmin.from('status_reports').upsert({
       id: payload.id,
       data: payload.data,
       squad_id: payload.squad_id || null,
       status: payload.status || 'active',
       updated_at: new Date().toISOString(),
     });
+    if (dbError) {
+      console.error('[flush] upsert error:', dbError.message);
+      return res.status(500).json({ error: 'Falha ao salvar dados.' });
+    }
     return res.json({ ok: true });
   } catch (e) {
     if (e instanceof SyntaxError) {
@@ -536,7 +540,7 @@ app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*', limit: 
     if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
       return res.status(400).json({ error: 'Data inválido.' });
     }
-    await supabaseAdmin.from('releases').upsert({
+    const { error: dbError } = await supabaseAdmin.from('releases').upsert({
       id: payload.id,
       data: payload.data,
       status: payload.status || 'planejada',
@@ -544,6 +548,10 @@ app.post('/api/release-flush', flushLimiter, express.text({ type: '*/*', limit: 
       production_date: payload.production_date || null,
       updated_at: new Date().toISOString(),
     });
+    if (dbError) {
+      console.error('[flush] upsert error:', dbError.message);
+      return res.status(500).json({ error: 'Falha ao salvar dados.' });
+    }
     return res.json({ ok: true });
   } catch (e) {
     if (e instanceof SyntaxError) {
@@ -590,13 +598,17 @@ app.post('/api/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '
     if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
       return res.status(400).json({ error: 'Data inválido.' });
     }
-    await supabaseAdmin.from('sprints').upsert({
+    const { error: dbError } = await supabaseAdmin.from('sprints').upsert({
       id: payload.id,
       data: payload.data,
       squad_id: payload.squad_id || null,
       status: payload.status || 'ativa',
       updated_at: new Date().toISOString(),
     });
+    if (dbError) {
+      console.error('[flush] upsert error:', dbError.message);
+      return res.status(500).json({ error: 'Falha ao salvar dados.' });
+    }
     return res.json({ ok: true });
   } catch (e) {
     if (e instanceof SyntaxError) return res.status(400).json({ error: 'JSON inválido.' });

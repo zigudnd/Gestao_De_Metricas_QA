@@ -24,15 +24,14 @@ export function ProfilePage() {
     if (!trimmed || trimmed === profile?.display_name) return
     setSaving(true)
     setError('')
-    try {
-      await updateDisplayName(trimmed)
+    const { error: err } = await updateDisplayName(trimmed)
+    if (err) {
+      setError(err.message)
+    } else {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar.')
-    } finally {
-      setSaving(false)
     }
+    setSaving(false)
   }
 
   async function handleChangePassword(e: React.FormEvent) {

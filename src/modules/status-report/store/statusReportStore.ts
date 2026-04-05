@@ -19,6 +19,7 @@ let _remotePersistInFlight = false
 let _remotePersistQueued = false
 let _cleanupRealtime: (() => void) | null = null
 let _lastPendingState: StatusReportState | null = null
+let _lastPendingSquadId: string | null = null
 let _lastPersistedAt: string | null = null
 
 // ─── Active squad helper ──────────────────────────────────────────────────────
@@ -35,6 +36,7 @@ async function doPersistToServer(state: StatusReportState, squadId?: string | nu
   _remotePersistInFlight = true
   _remotePersistQueued = false
   _lastPendingState = null
+  _lastPendingSquadId = null
   try {
     await persistToServer(state, squadId ?? undefined, updatedAt)
   } catch (e) {
@@ -53,6 +55,7 @@ async function doPersistToServer(state: StatusReportState, squadId?: string | nu
 function queueRemotePersist(state: StatusReportState, delay = 2500, squadId?: string | null, updatedAt?: string) {
   if (_remotePersistTimeout) clearTimeout(_remotePersistTimeout)
   _lastPendingState = state
+  _lastPendingSquadId = squadId ?? null
   _remotePersistTimeout = setTimeout(() => doPersistToServer(state, squadId, updatedAt), delay)
 }
 
@@ -64,7 +67,7 @@ if (typeof window !== 'undefined') {
       const payload = JSON.stringify({
         id: _lastPendingState.id,
         data: _lastPendingState,
-        squad_id: getActiveSquadId() || null,
+        squad_id: _lastPendingSquadId || null,
         status: 'active',
         updated_at: new Date().toISOString(),
       })

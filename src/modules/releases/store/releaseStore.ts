@@ -54,12 +54,20 @@ function queueRemotePersist(release: Release, delay = 2500, updatedAt?: string) 
 }
 
 // Flush pendente antes de fechar a aba
+function getActiveSquadId(): string | null {
+  try {
+    const saved = localStorage.getItem('activeSquadId')
+    return saved || null
+  } catch { return null }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (_lastPendingState) {
       const payload = JSON.stringify({
         id: _lastPendingState.id,
         data: _lastPendingState,
+        squad_id: getActiveSquadId(),
         status: _lastPendingState.status,
         version: _lastPendingState.version || null,
         production_date: _lastPendingState.productionDate || null,

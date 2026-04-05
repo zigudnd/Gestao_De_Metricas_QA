@@ -155,6 +155,8 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
 
     // Realtime: escuta alterações feitas por outros usuários nesta sprint
     if (_realtimeChannel) supabase.removeChannel(_realtimeChannel)
+    // Capture sprintId in closure to detect stale callbacks after sprint switch
+    const subscribedSprintId = sprintId
     _realtimeChannel = supabase
       .channel(`sprint:${sprintId}`)
       .on(
@@ -163,13 +165,19 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
         (payload) => {
           // Ignora se o payload não tiver dados
           if (!payload.new?.data) return
+          // Race condition guard: ignore if user already switched to another sprint
+          if (get().sprintId !== subscribedSprintId) return
           // Ignora echo da nossa própria persistência
           const incomingUpdatedAt = (payload.new as Record<string, unknown>).updated_at as string | undefined
           if (incomingUpdatedAt && incomingUpdatedAt === _lastPersistedAt) return
           const incoming = normalizeState(payload.new.data)
           const recomputed = computeFields(incoming)
-          saveToStorage(sprintId, recomputed)
-          upsertSprintInMasterIndex(sprintId, recomputed)
+          // Extract squadId from the Supabase row to preserve squad-based visibility
+          const incomingSquadId = (payload.new as Record<string, unknown>).squad_id as string | undefined
+          const existingEntry = getMasterIndex().find((s) => s.id === subscribedSprintId)
+          const squadId = incomingSquadId || existingEntry?.squadId
+          saveToStorage(subscribedSprintId, recomputed)
+          upsertSprintInMasterIndex(subscribedSprintId, recomputed, squadId)
           set({ state: recomputed })
         }
       )

@@ -14,6 +14,7 @@ let _remotePersistTimeout: ReturnType<typeof setTimeout> | null = null
 let _remotePersistInFlight = false
 let _remotePersistQueued = false
 let _cleanupRealtime: (() => void) | null = null
+let _lastPersistedAt = ''
 
 async function doPersistToServer(state: SquadConfigState) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
@@ -141,6 +142,8 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
 
     if (_cleanupRealtime) _cleanupRealtime()
     _cleanupRealtime = initRealtimeSubscription(squadId, (incoming) => {
+      // Ignora echo da nossa própria persistência
+      if (incoming.updatedAt && _lastPersistedAt && incoming.updatedAt <= _lastPersistedAt) return
       set({ ...incoming })
     })
   },
@@ -169,6 +172,7 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
     }
     saveToLocalStorage(state)
     queueRemotePersist(state)
+    _lastPersistedAt = updatedAt
     set({ ...state })
   },
 
