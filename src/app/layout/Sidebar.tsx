@@ -91,36 +91,27 @@ const NavItem = ({
   <button
     title={expanded ? undefined : (disabled ? `${label} — em breve` : label)}
     onClick={disabled ? undefined : onClick}
+    className="flex items-center shrink-0 overflow-hidden whitespace-nowrap border-none rounded-[9px] text-[18px] transition-[background,color,width] duration-200"
     style={{
       width: expanded ? 'calc(100% - 16px)' : 40,
       height: 38,
-      borderRadius: 9,
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
       justifyContent: expanded ? 'flex-start' : 'center',
       gap: 10,
       padding: expanded ? '0 12px' : 0,
-      fontSize: 18,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.4 : 1,
       background: active ? 'var(--color-blue-light)' : 'transparent',
       color: active ? 'var(--color-blue-text)' : 'var(--color-text-2)',
-      transition: 'background 0.15s, color 0.15s, width 0.2s',
-      flexShrink: 0,
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      fontFamily: 'var(--font-family-sans)',
     }}
   >
-    <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20 }}>
+    <span className="shrink-0 flex items-center justify-center w-5">
       {icon}
     </span>
     {expanded && (
-      <span style={{
-        fontSize: 13, fontWeight: active ? 600 : 500,
-        overflow: 'hidden', textOverflow: 'ellipsis',
-      }}>
+      <span
+        className="overflow-hidden text-ellipsis"
+        style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}
+      >
         {label}
       </span>
     )}
@@ -143,58 +134,43 @@ export function Sidebar() {
 
   return (
     <aside
+      className="shrink-0 bg-surface border-r border-border flex flex-col py-3 gap-[2px] overflow-hidden transition-[width] duration-200 ease-out"
       style={{
         width: expanded ? EXPANDED_W : COLLAPSED_W,
-        flexShrink: 0,
-        background: 'var(--color-surface)',
-        borderRight: '1px solid var(--color-border)',
-        display: 'flex', flexDirection: 'column',
         alignItems: expanded ? 'stretch' : 'center',
-        padding: '12px 0', gap: 2,
-        transition: 'width 0.2s ease',
-        overflow: 'hidden',
       }}
     >
       {/* Logo */}
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        gap: 10,
-        padding: expanded ? '0 12px' : '0',
-        marginBottom: 12,
-        justifyContent: expanded ? 'flex-start' : 'center',
-      }}>
+      <div
+        className="flex items-center gap-[10px] mb-3"
+        style={{
+          padding: expanded ? '0 12px' : '0',
+          justifyContent: expanded ? 'flex-start' : 'center',
+        }}
+      >
         <button
           onClick={() => navigate('/')}
           title="Início"
-          className="sidebar-logo"
-          style={{
-            width: 32, height: 32, background: 'var(--color-blue-text)',
-            borderRadius: 9, display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: 14,
-            flexShrink: 0, letterSpacing: '-0.5px',
-            border: 'none', cursor: 'pointer',
-            transition: 'opacity 0.15s',
-          }}
+          className="sidebar-logo w-8 h-8 rounded-[9px] flex items-center justify-center text-white font-bold text-[14px] shrink-0 tracking-tight border-none cursor-pointer transition-opacity duration-150"
+          style={{ background: 'var(--color-blue-text)' }}
         >
           TS
         </button>
         {expanded && (
-          <span style={{
-            fontSize: 14, fontWeight: 700, color: 'var(--color-text)',
-            whiteSpace: 'nowrap', overflow: 'hidden',
-          }}>
+          <span className="text-[14px] font-bold text-text whitespace-nowrap overflow-hidden">
             ToStatos
           </span>
         )}
       </div>
 
       {/* Separator */}
-      <div style={{
-        width: expanded ? 'calc(100% - 24px)' : 28,
-        height: 1, background: 'var(--color-border)',
-        margin: '6px auto',
-      }} />
+      <div
+        className="h-px mx-auto my-[6px]"
+        style={{
+          width: expanded ? 'calc(100% - 24px)' : 28,
+          background: 'var(--color-border)',
+        }}
+      />
 
       {/* Nav items */}
       <NavItem icon={<IconHome />} label="Início" active={location.pathname === '/'} expanded={expanded} onClick={() => navigate('/')} />
@@ -202,40 +178,38 @@ export function Sidebar() {
       <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
       <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />
 
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
       {/* Separator */}
-      <div style={{
-        width: expanded ? 'calc(100% - 24px)' : 28,
-        height: 1, background: 'var(--color-border)',
-        margin: '4px auto',
-      }} />
+      <div
+        className="h-px mx-auto my-1"
+        style={{
+          width: expanded ? 'calc(100% - 24px)' : 28,
+          background: 'var(--color-border)',
+        }}
+      />
 
       {/* Nav items — administrativo */}
       <NavItem icon={<IconSquads />} label="Cadastros"  active={isSquads}  expanded={expanded} onClick={() => navigate('/squads')} />
       <NavItem icon={<IconDocs />} label="Documentação" active={location.pathname === '/docs'} expanded={expanded} onClick={() => navigate('/docs')} />
 
       {/* Toggle button */}
-      <div style={{
-        width: expanded ? 'calc(100% - 24px)' : 28,
-        height: 1, background: 'var(--color-border)',
-        margin: '4px auto',
-      }} />
+      <div
+        className="h-px mx-auto my-1"
+        style={{
+          width: expanded ? 'calc(100% - 24px)' : 28,
+          background: 'var(--color-border)',
+        }}
+      />
       <button
         onClick={() => setExpanded(!expanded)}
         title={expanded ? 'Recolher menu' : 'Expandir menu'}
-        className="sidebar-toggle"
+        className="sidebar-toggle flex items-center shrink-0 border-none bg-transparent cursor-pointer text-text-3 rounded-[7px] transition-[background,color,width] duration-200"
         style={{
           width: expanded ? 'calc(100% - 16px)' : 36,
-          height: 30, borderRadius: 7,
-          border: 'none', background: 'transparent',
-          cursor: 'pointer',
-          display: 'flex', alignItems: 'center',
+          height: 30,
           justifyContent: expanded ? 'flex-end' : 'center',
           padding: expanded ? '0 10px' : 0,
-          color: 'var(--color-text-3)',
-          transition: 'background 0.15s, color 0.15s, width 0.2s',
-          flexShrink: 0,
           alignSelf: expanded ? 'stretch' : 'center',
           margin: expanded ? '0 8px' : 0,
         }}

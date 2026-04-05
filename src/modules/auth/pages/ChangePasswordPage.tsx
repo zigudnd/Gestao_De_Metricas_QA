@@ -52,56 +52,34 @@ export function ChangePasswordPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--color-bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 24,
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 380,
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 12,
-        padding: '32px 28px',
-      }}>
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] p-6">
+      <div className="card w-full max-w-[380px]" style={{ padding: '32px 28px' }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-          <div style={{
-            width: 34, height: 34, background: 'var(--color-blue-text)', borderRadius: 9,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: '-0.5px', flexShrink: 0,
-          }}>TS</div>
-          <span style={{ fontWeight: 600, fontSize: 16, color: 'var(--color-text)' }}>ToStatos QA</span>
+        <div className="flex items-center gap-2.5 mb-7">
+          <div className="flex shrink-0 items-center justify-center rounded-[9px] bg-[var(--color-blue-text)] text-white text-sm font-bold tracking-tight" style={{ width: 34, height: 34 }}>
+            TS
+          </div>
+          <span className="heading-md" style={{ fontWeight: 600 }}>ToStatos QA</span>
         </div>
 
-        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 600, color: 'var(--color-text)' }}>
+        <h1 className="mb-1 text-xl font-semibold text-[var(--color-text)]">
           Alterar senha
         </h1>
-        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--color-text-2)' }}>
+        <p className="text-body mb-6">
           {user?.email ? `Olá! Crie uma nova senha para ${user.email}.` : 'Crie uma nova senha para continuar.'}
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>NOVA SENHA</span>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          <label className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="section-label" style={{ marginBottom: 0 }}>NOVA SENHA</span>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                className="chpwd-toggle"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--color-text-3)', fontSize: 11, fontWeight: 500,
-                  fontFamily: 'var(--font-family-sans)',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  transition: 'color 0.15s',
-                }}
+                className="chpwd-toggle flex items-center gap-1 border-none bg-transparent text-[11px] font-medium text-[var(--color-text-3)] cursor-pointer transition-colors"
+                style={{ fontFamily: 'var(--font-family-sans)' }}
               >
                 {showPassword ? (
                   <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -127,12 +105,12 @@ export function ChangePasswordPage() {
               required
               minLength={8}
               autoFocus
-              style={inputStyle}
+              className="input-field"
             />
           </label>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>CONFIRMAR SENHA</span>
+          <label className="flex flex-col gap-1.5">
+            <span className="section-label" style={{ marginBottom: 0 }}>CONFIRMAR SENHA</span>
             <input
               type={showPassword ? 'text' : 'password'}
               value={confirm}
@@ -140,27 +118,18 @@ export function ChangePasswordPage() {
               placeholder="Repita a nova senha"
               required
               minLength={8}
-              style={inputStyle}
+              className="input-field"
             />
           </label>
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-red-mid)', background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)', borderRadius: 6, padding: '8px 12px' }}>
-              {error}
-            </p>
+            <p className="msg-error">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              marginTop: 4, padding: '10px 0',
-              background: 'var(--color-blue)',
-              color: '#fff', border: 'none', borderRadius: 7,
-              fontSize: 14, fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s',
-            }}
+            className="btn btn-primary btn-lg mt-1 w-full justify-center font-semibold"
           >
             {loading ? 'Salvando...' : 'Salvar nova senha'}
           </button>
@@ -171,16 +140,4 @@ export function ChangePasswordPage() {
       </div>
     </div>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box' as const,
-  padding: '9px 11px',
-  background: 'var(--color-bg)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 8,
-  fontSize: 14,
-  color: 'var(--color-text)',
-  outline: 'none',
 }

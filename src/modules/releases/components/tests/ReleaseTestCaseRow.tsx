@@ -67,23 +67,23 @@ export function ReleaseTestCaseRow({
         opacity: testCase.status === 'Concluído' ? 0.85 : 1,
       }}
     >
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: 10 }}>
+      <div className="flex gap-2.5 flex-wrap items-start mb-2.5">
         <input
           type="text"
           value={testCase.name}
           onChange={(e) => onUpdate(caseIndex, 'name', e.target.value)}
           placeholder="Título do Caso de Teste"
-          style={{ ...inputSm, flexGrow: 1, minWidth: 200, fontWeight: 600 }}
+          className="input-field"
+          style={{ flexGrow: 1, minWidth: 200, fontWeight: 600 }}
         />
         <select
           value={testCase.complexity}
           onChange={(e) => onUpdate(caseIndex, 'complexity', e.target.value as TestCaseComplexity)}
+          className="select-field"
           style={{
-            ...selectSm,
             width: 130,
             color: COMPLEXITY_COLORS[testCase.complexity] ?? 'var(--color-text-2)',
-            fontWeight: 500,
-            fontSize: 12,
+            fontWeight: 500, fontSize: 12,
             border: '0.5px solid var(--color-border)',
             padding: '4px 24px 4px 10px',
           }}
@@ -95,12 +95,11 @@ export function ReleaseTestCaseRow({
         <select
           value={testCase.status}
           onChange={(e) => handleStatusChange(e.target.value as TestCaseStatus)}
+          className="select-field"
           style={{
-            ...selectSm,
             width: 140,
             color: STATUS_TEXT_COLORS[testCase.status] ?? 'var(--color-text-2)',
-            fontWeight: 500,
-            fontSize: 12,
+            fontWeight: 500, fontSize: 12,
             border: '0.5px solid var(--color-border)',
             padding: '4px 24px 4px 10px',
           }}
@@ -115,39 +114,29 @@ export function ReleaseTestCaseRow({
           value={testCase.executionDay}
           onChange={(e) => onUpdate(caseIndex, 'executionDay', e.target.value)}
           placeholder="Ex: D1, D2..."
-          style={{ ...inputSm, width: 100 }}
+          className="input-field"
+          style={{ width: 100 }}
           title="Dia de execução"
         />
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+        <div className="flex gap-0.5" style={{ flexShrink: 0 }}>
           <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger>
             <IconTrash />
           </ActionBtn>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div className="flex gap-3 items-start">
         <textarea
           value={testCase.gherkin}
           onChange={(e) => onUpdate(caseIndex, 'gherkin', e.target.value)}
           placeholder="Escreva o cenário em Gherkin..."
           rows={4}
-          style={{
-            fontFamily: 'var(--font-family-mono)',
-            fontSize: 13,
-            resize: 'vertical',
-            flex: 1,
-            minWidth: 0,
-            border: '1px solid var(--color-border-md)',
-            borderRadius: 6,
-            padding: 10,
-            background: 'var(--color-bg)',
-            color: 'var(--color-text)',
-            boxSizing: 'border-box',
-          }}
+          className="textarea-field"
+          style={{ fontFamily: 'var(--font-family-mono)', flex: 1, minWidth: 0 }}
         />
         {mockupImage && (
           <div style={{ flexShrink: 0, width: 'clamp(100px, 30%, 220px)' }}>
-            <div style={{ fontSize: 10, color: 'var(--color-text-3)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Referência</div>
+            <div className="section-label">Referência</div>
             <img src={mockupImage} alt="Mockup" style={{ width: '100%', borderRadius: 6, border: '1px solid var(--color-border)', objectFit: 'contain', maxHeight: 130, background: '#fff' }} />
           </div>
         )}
@@ -178,16 +167,10 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
       onMouseLeave={() => setHov(false)}
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 6,
-        borderRadius: 6,
-        cursor: 'pointer',
+        border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s', flexShrink: 0,
       }}
     >
       {children}
@@ -201,28 +184,4 @@ function IconTrash() {
       <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
     </svg>
   )
-}
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const inputSm: React.CSSProperties = {
-  width: '100%',
-  padding: '6px 8px',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 6,
-  fontSize: 13,
-  color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-  fontFamily: 'var(--font-family-sans)',
-  boxSizing: 'border-box',
-}
-
-const selectSm: React.CSSProperties = {
-  ...inputSm,
-  padding: '6px 24px 6px 8px',
-  cursor: 'pointer',
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 8px center',
 }

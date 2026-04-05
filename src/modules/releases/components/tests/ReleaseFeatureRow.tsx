@@ -58,19 +58,15 @@ export function ReleaseFeatureRow({
       {/* Feature header */}
       <div
         onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between gap-2"
         style={{
-          padding: '10px 14px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          padding: '10px 14px', cursor: 'pointer',
           background: statusBg ?? 'var(--color-bg)',
           borderBottom: open ? `1px solid ${statusBorder}` : 'none',
           userSelect: 'none',
-          gap: 8,
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span className="flex items-center gap-2" style={{ minWidth: 0 }}>
           <span style={{ fontSize: 14, color: 'var(--color-text-2)' }}>{open ? '▾' : '▸'}</span>
           <span
             style={{
@@ -80,31 +76,22 @@ export function ReleaseFeatureRow({
                 : isBlocked ? 'var(--color-red)' : isCancelled ? 'var(--color-text-2)' : 'var(--color-text)',
               fontSize: 14,
               textDecoration: isCancelled || isNonBlocking ? 'line-through' : 'none',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}
           >
             {feature.name || 'Funcionalidade sem nome'}
           </span>
           {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, display: 'inline-block' }} />}
-          {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
+          {isCancelled && <span className="badge badge-neutral" style={{ fontWeight: 700 }}>Cancelada</span>}
           {isNonBlocking && (
-            <span style={{
-              fontSize: 10, fontWeight: 700,
-              padding: '2px 8px', borderRadius: 8,
-              background: 'var(--color-amber-light)',
-              color: 'var(--color-amber)',
-              flexShrink: 0,
-              whiteSpace: 'nowrap',
-            }}>
+            <span className="badge badge-amber">
               Não impeditivo
             </span>
           )}
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <span className="flex items-center gap-2" style={{ flexShrink: 0 }}>
           {failedCases > 0 && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)', background: 'var(--color-red-light)', padding: '2px 6px', borderRadius: 8 }}>
+            <span className="badge badge-red">
               {failedCases} falha{failedCases > 1 ? 's' : ''}
             </span>
           )}
@@ -118,20 +105,20 @@ export function ReleaseFeatureRow({
       {open && (
         <div style={{ padding: '14px 16px' }}>
           {/* Feature settings */}
-          <div style={{ background: 'var(--color-bg)', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div className="card-sm flex flex-col gap-3" style={{ background: 'var(--color-bg)', marginBottom: 16 }}>
+            <div className="flex gap-3.5 flex-wrap items-end">
               <div style={{ flexGrow: 1, minWidth: 200 }}>
-                <label style={labelSm}>Nome da Funcionalidade</label>
+                <label className="section-label">Nome da Funcionalidade</label>
                 <input
                   type="text"
                   value={feature.name}
                   onChange={(e) => onUpdate(featureIndex, 'name', e.target.value)}
                   placeholder="Ex: Tela de Login"
-                  style={inputSm}
+                  className="input-field"
                 />
               </div>
               <div style={{ width: 160 }}>
-                <label style={labelSm}>Status</label>
+                <label className="section-label">Status</label>
                 <select
                   value={feature.status}
                   onChange={(e) => {
@@ -147,8 +134,8 @@ export function ReleaseFeatureRow({
                       if (val === 'Ativa') onUpdate(featureIndex, 'blockReason', '')
                     }
                   }}
+                  className="select-field"
                   style={{
-                    ...selectSm,
                     fontWeight: 700,
                     color: isBlocked ? 'var(--color-red)' : isCancelled ? 'var(--color-text-2)' : 'var(--color-green)',
                   }}
@@ -160,13 +147,13 @@ export function ReleaseFeatureRow({
               </div>
               {(isBlocked || isCancelled) && (
                 <div style={{ flexGrow: 1, minWidth: 200 }}>
-                  <label style={labelSm}>{isBlocked ? 'Motivo do Bloqueio' : 'Motivo do Cancelamento'}</label>
+                  <label className="section-label">{isBlocked ? 'Motivo do Bloqueio' : 'Motivo do Cancelamento'}</label>
                   <input
                     type="text"
                     value={feature.blockReason}
                     onChange={(e) => onUpdate(featureIndex, 'blockReason', e.target.value)}
                     placeholder="Descreva o motivo..."
-                    style={inputSm}
+                    className="input-field"
                   />
                 </div>
               )}
@@ -177,23 +164,17 @@ export function ReleaseFeatureRow({
           </div>
 
           {/* Test cases */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+          <div className="flex justify-between items-center mb-2.5">
+            <h4 className="heading-sm">
               Cenários Gherkin ({cases.length})
             </h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <label style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>Filtrar:</label>
+            <div className="flex items-center gap-2">
+              <label className="text-small" style={{ fontWeight: 600 }}>Filtrar:</label>
               <select
                 value={activeFilter}
                 onChange={(e) => onUpdate(featureIndex, 'activeFilter', e.target.value)}
-                style={{
-                  fontSize: 12, padding: '4px 24px 4px 8px', borderRadius: 6,
-                  border: '1px solid var(--color-border-md)', background: 'var(--color-bg)',
-                  color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)',
-                  cursor: 'pointer', appearance: 'none' as const,
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-                }}
+                className="select-field"
+                style={{ fontSize: 12, padding: '4px 24px 4px 8px', width: 'auto' }}
               >
                 <option value="Todos">Todos</option>
                 <option value="Pendente">Pendentes</option>
@@ -222,7 +203,7 @@ export function ReleaseFeatureRow({
 
           <button
             onClick={() => onAddTestCase(featureIndex)}
-            style={{ width: '100%', marginTop: 8, padding: '10px', border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+            style={{ width: '100%', marginTop: 8, padding: 10, border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
           >
             + Adicionar Caso de Teste
           </button>
@@ -233,15 +214,15 @@ export function ReleaseFeatureRow({
       {blockModal && (
         <div
           onClick={(e) => e.target === e.currentTarget && setBlockModal(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          className="modal-backdrop"
         >
-          <div role="dialog" aria-modal="true" aria-label="Bloquear Funcionalidade" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>Bloquear Funcionalidade</div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+          <div className="modal-container modal-sm" style={{ borderTop: '3px solid var(--color-red)', gap: 16 }}>
+            <div className="heading-sm">Bloquear Funcionalidade</div>
+            <div className="text-body">
               Informe o motivo do bloqueio de <strong>&quot;{feature.name || 'Sem nome'}&quot;</strong>.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="section-label">
                 Motivo do Bloqueio *
               </label>
               <textarea
@@ -251,14 +232,11 @@ export function ReleaseFeatureRow({
                 placeholder="Descreva o motivo do bloqueio..."
                 rows={3}
                 onKeyDown={(e) => { if (e.key === 'Escape') setBlockModal(false) }}
-                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
+                className="textarea-field"
               />
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setBlockModal(false)}
-                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
-              >
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setBlockModal(false)} className="btn btn-md btn-outline">
                 Cancelar
               </button>
               <button
@@ -268,7 +246,7 @@ export function ReleaseFeatureRow({
                   onUpdate(featureIndex, 'blockReason', blockReason.trim())
                   setBlockModal(false)
                 }}
-                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-red)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: blockReason.trim() ? 'pointer' : 'not-allowed', opacity: blockReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+                className="btn btn-md btn-danger"
               >
                 Confirmar Bloqueio
               </button>
@@ -281,15 +259,15 @@ export function ReleaseFeatureRow({
       {cancelModal && (
         <div
           onClick={(e) => e.target === e.currentTarget && setCancelModal(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          className="modal-backdrop"
         >
-          <div role="dialog" aria-modal="true" aria-label="Cancelar Funcionalidade" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-text-3)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>Cancelar Funcionalidade</div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+          <div className="modal-container modal-md" style={{ borderTop: '3px solid var(--color-text-3)', gap: 16 }}>
+            <div className="heading-sm">Cancelar Funcionalidade</div>
+            <div className="text-body">
               Registre o motivo do cancelamento de <strong>&quot;{feature.name || 'Sem nome'}&quot;</strong>.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="section-label">
                 Motivo *
               </label>
               <textarea
@@ -299,14 +277,11 @@ export function ReleaseFeatureRow({
                 placeholder="Motivo do cancelamento..."
                 rows={3}
                 onKeyDown={(e) => { if (e.key === 'Escape') setCancelModal(false) }}
-                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
+                className="textarea-field"
               />
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setCancelModal(false)}
-                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
-              >
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setCancelModal(false)} className="btn btn-md btn-outline">
                 Voltar
               </button>
               <button
@@ -316,7 +291,8 @@ export function ReleaseFeatureRow({
                   onUpdate(featureIndex, 'blockReason', cancelReason.trim())
                   setCancelModal(false)
                 }}
-                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-text-3)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelReason.trim() ? 'pointer' : 'not-allowed', opacity: cancelReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+                className="btn btn-md"
+                style={{ background: 'var(--color-text-3)', color: '#fff' }}
               >
                 Confirmar Cancelamento
               </button>
@@ -351,16 +327,10 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
       onMouseLeave={() => setHov(false)}
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 6,
-        borderRadius: 6,
-        cursor: 'pointer',
+        border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s', flexShrink: 0,
       }}
     >
       {children}
@@ -374,38 +344,4 @@ function IconTrash() {
       <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
     </svg>
   )
-}
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const labelSm: React.CSSProperties = {
-  display: 'block',
-  fontSize: 11,
-  fontWeight: 500,
-  color: 'var(--color-text-2)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-  marginBottom: 6,
-}
-
-const inputSm: React.CSSProperties = {
-  width: '100%',
-  padding: '6px 8px',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 6,
-  fontSize: 13,
-  color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-  fontFamily: 'var(--font-family-sans)',
-  boxSizing: 'border-box',
-}
-
-const selectSm: React.CSSProperties = {
-  ...inputSm,
-  padding: '6px 24px 6px 8px',
-  cursor: 'pointer',
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 8px center',
 }

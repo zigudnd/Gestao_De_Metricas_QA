@@ -54,23 +54,14 @@ export function SprintCard({
       onClick={onClick}
       onDragOver={(e) => { if (!compareMode) e.preventDefault() }}
       onDrop={(e) => { if (!compareMode) onDrop(e, sprint.id) }}
-      className="hp-card-hover"
+      className="hp-card-hover flex items-start gap-2.5 cursor-pointer rounded-[10px] p-[10px_16px] bg-[var(--color-surface)] relative transition-[box-shadow,border-color] duration-150"
       style={{
-        background: 'var(--color-surface)',
         border: isSelected
           ? '1.5px solid var(--color-blue)'
           : '0.5px solid var(--color-border)',
-        borderRadius: 10,
-        padding: '10px 16px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 10,
-        cursor: 'pointer',
-        transition: 'box-shadow 0.15s, border-color 0.15s',
         boxShadow: isSelected
           ? '0 0 0 3px rgba(59,130,246,0.12)'
           : 'none',
-        position: 'relative',
       }}
     >
       {/* Left: checkbox (compare) or drag handle + dot */}
@@ -80,95 +71,70 @@ export function SprintCard({
           checked={isSelected}
           onChange={() => onClick()}
           onClick={(e) => e.stopPropagation()}
-          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-blue)', marginTop: 2, flexShrink: 0 }}
+          className="w-[15px] h-[15px] cursor-pointer mt-0.5 shrink-0"
+          style={{ accentColor: 'var(--color-blue)' }}
         />
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginTop: 3 }}>
+        <div className="flex items-center gap-1.5 shrink-0 mt-[3px]">
           <span
             draggable
-            className="hp-drag-handle"
+            className="hp-drag-handle text-[var(--color-text-3)] cursor-grab text-[10px] opacity-0 transition-opacity duration-150 leading-none"
             onDragStart={(e) => { e.stopPropagation(); onDragStart(e, sprint.id) }}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              color: 'var(--color-text-3)',
-              cursor: 'grab',
-              fontSize: 10,
-              opacity: 0,
-              transition: 'opacity 0.15s',
-              lineHeight: 1,
-            }}
             title="Arrastar para reordenar"
           >
             ⠿
           </span>
-          <div style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: dotColor, flexShrink: 0,
-          }} />
+          <div
+            className="w-[7px] h-[7px] rounded-full shrink-0"
+            style={{ background: dotColor }}
+          />
         </div>
       )}
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontSize: 13, fontWeight: 700, color: 'var(--color-text)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-bold text-[var(--color-text)] overflow-hidden text-ellipsis whitespace-nowrap">
             {sprint.title}
           </span>
           {sprint.sprintType && sprint.sprintType !== 'squad' && (
-            <span style={{
-              fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 8, flexShrink: 0,
-              background: sprint.sprintType === 'regressivo' ? '#f97316' + '18' : 'var(--color-blue-light)',
-              color: sprint.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
-              textTransform: 'uppercase',
-            }}>
+            <span
+              className="text-[9px] font-bold py-px px-1.5 rounded-lg shrink-0 uppercase"
+              style={{
+                background: sprint.sprintType === 'regressivo' ? '#f9731618' : 'var(--color-blue-light)',
+                color: sprint.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
+              }}
+            >
               {sprint.sprintType === 'regressivo' ? '🔄 REG' : '🔗 INT'}
               {sprint.releaseVersion && ` · ${sprint.releaseVersion}`}
             </span>
           )}
           {sprint.favorite && (
-            <span style={{ fontSize: 11, color: 'var(--color-amber-mid)', flexShrink: 0 }}>★</span>
+            <span className="text-[11px] text-[var(--color-amber-mid)] shrink-0">★</span>
           )}
           {compareMode && isSelected && (
-            <span style={{
-              fontSize: 10, fontWeight: 600, color: 'var(--color-blue-text)',
-              background: 'var(--color-blue-light)', padding: '1px 6px',
-              borderRadius: 10, flexShrink: 0,
-            }}>
+            <span className="badge badge-blue shrink-0">
               selecionada
             </span>
           )}
         </div>
-        <div style={{
-          fontSize: 12, color: 'var(--color-text-2)', marginTop: 2,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
+        <div className="text-xs text-[var(--color-text-2)] mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap">
           {subtitle}
         </div>
         {/* Mini progress bar */}
-        <div style={{
-          height: 3, borderRadius: 2,
-          background: 'var(--color-border)',
-          marginTop: 6, maxWidth: 180,
-        }}>
-          <div style={{
-            height: '100%', width: `${pct}%`,
-            background: dotColor, borderRadius: 2,
-            transition: 'width 0.3s',
-          }} />
+        <div className="h-[3px] rounded-sm bg-[var(--color-border)] mt-1.5 max-w-[180px]">
+          <div
+            className="h-full rounded-sm transition-[width] duration-300"
+            style={{ width: `${pct}%`, background: dotColor }}
+          />
         </div>
       </div>
 
       {/* Right actions — always visible at low opacity, full on hover */}
       <div
-        className="hp-actions"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-          opacity: compareMode ? 0 : 0.4,
-          transition: 'opacity 0.15s',
-        }}
+        className="hp-actions flex items-center gap-1 shrink-0 transition-opacity duration-150"
+        style={{ opacity: compareMode ? 0 : 0.4 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Favoritar */}
@@ -176,18 +142,11 @@ export function SprintCard({
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(e, sprint.id) }}
           aria-label={sprint.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           aria-pressed={sprint.favorite}
+          className="hp-fav-hover h-9 min-w-9 rounded-lg border border-transparent cursor-pointer flex items-center justify-center gap-1 text-sm px-2 transition-all duration-150"
           style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
             background: sprint.favorite ? 'var(--color-amber-light)' : 'transparent',
             color: sprint.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 4,
-            fontSize: 14, padding: '0 8px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
           }}
-          className="hp-fav-hover"
           data-active={sprint.favorite ? 'true' : undefined}
         >
           {sprint.favorite ? '★' : '☆'}
@@ -197,42 +156,20 @@ export function SprintCard({
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(e) }}
           aria-label="Duplicar sprint"
-          style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
-            background: 'transparent',
-            color: 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontSize: 12, fontWeight: 600, padding: '0 10px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-          className="hp-btn-blue"
+          className="hp-btn-blue h-9 min-w-9 rounded-lg border border-transparent bg-transparent text-[var(--color-text-3)] cursor-pointer flex items-center justify-center gap-[5px] text-xs font-semibold px-2.5 transition-all duration-150"
         >
-          <span style={{ fontSize: 14 }}>⧉</span>
-          <span style={{ fontSize: 11 }}>Duplicar</span>
+          <span className="text-sm">⧉</span>
+          <span className="text-[11px]">Duplicar</span>
         </button>
 
         {/* Excluir */}
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(e) }}
           aria-label="Excluir sprint"
-          style={{
-            height: 36, minWidth: 36, borderRadius: 8,
-            border: '1px solid transparent',
-            background: 'transparent',
-            color: 'var(--color-text-3)',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontSize: 12, fontWeight: 600, padding: '0 10px',
-            transition: 'all 0.15s',
-            fontFamily: 'var(--font-family-sans)',
-          }}
-          className="hp-btn-red"
+          className="hp-btn-red h-9 min-w-9 rounded-lg border border-transparent bg-transparent text-[var(--color-text-3)] cursor-pointer flex items-center justify-center gap-[5px] text-xs font-semibold px-2.5 transition-all duration-150"
         >
-          <span style={{ fontSize: 13 }}>✕</span>
-          <span style={{ fontSize: 11 }}>Excluir</span>
+          <span className="text-[13px]">✕</span>
+          <span className="text-[11px]">Excluir</span>
         </button>
       </div>
     </div>

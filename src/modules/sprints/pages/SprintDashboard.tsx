@@ -49,27 +49,19 @@ export function SprintDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <span style={{ color: 'var(--color-text-2)', fontSize: 14 }}>Carregando…</span>
+      <div className="flex items-center justify-center h-[200px]">
+        <span className="text-[var(--color-text-2)] text-sm">Carregando…</span>
       </div>
     )
   }
 
   return (
-    <div id="sprint-dashboard" style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div id="sprint-dashboard" className="max-w-[1200px] mx-auto">
       {/* Tab Navigation */}
       <div
         role="tablist"
         aria-label="Abas da Sprint"
-        style={{
-          display: 'flex',
-          gap: 2,
-          marginBottom: 20,
-          borderBottom: '1px solid var(--color-border)',
-          overflowX: 'auto',
-          paddingBottom: 0,
-          flexShrink: 0,
-        }}
+        className="flex gap-0.5 mb-5 border-b border-[var(--color-border)] overflow-x-auto shrink-0"
       >
         {TABS.map((tab) => (
           <button
@@ -78,23 +70,11 @@ export function SprintDashboard() {
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              background: 'none',
-              border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
-              color: activeTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
-              fontWeight: activeTab === tab.id ? 700 : 500,
-              fontSize: 13,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-family-sans)',
-              marginBottom: -1,
-              transition: 'color 0.15s',
-            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 bg-none border-none cursor-pointer whitespace-nowrap text-[13px] -mb-px transition-colors duration-150 ${
+              activeTab === tab.id
+                ? 'border-b-2 border-b-[var(--color-blue)] text-[var(--color-blue-text)] font-bold'
+                : 'border-b-2 border-b-transparent text-[var(--color-text-2)] font-medium'
+            }`}
           >
             {tab.icon} {tab.label}
           </button>

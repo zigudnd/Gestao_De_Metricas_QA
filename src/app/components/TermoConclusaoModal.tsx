@@ -95,27 +95,26 @@ export function TermoConclusaoModal({ onClose }: Props) {
     setTimeout(() => { win.print(); win.close() }, 400)
   }
 
+  // Note: TermoConclusaoModal uses hardcoded print-safe colors (not CSS vars)
+  // because its content is cloned into a new window for printing.
+  // Inline styles are intentionally kept here for print fidelity.
+
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px', overflowY: 'auto' }}
+      className="modal-backdrop"
+      style={{ alignItems: 'flex-start', padding: '24px 16px', overflowY: 'auto' }}
     >
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, width: '100%', maxWidth: 820, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="modal-container modal-lg !p-0 !gap-0">
 
         {/* Header do modal */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>📋 Termo de Conclusão da Sprint</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={handlePrint}
-              style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-blue)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
-            >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="heading-sm">📋 Termo de Conclusão da Sprint</div>
+          <div className="flex gap-2">
+            <button onClick={handlePrint} className="btn btn-primary btn-sm">
               🖨️ Imprimir / PDF
             </button>
-            <button
-              onClick={onClose}
-              style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-2)' }}
-            >✕</button>
+            <button onClick={onClose} className="btn btn-ghost text-[18px]">✕</button>
           </div>
         </div>
 

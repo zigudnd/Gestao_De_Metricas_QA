@@ -26,12 +26,6 @@ function formatPeriod(start: string, end: string): string {
   return `... a ${fmt(end)}`
 }
 
-const dateInputStyle: React.CSSProperties = {
-  padding: '5px 8px', borderRadius: 6,
-  border: '1px solid var(--color-border-md)', fontSize: 12,
-  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-}
-
 type TabId = 'editor' | 'preview' | 'gantt'
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
@@ -109,29 +103,21 @@ export function StatusReportPage() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <span style={{ color: 'var(--color-text-2)', fontSize: 14 }}>Carregando...</span>
+      <div className="flex items-center justify-center" style={{ height: 200 }}>
+        <span className="text-small">Carregando...</span>
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className="mx-auto" style={{ maxWidth: 1200 }}>
       {/* Top bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginBottom: 16, flexWrap: 'wrap',
-      }}>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <button
           onClick={() => navigate('/status-report')}
           title="Voltar para lista"
-          style={{
-            width: 32, height: 32, borderRadius: 7, border: 'none',
-            background: 'var(--color-surface-2)', cursor: 'pointer',
-            fontSize: 16, color: 'var(--color-text-2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, transition: 'all 0.15s',
-          }}
+          className="btn btn-ghost flex items-center justify-center"
+          style={{ width: 32, height: 32, flexShrink: 0 }}
         >
           ←
         </button>
@@ -139,18 +125,14 @@ export function StatusReportPage() {
           value={config.title}
           onChange={(e) => updateConfig({ title: e.target.value })}
           placeholder="Título do Report"
+          className="heading-lg flex-1"
           style={{
-            fontSize: 18, fontWeight: 700, color: 'var(--color-text)',
             border: 'none', background: 'transparent', outline: 'none',
-            minWidth: 200, flex: 1,
-            fontFamily: 'var(--font-family-sans)',
+            minWidth: 200, fontFamily: 'var(--font-family-sans)',
           }}
         />
         {/* Sync indicator */}
-        <span style={{
-          fontSize: 11, color: 'var(--color-text-3)', fontWeight: 500,
-          flexShrink: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4,
-        }}>
+        <span className="text-small text-muted flex items-center gap-1" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
           {lastSyncedAt
             ? <>
                 <span style={{ color: 'var(--color-green)', fontSize: 10 }}>●</span>
@@ -163,8 +145,8 @@ export function StatusReportPage() {
           }
         </span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 11, color: 'var(--color-text-3)', whiteSpace: 'nowrap' }}>Período:</span>
+        <div className="flex items-center gap-1">
+          <span className="text-small text-muted" style={{ whiteSpace: 'nowrap' }}>Período:</span>
           <input
             type="date" value={config.periodStart}
             max={config.periodEnd || undefined}
@@ -174,9 +156,10 @@ export function StatusReportPage() {
               const period = formatPeriod(start, end)
               updateConfig({ periodStart: start, period })
             }}
-            style={dateInputStyle}
+            className="input-field"
+            style={{ width: 'auto', padding: '5px 8px', fontSize: 12 }}
           />
-          <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>a</span>
+          <span className="text-small text-muted">a</span>
           <input
             type="date" value={config.periodEnd}
             min={config.periodStart || undefined}
@@ -186,7 +169,8 @@ export function StatusReportPage() {
               const period = formatPeriod(start, end)
               updateConfig({ periodEnd: end, period })
             }}
-            style={dateInputStyle}
+            className="input-field"
+            style={{ width: 'auto', padding: '5px 8px', fontSize: 12 }}
           />
         </div>
       </div>
@@ -195,20 +179,15 @@ export function StatusReportPage() {
       <ReportDashboard sections={sections} items={items} computedDates={computedDates} />
 
       {/* Tab navigation */}
-      <div role="tablist" aria-label="Abas do Status Report" style={{
-        display: 'flex', gap: 2,
-        marginBottom: 16,
-        borderBottom: '1px solid var(--color-border)',
-        alignItems: 'center',
-      }}>
+      <div role="tablist" aria-label="Abas do Status Report" className="flex items-center gap-0.5 mb-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
             role="tab"
             aria-selected={currentTab === tab.id}
             onClick={() => setTab(tab.id)}
+            className="flex items-center gap-1.5"
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', background: 'none', border: 'none',
               borderBottom: currentTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
               color: currentTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
@@ -221,38 +200,23 @@ export function StatusReportPage() {
           </button>
         ))}
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {/* Action buttons */}
         {currentTab === 'preview' && (
           <>
             <button
               onClick={handleCopyReport}
-              style={{
-                padding: '6px 14px', borderRadius: 7, border: 'none',
-                background: 'var(--color-blue)',
-                color: '#fff',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-                marginBottom: 4, transition: 'all 0.15s',
-              }}
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: 4 }}
             >
               Copiar relatório
             </button>
             <button
               onClick={handleExportImage}
               disabled={exporting}
-              style={{
-                padding: '6px 14px', borderRadius: 7,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent',
-                color: exporting ? 'var(--color-text-3)' : 'var(--color-text-2)',
-                fontSize: 12, fontWeight: 600,
-                cursor: exporting ? 'not-allowed' : 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-                marginBottom: 4, marginLeft: 4,
-                transition: 'all 0.15s',
-              }}
+              className="btn btn-outline btn-sm"
+              style={{ marginBottom: 4, marginLeft: 4 }}
             >
               {exporting ? 'Gerando...' : 'Exportar JPG'}
             </button>
@@ -263,29 +227,19 @@ export function StatusReportPage() {
       {/* Tab content */}
       {currentTab === 'editor' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <div className="flex justify-end mb-2">
             <button
               onClick={() => setShowSectionManager(true)}
-              style={{
-                padding: '5px 12px', borderRadius: 6,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent', color: 'var(--color-text-2)',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-                transition: 'all 0.15s',
-              }}
+              className="btn btn-outline btn-sm"
             >
               ⚙ Gerenciar seções
             </button>
           </div>
           {items.length === 0 && (
-            <div style={{
-              textAlign: 'center', padding: '48px 20px',
-              color: 'var(--color-text-3)', fontSize: 14,
-            }}>
+            <div className="text-center text-muted" style={{ padding: '48px 20px', fontSize: 14 }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>📋</div>
-              <p style={{ fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 4px' }}>Nenhum item adicionado</p>
-              <p style={{ margin: 0, fontSize: 13 }}>Clique em <strong>+ Adicionar item</strong> dentro de uma seção para começar.</p>
+              <p className="heading-sm" style={{ margin: '0 0 4px' }}>Nenhum item adicionado</p>
+              <p className="text-body" style={{ margin: 0 }}>Clique em <strong>+ Adicionar item</strong> dentro de uma seção para começar.</p>
             </div>
           )}
           {sections.map((sec) => (

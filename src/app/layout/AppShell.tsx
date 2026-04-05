@@ -27,11 +27,11 @@ export function AppShell() {
   }, [])
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--color-bg)' }}>
+    <div className="flex h-screen overflow-hidden bg-bg">
       <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
+        <main className="flex-1 overflow-y-auto p-5 px-[22px]">
           <ErrorBoundary moduleName="Página">
             <Outlet />
           </ErrorBoundary>

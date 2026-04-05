@@ -14,29 +14,15 @@ export function SaveToast() {
 
   return (
     <div
+      className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-[10px] px-[18px] py-[10px] text-[13px] font-semibold text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)] pointer-events-none"
       style={{
-        position: 'fixed',
-        bottom: 24,
-        right: 24,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '10px 18px',
         background: 'var(--color-bg-2)',
-        color: '#fff',
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        fontFamily: 'var(--font-family-sans)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-        pointerEvents: 'none',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
         transition: 'opacity 0.2s ease, transform 0.2s ease',
       }}
     >
-      <span style={{ color: 'var(--color-green)', fontSize: 15 }}>✓</span>
+      <span className="text-[15px] text-green">✓</span>
       Salvo
     </div>
   )

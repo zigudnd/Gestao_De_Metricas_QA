@@ -25,15 +25,6 @@ const HOME_TABS: { id: HomeTabId; label: string; icon: string }[] = [
 
 type FilterStatus = 'all' | 'active' | 'concluded' | 'favorites'
 
-const btnIcon: React.CSSProperties = {
-  width: 30, height: 30, borderRadius: 6, border: 'none',
-  background: 'transparent', cursor: 'pointer',
-  color: 'var(--color-text-3)', fontSize: 13,
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'background 0.15s, color 0.15s',
-  flexShrink: 0,
-}
-
 export function StatusReportHomePage() {
   const navigate = useNavigate()
   const [homeTab, setHomeTab] = useState<HomeTabId>('reports')
@@ -288,7 +279,7 @@ export function StatusReportHomePage() {
   ]
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div className="mx-auto" style={{ maxWidth: 900 }}>
       <style>{`
         .sr-home-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .sr-home-fav-hover:not([data-active="true"]):hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber-mid); }
@@ -298,27 +289,19 @@ export function StatusReportHomePage() {
         .sr-home-btn-red:hover { background: var(--color-red-light); border-color: var(--color-red-mid); color: var(--color-red); }
       `}</style>
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 0,
-      }}>
+      <div className="flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+          <h1 className="heading-lg" style={{ margin: 0 }}>
             Status Reports
           </h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
+          <p className="text-body" style={{ margin: '4px 0 0' }}>
             Gerencie os relatórios de status dos seus times
           </p>
         </div>
         {homeTab === 'reports' && (
           <button
             onClick={() => setShowNew(true)}
-            style={{
-              padding: '9px 20px', borderRadius: 8, border: 'none',
-              background: 'var(--color-blue)', color: '#fff',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-            }}
+            className="btn btn-primary btn-md"
           >
             + Novo Report
           </button>
@@ -326,8 +309,7 @@ export function StatusReportHomePage() {
       </div>
 
       {/* Home tabs */}
-      <div role="tablist" aria-label="Abas de Status Reports" style={{
-        display: 'flex', gap: 0,
+      <div role="tablist" aria-label="Abas de Status Reports" className="flex" style={{
         borderBottom: '1px solid var(--color-border)',
         margin: '16px 0 20px',
       }}>
@@ -337,8 +319,8 @@ export function StatusReportHomePage() {
             role="tab"
             aria-selected={homeTab === tab.id}
             onClick={() => setHomeTab(tab.id)}
+            className="flex items-center gap-1.5"
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
               padding: '9px 16px', background: 'none', border: 'none',
               borderBottom: homeTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
               color: homeTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
@@ -364,22 +346,18 @@ export function StatusReportHomePage() {
 
       {/* Filters bar */}
       {reports.length > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
-          flexWrap: 'wrap',
-        }}>
+        <div className="flex items-center gap-2 mb-3.5 flex-wrap">
           {/* Status chips */}
           {FILTERS.map((f) => (
             <button
               key={f.id}
               onClick={() => setFilterStatus(f.id)}
+              className="btn btn-sm"
               style={{
-                padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                borderRadius: 20,
                 border: filterStatus === f.id ? '1.5px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                 background: filterStatus === f.id ? 'var(--color-blue-light)' : 'transparent',
                 color: filterStatus === f.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
-                transition: 'all 0.15s',
               }}
             >
               {f.label} <span style={{ opacity: 0.6 }}>({f.count})</span>
@@ -389,58 +367,46 @@ export function StatusReportHomePage() {
           <div style={{ width: 1, height: 20, background: 'var(--color-border)', margin: '0 4px' }} />
 
           {/* Date range filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>De:</span>
+          <div className="flex items-center gap-1">
+            <span className="text-small text-muted">De:</span>
             <input
               type="date" value={filterDateFrom}
               onChange={(e) => setFilterDateFrom(e.target.value)}
-              style={{
-                padding: '4px 6px', borderRadius: 6, fontSize: 11,
-                border: '1px solid var(--color-border-md)',
-                fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-              }}
+              className="input-field"
+              style={{ width: 'auto', padding: '4px 6px', fontSize: 11 }}
             />
-            <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>Até:</span>
+            <span className="text-small text-muted">Até:</span>
             <input
               type="date" value={filterDateTo}
               min={filterDateFrom || undefined}
               onChange={(e) => setFilterDateTo(e.target.value)}
-              style={{
-                padding: '4px 6px', borderRadius: 6, fontSize: 11,
-                border: '1px solid var(--color-border-md)',
-                fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-              }}
+              className="input-field"
+              style={{ width: 'auto', padding: '4px 6px', fontSize: 11 }}
             />
             {(filterDateFrom || filterDateTo) && (
               <button
                 onClick={() => { setFilterDateFrom(''); setFilterDateTo('') }}
                 title="Limpar filtro de data"
-                style={{
-                  border: 'none', background: 'none', cursor: 'pointer',
-                  color: 'var(--color-text-3)', fontSize: 12, padding: '2px 4px',
-                }}
+                className="btn btn-ghost"
+                style={{ padding: '2px 4px' }}
               >
                 ×
               </button>
             )}
           </div>
 
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
           {/* Search */}
-          <div style={{ position: 'relative', width: 200 }}>
+          <div className="relative" style={{ width: 200 }}>
             <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--color-text-3)', pointerEvents: 'none' }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
             </span>
             <input
               type="text" placeholder="Buscar..."
               value={search} onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '6px 10px 6px 28px', fontSize: 12,
-                borderRadius: 7, border: '1px solid var(--color-border-md)',
-                background: 'var(--color-bg)', color: 'var(--color-text)',
-                outline: 'none', fontFamily: 'var(--font-family-sans)',
-              }}
+              className="input-field"
+              style={{ paddingLeft: 28, fontSize: 12 }}
             />
           </div>
         </div>
@@ -448,10 +414,7 @@ export function StatusReportHomePage() {
 
       {/* Empty state */}
       {reports.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: '60px 20px',
-          color: 'var(--color-text-3)', fontSize: 14,
-        }}>
+        <div className="text-center text-muted" style={{ padding: '60px 20px', fontSize: 14 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
           Nenhum status report criado ainda.
           <br />
@@ -461,76 +424,59 @@ export function StatusReportHomePage() {
 
       {/* Filtered empty */}
       {reports.length > 0 && filtered.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: '40px 20px',
-          color: 'var(--color-text-3)', fontSize: 13,
-        }}>
+        <div className="text-center text-muted text-body" style={{ padding: '40px 20px' }}>
           Nenhum report encontrado com os filtros atuais.
         </div>
       )}
 
       {/* List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="flex flex-col gap-2">
         {filtered.map((report) => {
           const isConcluded = report.status === 'concluded'
           return (
             <div
               key={report.id}
+              className="card sr-home-card-hover flex items-center gap-3.5"
               style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderLeft: isConcluded ? '3px solid var(--color-green-mid)' : report.favorite ? '3px solid var(--color-amber-mid)' : '1px solid var(--color-border)',
-                borderRadius: 10,
+                borderLeft: isConcluded ? '3px solid var(--color-green-mid)' : report.favorite ? '3px solid var(--color-amber-mid)' : undefined,
                 cursor: 'pointer',
                 opacity: isConcluded ? 0.7 : 1,
-                transition: 'box-shadow 0.15s',
               }}
               onClick={() => navigate(`/status-report/${report.id}`)}
-              className="sr-home-card-hover"
             >
               {/* Favorite star */}
               <button
                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(report.id) }}
                 aria-label={report.favorite ? 'Remover favorito' : 'Favoritar'}
                 aria-pressed={report.favorite}
+                className="sr-home-fav-hover btn"
                 style={{
                   height: 36, minWidth: 36, borderRadius: 8,
                   border: '1px solid transparent',
                   background: report.favorite ? 'var(--color-amber-light)' : 'transparent',
                   color: report.favorite ? 'var(--color-amber-mid)' : 'var(--color-text-3)',
-                  cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', gap: 4,
                   fontSize: 14, padding: '0 8px',
-                  transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
                 }}
-                className="sr-home-fav-hover"
                 data-active={report.favorite ? 'true' : undefined}
               >
                 {report.favorite ? '★' : '☆'}
               </button>
 
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    fontSize: 14, fontWeight: 600, color: 'var(--color-text)',
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="heading-sm" style={{
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {report.title || 'S/ Título'}
                   </span>
                   {isConcluded && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: '2px 7px',
-                      borderRadius: 4, background: 'var(--color-green-light)',
-                      color: 'var(--color-green)',
-                    }}>
+                    <span className="badge badge-green">
                       Concluído
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
+                <div className="text-small" style={{ marginTop: 2 }}>
                   {report.squad && <span>{report.squad} · </span>}
                   {report.itemCount} {report.itemCount === 1 ? 'item' : 'itens'}
                   {(report.periodStart || report.periodEnd) && (
@@ -538,27 +484,20 @@ export function StatusReportHomePage() {
                       · {formatPeriodShort(report.periodStart, report.periodEnd)}
                     </span>
                   )}
-                  <span style={{ marginLeft: 8, color: 'var(--color-text-3)' }}>
+                  <span className="text-muted" style={{ marginLeft: 8 }}>
                     {formatDate(report.updatedAt)}
                   </span>
                 </div>
               </div>
 
-              {/* Actions — same style as Cobertura QA (36px, icon + label) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+              {/* Actions */}
+              <div className="flex items-center gap-1" style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                 {isConcluded ? (
                   <button
                     onClick={() => handleReactivate(report.id)}
                     aria-label="Reativar report"
-                    style={{
-                      height: 36, minWidth: 36, borderRadius: 8,
-                      border: '1px solid transparent', background: 'transparent',
-                      color: 'var(--color-text-3)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      fontSize: 12, fontWeight: 600, padding: '0 10px',
-                      transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
-                    }}
-                    className="sr-home-btn-blue"
+                    className="sr-home-btn-blue btn btn-ghost flex items-center gap-1"
+                    style={{ height: 36, minWidth: 36, padding: '0 10px' }}
                   >
                     <span style={{ fontSize: 14 }}>↩</span>
                     <span style={{ fontSize: 11 }}>Reativar</span>
@@ -567,15 +506,8 @@ export function StatusReportHomePage() {
                   <button
                     onClick={() => handleConclude(report.id)}
                     aria-label="Concluir report"
-                    style={{
-                      height: 36, minWidth: 36, borderRadius: 8,
-                      border: '1px solid transparent', background: 'transparent',
-                      color: 'var(--color-text-3)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      fontSize: 12, fontWeight: 600, padding: '0 10px',
-                      transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
-                    }}
-                    className="sr-home-btn-green"
+                    className="sr-home-btn-green btn btn-ghost flex items-center gap-1"
+                    style={{ height: 36, minWidth: 36, padding: '0 10px' }}
                   >
                     <span style={{ fontSize: 14 }}>✓</span>
                     <span style={{ fontSize: 11 }}>Concluir</span>
@@ -584,15 +516,8 @@ export function StatusReportHomePage() {
                 <button
                   onClick={() => handleDuplicate(report.id)}
                   aria-label="Duplicar report"
-                  style={{
-                    height: 36, minWidth: 36, borderRadius: 8,
-                    border: '1px solid transparent', background: 'transparent',
-                    color: 'var(--color-text-3)', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    fontSize: 12, fontWeight: 600, padding: '0 10px',
-                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
-                  }}
-                  className="sr-home-btn-blue"
+                  className="sr-home-btn-blue btn btn-ghost flex items-center gap-1"
+                  style={{ height: 36, minWidth: 36, padding: '0 10px' }}
                 >
                   <span style={{ fontSize: 14 }}>⧉</span>
                   <span style={{ fontSize: 11 }}>Duplicar</span>
@@ -600,15 +525,8 @@ export function StatusReportHomePage() {
                 <button
                   onClick={() => { setMigrateFromId(report.id); setMigrateToId(''); setMigrateMode('copy') }}
                   aria-label="Migrar itens para outro report"
-                  style={{
-                    height: 36, minWidth: 36, borderRadius: 8,
-                    border: '1px solid transparent', background: 'transparent',
-                    color: 'var(--color-text-3)', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    fontSize: 12, fontWeight: 600, padding: '0 10px',
-                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
-                  }}
-                  className="sr-home-btn-amber"
+                  className="sr-home-btn-amber btn btn-ghost flex items-center gap-1"
+                  style={{ height: 36, minWidth: 36, padding: '0 10px' }}
                 >
                   <span style={{ fontSize: 14 }}>↗</span>
                   <span style={{ fontSize: 11 }}>Migrar</span>
@@ -616,15 +534,8 @@ export function StatusReportHomePage() {
                 <button
                   onClick={() => setDeleteId(report.id)}
                   aria-label="Excluir report"
-                  style={{
-                    height: 36, minWidth: 36, borderRadius: 8,
-                    border: '1px solid transparent', background: 'transparent',
-                    color: 'var(--color-text-3)', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    fontSize: 12, fontWeight: 600, padding: '0 10px',
-                    transition: 'all 0.15s', fontFamily: 'var(--font-family-sans)',
-                  }}
-                  className="sr-home-btn-red"
+                  className="sr-home-btn-red btn btn-ghost flex items-center gap-1"
+                  style={{ height: 36, minWidth: 36, padding: '0 10px' }}
                 >
                   <span style={{ fontSize: 13 }}>✕</span>
                   <span style={{ fontSize: 11 }}>Excluir</span>
@@ -639,55 +550,31 @@ export function StatusReportHomePage() {
       {showNew && (
         <div
           onClick={(e) => e.target === e.currentTarget && setShowNew(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.45)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16,
-          }}
+          className="modal-backdrop"
         >
-          <div style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderTop: '3px solid var(--color-blue)',
-            borderRadius: 12, padding: 24,
-            width: '100%', maxWidth: 400,
-            boxShadow: 'var(--shadow-xl)',
-          }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', marginBottom: 16 }}>
+          <div className="modal-container modal-sm" style={{ borderTop: '3px solid var(--color-blue)' }}>
+            <div className="heading-sm" style={{ marginBottom: 16 }}>
               Novo Status Report
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 4 }}>
+              <label className="label-field">
                 Título *
               </label>
               <input
                 value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Ex: APP EP FGTS" autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                style={{
-                  width: '100%', padding: '8px 10px', borderRadius: 7,
-                  border: '1px solid var(--color-border-md)', fontSize: 13,
-                  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-                }}
+                className="input-field"
               />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 4 }}>
+              <label className="label-field">
                 Squad
               </label>
               <select
                 value={newSquadId}
                 onChange={(e) => setNewSquadId(e.target.value)}
-                style={{
-                  width: '100%', padding: '8px 28px 8px 10px', borderRadius: 7,
-                  border: '1px solid var(--color-border-md)', fontSize: 13,
-                  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-                  background: 'var(--color-surface)', cursor: 'pointer',
-                  appearance: 'none',
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-                }}
+                className="select-field"
               >
                 <option value="">— Sem squad —</option>
                 {squads.map((s) => (
@@ -695,20 +582,13 @@ export function StatusReportHomePage() {
                 ))}
               </select>
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowNew(false)} style={{
-                padding: '8px 18px', borderRadius: 8,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent', color: 'var(--color-text-2)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-              }}>Cancelar</button>
-              <button onClick={handleCreate} style={{
-                padding: '8px 18px', borderRadius: 8, border: 'none',
-                background: 'var(--color-blue)', color: '#fff',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-              }}>Criar</button>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowNew(false)} className="btn btn-outline btn-md">
+                Cancelar
+              </button>
+              <button onClick={handleCreate} className="btn btn-primary btn-md">
+                Criar
+              </button>
             </div>
           </div>
         </div>
@@ -718,75 +598,49 @@ export function StatusReportHomePage() {
       {migrateFromId && migrateSource && (
         <div
           onClick={(e) => e.target === e.currentTarget && setMigrateFromId(null)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.45)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16,
-          }}
+          className="modal-backdrop"
         >
-          <div style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
+          <div className="modal-container" style={{
             borderTop: '3px solid var(--color-amber-mid)',
-            borderRadius: 12, padding: 24,
-            width: '100%', maxWidth: 440,
-            boxShadow: 'var(--shadow-xl)',
+            width: 440,
           }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', marginBottom: 4 }}>
+            <div className="heading-sm" style={{ marginBottom: 4 }}>
               Migrar itens
             </div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginBottom: 16 }}>
+            <div className="text-small" style={{ marginBottom: 16 }}>
               De: <strong>{migrateSource.title}</strong> ({migrateSource.itemCount} itens)
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 6 }}>Modo</label>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <label className="label-field" style={{ marginBottom: 6 }}>Modo</label>
+              <div className="flex gap-1.5">
                 {(['copy', 'move'] as const).map((m) => (
-                  <button key={m} onClick={() => setMigrateMode(m)} style={{
-                    flex: 1, padding: '7px 0', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  <button key={m} onClick={() => setMigrateMode(m)} className="btn btn-sm flex-1" style={{
                     border: migrateMode === m ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                     background: migrateMode === m ? 'var(--color-blue-light)' : 'transparent',
                     color: migrateMode === m ? 'var(--color-blue-text)' : 'var(--color-text-2)',
                   }}>{m === 'copy' ? 'Copiar itens' : 'Mover itens'}</button>
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 4 }}>
+              <div className="text-small text-muted" style={{ marginTop: 4 }}>
                 {migrateMode === 'copy' ? 'Os itens serão copiados — o report original mantém seus itens.' : 'Os itens serão movidos — o report original ficará vazio.'}
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 4 }}>Report destino</label>
-              <select value={migrateToId} onChange={(e) => setMigrateToId(e.target.value)} style={{
-                width: '100%', padding: '8px 28px 8px 10px', borderRadius: 7,
-                border: '1px solid var(--color-border-md)', fontSize: 13,
-                fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-                cursor: 'pointer', appearance: 'none' as const,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 10px center',
-              }}>
+              <label className="label-field">Report destino</label>
+              <select value={migrateToId} onChange={(e) => setMigrateToId(e.target.value)} className="select-field">
                 <option value="">Selecione o report destino...</option>
                 {reports.filter((r) => r.id !== migrateFromId).map((r) => (
                   <option key={r.id} value={r.id}>{r.title} ({r.itemCount} itens)</option>
                 ))}
               </select>
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setMigrateFromId(null)} style={{
-                padding: '8px 18px', borderRadius: 8,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent', color: 'var(--color-text-2)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-              }}>Cancelar</button>
-              <button onClick={handleMigrate} disabled={!migrateToId} style={{
-                padding: '8px 18px', borderRadius: 8, border: 'none',
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setMigrateFromId(null)} className="btn btn-outline btn-md">
+                Cancelar
+              </button>
+              <button onClick={handleMigrate} disabled={!migrateToId} className="btn btn-md" style={{
                 background: migrateToId ? 'var(--color-amber-mid)' : '#ccc',
-                color: '#fff', fontSize: 13, fontWeight: 600,
-                cursor: migrateToId ? 'pointer' : 'not-allowed',
-                fontFamily: 'var(--font-family-sans)',
+                color: '#fff',
               }}>{migrateMode === 'copy' ? 'Copiar' : 'Mover'}</button>
             </div>
           </div>

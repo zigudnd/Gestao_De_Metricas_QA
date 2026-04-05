@@ -75,7 +75,7 @@ export function BugsTab() {
         if (sortField === 'status') return dir * ((STATUS_ORDER[a.b.status] ?? 9) - (STATUS_ORDER[z.b.status] ?? 9))
         if (sortField === 'retests') return dir * ((a.b.retests ?? 0) - (z.b.retests ?? 0))
       }
-      // default: Falhou primeiro, Resolvido por último
+      // default: Falhou primeiro, Resolvido por ultimo
       return (a.b.status === 'Resolvido' ? 1 : 0) - (z.b.status === 'Resolvido' ? 1 : 0) || (a.b.status === 'Falhou' ? -1 : 0) - (z.b.status === 'Falhou' ? -1 : 0)
     })
     .filter(({ b }) => {
@@ -98,7 +98,7 @@ export function BugsTab() {
   function sevBadge(severity: string) {
     const s = SEV_STYLE[severity] ?? { bg: 'var(--color-bg)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
     return (
-      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 500, background: s.bg, color: s.color, border: s.border, whiteSpace: 'nowrap' }}>
+      <span className="badge" style={{ background: s.bg, color: s.color, border: s.border }}>
         {severity || '—'}
       </span>
     )
@@ -106,52 +106,49 @@ export function BugsTab() {
 
   function stackBadge(stack: string) {
     return (
-      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 500, background: 'var(--color-bg)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)', whiteSpace: 'nowrap' }}>
+      <span className="badge badge-neutral">
         {stack || '—'}
       </span>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       <style>{`
         .bug-id-input:hover { border-bottom: 1px solid var(--color-border-md) !important; }
         .bug-action-btn:hover { background: var(--color-bg) !important; }
         .bug-action-btn-danger:hover { background: var(--color-red-light) !important; color: var(--color-red) !important; }
       `}</style>
       {/* Filter Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
+      <div className="card-sm flex items-center gap-4 flex-wrap">
         <FilterGroup label="Status" value={filters.status} options={['Todos', 'Aberto', 'Em Andamento', 'Falhou', 'Resolvido']} onChange={(v) => setFilters((f) => ({ ...f, status: v }))} />
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
         <FilterGroup label="Stack" value={filters.stack} options={['Todos', 'Front', 'BFF', 'Back', 'Mobile', 'Infra']} onChange={(v) => setFilters((f) => ({ ...f, stack: v }))} />
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
         <FilterGroup label="Atribuição" value={filters.assignee} options={assignees} onChange={(v) => setFilters((f) => ({ ...f, assignee: v }))} />
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 400 }}>{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-small">{sorted.length} de {state.bugs.length} bug{state.bugs.length !== 1 ? 's' : ''}</span>
           {hasFilters && (
-            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} aria-label="Limpar filtros" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-red)', background: 'var(--color-red-light)', color: 'var(--color-red)', cursor: 'pointer' }}>
+            <button onClick={() => setFilters({ status: 'Todos', stack: 'Todos', assignee: 'Todos' })} aria-label="Limpar filtros" className="badge badge-red" style={{ cursor: 'pointer', fontWeight: 700 }}>
               ✕ Limpar
             </button>
           )}
         </div>
         {/* Severity summary */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div className="flex gap-1 items-center">
           {(['Crítica', 'Alta', 'Média', 'Baixa'] as const).map((sev) => {
             const count = state.bugs.filter((b) => b.severity === sev && b.status !== 'Resolvido').length
             if (count === 0) return null
             const s = SEV_STYLE[sev]
             return (
-              <span key={sev} style={{
-                fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6,
-                background: s.bg, color: s.color, border: s.border,
-              }}>
+              <span key={sev} className="badge" style={{ fontWeight: 700, background: s.bg, color: s.color, border: s.border }}>
                 {count} {sev}
               </span>
             )
           })}
         </div>
         <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
-        <button onClick={() => setShowNewModal(true)} aria-label="Adicionar novo bug" style={btnPrimary}>+ Novo Bug</button>
+        <button onClick={() => setShowNewModal(true)} aria-label="Adicionar novo bug" className="btn btn-md btn-primary">+ Novo Bug</button>
       </div>
 
       {/* Table */}
@@ -172,7 +169,7 @@ export function BugsTab() {
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--color-text-2)', fontSize: 14 }}>
+                <td colSpan={8} className="text-body text-center" style={{ padding: 32, fontSize: 14 }}>
                   {state.bugs.length === 0 ? 'Nenhum bug registrado.' : 'Nenhum bug corresponde aos filtros.'}
                 </td>
               </tr>
@@ -182,24 +179,24 @@ export function BugsTab() {
 
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid var(--color-border)', background: isResolved ? 'var(--color-green-light)' : 'var(--color-surface)', opacity: isResolved ? 0.85 : 1 }}>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                    <td className="table-cell" style={{ whiteSpace: 'nowrap' }}>
                       <BugIdInput id={b.id} onCommit={(val) => updateBug(i, 'id', val)} />
                     </td>
-                    <td style={{ padding: '10px 12px', maxWidth: 260 }}>
+                    <td className="table-cell" style={{ maxWidth: 260 }}>
                       {editingBug === i ? (
                         <BugEditInline bug={b} index={i} onDone={() => setEditingBug(null)} />
                       ) : (
                         <div style={{ fontWeight: 600, color: 'var(--color-text)', lineHeight: 1.3, textDecoration: isResolved ? 'line-through' : 'none' }}>{b.desc || 'Sem descrição'}</div>
                       )}
                     </td>
-                    <td style={{ padding: '10px 12px', maxWidth: 180 }}>
+                    <td className="table-cell" style={{ maxWidth: 180 }}>
                       {editingBug !== i && (
-                        <div style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{b.feature || '—'}</div>
+                        <div className="text-small">{b.feature || '—'}</div>
                       )}
                     </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{stackBadge(b.stack || '—')}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{sevBadge(b.severity)}</td>
-                    <td style={{ padding: '10px 12px' }}>
+                    <td className="table-cell text-center">{stackBadge(b.stack || '—')}</td>
+                    <td className="table-cell text-center">{sevBadge(b.severity)}</td>
+                    <td className="table-cell">
                       <select
                         value={b.status}
                         aria-label="Status do bug"
@@ -214,21 +211,13 @@ export function BugsTab() {
                             updateBug(i, 'status', newStatus)
                           }
                         }}
+                        className="select-field"
                         style={{
                           fontSize: 12,
                           fontWeight: 500,
                           padding: '4px 24px 4px 10px',
-                          borderRadius: 8,
-                          border: '0.5px solid var(--color-border)',
-                          background: 'var(--color-surface)',
                           color: STATUS_TEXT_COLOR[b.status] ?? 'var(--color-text-2)',
-                          cursor: 'pointer',
-                          fontFamily: 'var(--font-family-sans)',
                           width: 138,
-                          appearance: 'none',
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'right 8px center',
                         }}
                       >
                         <option value="Aberto">Aberto</option>
@@ -237,17 +226,18 @@ export function BugsTab() {
                         <option value="Resolvido">Resolvido</option>
                       </select>
                     </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                    <td className="table-cell text-center">
                       <input
                         type="number"
                         min={0}
                         value={b.retests || 0}
                         onChange={(e) => updateBug(i, 'retests', Number(e.target.value))}
                         aria-label="Número de retestes"
-                        style={{ width: 55, textAlign: 'center', padding: '4px', border: '1px solid var(--color-border-md)', borderRadius: 6, background: 'var(--color-surface)', color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)' }}
+                        className="input-field"
+                        style={{ width: 55, textAlign: 'center', padding: 4 }}
                       />
                     </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <td className="table-cell text-center" style={{ whiteSpace: 'nowrap' }}>
                       <BugActionBtn onClick={() => setEditingBug(editingBug === i ? null : i)} title="Editar"><IcoEdit /></BugActionBtn>
                       <BugActionBtn onClick={() => duplicateBug(i)} title="Duplicar"><IcoDuplicate /></BugActionBtn>
                       <BugActionBtn onClick={() => setDeleteTarget({ index: i, desc: b.desc || 'Sem descrição' })} title="Remover" danger><IcoTrash /></BugActionBtn>
@@ -260,7 +250,7 @@ export function BugsTab() {
         </table>
       </div>
 
-      {/* ── Modal: Novo Bug ───────────────────────────────────────────────── */}
+      {/* Modal: Novo Bug */}
       {showNewModal && (
         <NewBugModal
           featureNames={featureNames}
@@ -272,7 +262,7 @@ export function BugsTab() {
         />
       )}
 
-      {/* ── Modal: Confirmar Exclusão ─────────────────────────────────────── */}
+      {/* Modal: Confirmar Exclusão */}
       {deleteTarget && (
         <ConfirmModal
           title="Excluir Bug"
@@ -283,12 +273,12 @@ export function BugsTab() {
         />
       )}
 
-      {/* ── Modal: Confirmar Resolução ────────────────────────────────────── */}
+      {/* Modal: Confirmar Resolução */}
       {resolveModal && (
-        <div onClick={(e) => { if (e.target === e.currentTarget) setResolveModal(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>✅ Confirmar Resolução</div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>Informe a data em que o bug foi resolvido.</div>
+        <div onClick={(e) => { if (e.target === e.currentTarget) setResolveModal(null) }} className="modal-backdrop">
+          <div className="modal-container modal-sm">
+            <div className="heading-md">✅ Confirmar Resolução</div>
+            <div className="text-body" style={{ lineHeight: 1.5 }}>Informe a data em que o bug foi resolvido.</div>
             <Field label="Data de Resolução">
               <input
                 autoFocus
@@ -296,15 +286,16 @@ export function BugsTab() {
                 value={resolveModal.date}
                 onChange={(e) => setResolveModal((r) => r ? { ...r, date: e.target.value } : r)}
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmResolve(); if (e.key === 'Escape') setResolveModal(null) }}
-                style={inputStyle}
+                className="input-field"
               />
             </Field>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setResolveModal(null)} style={btnOutline}>Cancelar</button>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setResolveModal(null)} className="btn btn-outline btn-md">Cancelar</button>
               <button
                 onClick={confirmResolve}
                 disabled={!resolveModal.date}
-                style={{ ...btnPrimary, background: 'var(--color-green)', opacity: resolveModal.date ? 1 : 0.5, cursor: resolveModal.date ? 'pointer' : 'not-allowed' }}
+                className="btn btn-md btn-success"
+                style={{ opacity: resolveModal.date ? 1 : 0.5, cursor: resolveModal.date ? 'pointer' : 'not-allowed' }}
               >
                 Confirmar
               </button>
@@ -316,7 +307,7 @@ export function BugsTab() {
   )
 }
 
-// ─── BugIdInput ───────────────────────────────────────────────────────────────
+// --- BugIdInput ---
 
 function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => void }) {
   const [local, setLocal] = useState(id)
@@ -359,7 +350,7 @@ function BugIdInput({ id, onCommit }: { id: string; onCommit: (val: string) => v
   )
 }
 
-// ─── BugEditInline ────────────────────────────────────────────────────────────
+// --- BugEditInline ---
 
 function BugEditInline({ bug, index, onDone }: { bug: Bug; index: number; onDone: () => void }) {
   const updateBug = useSprintStore((s) => s.updateBug)
@@ -368,14 +359,15 @@ function BugEditInline({ bug, index, onDone }: { bug: Bug; index: number; onDone
   const knownAssignees = [...new Set(state.bugs.map((b) => b.assignee?.trim()).filter(Boolean) as string[])]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div className="flex flex-col gap-1.5">
       <input
         autoFocus
         type="text"
         value={bug.desc}
         onChange={(e) => updateBug(index, 'desc', e.target.value)}
         placeholder="Descrição do bug"
-        style={inputSm}
+        className="input-field"
+        style={{ fontSize: 12, padding: '5px 8px' }}
       />
       <input
         type="text"
@@ -383,45 +375,46 @@ function BugEditInline({ bug, index, onDone }: { bug: Bug; index: number; onDone
         value={bug.feature}
         onChange={(e) => updateBug(index, 'feature', e.target.value)}
         placeholder="Funcionalidade relacionada"
-        style={inputSm}
+        className="input-field"
+        style={{ fontSize: 12, padding: '5px 8px' }}
       />
       <datalist id={`feat-list-${index}`}>
         {featureNames.map((n) => <option key={n} value={n} />)}
       </datalist>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <select value={bug.stack} onChange={(e) => updateBug(index, 'stack', e.target.value as BugStack)} style={selectSm}>
+      <div className="flex gap-1.5">
+        <select value={bug.stack} onChange={(e) => updateBug(index, 'stack', e.target.value as BugStack)} className="select-field" style={{ fontSize: 12, padding: '5px 8px' }}>
           {['Front', 'BFF', 'Back', 'Mobile', 'Infra'].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={bug.severity} onChange={(e) => updateBug(index, 'severity', e.target.value as BugSeverity)} style={selectSm}>
+        <select value={bug.severity} onChange={(e) => updateBug(index, 'severity', e.target.value as BugSeverity)} className="select-field" style={{ fontSize: 12, padding: '5px 8px' }}>
           {['Crítica', 'Alta', 'Média', 'Baixa'].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
-      <input type="text" list={`assignees-inline-${index}`} value={bug.assignee ?? ''} onChange={(e) => updateBug(index, 'assignee', e.target.value)} placeholder="Responsável" style={inputSm} />
+      <input type="text" list={`assignees-inline-${index}`} value={bug.assignee ?? ''} onChange={(e) => updateBug(index, 'assignee', e.target.value)} placeholder="Responsável" className="input-field" style={{ fontSize: 12, padding: '5px 8px' }} />
       <datalist id={`assignees-inline-${index}`}>
         {knownAssignees.map((a) => <option key={a} value={a} />)}
       </datalist>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Data de Abertura</label>
-        <input type="date" value={bug.openedAt ?? ''} onChange={(e) => updateBug(index, 'openedAt', e.target.value)} style={inputSm} />
+      <div className="flex flex-col gap-0.5">
+        <label className="section-label" style={{ fontSize: 10 }}>Data de Abertura</label>
+        <input type="date" value={bug.openedAt ?? ''} onChange={(e) => updateBug(index, 'openedAt', e.target.value)} className="input-field" style={{ fontSize: 12, padding: '5px 8px' }} />
       </div>
-      <textarea value={bug.notes ?? ''} onChange={(e) => updateBug(index, 'notes', e.target.value)} placeholder="Notas…" rows={2} style={{ ...inputSm, fontFamily: 'var(--font-family-sans)', resize: 'vertical' }} />
-      <button onClick={onDone} style={{ ...btnPrimary, fontSize: 12, padding: '4px 12px', alignSelf: 'flex-end' }}>✓ Fechar</button>
+      <textarea value={bug.notes ?? ''} onChange={(e) => updateBug(index, 'notes', e.target.value)} placeholder="Notas…" rows={2} className="textarea-field" style={{ fontSize: 12, padding: '5px 8px' }} />
+      <button onClick={onDone} className="btn btn-sm btn-primary self-end">✓ Fechar</button>
     </div>
   )
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components ---
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <label className="section-label">{label}</label>
       {children}
     </div>
   )
 }
 
-// ─── SVG icons ────────────────────────────────────────────────────────────────
+// --- SVG icons ---
 
 function IcoEdit() {
   return <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.5 2.5l2 2L5 12H3v-2L10.5 2.5z"/></svg>
@@ -448,21 +441,8 @@ function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChild
       onClick={onClick}
       title={title}
       aria-label={title}
-      className={danger ? 'bug-action-btn-danger' : 'bug-action-btn'}
-      style={{
-        background: 'none',
-        border: 'none',
-        padding: 8,
-        minWidth: 32,
-        minHeight: 32,
-        borderRadius: 8,
-        cursor: 'pointer',
-        color: 'var(--color-text-2)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-      }}
+      className={`btn-ghost ${danger ? 'bug-action-btn-danger' : 'bug-action-btn'}`}
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 32, minHeight: 32 }}
     >
       {children}
     </button>
@@ -471,7 +451,7 @@ function BugActionBtn({ onClick, title, children, danger }: React.PropsWithChild
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+    <th className="table-header" style={{ whiteSpace: 'nowrap' }}>
       {children}
     </th>
   )
@@ -494,7 +474,8 @@ function ThSort({ children, field, current, dir, onSort }: { children: React.Rea
       }}
       onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
       onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-      style={{ padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500, color: active ? 'var(--color-blue)' : 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none', outline: 'none', borderRadius: 4 }}
+      className="table-header"
+      style={{ whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none', outline: 'none', borderRadius: 4, color: active ? 'var(--color-blue)' : undefined }}
     >
       {children}
       {active ? (dir === 'asc' ? <IcoSortAsc /> : <IcoSortDesc />) : <IcoSort />}
@@ -504,26 +485,16 @@ function ThSort({ children, field, current, dir, onSort }: { children: React.Rea
 
 function FilterGroup({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{label}</span>
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+    <div className="flex items-center gap-1.5">
+      <span className="section-label" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>{label}</span>
+      <div className="flex gap-1 flex-wrap">
         {options.map((opt) => (
           <button
             key={opt}
             onClick={() => onChange(opt)}
             aria-pressed={value === opt}
-            style={{
-              fontSize: 11,
-              fontWeight: 500,
-              padding: '3px 10px',
-              borderRadius: 20,
-              border: value === opt ? '0.5px solid var(--color-blue-light)' : '0.5px solid var(--color-border)',
-              cursor: 'pointer',
-              background: value === opt ? 'var(--color-blue-light)' : 'var(--color-bg)',
-              color: value === opt ? 'var(--color-blue)' : 'var(--color-text-2)',
-              fontFamily: 'var(--font-family-sans)',
-              transition: 'background 0.15s',
-            }}
+            className={value === opt ? 'badge badge-blue' : 'badge badge-neutral'}
+            style={{ cursor: 'pointer', fontFamily: 'var(--font-family-sans)', transition: 'background 0.15s' }}
           >
             {opt}
           </button>
@@ -531,64 +502,4 @@ function FilterGroup({ label, value, options, onChange }: { label: string; value
       </div>
     </div>
   )
-}
-
-const btnPrimary: React.CSSProperties = {
-  padding: '7px 16px',
-  background: 'var(--color-blue)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  fontWeight: 500,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-  flexShrink: 0,
-}
-
-const btnOutline: React.CSSProperties = {
-  padding: '7px 18px',
-  background: 'transparent',
-  color: 'var(--color-text-2)',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontSize: 13,
-  color: 'var(--color-text)',
-  background: 'var(--color-bg)',
-  fontFamily: 'var(--font-family-sans)',
-  boxSizing: 'border-box',
-}
-
-
-const inputSm: React.CSSProperties = {
-  width: '100%',
-  padding: '5px 8px',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 6,
-  fontSize: 12,
-  color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-  fontFamily: 'var(--font-family-sans)',
-  boxSizing: 'border-box',
-}
-
-const selectSm: React.CSSProperties = {
-  ...inputSm,
-  padding: '5px 24px 5px 8px',
-  cursor: 'pointer',
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 8px center',
 }

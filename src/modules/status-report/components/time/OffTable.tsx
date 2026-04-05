@@ -43,8 +43,8 @@ function formatFaltam(diasRestantes: number | null): string {
 export function OffTable({ offs, onRemove }: OffTableProps) {
   if (offs.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--color-text-3)' }}>
-        <p style={{ fontSize: 13, margin: 0 }}>
+      <div className="text-center text-muted" style={{ padding: '24px 16px' }}>
+        <p className="text-body" style={{ margin: 0 }}>
           Nenhum período registrado. Clique em &quot;+ Registrar período&quot; para começar.
         </p>
       </div>
@@ -62,11 +62,7 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
           display: 'grid',
           gridTemplateColumns: '1fr 80px 65px 65px 45px 50px 80px 36px',
           gap: 0, padding: '8px 12px',
-          background: 'var(--color-surface-2)',
-          borderBottom: '0.5px solid var(--color-border)',
-          fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)',
-          textTransform: 'uppercase', letterSpacing: '0.04em',
-        }}>
+        }} className="table-header">
           <span>Membro</span>
           <span>Tipo</span>
           <span>Início</span>
@@ -84,28 +80,25 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
           return (
             <div
               key={off.id}
+              className="table-cell items-center"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 80px 65px 65px 45px 50px 80px 36px',
-                gap: 0, padding: '8px 12px',
-                borderBottom: '0.5px solid var(--color-border)',
+                gap: 0,
                 background: rowBg,
                 opacity: off.alerta === 'encerrado' ? 0.5 : 1,
-                fontSize: 12, color: 'var(--color-text)',
-                alignItems: 'center',
               }}
             >
               <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {off.membro.nome}
               </span>
-              <span style={{ color: 'var(--color-text-2)' }}>{TIPO_LABEL[off.tipo]}</span>
+              <span className="text-small">{TIPO_LABEL[off.tipo]}</span>
               <span>{formatDate(off.inicio)}</span>
               <span>{formatDate(off.fim)}</span>
               <span style={{ fontWeight: 600 }}>{off.duracaoDias}</span>
               <span style={{ fontWeight: 600 }}>{formatFaltam(off.diasRestantes)}</span>
               <span>
-                <span style={{
-                  fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                <span className="badge" style={{
                   background: badge.bg, color: badge.color,
                 }}>
                   {badge.label}
@@ -113,11 +106,9 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
               </span>
               <button
                 onClick={() => onRemove(off.id)}
-                className="time-off-delete"
+                className="time-off-delete btn btn-ghost"
                 style={{
-                  width: 22, height: 22, borderRadius: 4, border: 'none',
-                  background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
-                  fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 22, height: 22, padding: 0,
                   opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
                 }}
                 title="Remover"
@@ -130,7 +121,7 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
       </div>
 
       {/* Legenda */}
-      <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11, color: 'var(--color-text-3)' }}>
+      <div className="flex gap-4 mt-2.5 text-small text-muted">
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-light)', marginRight: 4 }} />Férias em até 30 dias</span>
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-red-light)', marginRight: 4 }} />Férias em até 7 dias</span>
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green-light)', marginRight: 4 }} />Período ativo ou agendado</span>

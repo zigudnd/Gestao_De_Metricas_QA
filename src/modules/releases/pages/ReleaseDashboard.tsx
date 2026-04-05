@@ -43,21 +43,6 @@ const STATUS_BG_COLORS: Record<ReleaseStatus, string> = {
   uniu_escopo: '#ede9fe',
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', borderRadius: 7,
-  border: '1px solid var(--color-border-md)', fontSize: 13,
-  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 600,
-  color: 'var(--color-text-2)', marginBottom: 4,
-  textTransform: 'uppercase', letterSpacing: '0.5px',
-}
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function ReleaseDashboard() {
@@ -79,8 +64,8 @@ export function ReleaseDashboard() {
 
   if (!loaded) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <span style={{ color: 'var(--color-text-2)', fontSize: 14 }}>Carregando...</span>
+      <div className="flex items-center justify-center" style={{ height: 200 }}>
+        <span className="text-body">Carregando...</span>
       </div>
     )
   }
@@ -88,17 +73,13 @@ export function ReleaseDashboard() {
   if (!release) {
     return (
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: 14, color: 'var(--color-text-3)' }}>
+        <div className="text-body text-muted">
           Release não encontrada.
         </div>
         <button
           onClick={() => navigate('/releases')}
-          style={{
-            marginTop: 16, padding: '8px 18px', borderRadius: 8, border: 'none',
-            background: 'var(--color-blue)', color: '#fff',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            fontFamily: 'var(--font-family-sans)',
-          }}
+          className="btn btn-md btn-primary"
+          style={{ marginTop: 16 }}
         >
           Voltar para Releases
         </button>
@@ -131,32 +112,27 @@ export function ReleaseDashboard() {
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Top bar */}
-      <div style={{ marginBottom: 20 }}>
+      <div className="mb-5">
         <button
           onClick={() => navigate('/releases')}
           aria-label="Voltar para lista de releases"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600,
-            padding: 0, marginBottom: 12, fontFamily: 'var(--font-family-sans)',
-          }}
+          className="btn btn-ghost"
+          style={{ padding: 0, marginBottom: 12 }}
         >
           ← Releases
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h1 className="heading-lg" style={{ fontSize: 20 }}>
             {release.title || 'Release sem título'}
           </h1>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: '3px 10px',
-            borderRadius: 5, background: 'var(--color-surface-2)',
-            color: 'var(--color-text-2)', fontFamily: 'var(--font-family-mono)',
+          <span className="badge badge-neutral" style={{
+            fontFamily: 'var(--font-family-mono)', fontWeight: 700, fontSize: 11,
           }}>
             {release.version || '—'}
           </span>
-          <span style={{
-            fontSize: 10, fontWeight: 700, padding: '3px 10px',
-            borderRadius: 4, background: STATUS_BG_COLORS[release.status], color: statusColor,
+          <span className="badge" style={{
+            fontSize: 10, fontWeight: 700,
+            background: STATUS_BG_COLORS[release.status], color: statusColor,
           }}>
             {statusLabel}
           </span>
@@ -171,41 +147,40 @@ export function ReleaseDashboard() {
       />
 
       {/* Dados da Release — formulário de edição */}
-      <div style={{
-        background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-        borderRadius: 12, padding: '20px 24px', marginBottom: 20,
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="heading-sm" style={{ fontSize: 13, marginBottom: 16 }}>
           Dados da Release
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+        <div className="grid grid-cols-2 gap-3.5" style={{ marginBottom: 14 }}>
           <div>
-            <label style={labelStyle}>Título</label>
+            <label className="section-label">Título</label>
             <input
               value={release.title}
               onChange={(e) => handleField('title', e.target.value)}
               disabled={isConcluida}
               placeholder="Ex: Release App Março"
-              style={{ ...inputStyle, opacity: isConcluida ? 0.6 : 1 }}
+              className="input-field"
+              style={{ opacity: isConcluida ? 0.6 : 1 }}
             />
           </div>
           <div>
-            <label style={labelStyle}>Versão</label>
+            <label className="section-label">Versão</label>
             <input
               value={release.version}
               onChange={(e) => handleField('version', e.target.value)}
               disabled={isConcluida}
               placeholder="Ex: v4.2.0"
-              style={{ ...inputStyle, opacity: isConcluida ? 0.6 : 1 }}
+              className="input-field"
+              style={{ opacity: isConcluida ? 0.6 : 1 }}
             />
           </div>
         </div>
 
         {/* Plataformas */}
         <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Plataformas</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <label className="section-label">Plataformas</label>
+          <div className="flex gap-2">
             {(['iOS', 'Android', 'Front', 'BFF', 'Back', 'Infra'] as const).map((p) => {
               const active = (release.platforms || []).includes(p)
               return (
@@ -236,38 +211,35 @@ export function ReleaseDashboard() {
         </div>
 
         <div>
-          <label style={labelStyle}>Notas</label>
+          <label className="section-label">Notas</label>
           <textarea
             value={release.description}
             onChange={(e) => handleField('description', e.target.value)}
             disabled={isConcluida}
             placeholder="Notas sobre esta release..."
             rows={3}
-            style={{ ...inputStyle, resize: 'vertical', opacity: isConcluida ? 0.6 : 1 }}
+            className="textarea-field"
+            style={{ opacity: isConcluida ? 0.6 : 1 }}
           />
         </div>
 
         {/* Status history */}
         {release.statusHistory.length > 0 && (
           <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--color-border)' }}>
-            <div style={{ ...labelStyle, marginBottom: 8 }}>Histórico de transições</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="section-label" style={{ marginBottom: 8 }}>Histórico de transições</div>
+            <div className="flex flex-col gap-1">
               {release.statusHistory.slice().reverse().map((h, i) => (
-                <div key={i} style={{ fontSize: 12, color: 'var(--color-text-2)', display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, color: 'var(--color-text-3)', fontFamily: 'var(--font-family-mono)', minWidth: 110 }}>
+                <div key={i} className="flex items-center gap-2 text-small">
+                  <span style={{ fontFamily: 'var(--font-family-mono)', minWidth: 110, fontSize: 10 }} className="text-muted">
                     {new Date(h.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <span style={{
-                    fontSize: 10, padding: '1px 6px', borderRadius: 4,
-                    background: 'var(--color-surface-2)', color: 'var(--color-text-3)',
-                  }}>
+                  <span className="badge badge-neutral" style={{ fontSize: 10 }}>
                     {STATUS_LABELS[h.from] || h.from}
                   </span>
-                  <span style={{ color: 'var(--color-text-3)' }}>→</span>
-                  <span style={{
-                    fontSize: 10, padding: '1px 6px', borderRadius: 4,
+                  <span className="text-muted">→</span>
+                  <span className="badge" style={{
+                    fontSize: 10, fontWeight: 600,
                     background: STATUS_BG_COLORS[h.to], color: STATUS_COLORS[h.to],
-                    fontWeight: 600,
                   }}>
                     {STATUS_LABELS[h.to] || h.to}
                   </span>

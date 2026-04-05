@@ -65,17 +65,17 @@ export function ReleaseSuiteCard({
       style={{
         background: 'var(--color-surface)',
         border: '2px solid var(--color-border)',
-        borderRadius: 10,
-        overflow: 'hidden',
+        borderRadius: 10, overflow: 'hidden',
         animationDelay: `${index * 0.05}s`,
       }}
     >
       {/* Suite header */}
       <div
+        className="flex items-center gap-2.5 flex-wrap"
         style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px',
+          padding: '14px 20px',
           background: 'var(--color-bg)', borderBottom: open ? '1px solid var(--color-border)' : 'none',
-          cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap',
+          cursor: 'pointer', userSelect: 'none',
         }}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
@@ -92,49 +92,35 @@ export function ReleaseSuiteCard({
             onChange={(e) => setNameVal(e.target.value)}
             onBlur={() => { onRenameSuite(suiteIndex, nameVal); setEditingName(false) }}
             onKeyDown={(e) => { if (e.key === 'Enter') { onRenameSuite(suiteIndex, nameVal); setEditingName(false) } }}
-            style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-family-sans)', background: 'var(--color-surface)' }}
+            className="input-field"
+            style={{ fontSize: 15, fontWeight: 700, width: 'auto', padding: '2px 8px' }}
           />
         ) : (
-          <strong style={{ fontSize: 15, color: 'var(--color-text)' }}>
+          <strong className="heading-sm" style={{ fontSize: 15 }}>
             {suite.name || 'Suite sem nome'}
           </strong>
         )}
 
         {blockedCount > 0 && (
-          <span style={{ fontSize: 10, fontWeight: 500, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)', padding: '2px 8px', borderRadius: 10 }}>
+          <span className="badge badge-red">
             {blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
           </span>
         )}
 
         {/* Inline mini progress: counter + bar + percentage */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-          <span style={{
-            fontSize: 10, fontWeight: 600,
-            fontFamily: 'var(--font-family-mono)',
-            color: 'var(--color-text-3)',
-          }}>
+        <div className="flex items-center gap-1.5" style={{ marginLeft: 'auto' }}>
+          <span className="text-muted" style={{ fontSize: 10, fontWeight: 600, fontFamily: 'var(--font-family-mono)' }}>
             {completedTests}/{totalTests}
           </span>
-          <div style={{
-            width: 60, height: 4, borderRadius: 2,
-            background: 'var(--color-surface-2)', overflow: 'hidden',
-          }}>
-            <div style={{
-              width: `${progressPct}%`, height: '100%',
-              background: barColor, borderRadius: 2,
-              transition: 'width 0.3s',
-            }} />
+          <div style={{ width: 60, height: 4, borderRadius: 2, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
+            <div style={{ width: `${progressPct}%`, height: '100%', background: barColor, borderRadius: 2, transition: 'width 0.3s' }} />
           </div>
-          <span style={{
-            fontSize: 10, fontWeight: 700,
-            fontFamily: 'var(--font-family-mono)',
-            color: barColor,
-          }}>
+          <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: barColor }}>
             {progressPct}%
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
           <ActionBtn
             onClick={() => { setNameVal(suite.name); setEditingName(true) }}
             title="Renomear suite"
@@ -163,7 +149,7 @@ export function ReleaseSuiteCard({
               onBugRequest={onBugRequest}
             />
           ))}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <div className="flex gap-2" style={{ marginTop: 10 }}>
             <button
               onClick={(e) => { e.stopPropagation(); onAddFeature(suite.id) }}
               style={{ flex: 1, padding: 12, border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
@@ -172,7 +158,8 @@ export function ReleaseSuiteCard({
             </button>
             <label
               title="Importar .feature ou .csv"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', border: '1px solid var(--color-border-md)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap' }}
+              className="btn btn-sm btn-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
             >
               Importar
               <input
@@ -213,16 +200,10 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
       onMouseLeave={() => setHov(false)}
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 6,
-        borderRadius: 6,
-        cursor: 'pointer',
+        border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s', flexShrink: 0,
       }}
     >
       {children}

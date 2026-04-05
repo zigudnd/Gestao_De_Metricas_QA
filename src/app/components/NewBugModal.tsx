@@ -71,17 +71,17 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onCancel()}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      className="modal-backdrop"
     >
-      <div role="dialog" aria-modal="true" aria-label="Novo Bug" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, width: '100%', maxWidth: 520, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div role="dialog" aria-modal="true" aria-label="Novo Bug" className="modal-container modal-md !p-0 !gap-0">
         {/* Header */}
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>🐞 Novo Bug</div>
-          <button onClick={onCancel} aria-label="Fechar" style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-2)', lineHeight: 1 }}>✕</button>
+        <div className="flex items-center justify-between px-6 py-[18px] border-b border-border">
+          <div className="heading-md">🐞 Novo Bug</div>
+          <button onClick={onCancel} aria-label="Fechar" className="btn btn-ghost text-[18px] leading-none">✕</button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', maxHeight: '70vh' }}>
+        <div className="flex flex-col gap-[14px] px-6 py-5 overflow-y-auto max-h-[70vh]">
           <Field label="Descrição *">
             <input
               autoFocus
@@ -89,7 +89,7 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
               value={draft.desc}
               onChange={(e) => set('desc', e.target.value)}
               placeholder="Descreva o bug encontrado…"
-              style={inputStyle}
+              className="input-field"
             />
           </Field>
 
@@ -100,17 +100,17 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
               value={draft.feature}
               onChange={(e) => set('feature', e.target.value)}
               placeholder="Funcionalidade afetada"
-              style={inputStyle}
+              className="input-field"
             />
             <datalist id="new-bug-modal-features">
               {featureNames.map((n) => <option key={n} value={n} />)}
             </datalist>
           </Field>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Stack">
               {addingStack ? (
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div className="flex gap-[6px]">
                   <input
                     autoFocus
                     type="text"
@@ -118,13 +118,13 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
                     onChange={(e) => setNewStackVal(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') confirmNewStack(); if (e.key === 'Escape') cancelNewStack() }}
                     placeholder="Nome da nova stack…"
-                    style={{ ...inputStyle, flex: 1 }}
+                    className="input-field flex-1"
                   />
-                  <button onClick={confirmNewStack} style={btnConfirmSmall} title="Confirmar">✓</button>
-                  <button onClick={cancelNewStack} style={btnCancelSmall} title="Cancelar">✕</button>
+                  <button onClick={confirmNewStack} className="btn btn-success btn-sm" title="Confirmar">✓</button>
+                  <button onClick={cancelNewStack} className="btn btn-outline btn-sm" title="Cancelar">✕</button>
                 </div>
               ) : (
-                <select value={draft.stack} onChange={(e) => handleStackChange(e.target.value)} style={inputStyle}>
+                <select value={draft.stack} onChange={(e) => handleStackChange(e.target.value)} className="select-field">
                   {allStacks.map((s) => <option key={s} value={s}>{s}</option>)}
                   <option disabled style={{ color: 'var(--color-text-3)' }}>──────────</option>
                   <option value={NEW_STACK_SENTINEL}>➕ Nova stack…</option>
@@ -132,20 +132,20 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
               )}
             </Field>
             <Field label="Severidade">
-              <select value={draft.severity} onChange={(e) => set('severity', e.target.value as BugSeverity)} style={inputStyle}>
+              <select value={draft.severity} onChange={(e) => set('severity', e.target.value as BugSeverity)} className="select-field">
                 {(['Crítica', 'Alta', 'Média', 'Baixa'] as BugSeverity[]).map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Status">
-              <select value={draft.status} onChange={(e) => set('status', e.target.value as BugStatus)} style={inputStyle}>
+              <select value={draft.status} onChange={(e) => set('status', e.target.value as BugStatus)} className="select-field">
                 {(['Aberto', 'Em Andamento', 'Falhou', 'Resolvido'] as BugStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Responsável">
-              <input type="text" list="new-bug-modal-assignees" value={draft.assignee} onChange={(e) => set('assignee', e.target.value)} placeholder="Nome do responsável" style={inputStyle} />
+              <input type="text" list="new-bug-modal-assignees" value={draft.assignee} onChange={(e) => set('assignee', e.target.value)} placeholder="Nome do responsável" className="input-field" />
               <datalist id="new-bug-modal-assignees">
                 {assignees.map((a) => <option key={a} value={a} />)}
               </datalist>
@@ -157,7 +157,7 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
               type="date"
               value={draft.openedAt}
               onChange={(e) => set('openedAt', e.target.value)}
-              style={inputStyle}
+              className="input-field"
             />
           </Field>
 
@@ -167,18 +167,18 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
               onChange={(e) => set('notes', e.target.value)}
               placeholder="Contexto adicional, passos para reproduzir…"
               rows={3}
-              style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-family-sans)' }}
+              className="textarea-field"
             />
           </Field>
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button onClick={onCancel} style={btnOutline}>Cancelar</button>
+        <div className="flex gap-2 justify-end px-6 py-[14px] border-t border-border">
+          <button onClick={onCancel} className="btn btn-outline btn-md">Cancelar</button>
           <button
             onClick={() => canSubmit && onConfirm(draft)}
             disabled={!canSubmit}
-            style={{ ...btnPrimary, opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+            className="btn btn-primary btn-md"
           >
             Criar Bug
           </button>
@@ -190,72 +190,9 @@ export function NewBugModal({ featureNames, assignees, stacks = [], initialDraft
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</label>
+    <div className="flex flex-col gap-[5px]">
+      <label className="section-label !mb-0">{label}</label>
       {children}
     </div>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontSize: 13,
-  color: 'var(--color-text)',
-  background: 'var(--color-bg)',
-  fontFamily: 'var(--font-family-sans)',
-  boxSizing: 'border-box',
-}
-
-const btnPrimary: React.CSSProperties = {
-  padding: '7px 18px',
-  background: 'var(--color-blue)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-  flexShrink: 0,
-  transition: 'all 0.15s',
-}
-
-const btnOutline: React.CSSProperties = {
-  padding: '7px 18px',
-  background: 'transparent',
-  color: 'var(--color-text-2)',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-  transition: 'all 0.15s',
-}
-
-const btnConfirmSmall: React.CSSProperties = {
-  padding: '0 10px',
-  background: 'var(--color-green)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-  flexShrink: 0,
-}
-
-const btnCancelSmall: React.CSSProperties = {
-  padding: '0 10px',
-  background: 'transparent',
-  color: 'var(--color-text-2)',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-  flexShrink: 0,
 }

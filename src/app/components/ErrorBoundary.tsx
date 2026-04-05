@@ -32,26 +32,18 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
       return (
-        <div style={{
-          padding: '32px 24px', textAlign: 'center',
-          background: 'var(--color-red-light)', borderRadius: 12,
-          border: '1px solid var(--color-red-mid)', margin: 16,
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-red)', marginBottom: 8 }}>
+        <div className="msg-error m-4 p-8 text-center rounded-[12px]">
+          <div className="text-[14px] font-bold text-red mb-2">
             Algo deu errado{this.props.moduleName ? ` em ${this.props.moduleName}` : ''}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginBottom: 12 }}>
+          <div className="text-small mb-3">
             {this.state.error?.message || 'Erro inesperado'}
           </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null, retryCount: this.state.retryCount + 1 })}
             aria-label="Tentar novamente"
-            style={{
-              padding: '7px 16px', borderRadius: 7, border: 'none',
-              background: 'var(--color-red)', color: '#fff',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-            }}
+            className="btn btn-sm"
+            style={{ background: 'var(--color-red)', color: '#fff' }}
           >
             Tentar novamente
           </button>

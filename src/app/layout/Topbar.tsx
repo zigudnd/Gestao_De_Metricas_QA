@@ -86,22 +86,24 @@ export function Topbar() {
   const crumbs = getBreadcrumb()
 
   return (
-    <header style={headerStyle}>
+    <header className="h-[52px] bg-surface border-b border-border flex items-center justify-between px-6 shrink-0">
       {/* Breadcrumb */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-2)' }}>
+      <nav className="flex items-center gap-[6px] text-[13px] text-text-2">
         {crumbs.map((crumb, i) => (
-          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {i > 0 && <span style={{ opacity: 0.35 }}>/</span>}
+          <span key={i} className="flex items-center gap-[6px]">
+            {i > 0 && <span className="opacity-35">/</span>}
             {crumb.path ? (
               <span
                 onClick={() => navigate(crumb.path!)}
-                className="topbar-breadcrumb-link"
-                style={{ cursor: 'pointer', fontWeight: 500, transition: 'color 0.15s' }}
+                className="cursor-pointer font-medium transition-colors duration-150 hover:text-text"
               >
                 {crumb.label}
               </span>
             ) : (
-              <span style={{ color: i === crumbs.length - 1 ? 'var(--color-text)' : 'var(--color-text-2)', fontWeight: 500 }}>
+              <span
+                className="font-medium"
+                style={{ color: i === crumbs.length - 1 ? 'var(--color-text)' : 'var(--color-text-2)' }}
+              >
                 {crumb.label}
               </span>
             )}
@@ -109,60 +111,61 @@ export function Topbar() {
         ))}
       </nav>
 
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
       {/* Ações contextuais */}
       {isDashboard && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div className="flex items-center gap-1">
 
           {/* 1. Voltar — ghost */}
-          <BtnGhost onClick={() => navigate('/sprints')}>← Voltar</BtnGhost>
+          <button onClick={() => navigate('/sprints')} className="btn btn-ghost">← Voltar</button>
 
           {/* Separador */}
-          <div style={{ width: 1, height: 20, background: 'var(--color-border)', opacity: 0.5, margin: '0 4px' }} />
+          <div className="w-px h-5 bg-border opacity-50 mx-1" />
 
           {/* 2. Exportar dashboard — filled-secondary */}
-          <BtnSecondary onClick={() => exportToImage()}>↑ Gerar relatório da sprint</BtnSecondary>
+          <button onClick={() => exportToImage()} className="btn btn-outline btn-sm">↑ Gerar relatório da sprint</button>
 
           {/* 3. JSON btn-group */}
-          <div style={btnGroupWrapper}>
-            <BtnGroupItem
+          <div className="inline-flex border border-border rounded-[8px] overflow-hidden">
+            <button
               onClick={() => sprintState && exportJSON(sprintState)}
               title="Exportar JSON"
-              position="left"
+              className="btn btn-sm !rounded-none !rounded-l-[8px] !border-r !border-border"
+              style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
             >
               ↑ Exportar
-            </BtnGroupItem>
-            <BtnGroupItem
-              as="label"
+            </button>
+            <label
               title="Importar JSON"
-              position="right"
+              className="btn btn-sm !rounded-none !rounded-r-[8px] cursor-pointer"
+              style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
             >
               ↓ Importar
               <input
                 ref={importInputRef}
                 type="file"
                 accept=".json"
-                style={{ display: 'none' }}
+                className="hidden"
                 onChange={handleImport}
               />
-            </BtnGroupItem>
+            </label>
           </div>
 
           {/* 4. Termo de conclusão — outline discreto */}
-          <BtnOutlineSubtle onClick={() => setShowTermo(true)}>
+          <button onClick={() => setShowTermo(true)} className="btn btn-outline btn-sm">
             📋 Termo de conclusão
-          </BtnOutlineSubtle>
+          </button>
 
           {/* 5. Concluir / Reativar */}
           {isConcluida ? (
-            <BtnOutlineSubtle onClick={handleReativar} title="Reativar esta sprint">
+            <button onClick={handleReativar} title="Reativar esta sprint" className="btn btn-outline btn-sm">
               ↩ Reativar sprint
-            </BtnOutlineSubtle>
+            </button>
           ) : (
-            <BtnFilledPrimary onClick={() => setShowConfirmConcluir(true)} title="Marcar esta sprint como concluída">
+            <button onClick={() => setShowConfirmConcluir(true)} title="Marcar esta sprint como concluída" className="btn btn-primary btn-sm font-semibold">
               ✓ Concluir sprint
-            </BtnFilledPrimary>
+            </button>
           )}
 
         </div>
@@ -177,214 +180,44 @@ export function Topbar() {
       {showConfirmConcluir && (
         <div
           onClick={() => setShowConfirmConcluir(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="modal-backdrop"
         >
-          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Concluir Sprint" style={{
-            background: 'var(--color-surface)',
-            borderRadius: 14,
-            padding: 24,
-            width: '100%',
-            maxWidth: 420,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Concluir Sprint"
+            className="modal-container modal-sm"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="heading-md">
                 Concluir Sprint
               </h2>
               <button
                 onClick={() => setShowConfirmConcluir(false)}
                 aria-label="Fechar"
-                style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--color-text-2)', cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
+                className="btn btn-ghost text-[20px] leading-none px-1"
               >
                 ×
               </button>
             </div>
-            <p style={{ fontSize: 14, color: 'var(--color-text)', lineHeight: 1.6, marginBottom: 20 }}>
+            <p className="text-body mb-5">
               Deseja marcar esta sprint como <strong>concluída</strong>? Ela será movida para a seção de sprints encerradas.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowConfirmConcluir(false)}
-                style={modalBtnCancel}
+                className="btn btn-outline btn-md"
               >
                 Cancelar
               </button>
-              <BtnFilledPrimary onClick={handleConcluir}>
+              <button onClick={handleConcluir} className="btn btn-primary btn-md font-semibold">
                 ✓ Confirmar conclusão
-              </BtnFilledPrimary>
+              </button>
             </div>
           </div>
         </div>
       )}
-      <style>{`
-        .topbar-breadcrumb-link:hover { color: var(--color-text) !important; }
-        .topbar-btn-ghost:hover { background: var(--color-bg) !important; }
-        .topbar-btn-secondary:hover { background: var(--color-border) !important; }
-        .topbar-btn-outline:hover { background: var(--color-bg) !important; }
-        .topbar-btn-primary:hover { background: var(--color-blue-text) !important; }
-        .topbar-btn-group-item:hover { background: var(--color-border) !important; }
-      `}</style>
     </header>
   )
-}
-
-// ─── Micro-components ─────────────────────────────────────────────────────────
-
-function BtnGhost({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="topbar-btn-ghost"
-      style={{
-        ...btnBase,
-        background: 'transparent',
-        color: 'var(--color-text-2)',
-        border: 'none',
-        transition: 'background 0.12s',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function BtnSecondary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="topbar-btn-secondary"
-      style={{
-        ...btnBase,
-        background: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        border: '0.5px solid var(--color-border)',
-        transition: 'background 0.12s',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function BtnOutlineSubtle({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="topbar-btn-outline"
-      style={{
-        ...btnBase,
-        background: 'transparent',
-        color: 'var(--color-text-2)',
-        border: '0.5px solid var(--color-border)',
-        transition: 'background 0.12s',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function BtnFilledPrimary({ children, onClick, title }: React.PropsWithChildren<{ onClick?: () => void; title?: string }>) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="topbar-btn-primary"
-      style={{
-        ...btnBase,
-        background: 'var(--color-blue)',
-        color: '#fff',
-        border: 'none',
-        fontWeight: 600,
-        transition: 'background 0.12s',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-type BtnGroupItemProps = React.PropsWithChildren<{
-  onClick?: () => void
-  title?: string
-  position: 'left' | 'right'
-  as?: 'button' | 'label'
-}>
-
-function BtnGroupItem({ children, onClick, title, position, as: Tag = 'button' }: BtnGroupItemProps) {
-  return (
-    <Tag
-      onClick={onClick}
-      title={title}
-      className="topbar-btn-group-item"
-      style={{
-        ...btnBase,
-        background: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        border: 'none',
-        ...(position === 'left'
-          ? { borderRadius: '8px 0 0 8px', borderRight: '0.5px solid var(--color-border)' }
-          : { borderRadius: '0 8px 8px 0' }),
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        userSelect: 'none' as const,
-        transition: 'background 0.12s',
-      }}
-    >
-      {children}
-    </Tag>
-  )
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const headerStyle: React.CSSProperties = {
-  height: 52,
-  background: 'var(--color-surface)',
-  borderBottom: '1px solid var(--color-border)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 24px',
-  flexShrink: 0,
-}
-
-const btnBase: React.CSSProperties = {
-  padding: '6px 14px',
-  borderRadius: 8,
-  fontSize: 13,
-  fontWeight: 500,
-  fontFamily: 'var(--font-family-sans)',
-  cursor: 'pointer',
-  lineHeight: 1.4,
-  whiteSpace: 'nowrap',
-  transition: 'background 0.12s',
-}
-
-const btnGroupWrapper: React.CSSProperties = {
-  display: 'inline-flex',
-  border: '0.5px solid var(--color-border)',
-  borderRadius: 8,
-  overflow: 'hidden',
-}
-
-const modalBtnCancel: React.CSSProperties = {
-  padding: '7px 16px',
-  background: 'transparent',
-  color: 'var(--color-text)',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontWeight: 500,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
 }

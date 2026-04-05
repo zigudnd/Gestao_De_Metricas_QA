@@ -33,28 +33,27 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
   }
 
   return (
-    <div style={{
+    <div className="mb-3" style={{
       border: '0.5px solid var(--color-border)',
       borderLeft: `4px solid ${color}`,
-      borderRadius: 10, overflow: 'hidden', marginBottom: 12,
+      borderRadius: 10, overflow: 'hidden',
     }}>
       {/* Header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center gap-2.5"
         style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
           padding: '12px 16px', border: 'none', background: 'none',
           cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
         }}
       >
-        <span style={{
+        <span className="text-muted" style={{
           fontSize: 10, transition: 'transform 0.15s', display: 'inline-block',
           transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-          color: 'var(--color-text-3)',
         }}>
           ▼
         </span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+        <span className="heading-sm">
           {title}
         </span>
         <span style={{
@@ -68,18 +67,18 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
       {!collapsed && (
         <div style={{ padding: '0 16px 14px' }}>
           {items.length === 0 && (
-            <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic', margin: '0 0 10px' }}>
+            <p className="text-small text-muted" style={{ fontStyle: 'italic', margin: '0 0 10px' }}>
               Nenhum item. Adicione o primeiro criterio.
             </p>
           )}
 
           {/* Items list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="flex flex-col gap-1">
             {items.map((item, idx) => (
               <div
                 key={idx}
+                className="flex items-start gap-2"
                 style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 8,
                   padding: '6px 8px', borderRadius: 6,
                   background: 'var(--color-surface)',
                 }}
@@ -94,28 +93,25 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
                     onChange={(e) => setEditText(e.target.value)}
                     onBlur={() => saveEdit(idx)}
                     onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(idx); if (e.key === 'Escape') setEditingIdx(null) }}
+                    className="input-field flex-1"
                     style={{
-                      flex: 1, fontSize: 13, color: 'var(--color-text)',
-                      border: '1px solid var(--color-blue)', borderRadius: 4,
-                      padding: '2px 6px', outline: 'none', background: 'var(--color-bg)',
-                      fontFamily: 'var(--font-family-sans)',
+                      borderColor: 'var(--color-blue)',
+                      padding: '2px 6px',
                     }}
                   />
                 ) : (
                   <span
                     onClick={() => startEdit(idx)}
-                    style={{ flex: 1, fontSize: 13, color: 'var(--color-text)', cursor: 'text', lineHeight: 1.5 }}
+                    className="flex-1" style={{ fontSize: 13, cursor: 'text', lineHeight: 1.5 }}
                   >
                     {item}
                   </span>
                 )}
                 <button
                   onClick={() => onRemove(idx)}
-                  className="combinados-remove-btn"
+                  className="combinados-remove-btn btn btn-ghost"
                   style={{
-                    width: 22, height: 22, borderRadius: 4, border: 'none',
-                    background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
-                    fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 22, height: 22, padding: 0,
                     flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
                   }}
                   title="Remover"
@@ -127,27 +123,22 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
           </div>
 
           {/* Add form */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <div className="flex gap-2 mt-2.5">
             <input
               value={newItem}
               onChange={(e) => setNewItem(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
               placeholder={placeholder}
-              style={{
-                flex: 1, padding: '6px 10px', fontSize: 12,
-                border: '1px solid var(--color-border-md)', borderRadius: 6,
-                background: 'var(--color-bg)', color: 'var(--color-text)',
-                outline: 'none', fontFamily: 'var(--font-family-sans)',
-              }}
+              className="input-field flex-1"
+              style={{ padding: '6px 10px', fontSize: 12 }}
             />
             <button
               onClick={handleAdd}
               disabled={!newItem.trim()}
+              className="btn btn-sm"
               style={{
-                padding: '6px 14px', borderRadius: 6, border: 'none',
                 background: newItem.trim() ? color : 'var(--color-border)',
-                color: '#fff', fontSize: 12, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'not-allowed',
-                fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                color: '#fff', whiteSpace: 'nowrap',
               }}
             >
               + Add

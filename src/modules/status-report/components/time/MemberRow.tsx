@@ -74,61 +74,51 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
       borderRadius: 8, overflow: 'hidden',
     }}>
       {/* Main row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px' }}>
+      <div className="flex items-center gap-2.5" style={{ padding: '8px 12px' }}>
         {/* Avatar */}
-        <div style={{
+        <div className="flex items-center justify-center" style={{
           width: 32, height: 32, borderRadius: '50%',
           background: cor.bg, color: cor.text,
           border: `0.5px solid ${cor.text}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 12, fontWeight: 600, flexShrink: 0,
         }}>
           {getIniciais(membro.nome)}
         </div>
 
         {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span style={{ fontSize: 13, fontWeight: 500 }}>
               {membro.nome}
             </span>
             {membro.papel && (
-              <span style={{
-                fontSize: 10, color: cor.text, background: cor.bg,
-                padding: '1px 8px', borderRadius: 8, fontWeight: 600,
+              <span className="badge" style={{
+                color: cor.text, background: cor.bg,
               }}>
                 {membro.papel}
               </span>
             )}
             {membro.squadRole && (
-              <span style={{
-                fontSize: 10, fontWeight: 500, padding: '1px 7px', borderRadius: 8,
-                background: 'var(--color-surface-2)', color: 'var(--color-text-2)',
-                border: '0.5px solid var(--color-border)',
-              }}>
+              <span className="badge badge-neutral">
                 {ROLE_LABEL[membro.squadRole] || membro.squadRole}
               </span>
             )}
             {isTemp && (
-              <span style={{
-                fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 8,
-                background: 'var(--color-amber-light)', color: 'var(--color-amber)',
-                border: '0.5px solid var(--color-amber-mid)',
-              }}>
+              <span className="badge badge-amber">
                 Temporário
               </span>
             )}
           </div>
           {/* Segunda linha */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <div className="flex items-center gap-2" style={{ marginTop: 2 }}>
             {membro.email && (
-              <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>{membro.email}</span>
+              <span className="text-small text-muted">{membro.email}</span>
             )}
             {membro.motivo && (
-              <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>· {membro.motivo}</span>
+              <span className="text-small text-muted">· {membro.motivo}</span>
             )}
             {membro.periodoInicio && membro.periodoFim && (
-              <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>
+              <span className="text-small text-muted">
                 · {membro.periodoInicio.split('-').reverse().slice(0, 2).join('/')} — {membro.periodoFim.split('-').reverse().slice(0, 2).join('/')}
               </span>
             )}
@@ -139,12 +129,11 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
         {isTemp && onUpdate && (
           <button
             onClick={() => setShowStatusEdit(!showStatusEdit)}
+            className="btn btn-sm"
             style={{
-              padding: '3px 8px', borderRadius: 5, border: 'none',
               background: showStatusEdit ? 'var(--color-blue-light)' : 'none',
               color: showStatusEdit ? 'var(--color-blue)' : 'var(--color-text-3)',
-              cursor: 'pointer', fontSize: 11, fontWeight: 600,
-              transition: 'all 0.15s',
+              border: 'none',
             }}
           >
             {showStatusEdit ? 'Fechar' : 'Status'}
@@ -154,11 +143,9 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
           <>
             <button
               onClick={() => onRemove(membro.id)}
-              className="time-member-remove"
+              className="time-member-remove btn btn-ghost"
               style={{
-                width: 22, height: 22, borderRadius: 4, border: 'none',
-                background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
-                fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 22, height: 22, padding: 0,
                 flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
               }}
               title="Remover membro temporario"
@@ -180,38 +167,28 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
           padding: '10px 12px',
           background: 'var(--color-bg)',
         }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <label style={labelSm}>Motivo</label>
-              <select value={motivo} onChange={(e) => setMotivo(e.target.value)} style={inputSm}>
+          <div className="flex gap-2.5 flex-wrap mb-2.5">
+            <div className="flex-1" style={{ minWidth: 140 }}>
+              <label className="section-label">Motivo</label>
+              <select value={motivo} onChange={(e) => setMotivo(e.target.value)} className="input-field">
                 <option value="">Sem motivo</option>
                 {MOTIVOS.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div style={{ flex: 1, minWidth: 120 }}>
-              <label style={labelSm}>Período início</label>
-              <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} style={inputSm} />
+            <div className="flex-1" style={{ minWidth: 120 }}>
+              <label className="section-label">Período início</label>
+              <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} className="input-field" />
             </div>
-            <div style={{ flex: 1, minWidth: 120 }}>
-              <label style={labelSm}>Período fim</label>
-              <input type="date" value={periodoFim} min={periodoInicio || undefined} onChange={(e) => setPeriodoFim(e.target.value)} style={inputSm} />
+            <div className="flex-1" style={{ minWidth: 120 }}>
+              <label className="section-label">Período fim</label>
+              <input type="date" value={periodoFim} min={periodoInicio || undefined} onChange={(e) => setPeriodoFim(e.target.value)} className="input-field" />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button onClick={() => setShowStatusEdit(false)} style={{
-              padding: '5px 12px', borderRadius: 6,
-              border: '1px solid var(--color-border-md)',
-              background: 'transparent', color: 'var(--color-text-2)',
-              fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-            }}>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setShowStatusEdit(false)} className="btn btn-outline btn-sm">
               Cancelar
             </button>
-            <button onClick={saveStatus} style={{
-              padding: '5px 12px', borderRadius: 6, border: 'none',
-              background: 'var(--color-blue)', color: '#fff',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-            }}>
+            <button onClick={saveStatus} className="btn btn-primary btn-sm">
               Salvar
             </button>
           </div>
@@ -219,18 +196,4 @@ export function MemberRow({ membro, onRemove, onUpdate }: MemberRowProps) {
       )}
     </div>
   )
-}
-
-const labelSm: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 500,
-  color: 'var(--color-text-2)', marginBottom: 4,
-  textTransform: 'uppercase', letterSpacing: '0.04em',
-}
-
-const inputSm: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box',
-  padding: '7px 10px', fontSize: 13,
-  border: '0.5px solid var(--color-border)', borderRadius: 6,
-  background: 'var(--color-surface)', color: 'var(--color-text)',
-  outline: 'none', fontFamily: 'var(--font-family-sans)',
 }

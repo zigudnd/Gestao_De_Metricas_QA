@@ -67,26 +67,21 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="anim-fade-up release-squad-card"
+      className="anim-fade-up release-squad-card card"
       style={{
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 10,
-        padding: '16px 18px',
         cursor: 'pointer',
         transition: 'box-shadow 0.15s ease',
         animationDelay: `${index * 0.05}s`,
       }}
     >
       {/* Header: name + status badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', flex: 1 }}>
+      <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
+        <span className="heading-sm" style={{ flex: 1 }}>
           {squad.squadName}
         </span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, padding: '2px 8px',
-          borderRadius: 4, background: SQUAD_STATUS_BG_COLORS[squad.status], color: statusColor,
-          whiteSpace: 'nowrap',
+        <span className="badge" style={{
+          background: SQUAD_STATUS_BG_COLORS[squad.status], color: statusColor,
+          fontWeight: 700,
         }}>
           {statusLabel}
         </span>
@@ -95,15 +90,11 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
       {/* Feature type badge */}
       <div style={{ marginBottom: 12 }}>
         {squad.hasNewFeatures ? (
-          <span style={{
-            fontSize: 10, fontWeight: 600, color: 'var(--color-amber)',
-          }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-amber)' }}>
             ✦ Features novas
           </span>
         ) : (
-          <span style={{
-            fontSize: 10, fontWeight: 600, color: 'var(--color-text-3)',
-          }}>
+          <span className="text-muted" style={{ fontSize: 10, fontWeight: 600 }}>
             ○ Somente regressivo
           </span>
         )}
@@ -111,17 +102,11 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
 
       {/* Section 1: EXECUÇÃO GERAL */}
       <div style={{ marginBottom: 10 }}>
-        <div style={{
-          fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
-          textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4,
-        }}>
+        <div className="section-label">
           EXECUÇÃO GERAL
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            flex: 1, height: 8, borderRadius: 4,
-            background: 'var(--color-surface-2)',
-          }}>
+        <div className="flex items-center gap-2.5">
+          <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--color-surface-2)' }}>
             <div style={{
               width: `${Math.min(pct, 100)}%`, height: '100%', borderRadius: 4,
               background: barColor, transition: 'width 0.4s ease',
@@ -136,17 +121,12 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
             {pct}%
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)',
-            fontFamily: 'var(--font-family-mono)',
-          }}>
+        <div className="flex items-center gap-1.5" style={{ marginTop: 3 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)', fontFamily: 'var(--font-family-mono)' }}>
             {metrics.executedTests}/{metrics.totalTests}
           </span>
           {metrics.failedTests > 0 && (
-            <span style={{
-              fontSize: 10, fontWeight: 700, color: 'var(--color-red)',
-            }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)' }}>
               {metrics.failedTests} falha{metrics.failedTests > 1 ? 's' : ''}
             </span>
           )}
@@ -155,17 +135,11 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
 
       {/* Section 2: APROVACAO (pass rate) */}
       <div style={{ marginBottom: 8 }}>
-        <div style={{
-          fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
-          textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4,
-        }}>
+        <div className="section-label">
           APROVAÇÃO
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            flex: 1, height: 6, borderRadius: 3,
-            background: 'var(--color-surface-2)',
-          }}>
+        <div className="flex items-center gap-2.5">
+          <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--color-surface-2)' }}>
             <div style={{
               width: `${Math.min(metrics.passPct, 100)}%`, height: '100%', borderRadius: 3,
               background: progressColor(metrics.passPct), transition: 'width 0.4s ease',
@@ -181,17 +155,14 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           </span>
         </div>
         <div style={{ marginTop: 3 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)',
-            fontFamily: 'var(--font-family-mono)',
-          }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)', fontFamily: 'var(--font-family-mono)' }}>
             {metrics.passedTests}/{metrics.totalTests} aprovados
           </span>
         </div>
       </div>
 
       {/* Bugs line */}
-      <div style={{ fontSize: 11, color: 'var(--color-text-2)', marginBottom: squad.notes ? 8 : 0 }}>
+      <div className="text-small" style={{ marginBottom: squad.notes ? 8 : 0 }}>
         Bugs: {metrics.openBugs}
         {criticalBugs > 0 && (
           <span style={{ color: 'var(--color-red)', fontWeight: 700 }}>
@@ -207,14 +178,8 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
           padding: '8px 0',
           borderTop: '1px solid var(--color-border)',
         }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 4,
-          }}>
-            <span style={{
-              fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
-              textTransform: 'uppercase', letterSpacing: '0.5px',
-            }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+            <span className="section-label" style={{ marginBottom: 0 }}>
               DISTRIBUIÇÃO
             </span>
             <span style={{
@@ -227,10 +192,7 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
               {rolloutPct}%
             </span>
           </div>
-          <div style={{
-            height: 6, borderRadius: 3,
-            background: 'var(--color-surface-2)',
-          }}>
+          <div style={{ height: 6, borderRadius: 3, background: 'var(--color-surface-2)' }}>
             <div style={{
               width: `${Math.min(rolloutPct!, 100)}%`,
               height: '100%', borderRadius: 3,
@@ -251,8 +213,8 @@ export function ReleaseSquadCard({ squad, metrics, onClick, index = 0, releaseSt
 
       {/* Notes (truncated to 2 lines) */}
       {squad.notes && (
-        <div style={{
-          fontSize: 11, color: 'var(--color-text-3)', fontStyle: 'italic',
+        <div className="text-muted" style={{
+          fontSize: 11, fontStyle: 'italic',
           overflow: 'hidden', display: '-webkit-box',
           WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
         }}>

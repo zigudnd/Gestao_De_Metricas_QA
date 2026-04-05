@@ -28,27 +28,19 @@ export function PermissionsEditor({
   }
 
   return (
-    <div style={{
-      padding: '12px 14px',
-      background: 'var(--color-bg)',
-      border: '0.5px solid var(--color-border)',
-      borderRadius: 8,
-    }}>
-      <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 8, display: 'block' }}>
+    <div className="card-sm" style={{ background: 'var(--color-bg)' }}>
+      <span className="section-label mb-2 block">
         Permissões
       </span>
 
       {/* Grid header */}
-      <div style={{
-        display: 'grid',
+      <div className="grid items-center pb-1.5 mb-1.5" style={{
         gridTemplateColumns: '1fr repeat(3, 64px)',
-        gap: 0, alignItems: 'center',
         borderBottom: '1px solid var(--color-border)',
-        paddingBottom: 6, marginBottom: 6,
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Recurso</span>
+        <span className="text-small" style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Recurso</span>
         {PERMISSION_GROUPS.map((g) => (
-          <label key={g.id} style={{ textAlign: 'center', cursor: disabled ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <label key={g.id} className="flex flex-col items-center gap-0.5 text-center" style={{ cursor: disabled ? 'default' : 'pointer' }}>
             <input
               type="checkbox"
               checked={isGroupAllChecked(g.id)}
@@ -63,20 +55,17 @@ export function PermissionsEditor({
 
       {/* Grid rows */}
       {PERMISSION_RESOURCES.map((res) => (
-        <div key={res} style={{
-          display: 'grid',
+        <div key={res} className="grid items-center py-1.5" style={{
           gridTemplateColumns: '1fr repeat(3, 64px)',
-          gap: 0, alignItems: 'center',
-          padding: '5px 0',
           borderBottom: '0.5px solid var(--color-border)',
         }}>
-          <span style={{ fontSize: 12, color: 'var(--color-text)', fontWeight: 500 }}>
+          <span className="text-small" style={{ fontWeight: 500, color: 'var(--color-text)' }}>
             {RESOURCE_LABELS[res]}
           </span>
           {PERMISSION_GROUPS.map((g) => {
             const key = `${g.id}_${res}` as keyof MemberPermissions
             return (
-              <div key={g.id} style={{ textAlign: 'center' }}>
+              <div key={g.id} className="text-center">
                 <input
                   type="checkbox"
                   checked={value[key] ?? false}

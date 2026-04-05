@@ -148,14 +148,11 @@ function radarOptions(title: string) {
 
 const ChartCard = memo(function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
-    <div style={{
-      background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: 12,
-      padding: '18px 20px 20px',
-      gridColumn: fullWidth ? '1 / -1' : undefined,
-    }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>{title}</div>
+    <div
+      className="card"
+      style={{ gridColumn: fullWidth ? '1 / -1' : undefined }}
+    >
+      <div className="text-[13px] font-bold text-[var(--color-text)] mb-4">{title}</div>
       {children}
     </div>
   )
@@ -190,9 +187,9 @@ export function ComparePage() {
 
   if (items.length === 0) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
-        <p style={{ color: 'var(--color-text-2)', fontSize: 14 }}>Nenhuma sprint encontrada para comparação.</p>
-        <button onClick={() => navigate('/sprints')} style={btnOutline}>← Voltar</button>
+      <div className="max-w-[900px] mx-auto py-10 px-5 text-center">
+        <p className="text-body">Nenhuma sprint encontrada para comparação.</p>
+        <button onClick={() => navigate('/sprints')} className="btn btn-outline btn-md mt-4">← Voltar</button>
       </div>
     )
   }
@@ -328,86 +325,100 @@ export function ComparePage() {
   }
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 0 48px' }}>
+    <div className="max-w-[1280px] mx-auto pb-12">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button onClick={() => navigate('/sprints')} style={btnOutline}>← Voltar</button>
+      <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/sprints')} className="btn btn-outline btn-md">← Voltar</button>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Comparar Sprints</h1>
-            <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 3, marginBottom: 0 }}>
+            <h1 className="heading-lg !text-xl">Comparar Sprints</h1>
+            <p className="text-body mt-0.5">
               {items.length} sprint{items.length !== 1 ? 's' : ''} · Evolução do time
             </p>
           </div>
         </div>
-        <button onClick={handleExport} style={btnPrimary}>📸 Exportar PNG</button>
+        <button onClick={handleExport} className="btn btn-primary btn-md font-semibold">📸 Exportar PNG</button>
       </div>
 
       {/* Exportável */}
       <div ref={contentRef}>
 
         {/* Legenda */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+        <div className="flex flex-wrap gap-2.5 mb-6">
           {items.map((item, i) => (
-            <div key={item.entry.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-surface)', border: `2px solid ${PALETTE[i % PALETTE.length]}33`, borderRadius: 10, padding: '7px 14px' }}>
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: PALETTE[i % PALETTE.length], flexShrink: 0 }} />
+            <div
+              key={item.entry.id}
+              className="flex items-center gap-2 bg-[var(--color-surface)] rounded-[10px] py-[7px] px-3.5"
+              style={{ border: `2px solid ${PALETTE[i % PALETTE.length]}33` }}
+            >
+              <div
+                className="w-3 h-3 rounded-full shrink-0"
+                style={{ background: PALETTE[i % PALETTE.length] }}
+              />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>{item.entry.title}</div>
+                <div className="text-xs font-bold text-[var(--color-text)]">{item.entry.title}</div>
                 {item.entry.startDate && (
-                  <div style={{ fontSize: 11, color: 'var(--color-text-3)' }}>
+                  <div className="text-[11px] text-[var(--color-text-3)]">
                     {item.entry.startDate}{item.entry.endDate ? ` → ${item.entry.endDate}` : ''}
                   </div>
                 )}
               </div>
               {item.entry.status === 'concluida' && (
-                <span style={{ fontSize: 10, fontWeight: 700, background: '#d1fae5', color: '#065f46', padding: '2px 6px', borderRadius: 10 }}>✅ Concluída</span>
+                <span className="badge badge-green">✅ Concluída</span>
               )}
             </div>
           ))}
         </div>
 
         {/* KPI Table */}
-        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden', marginBottom: 32 }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>📊 Tabela Comparativa de KPIs</span>
-            <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>Δ = variação entre primeira e última sprint</span>
+        <div className="card !p-0 overflow-hidden mb-8">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+            <span className="text-[13px] font-bold text-[var(--color-text)]">📊 Tabela Comparativa de KPIs</span>
+            <span className="text-[11px] text-[var(--color-text-3)]">Δ = variação entre primeira e última sprint</span>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px]">
               <thead>
-                <tr style={{ background: 'var(--color-bg)' }}>
-                  <th style={thStyle}>KPI</th>
+                <tr className="bg-[var(--color-bg)]">
+                  <th className="table-header text-center min-w-[120px]">KPI</th>
                   {items.map((item, i) => (
-                    <th key={item.entry.id} style={thStyle}>
-                      <div style={{ color: PALETTE[i % PALETTE.length], fontWeight: 700 }}>
+                    <th key={item.entry.id} className="table-header text-center min-w-[120px]">
+                      <div style={{ color: PALETTE[i % PALETTE.length] }} className="font-bold">
                         {item.entry.title.length > 20 ? item.entry.title.slice(0, 20) + '…' : item.entry.title}
                       </div>
                       {item.entry.startDate && (
-                        <div style={{ fontSize: 10, fontWeight: 400, color: 'var(--color-text-3)', marginTop: 2 }}>{item.entry.startDate}</div>
+                        <div className="text-[10px] font-normal text-[var(--color-text-3)] mt-0.5">{item.entry.startDate}</div>
                       )}
                     </th>
                   ))}
                   {items.length >= 2 && (
-                    <th style={{ ...thStyle, color: 'var(--color-text-3)', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>Δ</th>
+                    <th className="table-header text-center min-w-[120px] text-[var(--color-text-3)] text-[11px] uppercase tracking-wide">Δ</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {KPI_ROWS.map((row, rowIdx) => (
-                  <tr key={row.key} style={{ background: rowIdx % 2 === 0 ? 'transparent' : 'var(--color-bg)' }}>
-                    <td style={{ padding: '9px 16px', fontWeight: 600, color: 'var(--color-text-2)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' as const }}>
+                  <tr key={row.key} className={rowIdx % 2 === 0 ? '' : 'bg-[var(--color-bg)]'}>
+                    <td className="table-cell font-semibold text-[var(--color-text-2)] whitespace-nowrap">
                       {row.label}
                     </td>
                     {items.map((item) => {
                       const val = item.kpis[row.key] as number
                       return (
-                        <td key={item.entry.id} style={{ padding: '9px 14px', textAlign: 'center' as const, fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: row.colorFn(val), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)' }}>
+                        <td
+                          key={item.entry.id}
+                          className="table-cell text-center font-bold font-[var(--font-family-mono)] border-l border-[var(--color-border)]"
+                          style={{ color: row.colorFn(val) }}
+                        >
                           {val}{row.unit}
                         </td>
                       )
                     })}
                     {items.length >= 2 && (
-                      <td style={{ padding: '9px 14px', textAlign: 'center' as const, fontWeight: 700, fontFamily: 'var(--font-family-mono)', color: deltaColor(row.key), borderBottom: '1px solid var(--color-border)', borderLeft: '1px solid var(--color-border)', fontSize: 12 }}>
+                      <td
+                        className="table-cell text-center font-bold font-[var(--font-family-mono)] border-l border-[var(--color-border)] text-xs"
+                        style={{ color: deltaColor(row.key) }}
+                      >
                         {deltaRow(row.key)}{row.unit}
                       </td>
                     )}
@@ -419,7 +430,7 @@ export function ComparePage() {
         </div>
 
         {/* Charts Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+        <div className="grid grid-cols-2 gap-5">
 
           {/* 1. Radar: perfil de qualidade */}
           <ChartCard title="🕸 Perfil de Qualidade (Radar)">
@@ -494,45 +505,4 @@ export function ComparePage() {
       </div>
     </div>
   )
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const btnOutline: React.CSSProperties = {
-  padding: '7px 16px',
-  background: 'transparent',
-  color: 'var(--color-text)',
-  border: '1px solid var(--color-border-md)',
-  borderRadius: 8,
-  fontWeight: 500,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-  flexShrink: 0,
-  transition: 'all 0.15s',
-}
-
-const btnPrimary: React.CSSProperties = {
-  padding: '7px 16px',
-  background: 'var(--color-blue)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 13,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-family-sans)',
-  transition: 'all 0.15s',
-}
-
-const thStyle: React.CSSProperties = {
-  textAlign: 'center',
-  padding: '10px 14px',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-  borderBottom: '1px solid var(--color-border)',
-  borderLeft: '1px solid var(--color-border)',
-  whiteSpace: 'nowrap',
-  minWidth: 120,
 }

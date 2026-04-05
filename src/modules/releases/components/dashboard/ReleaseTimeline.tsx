@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────���───────────────────────────���──────────────────
 
 interface ReleaseTimelineProps {
   cutoffDate: string
@@ -20,7 +20,7 @@ interface Milestone {
   position: number // 0–100%
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──��──────────────────────────────────────────────────────────────
 
 function parseDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
@@ -44,7 +44,7 @@ function todayISO(): string {
   return `${y}-${m}-${day}`
 }
 
-// ─── Colors ──────────────────────────────────────────────────────────────────
+// ─── Colors ───────���───────────────────────────────────────���──────────────────
 
 const MILESTONE_COLORS: Record<string, string> = {
   cutoff: '#8b5cf6',
@@ -56,7 +56,7 @@ const MILESTONE_COLORS: Record<string, string> = {
 
 const TODAY_COLOR = 'var(--color-blue)'
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────���─────────────────────
 
 export function ReleaseTimeline({
   cutoffDate,
@@ -141,11 +141,7 @@ export function ReleaseTimeline({
 
   if (!data) {
     return (
-      <div style={{
-        padding: '16px 20px', borderRadius: 10,
-        background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-        fontSize: 13, color: 'var(--color-text-3)', textAlign: 'center',
-      }}>
+      <div className="card text-body text-muted" style={{ textAlign: 'center' }}>
         Configure as datas da release para visualizar a timeline.
       </div>
     )
@@ -157,31 +153,24 @@ export function ReleaseTimeline({
   const BAR_TOP = 28
 
   return (
-    <div style={{
-      padding: '20px 20px 12px', borderRadius: 10,
-      background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-    }}>
+    <div className="card" style={{ paddingBottom: 12 }}>
       {/* Status tag */}
       {isPastProduction && (
-        <div style={{
-          display: 'inline-block', fontSize: 10, fontWeight: 700,
-          padding: '2px 8px', borderRadius: 4, marginBottom: 10,
-          background: 'var(--color-green-light)', color: 'var(--color-green)',
-        }}>
+        <span className="badge badge-green" style={{ marginBottom: 10 }}>
           Concluída
-        </div>
+        </span>
       )}
 
       {/* Timeline bar area */}
       <div style={{ position: 'relative', minHeight: BAR_TOP + BAR_HEIGHT + 30, marginBottom: 8 }}>
-        {/* Background bar — rounded pill */}
+        {/* Background bar */}
         <div style={{
           position: 'absolute', top: BAR_TOP, left: 0, right: 0,
           height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2,
           background: 'var(--color-surface-2)',
         }} />
 
-        {/* Fill bar — rounded pill with gradient */}
+        {/* Fill bar */}
         <div style={{
           position: 'absolute', top: BAR_TOP, left: 0,
           height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2,
@@ -195,40 +184,27 @@ export function ReleaseTimeline({
           <div
             key={m.key}
             style={{
-              position: 'absolute',
-              left: `${m.position}%`,
-              transform: 'translateX(-50%)',
-              top: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              position: 'absolute', left: `${m.position}%`, transform: 'translateX(-50%)',
+              top: 0, display: 'flex', flexDirection: 'column', alignItems: 'center',
               width: 'max-content',
             }}
           >
-            {/* Label above */}
             <div style={{
               fontSize: 8, fontWeight: 600, color: m.color,
-              whiteSpace: 'nowrap', marginBottom: 4,
-              textTransform: 'uppercase',
+              whiteSpace: 'nowrap', marginBottom: 4, textTransform: 'uppercase',
             }}>
               {m.label}
             </div>
-
-            {/* Dot — positioned inside the bar */}
             <div style={{
               width: 12, height: 12, borderRadius: '50%',
-              background: m.color,
-              border: '2px solid var(--color-bg)',
+              background: m.color, border: '2px solid var(--color-bg)',
               position: 'relative', zIndex: 2,
               marginTop: (BAR_HEIGHT - 12) / 2,
             }} />
-
-            {/* Date below — show range for homolog */}
             <div style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: 'var(--color-text-2)',
+              fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)',
               fontFamily: 'var(--font-family-mono)',
-              marginTop: (BAR_HEIGHT - 12) / 2 + 4,
-              whiteSpace: 'nowrap',
+              marginTop: (BAR_HEIGHT - 12) / 2 + 4, whiteSpace: 'nowrap',
             }}>
               {m.dateEnd
                 ? `${formatDateBR(m.date)}–${formatDateBR(m.dateEnd)}`
@@ -239,16 +215,11 @@ export function ReleaseTimeline({
 
         {/* Today indicator */}
         {todayPos >= 0 && todayPos <= 100 && !isPastProduction && (
-          <div
-            style={{
-              position: 'absolute',
-              left: `${todayPos}%`,
-              top: BAR_TOP - 12,
-              transform: 'translateX(-50%)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              zIndex: 3,
-            }}
-          >
+          <div style={{
+            position: 'absolute', left: `${todayPos}%`, top: BAR_TOP - 12,
+            transform: 'translateX(-50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3,
+          }}>
             <div style={{
               fontSize: 7, fontWeight: 800, color: TODAY_COLOR,
               textTransform: 'uppercase', letterSpacing: '0.5px',
@@ -259,34 +230,24 @@ export function ReleaseTimeline({
             </div>
             <div style={{
               width: 3, height: BAR_HEIGHT + 8,
-              background: TODAY_COLOR,
-              borderRadius: 2,
+              background: TODAY_COLOR, borderRadius: 2,
             }} />
           </div>
         )}
       </div>
 
       {/* Legend */}
-      <div style={{
-        display: 'flex', gap: 14, flexWrap: 'wrap',
-        paddingTop: 8, borderTop: '1px solid var(--color-border)',
-      }}>
+      <div className="flex gap-3.5 flex-wrap" style={{ paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
         {milestones.map((m) => (
-          <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10 }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: m.color, flexShrink: 0,
-            }} />
-            <span style={{ color: 'var(--color-text-2)', fontWeight: 500 }}>{m.label}</span>
+          <div key={m.key} className="flex items-center gap-1.5" style={{ fontSize: 10 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color, flexShrink: 0 }} />
+            <span className="text-small" style={{ fontWeight: 500 }}>{m.label}</span>
           </div>
         ))}
         {!isPastProduction && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10 }}>
-            <span style={{
-              width: 8, height: 2,
-              background: TODAY_COLOR, flexShrink: 0,
-            }} />
-            <span style={{ color: 'var(--color-text-2)', fontWeight: 500 }}>Hoje</span>
+          <div className="flex items-center gap-1.5" style={{ fontSize: 10 }}>
+            <span style={{ width: 8, height: 2, background: TODAY_COLOR, flexShrink: 0 }} />
+            <span className="text-small" style={{ fontWeight: 500 }}>Hoje</span>
           </div>
         )}
       </div>

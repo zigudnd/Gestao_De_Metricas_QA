@@ -34,16 +34,11 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{
-      padding: '12px 14px',
-      background: 'var(--color-bg)',
-      border: '0.5px solid var(--color-border)',
-      borderRadius: 8,
-    }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: error ? 0 : 0 }}>
+    <form onSubmit={handleSubmit} className="card-sm" style={{ background: 'var(--color-bg)' }}>
+      <div className="flex gap-2 flex-wrap">
         <div style={{ flex: 2, minWidth: 140 }}>
-          <label style={labelSm}>Membro</label>
-          <select value={membroId} onChange={(e) => setMembroId(e.target.value)} style={inputSm}>
+          <label className="section-label">Membro</label>
+          <select value={membroId} onChange={(e) => setMembroId(e.target.value)} className="select-field">
             <option value="">Selecione...</option>
             {membros.filter((m) => m.ativo).map((m) => (
               <option key={m.id} value={m.id}>{m.nome}</option>
@@ -51,61 +46,33 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
           </select>
         </div>
         <div style={{ flex: 1, minWidth: 100 }}>
-          <label style={labelSm}>Tipo</label>
-          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoOff)} style={inputSm}>
+          <label className="section-label">Tipo</label>
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoOff)} className="select-field">
             {TIPO_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
         <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={labelSm}>Início</label>
-          <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} style={inputSm} />
+          <label className="section-label">Início</label>
+          <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} className="input-field" />
         </div>
         <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={labelSm}>Fim</label>
-          <input type="date" value={fim} min={inicio || undefined} onChange={(e) => setFim(e.target.value)} style={inputSm} />
+          <label className="section-label">Fim</label>
+          <input type="date" value={fim} min={inicio || undefined} onChange={(e) => setFim(e.target.value)} className="input-field" />
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
-          <button type="submit" style={{
-            padding: '7px 16px', borderRadius: 6, border: 'none',
-            background: 'var(--color-blue)', color: '#fff', fontSize: 12,
-            fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-            whiteSpace: 'nowrap',
-          }}>
+        <div className="flex gap-1.5 items-end">
+          <button type="submit" className="btn btn-primary btn-sm" style={{ whiteSpace: 'nowrap' }}>
             Registrar
           </button>
-          <button type="button" onClick={onCancel} style={{
-            padding: '7px 16px', borderRadius: 6,
-            border: '1px solid var(--color-border-md)',
-            background: 'transparent', color: 'var(--color-text-2)',
-            fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-          }}>
+          <button type="button" onClick={onCancel} className="btn btn-outline btn-sm">
             Cancelar
           </button>
         </div>
       </div>
       {error && (
-        <p style={{
-          margin: '8px 0 0', fontSize: 12, color: 'var(--color-red)',
-          background: 'var(--color-red-light)', padding: '6px 10px',
-          borderRadius: 6,
-        }}>
+        <p className="msg-error" style={{ margin: '8px 0 0', fontSize: 12 }}>
           {error}
         </p>
       )}
     </form>
   )
-}
-
-const labelSm: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 500,
-  color: 'var(--color-text-2)', marginBottom: 4,
-  textTransform: 'uppercase', letterSpacing: '0.04em',
-}
-
-const inputSm: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box',
-  padding: '7px 10px', fontSize: 13,
-  border: '0.5px solid var(--color-border)', borderRadius: 6,
-  background: 'var(--color-surface)', color: 'var(--color-text)',
-  outline: 'none', fontFamily: 'var(--font-family-sans)',
 }

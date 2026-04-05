@@ -22,29 +22,6 @@ const STACK_OPTIONS: { value: Stack; label: string }[] = [
   { value: 'back', label: 'Back' },
 ]
 
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 600,
-  color: 'var(--color-text-3)', marginBottom: 3, textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '6px 8px', borderRadius: 6,
-  border: '1px solid var(--color-border-md)', fontSize: 13,
-  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-}
-
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  padding: '6px 28px 6px 8px',
-  cursor: 'pointer',
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 8px center',
-}
-
 function formatDate(iso: string): string {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-')
@@ -79,46 +56,34 @@ export function ItemDetailPanel({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+        className="flex flex-col"
         style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 420, maxWidth: '95vw',
-        background: 'var(--color-surface)',
-        borderLeft: '1px solid var(--color-border)',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
-        zIndex: 1000,
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
-        outline: 'none',
-      }}>
+          position: 'fixed', top: 0, right: 0, bottom: 0,
+          width: 420, maxWidth: '95vw',
+          background: 'var(--color-surface)',
+          borderLeft: '1px solid var(--color-border)',
+          boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
+          zIndex: 1000,
+          overflow: 'hidden',
+          outline: 'none',
+        }}
+      >
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 16px', borderBottom: '1px solid var(--color-border)',
-        }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>Detalhes do item</span>
-          <div style={{ display: 'flex', gap: 6 }}>
+        <div className="flex items-center justify-between" style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border)' }}>
+          <span className="heading-sm">Detalhes do item</span>
+          <div className="flex gap-1.5">
             <button
               onClick={() => setShowDeleteConfirm(true)}
               aria-label="Excluir"
-              style={{
-                padding: '5px 10px', borderRadius: 6, border: 'none',
-                background: 'var(--color-red-light)', color: 'var(--color-red)', fontSize: 11,
-                fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-                transition: 'all 0.15s',
-              }}
+              className="btn btn-destructive"
             >
               Excluir
             </button>
             <button
               onClick={onClose}
               aria-label="Fechar"
-              style={{
-                width: 28, height: 28, borderRadius: 6, border: 'none',
-                background: 'var(--color-surface-2)', cursor: 'pointer',
-                fontSize: 14, color: 'var(--color-text-2)', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s',
-              }}
+              className="btn btn-ghost flex items-center justify-center"
+              style={{ width: 28, height: 28 }}
             >
               ×
             </button>
@@ -126,74 +91,73 @@ export function ItemDetailPanel({
         </div>
 
         {/* Computed dates bar */}
-        <div style={{
+        <div className="grid gap-2" style={{
           padding: '12px 16px', background: 'var(--color-surface-2)',
           borderBottom: '1px solid var(--color-border)',
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8,
+          gridTemplateColumns: '1fr 1fr 1fr 1fr',
         }}>
           <div>
-            <div style={labelStyle}>Início</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(computed.start)}</div>
+            <div className="section-label">Início</div>
+            <div className="heading-sm">{formatDate(computed.start)}</div>
           </div>
           <div>
-            <div style={labelStyle}>Fim</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(computed.end)}</div>
+            <div className="section-label">Fim</div>
+            <div className="heading-sm">{formatDate(computed.end)}</div>
           </div>
           <div>
-            <div style={labelStyle}>Duração</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{duration > 0 ? `${duration} dias` : '—'}</div>
+            <div className="section-label">Duração</div>
+            <div className="heading-sm">{duration > 0 ? `${duration} dias` : '—'}</div>
           </div>
           <div>
-            <div style={labelStyle}>Status</div>
+            <div className="section-label">Status</div>
             {computed.isLate ? (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-red-light)', color: 'var(--color-red)', fontWeight: 700 }}>
+              <span className="badge badge-red" style={{ fontWeight: 700 }}>
                 EM ATRASO
               </span>
             ) : computed.isCycle ? (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', fontWeight: 700 }}>
+              <span className="badge badge-yellow" style={{ fontWeight: 700 }}>
                 CICLO
               </span>
             ) : (
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-green)' }}>OK</span>
+              <span className="heading-sm" style={{ color: 'var(--color-green)' }}>OK</span>
             )}
           </div>
         </div>
 
         {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="flex-1 flex flex-col gap-3.5" style={{ overflowY: 'auto', padding: 16 }}>
           {/* Title */}
           <div>
-            <label style={labelStyle}>Título</label>
+            <label className="section-label">Título</label>
             <input
               value={item.title}
               onChange={(e) => onUpdate(item.id, { title: e.target.value })}
-              style={inputStyle}
+              className="input-field"
             />
           </div>
 
           {/* Section + Priority */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={labelStyle}>Seção</label>
+              <label className="section-label">Seção</label>
               <select
                 value={item.section}
                 onChange={(e) => onUpdate(item.id, { section: e.target.value as SectionId })}
-                style={selectStyle}
+                className="select-field"
               >
                 {sections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Prioridade</label>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <label className="section-label">Prioridade</label>
+              <div className="flex gap-1">
                 {(['high', 'medium', 'low'] as Priority[]).map((p) => (
                   <button
                     key={p}
                     onClick={() => onUpdate(item.id, { priority: p })}
                     aria-pressed={item.priority === p}
+                    className="btn btn-sm flex-1"
                     style={{
-                      flex: 1, padding: '5px 0', borderRadius: 5, fontSize: 11, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
                       border: item.priority === p ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                       background: item.priority === p ? 'var(--color-blue-light)' : 'transparent',
                       color: item.priority === p ? 'var(--color-blue-text)' : 'var(--color-text-2)',
@@ -208,8 +172,8 @@ export function ItemDetailPanel({
 
           {/* Stacks */}
           <div>
-            <label style={labelStyle}>Stacks</label>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <label className="section-label">Stacks</label>
+            <div className="flex gap-1">
               {STACK_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -220,9 +184,8 @@ export function ItemDetailPanel({
                     onUpdate(item.id, { stacks: next })
                   }}
                   aria-pressed={item.stacks.includes(opt.value)}
+                  className="btn btn-sm"
                   style={{
-                    padding: '4px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
                     border: item.stacks.includes(opt.value)
                       ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                     background: item.stacks.includes(opt.value)
@@ -238,20 +201,20 @@ export function ItemDetailPanel({
           </div>
 
           {/* Duration + Start + Deadline */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div className="grid grid-cols-3 gap-2.5">
             <div>
-              <label style={labelStyle}>Duração (dias)</label>
+              <label className="section-label">Duração (dias)</label>
               <input
                 type="number" min={1} value={item.durationDays}
                 onChange={(e) => onUpdate(item.id, { durationDays: Math.max(1, parseInt(e.target.value) || 1) })}
-                style={inputStyle}
+                className="input-field"
               />
             </div>
             <div>
-              <label style={labelStyle}>
+              <label className="section-label">
                 Início manual
                 {item.dependsOn.length > 0 && (
-                  <span style={{ fontWeight: 400, fontSize: 9, display: 'block', color: 'var(--color-text-3)' }}>
+                  <span className="text-muted" style={{ fontWeight: 400, fontSize: 9, display: 'block' }}>
                     Calculado pelo predecessor
                   </span>
                 )}
@@ -260,23 +223,24 @@ export function ItemDetailPanel({
                 type="date" value={item.startDate}
                 onChange={(e) => onUpdate(item.id, { startDate: e.target.value })}
                 disabled={item.dependsOn.length > 0}
-                style={{ ...inputStyle, opacity: item.dependsOn.length > 0 ? 0.5 : 1 }}
+                className="input-field"
+                style={{ opacity: item.dependsOn.length > 0 ? 0.5 : 1 }}
               />
             </div>
             <div>
-              <label style={labelStyle}>Deadline fixo</label>
+              <label className="section-label">Deadline fixo</label>
               <input
                 type="date" value={item.deadlineDate}
                 min={computed.start || item.startDate || undefined}
                 onChange={(e) => onUpdate(item.id, { deadlineDate: e.target.value })}
-                style={inputStyle}
+                className="input-field"
               />
             </div>
           </div>
 
           {/* Pct */}
           <div>
-            <label style={labelStyle}>Conclusão: {item.pct}%</label>
+            <label className="section-label">Conclusão: {item.pct}%</label>
             <input
               type="range" min={0} max={100} step={5} value={item.pct}
               onChange={(e) => onUpdate(item.id, { pct: parseInt(e.target.value) })}
@@ -286,26 +250,21 @@ export function ItemDetailPanel({
 
           {/* Resp */}
           <div>
-            <label style={labelStyle}>Responsável</label>
+            <label className="section-label">Responsável</label>
             <input
               value={item.resp}
               onChange={(e) => onUpdate(item.id, { resp: e.target.value })}
-              style={inputStyle}
+              className="input-field"
             />
           </div>
 
           {/* Predecessors */}
           <div>
-            <label style={labelStyle}>Predecessores</label>
+            <label className="section-label">Predecessores</label>
             {predecessors.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+              <div className="flex flex-wrap gap-1 mb-1.5">
                 {predecessors.map((dep) => (
-                  <span key={dep.id} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '3px 8px', borderRadius: 5, fontSize: 11,
-                    background: 'var(--color-blue-light)', color: 'var(--color-blue-text)',
-                    fontWeight: 600,
-                  }}>
+                  <span key={dep.id} className="badge badge-blue flex items-center gap-1" style={{ fontWeight: 600 }}>
                     {dep.title.slice(0, 30)}{dep.title.length > 30 ? '…' : ''}
                     <button
                       onClick={() => onRemoveDependency(item.id, dep.id)}
@@ -326,7 +285,7 @@ export function ItemDetailPanel({
               <select
                 value=""
                 onChange={(e) => { if (e.target.value) onAddDependency(item.id, e.target.value) }}
-                style={{ ...selectStyle, fontSize: 12, color: 'var(--color-text-2)' }}
+                className="select-field text-small"
               >
                 <option value="">+ Adicionar predecessor...</option>
                 {availableDeps.map((dep) => (
@@ -338,23 +297,24 @@ export function ItemDetailPanel({
 
           {/* Notes */}
           <div>
-            <label style={labelStyle}>Notas / sub-itens</label>
+            <label className="section-label">Notas / sub-itens</label>
             <textarea
               value={item.notes}
               onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
               rows={4}
-              style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-family-mono)', fontSize: 12 }}
+              className="textarea-field"
+              style={{ fontFamily: 'var(--font-family-mono)', fontSize: 12 }}
             />
           </div>
 
           {/* Jira */}
           <div>
-            <label style={labelStyle}>Link Jira</label>
+            <label className="section-label">Link Jira</label>
             <input
               value={item.jira}
               onChange={(e) => onUpdate(item.id, { jira: e.target.value })}
               placeholder="https://jira..."
-              style={inputStyle}
+              className="input-field"
             />
           </div>
         </div>
