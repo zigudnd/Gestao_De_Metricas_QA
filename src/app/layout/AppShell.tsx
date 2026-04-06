@@ -8,13 +8,17 @@ import { ErrorBoundary } from '@/app/components/ErrorBoundary'
 import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
 import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
 import { syncAllReleases } from '@/modules/releases/services/releasePersistence'
+import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 
 export function AppShell() {
+  const loadSquads = useActiveSquadStore((s) => s.loadSquads)
+
   useEffect(() => {
     // Ao iniciar o app, sincroniza dados do Supabase para o localStorage.
     syncAllFromSupabase()
     syncStatusReports()
     syncAllReleases()
+    loadSquads()
 
     // Re-sync when coming back online
     function handleOnline() {

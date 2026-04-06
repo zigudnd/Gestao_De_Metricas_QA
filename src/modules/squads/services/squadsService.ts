@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/modules/auth/store/authStore'
+import { logAudit } from '@/lib/auditService'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -237,7 +238,9 @@ export async function createSquad(name: string, description = '', color = '#185F
     squad_color: color,
   })
   if (error) throw new Error(error.message)
-  return data as Squad
+  const squad = data as Squad
+  logAudit('squad', squad.id, 'create', { name: { old: null, new: name } })
+  return squad
 }
 
 export async function updateSquad(squadId: string, fields: { name?: string; description?: string; color?: string }): Promise<void> {
@@ -248,6 +251,7 @@ export async function updateSquad(squadId: string, fields: { name?: string; desc
 export async function deleteSquad(squadId: string): Promise<void> {
   const { error } = await supabase.from('squads').delete().eq('id', squadId)
   if (error) throw error
+  logAudit('squad', squadId, 'delete', {})
 }
 
 // ─── Squad Members ────────────────────────────────────────────────────────────
@@ -278,6 +282,7 @@ export async function addMember(
     if (error.code === '23505') throw new Error('Este usuário já é membro do squad.')
     throw new Error(error.message)
   }
+  logAudit('squad', squadId, 'update', { member_added: { old: null, new: userId } })
 }
 
 export async function updateMemberRole(memberId: string, role: SquadRole): Promise<void> {
@@ -293,6 +298,7 @@ export async function updateMemberPermissions(memberId: string, permissions: Mem
 export async function removeMember(memberId: string): Promise<void> {
   const { error } = await supabase.from('squad_members').delete().eq('id', memberId)
   if (error) throw error
+  logAudit('squad', memberId, 'update', { member_removed: { old: memberId, new: null } })
 }
 
 export async function getMyRole(squadId: string): Promise<SquadRole | null> {
@@ -387,8 +393,11 @@ export async function resetUserPassword(userId: string): Promise<void> {
     },
     body: JSON.stringify({ user_id: userId }),
   })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Erro ao resetar senha')
+  if (res.status === 503) throw new Error('Supabase não configurado no servidor. Reset de senha requer modo colaborativo.')
+  const text = await res.text()
+  let json: Record<string, unknown>
+  try { json = JSON.parse(text) } catch { throw new Error('Resposta inválida do servidor') }
+  if (!res.ok) throw new Error((json.error as string) || 'Erro ao resetar senha')
 }
 
 /** Retorna os squad_ids do usuário logado (para filtrar sprints na Home) */

@@ -161,15 +161,24 @@ export function UsersPanel({
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {usersTab.filter((u) => {
-            if (userFilterRole !== 'all' && u.global_role !== userFilterRole) return false
-            if (userFilterStatus === 'active' && !u.active) return false
-            if (userFilterStatus === 'inactive' && u.active) return false
-            if (!userTabSearch.trim()) return true
-            const q = userTabSearch.toLowerCase().trim()
-            return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-              || u.squads.some((sq) => sq.squad_name.toLowerCase().includes(q))
-          }).map((u) => (
+          {(() => {
+            const filtered = usersTab.filter((u) => {
+              if (userFilterRole !== 'all' && u.global_role !== userFilterRole) return false
+              if (userFilterStatus === 'active' && !u.active) return false
+              if (userFilterStatus === 'inactive' && u.active) return false
+              if (!userTabSearch.trim()) return true
+              const q = userTabSearch.toLowerCase().trim()
+              return u.display_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+                || u.squads.some((sq) => sq.squad_name.toLowerCase().includes(q))
+            })
+            if (filtered.length === 0 && (userTabSearch.trim() || userFilterRole !== 'all' || userFilterStatus !== 'all')) {
+              return (
+                <p style={{ fontSize: 13, color: 'var(--color-text-3)', fontStyle: 'italic', padding: '20px 0', textAlign: 'center' }}>
+                  Nenhum usuário encontrado para os filtros aplicados.
+                </p>
+              )
+            }
+            return filtered.map((u) => (
             <div key={u.id} style={{
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '12px 16px',
@@ -209,14 +218,15 @@ export function UsersPanel({
                 {u.id !== currentUserId && (
                   <>
                     <button onClick={() => setResetPasswordTarget(u)} style={btnGhost} title="Resetar senha para Mudar@123">🔑 Resetar</button>
-                    <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: '#3B6D11' }}>
+                    <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: 'var(--color-green)' }}>
                       {u.active ? 'Desativar' : 'Ativar'}
                     </button>
                   </>
                 )}
               </div>
             </div>
-          ))}
+          ))
+          })()}
         </div>
         </>
       )}

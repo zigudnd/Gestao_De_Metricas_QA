@@ -17,6 +17,7 @@ import {
   createDefaultRelease,
   initRealtimeSubscription,
 } from '../services/releasePersistence'
+import { logAudit } from '@/lib/auditService'
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
@@ -256,9 +257,11 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     const releases = [...get().releases, release]
     const index = getMasterIndex()
     set({ releases, index })
+    logAudit('release', release.id, 'create', { title: { old: null, new: release.title }, version: { old: null, new: release.version } })
   },
 
   updateRelease: (id, fields) => {
+    const original = get().releases.find((r) => r.id === id)
     const releases = get().releases.map((r) => {
       if (r.id !== id) return r
       const updated = { ...r, ...fields, updatedAt: new Date().toISOString() }
@@ -269,6 +272,9 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     })
     const index = getMasterIndex()
     set({ releases, index })
+    if (original && 'rolloutPct' in fields && fields.rolloutPct !== original.rolloutPct) {
+      logAudit('release', id, 'update', { rolloutPct: { old: original.rolloutPct, new: fields.rolloutPct } })
+    }
   },
 
   deleteRelease: (id) => {
@@ -278,6 +284,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     const releases = get().releases.filter((r) => r.id !== id)
     const index = getMasterIndex()
     set({ releases, index })
+    logAudit('release', id, 'delete', {})
   },
 
   getReleaseById: (id) => {
@@ -377,8 +384,9 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
 
   updateStatus: (status, reason = '') => {
     const { release, _commit } = get()
+    const oldStatus = release.status
     const change = {
-      from: release.status,
+      from: oldStatus,
       to: status,
       timestamp: new Date().toISOString(),
       reason,
@@ -388,6 +396,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       status,
       statusHistory: [...release.statusHistory, change],
     })
+    logAudit('release', release.id, 'update', { status: { old: oldStatus, new: status } })
   },
 
   // ── Squads (single-release mode) ───────────────────────────────────────────

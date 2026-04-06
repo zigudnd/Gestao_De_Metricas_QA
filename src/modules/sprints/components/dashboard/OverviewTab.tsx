@@ -263,10 +263,10 @@ export function OverviewTab() {
       </div>
 
       {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
-        <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
-        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
+        <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="var(--color-text-3)" />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : 'var(--color-text-3)'} />
         <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} barColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} highlight={openBugs > 0} />
       </div>
 
@@ -335,7 +335,7 @@ export function OverviewTab() {
       </div>
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <KpiCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" />
         <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
@@ -775,7 +775,7 @@ const HeroCard = memo(function HeroCard({ label, value, sub, valueColor, barColo
       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1.3 }}>{label}</div>
       <div style={{ fontSize: highlight ? 40 : 32, fontWeight: 700, color: valueColor ?? 'var(--color-text)', lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginBottom: 4 }}>{sub}</div>}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: barColor ?? '#6b7280' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: barColor ?? 'var(--color-text-3)' }} />
     </div>
   )
 })

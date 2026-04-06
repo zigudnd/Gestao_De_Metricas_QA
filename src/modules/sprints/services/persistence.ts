@@ -1,5 +1,6 @@
 import type { SprintState, SprintIndexEntry, SprintConfig, Feature, Notes } from '../types/sprint.types'
 import { supabase } from '@/lib/supabase'
+import { logAudit } from '@/lib/auditService'
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
@@ -481,6 +482,7 @@ export async function concludeSprint(sprintId: string): Promise<void> {
   const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'concluida' }
   saveMasterIndex(index)
+  logAudit('sprint', sprintId, 'update', { status: { old: 'ativa', new: 'concluida' } })
   const { error } = await supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
   if (error) {
     // Revert local state on server failure

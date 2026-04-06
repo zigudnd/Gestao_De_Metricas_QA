@@ -180,6 +180,7 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
 
     let state = await loadFromServer(reportId)
     if (!state) state = loadFromLocalStorage(reportId)
+    const isNewReport = !state
 
     if (!state) {
       // New report — seed with demo data only if it's the very first one
@@ -205,6 +206,10 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
       isLoading: false,
       lastSyncedAt: normalized.updatedAt,
     })
+
+    if (isNewReport) {
+      logAudit('status_report', reportId, 'create', { title: { old: null, new: normalized.config.title } })
+    }
 
     // Realtime
     if (_cleanupRealtime) _cleanupRealtime()
@@ -384,8 +389,17 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
   // ── Config ─────────────────────────────────────────────────────────────────
 
   updateConfig: (updates) => {
-    const { config, _commit } = get()
+    const { config, reportId, _commit } = get()
     _commit({ config: { ...config, ...updates } })
+    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    for (const key of Object.keys(updates) as Array<keyof typeof updates>) {
+      if (updates[key] !== config[key]) {
+        changes[key] = { old: config[key], new: updates[key] }
+      }
+    }
+    if (Object.keys(changes).length > 0) {
+      logAudit('status_report', reportId ?? '', 'update', changes)
+    }
   },
 
   // ── UI ─────────────────────────────────────────────────────────────────────

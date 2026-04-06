@@ -19,6 +19,8 @@ import { PermissionsEditor } from '../components/PermissionsEditor'
 import { ProfilesPanel } from '../components/ProfilesPanel'
 import { UsersPanel } from '../components/UsersPanel'
 import { SquadDetail } from '../components/SquadDetail'
+import { ApiKeysPanel } from '../components/ApiKeysPanel'
+import { AuditTrailPanel } from '../components/AuditTrailPanel'
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -48,7 +50,7 @@ export function SquadsPage() {
   const [squads, setSquads] = useState<Squad[]>([])
   const [loading, setLoading] = useState(true)
   const [activeSquad, setActiveSquad] = useState<Squad | null>(null)
-  const [tab, setTab] = useState<'squads' | 'profiles' | 'users'>('squads')
+  const [tab, setTab] = useState<'squads' | 'profiles' | 'users' | 'apikeys' | 'audit'>('squads')
 
   const [members, setMembers] = useState<SquadMember[]>([])
   const [myRole, setMyRole] = useState<SquadRole | null>(null)
@@ -532,8 +534,10 @@ export function SquadsPage() {
           ['squads',   '👥 Squads'],
           ['profiles', '🔐 Perfis de Acesso'],
           ...(isAdmin ? [['users', '👤 Usuários'] as const] : []),
+          ...(isAdmin ? [['apikeys', '🔑 API Keys'] as const] : []),
+          ...(isAdmin ? [['audit', '📋 Audit Trail'] as const] : []),
         ] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)} style={{
+          <button key={t} onClick={() => setTab(t)} role="tab" aria-selected={tab === t} style={{
             padding: '8px 16px', background: 'none', border: 'none',
             borderBottom: tab === t ? '2px solid var(--color-blue)' : '2px solid transparent',
             marginBottom: -1,
@@ -656,6 +660,8 @@ export function SquadsPage() {
                     <button
                       type="button"
                       onClick={() => setActiveSquad(isOpen ? null : s)}
+                      aria-expanded={isOpen}
+                      aria-label={`${isOpen ? 'Recolher' : 'Expandir'} squad ${s.name}`}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 14,
                         padding: '14px 18px', width: '100%',
@@ -742,6 +748,7 @@ export function SquadsPage() {
               <div style={{ marginTop: 28 }}>
                 <button
                   onClick={() => setShowArchived(!showArchived)}
+                  aria-expanded={showArchived}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     background: 'none', border: 'none', cursor: 'pointer',
@@ -841,6 +848,16 @@ export function SquadsPage() {
             handleToggleActive={handleToggleActive}
           />
         )}
+
+        {/* ════ Tab: API Keys ════ */}
+        {tab === 'apikeys' && isAdmin && (
+          <ApiKeysPanel />
+        )}
+
+        {/* ════ Tab: Audit Trail ════ */}
+        {tab === 'audit' && isAdmin && (
+          <AuditTrailPanel />
+        )}
       </div>
 
       {/* ── Modais ────────────────────────────────────────────────────────────── */}
@@ -859,7 +876,7 @@ export function SquadsPage() {
                   <label style={labelSm}>Cor</label>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {SQUAD_COLORS.map((c) => (
-                      <button key={c} type="button" onClick={() => setEditColor(c)} style={{
+                      <button key={c} type="button" onClick={() => setEditColor(c)} aria-label={`Cor ${c}`} aria-pressed={editColor === c} style={{
                         width: 28, height: 28, borderRadius: 7, background: c, border: editColor === c ? '2.5px solid var(--color-text)' : '2px solid transparent',
                         cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
                       }} />
@@ -917,7 +934,7 @@ export function SquadsPage() {
       {showProfileForm && (
         <div style={backdropStyle} onClick={() => setShowProfileForm(false)}>
           <div style={{ ...modalStyle, width: 460 }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 500 }}>{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div><label style={labelSm}>Nome</label><input autoFocus value={profileName} onChange={(e) => setProfileName(e.target.value)} style={inputStyle} required placeholder="Ex: QA Júnior, Stakeholder Avançado" /></div>
               <div><label style={labelSm}>Descrição</label><input value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} style={inputStyle} placeholder="Opcional" /></div>

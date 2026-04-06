@@ -152,12 +152,17 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   lastSaved: 0,
 
   initSprint: (sprintId, loaded) => {
+    const isNew = !getMasterIndex().some((s) => s.id === sprintId)
     const normalized = normalizeState(loaded)
     const computed = computeFields(normalized)
     set({ sprintId, state: computed, activeSuiteFilter: new Set() })
 
     // Garante que a sprint existe no Supabase ao abrir pela primeira vez
     queueRemotePersist(sprintId, computed)
+
+    if (isNew) {
+      logAudit('sprint', sprintId, 'create', { title: { old: null, new: computed.config.title } })
+    }
 
     // Realtime: escuta alterações feitas por outros usuários nesta sprint
     if (_realtimeChannel) supabase.removeChannel(_realtimeChannel)
@@ -212,8 +217,11 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
 
   // ── Config ─────────────────────────────────────────────────────────────────
   updateConfig: (field, value) => {
-    const { state, _commit } = get()
+    const { state, sprintId, _commit } = get()
+    const oldValue = state.config[field]
+    if (oldValue === value) return
     _commit({ ...state, config: { ...state.config, [field]: value } })
+    logAudit('sprint', sprintId, 'update', { [field]: { old: oldValue, new: value } })
   },
 
   // ── Notes & Reports ────────────────────────────────────────────────────────

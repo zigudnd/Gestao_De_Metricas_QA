@@ -155,7 +155,8 @@ export function SquadDetail({
                         <button
                           onClick={() => setDeleteMemberTarget(m)}
                           title={isMe ? 'Sair' : 'Remover'}
-                          style={{ background: 'none', border: 'none', color: '#A32D2D', width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', flexShrink: 0 }}
+                          aria-label={isMe ? 'Sair do squad' : `Remover ${m.profile?.display_name ?? 'membro'}`}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-red)', width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', flexShrink: 0 }}
                           className="sq-btn-remove"
                         >×</button>
                       )}
@@ -208,6 +209,7 @@ export function SquadDetail({
                     <button
                       type="button"
                       onClick={() => { setAddUserId(''); setUserSearch(''); setShowUserDropdown(true) }}
+                      aria-label="Limpar seleção"
                       style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-3)', fontSize: 14, lineHeight: 1, padding: '2px 4px' }}
                     >×</button>
                   )}
@@ -280,7 +282,7 @@ export function SquadDetail({
                 </div>
               </div>
               {addError && (
-                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#A32D2D' }}>{addError}</p>
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-red)' }}>{addError}</p>
               )}
               </div>
               )}
