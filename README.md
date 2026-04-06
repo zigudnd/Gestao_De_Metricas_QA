@@ -177,15 +177,34 @@ O ToStatos suporta tres modos de operacao, escolhidos pela presenca (ou ausencia
 
 ### Modo Offline — somente localStorage
 
-Use este modo para rodar sozinho, sem banco de dados, sem Docker.
+Use este modo para rodar sozinho em qualquer computador, sem banco de dados, sem Docker, sem Supabase.
 
 ```bash
+# 1. Clone o repositorio
+git clone https://github.com/zigudnd/Gestao_De_Metricas_QA.git
+cd Gestao_De_Metricas_QA
+
+# 2. Instale as dependencias
+npm install
+
+# 3. Suba o frontend
 npm run dev:client
 ```
 
 Acesse: **http://localhost:5173**
 
 Dados ficam salvos no `localStorage` do navegador. O sistema de autenticacao nao e ativado — todas as funcionalidades estao disponiveis sem login.
+
+**Opcional — backend Express (persistencia em arquivos JSON locais):**
+
+```bash
+# Em outro terminal
+npm run dev
+```
+
+Isso sobe o server na porta 3000 com storage local na pasta `data/`. Nao precisa de `.env` — o backend detecta automaticamente que Supabase nao esta configurado e usa arquivos locais.
+
+> **Requisitos minimos:** Node.js 18+ e npm 9+. Nenhuma outra ferramenta e necessaria.
 
 ---
 
