@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
@@ -8,52 +8,30 @@ import { ErrorBoundary } from '@/app/components/ErrorBoundary'
 import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
 import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
 import { syncAllReleases } from '@/modules/releases/services/releasePersistence'
-import { flushOfflineQueue as flushSprintQueue } from '@/modules/sprints/services/persistence'
-import { flushOfflineQueue as flushReportQueue } from '@/modules/status-report/services/statusReportPersistence'
-import { flushOfflineQueue as flushReleaseQueue } from '@/modules/releases/services/releasePersistence'
 
 export function AppShell() {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
-  )
-
   useEffect(() => {
     // Ao iniciar o app, sincroniza dados do Supabase para o localStorage.
     syncAllFromSupabase()
     syncStatusReports()
     syncAllReleases()
 
-    // Re-sync when coming back online — first flush queued offline writes, then pull
-    async function handleOnline() {
-      setIsOnline(true)
-      await Promise.allSettled([
-        flushSprintQueue(),
-        flushReportQueue(),
-        flushReleaseQueue(),
-      ])
+    // Re-sync when coming back online
+    function handleOnline() {
       syncAllFromSupabase()
       syncStatusReports()
       syncAllReleases()
     }
-
-    function handleOffline() {
-      setIsOnline(false)
-    }
-
     window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
+    return () => window.removeEventListener('online', handleOnline)
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--color-bg)' }}>
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Topbar />
-        <main className="flex-1 overflow-y-auto pt-6 pb-5 px-6">
+        <main style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
           <ErrorBoundary moduleName="Página">
             <Outlet />
           </ErrorBoundary>
@@ -61,12 +39,6 @@ export function AppShell() {
       </div>
       <SaveToast />
       <ToastContainer />
-      {!isOnline && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg bg-amber-100 border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 shadow-sm">
-          <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-          Offline
-        </div>
-      )}
     </div>
   )
 }

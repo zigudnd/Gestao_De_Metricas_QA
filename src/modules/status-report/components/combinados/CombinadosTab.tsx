@@ -53,68 +53,71 @@ export function CombinadosTab() {
       />
 
       {/* 3. Cerimônias */}
-      <div className="mb-6" style={{
+      <div style={{
         border: '0.5px solid var(--color-border)',
         borderLeft: '4px solid var(--color-yellow)',
-        borderRadius: 10, overflow: 'hidden',
+        borderRadius: 10, overflow: 'hidden', marginBottom: 12,
       }}>
         <button
           onClick={() => setCerCollapsed(!cerCollapsed)}
-          className="w-full flex items-center gap-2.5"
           style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
             padding: '12px 16px', border: 'none', background: 'none',
             cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
           }}
         >
-          <span className="text-muted" style={{
+          <span style={{
             fontSize: 10, transition: 'transform 0.15s', display: 'inline-block',
             transform: cerCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+            color: 'var(--color-text-3)',
           }}>▼</span>
-          <span className="heading-sm">Cerimônias</span>
-          <span className="badge badge-yellow">{cerimonias.length}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Cerimônias</span>
+          <span style={{
+            fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 10,
+            background: 'var(--color-yellow-light)', color: 'var(--color-yellow)',
+          }}>{cerimonias.length}</span>
         </button>
 
         {!cerCollapsed && (
           <div style={{ padding: '0 16px 14px' }}>
             {cerimonias.length === 0 && (
-              <p className="text-small text-muted" style={{ fontStyle: 'italic', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic', margin: '0 0 10px' }}>
                 Nenhuma cerimônia cadastrada.
               </p>
             )}
-            <div className="flex flex-col gap-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {cerimonias.map((c) => (
                 <CeremoniaCard key={c.id} cerimonia={c} onRemove={removeCerimonia} onUpdate={updateCerimonia} />
               ))}
             </div>
 
             {/* Add form */}
-            <div className="flex gap-2 mt-2.5 flex-wrap">
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
               <input
                 value={cerNome} onChange={(e) => setCerNome(e.target.value)}
                 placeholder="Nome (ex: Daily)"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddCerimonia() }}
-                className="input-field"
-                style={{ flex: 2, minWidth: 120, padding: '6px 10px', fontSize: 12 }}
+                style={{ ...inputSm, flex: 2, minWidth: 120 }}
               />
               <input
                 value={cerDia} onChange={(e) => setCerDia(e.target.value)}
                 placeholder="Dia/horário (ex: Seg a Sex — 09h30)"
-                className="input-field"
-                style={{ flex: 3, minWidth: 180, padding: '6px 10px', fontSize: 12 }}
+                style={{ ...inputSm, flex: 3, minWidth: 180 }}
               />
               <input
                 value={cerDuracao} onChange={(e) => setCerDuracao(e.target.value)}
                 placeholder="Duração (ex: 15 min)"
-                className="input-field"
-                style={{ flex: 1, minWidth: 80, padding: '6px 10px', fontSize: 12 }}
+                style={{ ...inputSm, flex: 1, minWidth: 80 }}
               />
               <button
                 onClick={handleAddCerimonia}
                 disabled={!cerNome.trim()}
-                className="btn btn-sm"
                 style={{
+                  padding: '6px 14px', borderRadius: 6, border: 'none',
                   background: cerNome.trim() ? 'var(--color-yellow)' : 'var(--color-border)',
-                  color: '#fff', whiteSpace: 'nowrap',
+                  color: '#fff', fontSize: 12, fontWeight: 600,
+                  cursor: cerNome.trim() ? 'pointer' : 'not-allowed',
+                  fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
                 }}
               >
                 + Add
@@ -125,24 +128,25 @@ export function CombinadosTab() {
       </div>
 
       {/* 4. Story Points */}
-      <div className="mb-6" style={{
+      <div style={{
         border: '0.5px solid var(--color-border)',
         borderLeft: '4px solid var(--color-blue)',
-        borderRadius: 10, overflow: 'hidden',
+        borderRadius: 10, overflow: 'hidden', marginBottom: 12,
       }}>
         <button
           onClick={() => setSpCollapsed(!spCollapsed)}
-          className="w-full flex items-center gap-2.5"
           style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
             padding: '12px 16px', border: 'none', background: 'none',
             cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
           }}
         >
-          <span className="text-muted" style={{
+          <span style={{
             fontSize: 10, transition: 'transform 0.15s', display: 'inline-block',
             transform: spCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+            color: 'var(--color-text-3)',
           }}>▼</span>
-          <span className="heading-sm">Story Points</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Story Points</span>
         </button>
 
         {!spCollapsed && (
@@ -169,4 +173,11 @@ export function CombinadosTab() {
       />
     </div>
   )
+}
+
+const inputSm: React.CSSProperties = {
+  padding: '6px 10px', fontSize: 12,
+  border: '1px solid var(--color-border-md)', borderRadius: 6,
+  background: 'var(--color-bg)', color: 'var(--color-text)',
+  outline: 'none', fontFamily: 'var(--font-family-sans)',
 }

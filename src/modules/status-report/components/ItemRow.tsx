@@ -34,29 +34,39 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
   return (
     <div
       onClick={onClick}
-      className="sr-item-row card-sm flex items-center gap-2.5"
+      className="sr-item-row"
       style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 12px',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
         borderLeft: `3px solid ${PRIORITY_COLORS[item.priority] ?? '#6b7280'}`,
+        borderRadius: 8,
         cursor: 'pointer',
         transition: 'box-shadow 0.15s',
         position: 'relative',
       }}
     >
       {/* Title + stacks */}
-      <div className="flex-1 min-w-0">
-        <div className="heading-sm" style={{
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--color-text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {item.title || 'Sem título'}
         </div>
-        <div className="flex gap-1 mt-1 flex-wrap">
+        <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
           {item.stacks.map((s) => (
-            <span key={s} className="badge badge-neutral">
+            <span key={s} style={{
+              fontSize: 10, padding: '1px 6px', borderRadius: 4,
+              background: 'var(--color-surface-2)', color: 'var(--color-text-2)',
+              fontWeight: 600,
+            }}>
               {STACK_LABELS[s] ?? s}
             </span>
           ))}
           {item.resp && (
-            <span className="text-small text-muted">
+            <span style={{ fontSize: 10, color: 'var(--color-text-3)' }}>
               {item.resp}
             </span>
           )}
@@ -65,7 +75,7 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
 
       {/* Progress */}
       <div style={{ width: 60, flexShrink: 0, textAlign: 'right' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 3 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)', marginBottom: 3 }}>
           {item.pct}%
         </div>
         <div style={{ height: 4, borderRadius: 2, background: 'var(--color-surface-2)' }}>
@@ -79,7 +89,7 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
       </div>
 
       {/* Dates */}
-      <div className="text-small" style={{ width: 90, flexShrink: 0, textAlign: 'right' }}>
+      <div style={{ width: 90, flexShrink: 0, textAlign: 'right', fontSize: 11, color: 'var(--color-text-2)' }}>
         {computed.start && computed.end
           ? `${formatDate(computed.start)} → ${formatDate(computed.end)}`
           : '—'}
@@ -88,17 +98,26 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
       {/* Badges */}
       <div style={{ width: 60, flexShrink: 0, textAlign: 'right' }}>
         {computed.isLate && (
-          <span className="badge badge-red" style={{ fontWeight: 700 }}>
+          <span style={{
+            fontSize: 10, padding: '2px 6px', borderRadius: 4,
+            background: 'var(--color-red-light)', color: 'var(--color-red)', fontWeight: 700,
+          }}>
             ⚠ ATRASO
           </span>
         )}
         {computed.isCycle && (
-          <span className="badge badge-yellow" style={{ fontWeight: 700 }}>
+          <span style={{
+            fontSize: 10, padding: '2px 6px', borderRadius: 4,
+            background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', fontWeight: 700,
+          }}>
             ↻ CICLO
           </span>
         )}
         {!computed.isLate && !computed.isCycle && !computed.start && !computed.end && (
-          <span className="badge badge-neutral">
+          <span style={{
+            fontSize: 10, padding: '2px 6px', borderRadius: 4,
+            background: 'var(--color-surface-2)', color: 'var(--color-text-3)', fontWeight: 600,
+          }}>
             Sem datas
           </span>
         )}
@@ -107,8 +126,9 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
       {/* Move arrows — always visible at low opacity, full on hover */}
       {(onMoveUp || onMoveDown) && (
         <div
-          className="move-arrows flex flex-col gap-0.5"
+          className="move-arrows"
           style={{
+            display: 'flex', flexDirection: 'column', gap: 2,
             opacity: 0.3, transition: 'opacity 0.15s',
             position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
           }}
@@ -119,11 +139,11 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
               onClick={onMoveUp}
               title="Mover para seção anterior"
               aria-label="Mover para seção anterior"
-              className="btn btn-ghost"
               style={{
-                width: 28, height: 28,
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)',
+                width: 28, height: 28, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)', borderRadius: 6,
+                cursor: 'pointer', fontSize: 12, lineHeight: 1,
+                color: 'var(--color-text-2)',
               }}
             >
               ↑
@@ -134,11 +154,11 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
               onClick={onMoveDown}
               title="Mover para próxima seção"
               aria-label="Mover para próxima seção"
-              className="btn btn-ghost"
               style={{
-                width: 28, height: 28,
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)',
+                width: 28, height: 28, border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)', borderRadius: 6,
+                cursor: 'pointer', fontSize: 12, lineHeight: 1,
+                color: 'var(--color-text-2)',
               }}
             >
               ↓

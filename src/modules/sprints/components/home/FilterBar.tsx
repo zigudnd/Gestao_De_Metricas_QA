@@ -26,19 +26,40 @@ export function FilterBar({
   totalCount,
 }: FilterBarProps) {
   return (
-    <div className="card-sm flex items-center gap-4 flex-wrap mb-6">
-      <div className="relative min-w-[200px]">
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-3)] pointer-events-none">🔍</span>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+        padding: '10px 14px',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 10,
+        marginBottom: 18,
+      }}
+    >
+      <div style={{ position: 'relative', minWidth: 200 }}>
+        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--color-text-3)', pointerEvents: 'none' }}>🔍</span>
         <input
           type="text"
           placeholder="Buscar sprint..."
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="input-field !pl-8 !py-1.5"
+          style={{
+            width: '100%',
+            padding: '6px 10px 6px 32px',
+            fontSize: 13,
+            borderRadius: 8,
+            border: '1px solid var(--color-border-md)',
+            background: 'var(--color-bg)',
+            color: 'var(--color-text)',
+            outline: 'none',
+          }}
         />
       </div>
 
-      <div className="w-px h-6 bg-[var(--color-border-md)]" />
+      <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
 
       <FilterGroup
         label="Squad"
@@ -51,7 +72,7 @@ export function FilterBar({
         ))}
       </FilterGroup>
 
-      <div className="w-px h-6 bg-[var(--color-border-md)]" />
+      <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
 
       <FilterGroup
         label="Status"
@@ -66,7 +87,7 @@ export function FilterBar({
 
       {years.length > 0 && (
         <>
-          <div className="w-px h-6 bg-[var(--color-border-md)]" />
+          <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
           <FilterGroup
             label="Ano"
             value={filters.year}
@@ -80,7 +101,7 @@ export function FilterBar({
         </>
       )}
 
-      <div className="w-px h-6 bg-[var(--color-border-md)]" />
+      <div style={{ width: 1, height: 24, background: 'var(--color-border-md)' }} />
 
       <FilterGroup
         label="Tipo"
@@ -97,13 +118,29 @@ export function FilterBar({
         <button
           onClick={() => setFilters({ squad: 'all', status: 'all', year: 'all', search: '', tipo: 'all' })}
           aria-label="Limpar filtros"
-          className="btn btn-outline btn-sm ml-auto !rounded-full"
+          style={{
+            marginLeft: 'auto',
+            fontSize: 12,
+            fontWeight: 600,
+            padding: '4px 10px',
+            borderRadius: 20,
+            border: '1px solid var(--color-border-md)',
+            background: 'transparent',
+            color: 'var(--color-text-2)',
+            cursor: 'pointer',
+          }}
         >
           ✕ Limpar
         </button>
       )}
 
-      <span className={`text-small text-muted ${hasFilters ? '' : 'ml-auto'}`}>
+      <span
+        style={{
+          marginLeft: hasFilters ? 0 : 'auto',
+          fontSize: 12,
+          color: 'var(--color-text-3)',
+        }}
+      >
         {hasFilters
           ? `${filteredCount} de ${totalCount} sprints`
           : `${totalCount} sprint${totalCount !== 1 ? 's' : ''}`}
@@ -124,19 +161,36 @@ function FilterGroup({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="section-label !mb-0 whitespace-nowrap">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'var(--color-text-3)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="select-field !w-auto !py-0.5 !pl-2 !pr-6 text-xs font-medium !rounded-[6px]"
         style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--color-text)',
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border-md)',
+          borderRadius: 6,
+          padding: '3px 24px 3px 8px',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-family-sans)',
+          appearance: 'none',
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right 8px center',
-          appearance: 'none',
         }}
       >
         {children}

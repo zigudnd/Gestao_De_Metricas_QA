@@ -13,25 +13,25 @@ interface DocSection {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="heading-lg mb-4 !mt-0">{children}</h2>
+  return <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12, marginTop: 0 }}>{children}</h2>
 }
 
 function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="heading-sm mb-4 mt-8">{children}</h3>
+  return <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6, marginTop: 16 }}>{children}</h3>
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p className="text-body mb-[10px]">{children}</p>
+  return <p style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.7, margin: '0 0 10px' }}>{children}</p>
 }
 
 function MetricCard({ name, icon, what, why, how }: { name: string; icon: string; what: string; why: string; how?: string }) {
   return (
-    <div className="card-sm mb-4" style={{ background: 'var(--color-bg)' }}>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[20px]">{icon}</span>
-        <strong className="text-[14px] text-text">{name}</strong>
+    <div style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '14px 16px', marginBottom: 12, background: 'var(--color-bg)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 20 }}>{icon}</span>
+        <strong style={{ fontSize: 14, color: 'var(--color-text)' }}>{name}</strong>
       </div>
-      <div className="flex flex-col gap-1">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <P><strong>O que é:</strong> {what}</P>
         <P><strong>Por que medir:</strong> {why}</P>
         {how && <P><strong>Como é calculado:</strong> {how}</P>}
@@ -42,10 +42,7 @@ function MetricCard({ name, icon, what, why, how }: { name: string; icon: string
 
 function Chip({ label, color = 'var(--color-blue)' }: { label: string; color?: string }) {
   return (
-    <span
-      className="inline-block px-[10px] py-[2px] rounded-[20px] text-[11px] font-bold mr-[6px] mb-1"
-      style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
-    >
+    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: `${color}22`, color, border: `1px solid ${color}44`, marginRight: 6, marginBottom: 4 }}>
       {label}
     </span>
   )
@@ -72,7 +69,7 @@ const SECTIONS: DocSection[] = [
           estruturada e baseada em dados sobre a qualidade de cada entrega (QA Metrics Dashboard).
         </P>
         <H3>Principais funcionalidades</H3>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>Gestão de múltiplas Sprints com métricas independentes</li>
           <li>Suites de teste organizadas por plataforma (Android, iOS, BFF, etc.)</li>
           <li>Casos de teste com status, complexidade e cenários Gherkin</li>
@@ -272,7 +269,7 @@ const SECTIONS: DocSection[] = [
         <P>
           Representam telas, fluxos ou módulos do sistema que precisam ser validados. Cada funcionalidade pode ter:
         </P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>Status: <Chip label="Ativa" color="var(--color-green)" /> <Chip label="Bloqueada" color="var(--color-red)" /> <Chip label="Cancelada" color="#6b7280" /></li>
           <li>Imagem de referência (mockup)</li>
           <li>Casos de Teste vinculados</li>
@@ -284,7 +281,7 @@ const SECTIONS: DocSection[] = [
         <P>
           Cada caso representa um cenário de validação. Possui:
         </P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>Status: <Chip label="Pendente" color="var(--color-blue)" /> <Chip label="Concluído" color="var(--color-green)" /> <Chip label="Falhou" color="var(--color-red)" /> <Chip label="Bloqueado" color="var(--color-yellow)" /></li>
           <li>Complexidade: Baixa, Moderada, Alta</li>
           <li>Data de execução (convertida em D1, D2...)</li>
@@ -309,7 +306,7 @@ const SECTIONS: DocSection[] = [
         </P>
 
         <H3>Campos de um Bug</H3>
-        <div className="grid grid-cols-2 gap-[10px]">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             ['ID', 'Identificador único editável (ex: BUG-123456)'],
             ['Descrição', 'Relato do defeito encontrado'],
@@ -323,9 +320,9 @@ const SECTIONS: DocSection[] = [
             ['Retestes', 'Contador de retestes. Incrementado automaticamente ao marcar status como Falhou, ou manualmente pelo QA.'],
             ['Notas', 'Observações, passos para reproduzir, contexto adicional'],
           ].map(([field, desc]) => (
-            <div key={field} className="card-sm" style={{ background: 'var(--color-bg)' }}>
-              <strong className="text-[12px] text-text block mb-1">{field}</strong>
-              <span className="text-small">{desc}</span>
+            <div key={field} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{field}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
             </div>
           ))}
         </div>
@@ -352,14 +349,14 @@ const SECTIONS: DocSection[] = [
           Cada registro contém uma data, o motivo do bloqueio e a quantidade de horas produtivas perdidas.
         </P>
         <H3>Por que registrar blockers?</H3>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>Evidenciar o impacto real de dependências externas no cronograma</li>
           <li>Embasar conversas de retrospectiva com dados concretos</li>
           <li>Alimentar o KPI "Horas Bloqueadas" do dashboard</li>
           <li>Identificar padrões recorrentes de impedimento ao longo das sprints</li>
         </ul>
         <H3>Motivos pré-definidos</H3>
-        <div className="flex flex-wrap gap-[6px] mt-1">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
           {['Ambiente indisponível', 'Bloqueio de dependência externa', 'Falta de requisitos/documentação',
             'Bug crítico impedindo testes', 'Indisponibilidade de recurso humano', 'Aguardando aprovação de deploy'].map((r) => (
             <Chip key={r} label={r} color="#6b7280" />
@@ -385,7 +382,7 @@ const SECTIONS: DocSection[] = [
           ou manualmente pelo QA a qualquer momento.
         </P>
         <H3>Exemplos de uso</H3>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>Registro de escopo removido por decisão do PO</li>
           <li>Acordo de comportamento esperado diferente do especificado</li>
           <li>Confirmação de bug known issue ou won't fix</li>
@@ -407,7 +404,7 @@ const SECTIONS: DocSection[] = [
           É calculado subtraindo penalidades de 100, onde cada fator negativo tem um peso configurável.
         </P>
         <H3>Fatores de penalização</H3>
-        <div className="flex flex-col gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             ['Bugs Críticos', 'Cada bug crítico aberto penaliza o score proporcionalmente ao peso configurado.', '#ef4444'],
             ['Bugs Alta', 'Bugs de alta severidade têm penalidade menor que críticos.', '#f97316'],
@@ -417,21 +414,21 @@ const SECTIONS: DocSection[] = [
             ['Funcionalidades Bloqueadas', 'Cada tela bloqueada reduz o score.', '#ef4444'],
             ['Atraso', 'O percentual de atraso é convertido em penalidade.', '#3b82f6'],
           ].map(([factor, desc, color]) => (
-            <div key={factor as string} className="card-sm flex items-start gap-3" style={{ background: 'var(--color-bg)' }}>
-              <span className="w-[10px] h-[10px] rounded-full shrink-0 mt-[3px]" style={{ background: color as string }} />
+            <div key={factor as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, flexShrink: 0, marginTop: 3 }} />
               <div>
-                <strong className="text-[13px] text-text">{factor as string}</strong>
+                <strong style={{ fontSize: 13, color: 'var(--color-text)' }}>{factor as string}</strong>
                 <P>{desc as string}</P>
               </div>
             </div>
           ))}
         </div>
-        <p className="text-body my-3">Os pesos de cada fator são configuráveis na aba <strong>Configurações</strong> de cada sprint.</p>
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.7, margin: '12px 0 10px' }}>Os pesos de cada fator são configuráveis na aba <strong>Configurações</strong> de cada sprint.</p>
         <H3>Interpretação</H3>
-        <div className="flex gap-[10px] flex-wrap mt-1">
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#15803d' }}>≥ 90% — Excelente</div>
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ background: '#fefce8', border: '1px solid #fde047', color: '#a16207' }}>70–89% — Atenção</div>
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626' }}>{'< 70% — Crítico'}</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+          <div style={{ padding: '8px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#15803d' }}>≥ 90% — Excelente</div>
+          <div style={{ padding: '8px 14px', background: '#fefce8', border: '1px solid #fde047', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#a16207' }}>70–89% — Atenção</div>
+          <div style={{ padding: '8px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#dc2626' }}>{'< 70% — Crítico'}</div>
         </div>
       </div>
     ),
@@ -452,37 +449,37 @@ const SECTIONS: DocSection[] = [
         </P>
 
         <H3>Fórmula</H3>
-        <div className="card-sm font-mono mb-3" style={{ background: 'var(--color-bg)' }}>
+        <div style={{ padding: '12px 16px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, fontFamily: 'monospace', fontSize: 13, color: 'var(--color-text)', marginBottom: 12 }}>
           Impacto Prevenido = Σ (peso_severidade × qtd_bugs_daquela_severidade)
         </div>
         <P>Exemplo: 2 bugs Críticos (×10) + 1 bug Alto (×5) + 3 bugs Médios (×3) + 2 bugs Baixos (×1) = <strong>36 pts</strong></P>
 
         <H3>Pesos padrão por severidade</H3>
-        <div className="flex gap-[10px] flex-wrap mb-3">
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
           {[
             ['Crítica', '10', '#ef4444'],
             ['Alta', '5', '#f97316'],
             ['Média', '3', '#f59e0b'],
             ['Baixa', '1', '#10b981'],
           ].map(([sev, peso, color]) => (
-            <div key={sev} className="px-4 py-[10px] rounded-[8px] text-center" style={{ border: `1px solid ${color}44`, background: `${color}11` }}>
-              <div className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color }}>{sev}</div>
-              <div className="text-[22px] font-bold" style={{ color }}>{peso}</div>
-              <div className="text-[11px] text-text-3">pontos</div>
+            <div key={sev} style={{ padding: '10px 16px', border: `1px solid ${color}44`, borderRadius: 8, background: `${color}11`, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{sev}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color }}>{peso}</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-3)' }}>pontos</div>
             </div>
           ))}
         </div>
         <P>Os pesos são configuráveis individualmente na aba <strong>Configurações</strong> de cada sprint, na seção "Impacto Prevenido — Pesos por Severidade".</P>
 
         <H3>Diferença entre Defeitos Prevenidos e Impacto Prevenido</H3>
-        <div className="grid grid-cols-2 gap-[10px]">
-          <div className="card-sm" style={{ background: 'var(--color-bg)' }}>
-            <strong className="text-[13px] text-text block mb-[6px]">🛡️ Defeitos Prevenidos</strong>
-            <span className="text-small">Contagem simples de todos os bugs encontrados. Sprint A com 10 bugs = Sprint B com 10 bugs.</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 6 }}>🛡️ Defeitos Prevenidos</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Contagem simples de todos os bugs encontrados. Sprint A com 10 bugs = Sprint B com 10 bugs.</span>
           </div>
-          <div className="card-sm" style={{ background: 'var(--color-bg)' }}>
-            <strong className="text-[13px] text-text block mb-[6px]">⭐ Impacto Prevenido</strong>
-            <span className="text-small">Score ponderado. Sprint A com 10 bugs críticos tem score 100. Sprint B com 10 bugs baixos tem score 10.</span>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 6 }}>⭐ Impacto Prevenido</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Score ponderado. Sprint A com 10 bugs críticos tem score 100. Sprint B com 10 bugs baixos tem score 10.</span>
           </div>
         </div>
       </div>
@@ -512,7 +509,7 @@ const SECTIONS: DocSection[] = [
 
         </P>
         <P>Ações disponíveis por report:</P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li><strong>Favoritar</strong> — marca o report com estrela para acesso rápido</li>
           <li><strong>Concluir / Reativar</strong> — muda o status do report (concluído fica com borda verde)</li>
           <li><strong>Duplicar</strong> — cria uma cópia completa do report com todos os itens</li>
@@ -532,7 +529,7 @@ const SECTIONS: DocSection[] = [
         </P>
 
         <H3>Seções padrão</H3>
-        <div className="flex flex-wrap gap-[6px] mb-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           <Chip label="Sprint Atual" color="#f59e0b" />
           <Chip label="Implantados" color="#10b981" />
           <Chip label="Débitos Técnicos" color="#ef4444" />
@@ -557,7 +554,7 @@ const SECTIONS: DocSection[] = [
         </P>
 
         <H3>Campos de um Item</H3>
-        <div className="grid grid-cols-2 gap-[10px]">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             ['Título', 'Nome descritivo da tarefa ou entrega'],
             ['Seção', 'Em qual seção o item está (Sprint, Backlog, etc.)'],
@@ -572,19 +569,19 @@ const SECTIONS: DocSection[] = [
             ['Notas', 'Sub-itens ou observações (cada linha = sub-item no preview)'],
             ['Link Jira', 'Referência ao ticket no Jira ou ferramenta de gestão'],
           ].map(([field, desc]) => (
-            <div key={field} className="card-sm" style={{ background: 'var(--color-bg)' }}>
-              <strong className="text-[12px] text-text block mb-1">{field}</strong>
-              <span className="text-small">{desc}</span>
+            <div key={field} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{field}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
             </div>
           ))}
         </div>
 
         <H3>Prioridade e cores</H3>
         <P>A borda esquerda de cada item indica sua prioridade:</P>
-        <div className="flex gap-[10px] mb-3">
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ borderLeft: '4px solid #ef4444', background: 'var(--color-bg)' }}>Alta</div>
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ borderLeft: '4px solid #f59e0b', background: 'var(--color-bg)' }}>Média</div>
-          <div className="px-[14px] py-2 rounded-[8px] text-[13px] font-semibold" style={{ borderLeft: '4px solid #10b981', background: 'var(--color-bg)' }}>Baixa</div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+          <div style={{ padding: '8px 14px', borderLeft: '4px solid #ef4444', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Alta</div>
+          <div style={{ padding: '8px 14px', borderLeft: '4px solid #f59e0b', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Média</div>
+          <div style={{ padding: '8px 14px', borderLeft: '4px solid #10b981', borderRadius: 8, background: 'var(--color-bg)', fontSize: 13, fontWeight: 600 }}>Baixa</div>
         </div>
 
         <H3>Dependências e Gantt</H3>
@@ -655,7 +652,7 @@ const SECTIONS: DocSection[] = [
 
         <H3>Barras horizontais</H3>
         <P>O dashboard também exibe três colunas de barras horizontais:</P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li><strong>Por Seção</strong> — distribuição de itens entre as seções (cores da seção)</li>
           <li><strong>Por Responsável</strong> — carga de trabalho por pessoa (top 6, com "+N outros")</li>
           <li><strong>Por Stack</strong> — cobertura por plataforma (iOS, Android, BFF, Back)</li>
@@ -695,14 +692,14 @@ const SECTIONS: DocSection[] = [
         <P>
           No header do editor, ao lado do título, um indicador mostra o estado de sincronização:
         </P>
-        <div className="flex gap-3 mb-3">
-          <div className="flex items-center gap-[6px] text-[12px]">
-            <span className="w-2 h-2 rounded-full bg-green" />
-            <span className="text-text-2">Salvo HH:MM — dados sincronizados</span>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green)' }} />
+            <span style={{ color: 'var(--color-text-2)' }}>Salvo HH:MM — dados sincronizados</span>
           </div>
-          <div className="flex items-center gap-[6px] text-[12px]">
-            <span className="w-2 h-2 rounded-full bg-amber-mid" />
-            <span className="text-text-2">Salvando... — persistência em andamento</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-amber-mid)' }} />
+            <span style={{ color: 'var(--color-text-2)' }}>Salvando... — persistência em andamento</span>
           </div>
         </div>
       </div>
@@ -725,19 +722,27 @@ const SECTIONS: DocSection[] = [
 
         <H3>Seções</H3>
 
-        <div className="flex flex-col gap-3">
-          {[
-            ['Definition of Ready (DoR)', 'Critérios que uma história precisa atender antes de entrar na sprint. Ex: "História tem critérios de aceite definidos e aprovados pelo PO".', '#378ADD'],
-            ['Definition of Done (DoD)', 'Critérios que definem quando uma história está realmente pronta. Ex: "Código revisado, testes unitários passando, smoke test pelo QA".', '#10b981'],
-            ['Cerimonias', 'Reuniões recorrentes do squad com nome, dia/horário e duração. Ex: "Daily — Seg a Sex, 09h30, 15 min".', '#f59e0b'],
-            ['Story Points', 'Escala de estimativa adotada pelo time. Opções: Fibonacci, T-Shirt, Linear, Powers of 2, Planning Poker. Apenas uma ativa por vez.', '#8b5cf6'],
-            ['Acordos de Trabalho', 'Regras de convivência e processo do time. Ex: "PR respondidos em até 4h", "Daily com máximo de 15 min".', '#06b6d4'],
-          ].map(([title, desc, color]) => (
-            <div key={title} className="card-sm" style={{ background: 'var(--color-bg)', borderLeft: `4px solid ${color}` }}>
-              <strong className="text-[13px] text-text block mb-1">{title}</strong>
-              <span className="text-small">{desc}</span>
-            </div>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #378ADD', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Definition of Ready (DoR)</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Critérios que uma história precisa atender antes de entrar na sprint. Ex: "História tem critérios de aceite definidos e aprovados pelo PO".</span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #10b981', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Definition of Done (DoD)</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Critérios que definem quando uma história está realmente pronta. Ex: "Código revisado, testes unitários passando, smoke test pelo QA".</span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #f59e0b', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Cerimonias</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Reuniões recorrentes do squad com nome, dia/horário e duração. Ex: "Daily — Seg a Sex, 09h30, 15 min".</span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #8b5cf6', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Story Points</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Escala de estimativa adotada pelo time. Opções: Fibonacci, T-Shirt, Linear, Powers of 2, Planning Poker. Apenas uma ativa por vez.</span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderLeft: '4px solid #06b6d4', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Acordos de Trabalho</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>Regras de convivência e processo do time. Ex: "PR respondidos em até 4h", "Daily com máximo de 15 min".</span>
+          </div>
         </div>
 
         <H3>Como funciona</H3>
@@ -769,7 +774,7 @@ const SECTIONS: DocSection[] = [
           Membros podem ser adicionados e removidos a qualquer momento.
         </P>
         <P>Papéis disponíveis:</P>
-        <div className="flex flex-wrap gap-[6px] mb-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {['Dev Mobile iOS', 'Dev Mobile Android', 'Dev Backend', 'Dev BFF', 'QA', 'Tech Lead', 'Scrum Master', 'Product Owner', 'Designer'].map((p) => (
             <Chip key={p} label={p} color="var(--color-blue)" />
           ))}
@@ -782,7 +787,7 @@ const SECTIONS: DocSection[] = [
           A tabela exibe automaticamente alertas visuais baseados na proximidade do período:
         </P>
 
-        <div className="flex flex-col gap-2 mb-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {[
             ['Agendado', 'Verde', 'Período agendado com mais de 30 dias de antecedência', 'var(--color-green-light)', 'var(--color-green)'],
             ['Em 30 dias', 'Amarelo', 'Faltam 30 dias ou menos para o início do período', '#FAEEDA', '#92400E'],
@@ -790,12 +795,12 @@ const SECTIONS: DocSection[] = [
             ['Em curso', 'Verde', 'Período ativo — membro está ausente agora', 'var(--color-green-light)', 'var(--color-green)'],
             ['Encerrado', 'Cinza', 'Período já terminou (linha com opacidade reduzida)', 'var(--color-surface-2)', 'var(--color-text-3)'],
           ].map(([label, , desc, bg, color]) => (
-            <div key={label} className="card-sm flex items-start gap-3" style={{ background: 'var(--color-bg)' }}>
-              <span
-                className="text-[10px] font-semibold px-2 py-[2px] rounded-[8px] shrink-0 mt-[2px]"
-                style={{ background: bg as string, color: color as string }}
-              >{label}</span>
-              <span className="text-small">{desc}</span>
+            <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                background: bg as string, color: color as string, flexShrink: 0, marginTop: 2,
+              }}>{label}</span>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
             </div>
           ))}
         </div>
@@ -832,24 +837,24 @@ const SECTIONS: DocSection[] = [
         <P>
           A página de Squads (<strong>/squads</strong>) tem 3 abas:
         </P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li><strong>👥 Squads</strong> — cards expansíveis com membros, roles e permissões inline</li>
           <li><strong>🔐 Perfis de Acesso</strong> — templates de permissão reutilizáveis (4 de sistema + custom)</li>
           <li><strong>👤 Usuários</strong> — somente admin: criar, editar, ativar/desativar, resetar senha</li>
         </ul>
 
         <H3>Roles e Permissões</H3>
-        <div className="flex flex-col gap-2 mb-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {[
             ['Admin (global)', 'Acesso total ao sistema: criar usuários, gerenciar todos os squads, alterar roles globais. Definido no perfil do usuário, não no squad.', 'var(--color-amber)'],
             ['QA Lead (squad)', 'Líder do squad: pode adicionar/remover membros, editar permissões, excluir o squad. Atribuído automaticamente ao criador do squad.', 'var(--color-blue)'],
             ['QA (squad)', 'Membro padrão: executa operações dentro do squad conforme suas permissões individuais. Pode sair do squad por conta própria.', 'var(--color-green)'],
             ['Stakeholder (squad)', 'Visibilidade: acesso de leitura ao squad e seus dados. Sem permissões de exclusão por padrão.', 'var(--color-text-3)'],
           ].map(([role, desc, color]) => (
-            <div key={role as string} className="card-sm flex items-start gap-3" style={{ background: 'var(--color-bg)' }}>
-              <span className="w-[10px] h-[10px] rounded-full shrink-0 mt-1" style={{ background: color as string }} />
+            <div key={role as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, flexShrink: 0, marginTop: 4 }} />
               <div>
-                <strong className="text-[13px] text-text">{role as string}</strong>
+                <strong style={{ fontSize: 13, color: 'var(--color-text)' }}>{role as string}</strong>
                 <P>{desc as string}</P>
               </div>
             </div>
@@ -860,7 +865,7 @@ const SECTIONS: DocSection[] = [
         <P>
           Cada membro de um squad tem 7 permissões individuais de exclusão que controlam o que ele pode apagar:
         </P>
-        <div className="flex flex-wrap gap-[6px] mb-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {['Sprints', 'Bugs', 'Funcionalidades', 'Casos de Teste', 'Suites', 'Bloqueios', 'Alinhamentos'].map((p) => (
             <Chip key={p} label={`Excluir ${p}`} color="var(--color-blue)" />
           ))}
@@ -872,16 +877,16 @@ const SECTIONS: DocSection[] = [
 
         <H3>Perfis de Acesso (templates)</H3>
         <P>O sistema vem com 4 perfis de sistema (não editáveis):</P>
-        <div className="grid grid-cols-2 gap-[10px] mb-3">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           {[
             ['Somente Leitura', 'Nenhuma permissão de exclusão. Ideal para stakeholders.'],
             ['QA Padrão', 'Pode excluir bugs, casos de teste, bloqueios e alinhamentos.'],
             ['QA Sênior', 'Pode excluir tudo exceto sprints.'],
             ['Acesso Total', 'Todas as permissões. Equivalente a QA Lead.'],
           ].map(([name, desc]) => (
-            <div key={name} className="card-sm" style={{ background: 'var(--color-bg)' }}>
-              <strong className="text-[12px] text-text block mb-1">{name}</strong>
-              <span className="text-small">{desc}</span>
+            <div key={name} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{name}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
             </div>
           ))}
         </div>
@@ -891,7 +896,7 @@ const SECTIONS: DocSection[] = [
         <P>
           Na aba Usuários (visível apenas para admins), é possível:
         </P>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li><strong>Criar usuário</strong> — com senha temporária (troca obrigatória no primeiro login)</li>
           <li><strong>Resetar senha</strong> — gera nova senha temporária com flag de troca obrigatória</li>
           <li><strong>Editar</strong> — alterar nome e role global (admin/user)</li>
@@ -915,21 +920,20 @@ const SECTIONS: DocSection[] = [
     content: (
       <div>
         <H2>Sobre o Autor</H2>
-        <div className="flex flex-col gap-4">
-          <div className="card" style={{ background: 'var(--color-bg)', padding: '20px 24px' }}>
-            <div className="flex items-center gap-[14px] mb-[14px]">
-              <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white font-bold text-[20px] shrink-0" style={{ background: '#0c447c' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: '20px 24px', background: 'var(--color-bg)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#0c447c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, flexShrink: 0 }}>
                 JR
               </div>
               <div>
-                <div className="heading-md">Jhonny Robert</div>
-                <div className="text-body mt-[2px]">QA Engineer · Software Developer</div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>Jhonny Robert</div>
+                <div style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 2 }}>QA Engineer · Software Developer</div>
                 <a
                   href="https://www.linkedin.com/in/jhonny-robert/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-[5px] mt-[6px] text-[12px] font-semibold no-underline"
-                  style={{ color: '#0a66c2' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, fontWeight: 600, color: '#0a66c2', textDecoration: 'none' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                   linkedin.com/in/jhonny-robert
@@ -945,9 +949,9 @@ const SECTIONS: DocSection[] = [
               e com todos os dados salvos localmente no navegador do usuário.
             </P>
           </div>
-          <div className="card" style={{ background: 'var(--color-bg)', padding: '16px 20px' }}>
-            <strong className="text-[13px] text-text block mb-2">Stack utilizada no sistema</strong>
-            <div className="flex flex-wrap gap-[6px]">
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: '16px 20px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 8 }}>Stack utilizada no sistema</strong>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {['React 19', 'TypeScript', 'Vite', 'Zustand', 'Chart.js', 'React Router', 'Node.js/Express', 'Supabase'].map((t) => (
                 <Chip key={t} label={t} color="var(--color-blue)" />
               ))}
@@ -965,8 +969,8 @@ const SECTIONS: DocSection[] = [
     content: (
       <div>
         <H2>Licença de Uso e Direitos Autorais</H2>
-        <div className="card mb-4" style={{ background: 'var(--color-bg)', padding: '20px 24px', borderWidth: 2 }}>
-          <div className="heading-sm mb-3">
+        <div style={{ border: '2px solid var(--color-border)', borderRadius: 12, padding: '20px 24px', background: 'var(--color-bg)', marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 12 }}>
             ToStatos — Proprietary Software License
           </div>
           <P>
@@ -980,14 +984,14 @@ const SECTIONS: DocSection[] = [
         </div>
 
         <H3>Permissões</H3>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>✅ Uso pessoal e interno em times de QA</li>
           <li>✅ Modificações para uso próprio sem redistribuição</li>
           <li>✅ Criação de sprints e gerenciamento de dados locais</li>
         </ul>
 
         <H3>Restrições</H3>
-        <ul className="pl-[18px] leading-8 text-[13px] text-text-2">
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
           <li>❌ Redistribuição do código-fonte ou binários sem autorização</li>
           <li>❌ Uso comercial ou cobrança por acesso ao sistema</li>
           <li>❌ Remoção de avisos de direitos autorais</li>
@@ -1001,7 +1005,7 @@ const SECTIONS: DocSection[] = [
           com as credenciais do próprio usuário (Supabase self-hosted).
         </P>
 
-        <div className="mt-4 px-4 py-3 rounded-[8px] text-[12px]" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1' }}>
+        <div style={{ marginTop: 16, padding: '12px 16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, fontSize: 12, color: '#0369a1' }}>
           Para solicitações de licença comercial, parcerias ou contribuições, entre em contato com o autor.
         </div>
       </div>
@@ -1016,10 +1020,10 @@ export function DocsPage() {
   const current = SECTIONS.find((s) => s.id === active) ?? SECTIONS[0]
 
   return (
-    <div className="max-w-[1000px] mx-auto flex gap-6 items-start">
+    <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', gap: 24, alignItems: 'flex-start' }}>
       {/* Nav sidebar */}
-      <nav className="w-[220px] shrink-0 sticky top-0">
-        <div className="card flex flex-col gap-[2px] !p-[10px]">
+      <nav style={{ width: 220, flexShrink: 0, position: 'sticky', top: 0 }}>
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {(() => {
             let lastGroup = ''
             return SECTIONS.map((s) => {
@@ -1028,23 +1032,35 @@ export function DocsPage() {
               return (
                 <div key={s.id}>
                   {showGroup && (
-                    <div
-                      className="section-label"
-                      style={{ padding: s.id === 'overview' ? '6px 10px 4px' : '12px 10px 4px' }}
-                    >
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
+                      textTransform: 'uppercase', letterSpacing: '0.5px',
+                      padding: s.id === 'overview' ? '6px 10px 4px' : '12px 10px 4px',
+                    }}>
                       {s.group}
                     </div>
                   )}
                   <button
                     onClick={() => setActive(s.id)}
-                    className="flex items-center gap-2 py-[7px] px-[10px] rounded-[8px] border-none w-full text-left text-[12px] cursor-pointer transition-colors duration-100"
                     style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '7px 10px',
+                      borderRadius: 8,
+                      border: 'none',
                       background: active === s.id ? 'var(--color-blue-light)' : 'transparent',
                       color: active === s.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
                       fontWeight: active === s.id ? 700 : 500,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontFamily: 'var(--font-family-sans)',
+                      width: '100%',
+                      transition: 'background 0.1s',
                     }}
                   >
-                    <span className="text-[14px]">{s.icon}</span>
+                    <span style={{ fontSize: 14 }}>{s.icon}</span>
                     {s.title}
                   </button>
                 </div>
@@ -1055,7 +1071,16 @@ export function DocsPage() {
       </nav>
 
       {/* Content */}
-      <div className="card flex-1 min-h-[400px]" style={{ padding: '24px 28px' }}>
+      <div
+        style={{
+          flex: 1,
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 12,
+          padding: '24px 28px',
+          minHeight: 400,
+        }}
+      >
         {current.content}
       </div>
     </div>

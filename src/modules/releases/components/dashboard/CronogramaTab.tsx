@@ -665,7 +665,31 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
     ...ALL_PLATFORMS.map((p) => ({ label: `${PLATFORM_ICON[p]} ${p}`, value: p as PlatformFilter })),
   ]
 
-  // Table header/cell styles are now via CSS classes (table-header, table-cell) with minimal inline overrides
+  const thStyle: React.CSSProperties = {
+    padding: '10px 12px',
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--color-text-3)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    textAlign: 'left',
+    borderBottom: '2px solid var(--color-border-md)',
+    whiteSpace: 'nowrap',
+    background: 'var(--color-surface)',
+  }
+
+  const sortableTh: React.CSSProperties = {
+    ...thStyle,
+    cursor: 'pointer',
+    userSelect: 'none',
+  }
+
+  const tdStyle: React.CSSProperties = {
+    padding: '9px 12px',
+    fontSize: 13,
+    borderBottom: '1px solid var(--color-border)',
+    verticalAlign: 'middle',
+  }
 
   return (
     <div>
@@ -745,8 +769,15 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         <button
           onClick={downloadTemplate}
           aria-label="Baixar template CSV"
-          className="btn btn-sm btn-outline"
-          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+          style={{
+            padding: '7px 14px', borderRadius: 7,
+            border: '1px solid var(--color-border-md)',
+            background: 'transparent', color: 'var(--color-text-2)',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-family-sans)',
+            transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M8 2v8m0 0L5 7.5m3 2.5l3-2.5" />
@@ -758,8 +789,15 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         {/* Import CSV */}
         <label
           aria-label="Importar releases de CSV"
-          className="btn btn-sm btn-outline"
-          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+          style={{
+            padding: '7px 14px', borderRadius: 7,
+            border: '1px solid var(--color-border-md)',
+            background: 'transparent', color: 'var(--color-text-2)',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-family-sans)',
+            transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M8 10V2m0 0L5 4.5M8 2l3 2.5" />
@@ -799,7 +837,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12 }}>
             Adicionar Release ao Cronograma
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Título *</label>
               <input value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="Release App v4.0" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
@@ -834,7 +872,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
             </div>
           </div>
           {/* Plataformas */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 6, textTransform: 'uppercase' }}>Plataformas</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {ALL_PLATFORMS.map((p) => (
@@ -888,10 +926,28 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
           <span style={{ fontSize: 13, color: 'var(--color-red)', fontWeight: 600, flex: 1 }}>
             Excluir esta release permanentemente?
           </span>
-          <button onClick={() => { onDeleteRelease(deleteConfirmId); setDeleteConfirmId(null); setSelectedRowIdx(null) }} className="btn btn-sm btn-danger">
+          <button
+            onClick={() => { onDeleteRelease(deleteConfirmId); setDeleteConfirmId(null); setSelectedRowIdx(null) }}
+            style={{
+              padding: '5px 14px', borderRadius: 6, border: 'none',
+              background: 'var(--color-red)', color: '#fff',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+            }}
+          >
             Excluir
           </button>
-          <button onClick={() => setDeleteConfirmId(null)} className="btn btn-sm btn-outline">
+          <button
+            onClick={() => setDeleteConfirmId(null)}
+            style={{
+              padding: '5px 14px', borderRadius: 6,
+              border: '1px solid var(--color-border-md)',
+              background: 'transparent', color: 'var(--color-text-2)',
+              fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+            }}
+          >
             Cancelar
           </button>
         </div>
@@ -911,32 +967,31 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         border: '1px solid var(--color-border)',
         overflow: 'hidden',
         background: 'var(--color-surface)',
-        marginBottom: 24,
       }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th className="table-header" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('release')} aria-sort={sortCol === 'release' ? (sortAsc ? 'ascending' : 'descending') : 'none'}>
+                <th style={sortableTh} onClick={() => handleSort('release')} aria-sort={sortCol === 'release' ? (sortAsc ? 'ascending' : 'descending') : 'none'}>
                   Release {sortCol === 'release' ? (sortAsc ? '↑' : '↓') : '↕'}
                 </th>
-                <th className="table-header">Plataforma</th>
-                <th className="table-header" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('version')} aria-sort={sortCol === 'version' ? (sortAsc ? 'ascending' : 'descending') : 'none'}>
+                <th style={thStyle}>Plataforma</th>
+                <th style={sortableTh} onClick={() => handleSort('version')} aria-sort={sortCol === 'version' ? (sortAsc ? 'ascending' : 'descending') : 'none'}>
                   Versão {sortCol === 'version' ? (sortAsc ? '↑' : '↓') : '↕'}
                 </th>
-                <th className="table-header">Corte</th>
-                <th className="table-header">Geração Versão</th>
-                <th className="table-header">Testes Homologação</th>
-                <th className="table-header">Beta (Pré-Prod)</th>
-                <th className="table-header">Produção</th>
-                <th className="table-header">Status</th>
-                <th className="table-header" style={{ textAlign: 'center', width: 80 }}>Ações</th>
+                <th style={thStyle}>Corte</th>
+                <th style={thStyle}>Geração Versão</th>
+                <th style={thStyle}>Testes Homologação</th>
+                <th style={thStyle}>Beta (Pré-Prod)</th>
+                <th style={thStyle}>Produção</th>
+                <th style={thStyle}>Status</th>
+                <th style={{ ...thStyle, textAlign: 'center', width: 80 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="table-cell" style={{ textAlign: 'center', padding: '32px 12px', color: 'var(--color-text-3)' }}>
+                  <td colSpan={10} style={{ ...tdStyle, textAlign: 'center', padding: '32px 12px', color: 'var(--color-text-3)' }}>
                     Nenhuma release encontrada.
                   </td>
                 </tr>
@@ -962,10 +1017,10 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                         transition: 'background 0.12s',
                       }}
                     >
-                      <td className="table-cell" style={{ fontWeight: 600, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td style={{ ...tdStyle, fontWeight: 600, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {row.releaseTitle}
                       </td>
-                      <td className="table-cell">
+                      <td style={tdStyle}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           {PLATFORM_ICON[row.platform] ?? '📦'}{' '}
                           <span style={{ color: PLATFORM_COLOR[row.platform] ?? 'var(--color-text-2)', fontWeight: 500 }}>
@@ -973,42 +1028,48 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                           </span>
                         </span>
                       </td>
-                      <td className="table-cell">{row.version}</td>
+                      <td style={tdStyle}>{row.version}</td>
 
                       {hasNote ? (
                         <td
                           colSpan={5}
-                          className="table-cell"
-                          style={{ textAlign: 'left', paddingLeft: 14, color: 'var(--color-amber)', fontStyle: 'italic', fontSize: 12 }}
+                          style={{
+                            ...tdStyle,
+                            textAlign: 'left',
+                            paddingLeft: 14,
+                            color: 'var(--color-amber)',
+                            fontStyle: 'italic',
+                            fontSize: 12,
+                          }}
                         >
                           📎 {row.note}
                         </td>
                       ) : (
                         <>
-                          <td className="table-cell">{row.corte}</td>
-                          <td className="table-cell">{row.geracao}</td>
-                          <td className="table-cell" style={
+                          <td style={tdStyle}>{row.corte}</td>
+                          <td style={tdStyle}>{row.geracao}</td>
+                          <td style={
                             row.currentPhase === 'homolog'
-                              ? { background: 'var(--color-yellow-light)', fontWeight: 700, color: 'var(--color-yellow)' }
-                              : undefined
+                              ? { ...tdStyle, background: 'var(--color-yellow-light)', fontWeight: 700, color: 'var(--color-yellow)' }
+                              : tdStyle
                           }>
                             {row.homolog}
                           </td>
-                          <td className="table-cell" style={
+                          <td style={
                             row.currentPhase === 'beta'
-                              ? { background: 'var(--color-yellow-light)', fontWeight: 700, color: 'var(--color-yellow)' }
-                              : undefined
+                              ? { ...tdStyle, background: 'var(--color-yellow-light)', fontWeight: 700, color: 'var(--color-yellow)' }
+                              : tdStyle
                           }>
                             {row.beta}
                           </td>
-                          <td className="table-cell">{row.prod}</td>
+                          <td style={tdStyle}>{row.prod}</td>
                         </>
                       )}
 
-                      <td className="table-cell">
+                      <td style={tdStyle}>
                         <StatusBadge status={row.status} />
                       </td>
-                      <td className="table-cell" style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <td style={{ ...tdStyle, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                           <button
                             className="cron-btn-edit"
@@ -1060,12 +1121,9 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 24 }} />
-
       {/* ── Calendar Slots (Programacao Oficial) ────────────────────────── */}
       {(calendarSlots.length > 0 || onAddCalendarSlot) && (
-        <div style={{ marginTop: 0 }}>
+        <div style={{ marginTop: 28 }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: 14,
@@ -1082,7 +1140,16 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               </span>
             </div>
             {onAddCalendarSlot && !showSlotForm && (
-              <button onClick={() => { resetSlotForm(); setShowSlotForm(true) }} className="btn btn-sm btn-primary">
+              <button
+                onClick={() => { resetSlotForm(); setShowSlotForm(true) }}
+                style={{
+                  padding: '7px 16px', borderRadius: 7, border: 'none',
+                  background: 'var(--color-blue)', color: '#fff',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
+                }}
+              >
                 + Novo Slot
               </button>
             )}
@@ -1097,7 +1164,7 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 12 }}>
                 {editSlotId ? 'Editar Slot' : 'Novo Slot de Release'}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 3, textTransform: 'uppercase' }}>Nome *</label>
                   <input value={slotLabel} onChange={(e) => setSlotLabel(e.target.value)} placeholder="Release App Marco" style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border-md)', fontSize: 12, fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)' }} />
@@ -1124,7 +1191,12 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button onClick={resetSlotForm} className="btn btn-sm btn-outline">
+                <button onClick={resetSlotForm} style={{
+                  padding: '7px 14px', borderRadius: 7,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}>
                   Cancelar
                 </button>
                 <button
@@ -1153,10 +1225,26 @@ export function CronogramaTab({ releases, onReleaseClick, onAddRelease, onDelete
               <span style={{ fontSize: 13, color: 'var(--color-red)', fontWeight: 600, flex: 1 }}>
                 Excluir este slot permanentemente?
               </span>
-              <button onClick={() => handleDeleteSlot(deleteSlotId)} className="btn btn-sm btn-danger">
+              <button
+                onClick={() => handleDeleteSlot(deleteSlotId)}
+                style={{
+                  padding: '5px 14px', borderRadius: 6, border: 'none',
+                  background: 'var(--color-red)', color: '#fff',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
+              >
                 Excluir
               </button>
-              <button onClick={() => setDeleteSlotId(null)} className="btn btn-sm btn-outline">
+              <button
+                onClick={() => setDeleteSlotId(null)}
+                style={{
+                  padding: '5px 14px', borderRadius: 6,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}
+              >
                 Cancelar
               </button>
             </div>

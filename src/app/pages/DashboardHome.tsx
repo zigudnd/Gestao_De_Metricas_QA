@@ -115,42 +115,59 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
     <button
       onClick={onClick}
       aria-label={title}
-      className="home-nav-card card flex flex-col p-5 cursor-pointer text-left relative overflow-hidden min-h-[160px] transition-[box-shadow,border-color] duration-200"
-      style={{ '--card-color': color } as React.CSSProperties}
+      className="home-nav-card"
+      style={{
+        '--card-color': color,
+        display: 'flex', flexDirection: 'column',
+        padding: 20,
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 12,
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontFamily: 'var(--font-family-sans)',
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+        position: 'relative',
+        overflow: 'hidden',
+        minHeight: 160,
+      } as React.CSSProperties}
     >
       {/* Color bar top */}
-      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: color }} />
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        height: 3, background: color,
+      }} />
 
       {/* Icon + Title */}
-      <div className="flex items-center gap-3 mb-2">
-        <div
-          className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0"
-          style={{
-            background: `color-mix(in srgb, ${color} 12%, transparent)`,
-            color,
-          }}
-        >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 10,
+          background: `color-mix(in srgb, ${color} 12%, transparent)`,
+          color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
           {icon}
         </div>
         <div>
-          <div className="text-[15px] font-bold text-text">
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
             {title}
           </div>
-          <div className="text-[12px] text-text-3 mt-1">
+          <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 1 }}>
             {description}
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="flex-1" />
-      <div className="flex gap-4 mt-3">
+      <div style={{ flex: 1 }} />
+      <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
         {stats.map((s, i) => (
           <div key={i}>
-            <div className="text-[20px] font-bold text-text leading-none">
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>
               {s.value}
             </div>
-            <div className="text-[11px] text-text-3 mt-[2px]">
+            <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 2 }}>
               {s.label}
             </div>
           </div>
@@ -173,19 +190,26 @@ export function DashboardHome() {
   const firstName = (profile?.display_name ?? '').split(' ')[0] || 'Usuário'
 
   return (
-    <div className="max-w-[900px] mx-auto">
+    <div style={{ maxWidth: 900, margin: '0 auto' }}>
       {/* Greeting */}
-      <div className="mb-8">
-        <h1 className="heading-lg" style={{ fontSize: 22 }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{
+          fontSize: 22, fontWeight: 700, color: 'var(--color-text)',
+          margin: 0,
+        }}>
           Olá, {firstName}
         </h1>
-        <p className="text-body mt-1">
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
           Hub de Qualidade — O que deseja fazer hoje?
         </p>
       </div>
 
       {/* Cards grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        gap: 14,
+      }}>
         <NavCard
           icon={<IconSprints />}
           title="Cobertura QA"

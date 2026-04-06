@@ -6,8 +6,9 @@ import {
   listAllUsersWithSquads, createUser, updateUserProfile, toggleUserActive, resetUserPassword,
   listPermissionProfiles, createPermissionProfile, updatePermissionProfile, deletePermissionProfile,
   archiveSquad, unarchiveSquad, listArchivedSquads,
-  DEFAULT_PERMISSIONS,
+  DEFAULT_PERMISSIONS, PERMISSION_LABELS, PERMISSION_GROUPS, PERMISSION_RESOURCES, RESOURCE_LABELS,
   type Squad, type SquadMember, type SquadRole, type MemberPermissions, type PermissionProfile,
+  type PermissionGroup,
   type UserWithSquads,
 } from '../services/squadsService'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -32,6 +33,11 @@ const ROLE_LABEL: Record<SquadRole, string> = {
 }
 
 const SQUAD_COLORS = ['#185FA5', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#DB2777', '#4F46E5', '#0D9488', '#CA8A04']
+
+const roleBadge: React.CSSProperties = {
+  fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8,
+  background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)',
+}
 
 // ─── SquadsPage ────────────────────────────────────────────────────────────────
 
@@ -509,11 +515,11 @@ export function SquadsPage() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   if (loading) return (
-    <div className="p-10 text-body">Carregando...</div>
+    <div style={{ padding: 40, color: 'var(--color-text-2)', fontSize: 14 }}>Carregando...</div>
   )
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <style>{`
         .sq-btn-archive:hover { background: var(--color-red-light) !important; }
         .sq-btn-remove:hover { background: var(--color-red-light) !important; }
@@ -521,19 +527,19 @@ export function SquadsPage() {
       `}</style>
 
       {/* ── Tabs ──────────────────────────────────────────────────────────────── */}
-      <div className="flex px-6" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <div style={{ padding: '0 24px', display: 'flex', gap: 0, borderBottom: '1px solid var(--color-border)' }}>
         {([
           ['squads',   '👥 Squads'],
           ['profiles', '🔐 Perfis de Acesso'],
           ...(isAdmin ? [['users', '👤 Usuários'] as const] : []),
         ] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)} className="cursor-pointer" style={{
+          <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', background: 'none', border: 'none',
             borderBottom: tab === t ? '2px solid var(--color-blue)' : '2px solid transparent',
             marginBottom: -1,
             color: tab === t ? 'var(--color-blue)' : 'var(--color-text-2)',
             fontWeight: tab === t ? 600 : 400,
-            fontSize: 13,
+            fontSize: 13, cursor: 'pointer',
           }}>
             {label}
           </button>
@@ -541,16 +547,16 @@ export function SquadsPage() {
       </div>
 
       {/* ── Conteúdo ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto pt-5 pb-5 px-6">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
 
         {/* ════ Tab: Squads ════ */}
         {tab === 'squads' && (
-          <div className="max-w-[860px]">
+          <div style={{ maxWidth: 860 }}>
             {/* Search + New Squad button */}
-            <div className="flex items-center gap-2.5 mb-3.5">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               {squads.length > 0 && (
-                <div className="relative flex-1 max-w-80">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-3)' }}>
+                <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-3)', pointerEvents: 'none' }}>
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
                   </span>
                   <input
@@ -558,13 +564,20 @@ export function SquadsPage() {
                     placeholder="Buscar squad..."
                     value={squadSearch}
                     onChange={(e) => setSquadSearch(e.target.value)}
-                    className="input-field pl-8"
+                    style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
                   />
                 </div>
               )}
               <button
                 onClick={() => setShowNewSquadForm(!showNewSquadForm)}
-                className={`btn btn-md shrink-0 ${showNewSquadForm ? 'btn-outline' : 'btn-primary'}`}
+                style={{
+                  padding: '8px 16px', borderRadius: 8, border: 'none',
+                  background: showNewSquadForm ? 'var(--color-surface-2)' : 'var(--color-blue)',
+                  color: showNewSquadForm ? 'var(--color-text-2)' : '#fff',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
               >
                 {showNewSquadForm ? 'Cancelar' : '+ Novo Squad'}
               </button>
@@ -572,20 +585,26 @@ export function SquadsPage() {
 
             {/* Inline new squad form */}
             {showNewSquadForm && (
-              <form onSubmit={handleCreate} className="card flex flex-col gap-4 mb-3.5" style={{ border: '1px solid var(--color-blue)' }}>
-                <div className="heading-sm">Novo Squad</div>
+              <form onSubmit={handleCreate} style={{
+                padding: '16px 18px',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-blue)',
+                borderRadius: 10,
+                marginBottom: 14,
+                display: 'flex', flexDirection: 'column', gap: 10,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>Novo Squad</div>
                 <div>
                   <input
                     value={newName}
                     onChange={(e) => { setNewName(e.target.value); setNewNameError('') }}
-                    className="input-field"
-                    style={newNameError ? { borderColor: 'var(--color-red-mid)' } : undefined}
+                    style={{ ...inputStyle, width: '100%', borderColor: newNameError ? 'var(--color-red-mid)' : undefined }}
                     required
                     placeholder="Nome do squad *"
                     autoFocus
                   />
                   {newNameError && (
-                    <div className="text-small mt-1" style={{ color: 'var(--color-red)', fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4, fontWeight: 600 }}>
                       {newNameError}
                     </div>
                   )}
@@ -593,13 +612,16 @@ export function SquadsPage() {
                 <input
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="input-field"
+                  style={{ ...inputStyle, width: '100%' }}
                   placeholder="Descrição (opcional)"
                 />
                 <button
                   type="submit"
                   disabled={creating || !newName.trim()}
-                  className="btn btn-primary btn-md self-start"
+                  style={{
+                    ...btnPrimary, alignSelf: 'flex-start',
+                    opacity: creating || !newName.trim() ? 0.5 : 1,
+                  }}
                 >
                   {creating ? 'Criando...' : 'Criar Squad'}
                 </button>
@@ -608,15 +630,15 @@ export function SquadsPage() {
 
             {/* Empty state */}
             {squads.length === 0 && !showNewSquadForm && (
-              <div className="text-center py-10 px-5 text-muted">
-                <div className="text-4xl mb-2.5">👥</div>
-                <p className="text-body mb-1.5" style={{ fontWeight: 600, color: 'var(--color-text-2)' }}>Nenhum squad criado</p>
-                <p className="text-body">Clique em <strong>+ Novo Squad</strong> para começar.</p>
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-3)' }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 6px' }}>Nenhum squad criado</p>
+                <p style={{ fontSize: 13, margin: 0 }}>Clique em <strong>+ Novo Squad</strong> para começar.</p>
               </div>
             )}
 
             {/* Lista de squads como cards expansíveis */}
-            <div className="flex flex-col gap-2.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {squads.filter((s) => {
                 if (!squadSearch.trim()) return true
                 const q = squadSearch.toLowerCase().trim()
@@ -624,41 +646,47 @@ export function SquadsPage() {
               }).map((s) => {
                 const isOpen = activeSquad?.id === s.id
                 return (
-                  <div key={s.id} className="rounded-xl overflow-hidden" style={{
+                  <div key={s.id} style={{
                     background: 'var(--color-bg)',
                     border: '0.5px solid var(--color-border)',
                     borderLeft: `3px solid ${s.color || 'var(--color-blue)'}`,
+                    borderRadius: 12, overflow: 'hidden',
                   }}>
                     {/* Card header — clicável */}
                     <button
                       type="button"
                       onClick={() => setActiveSquad(isOpen ? null : s)}
-                      className="flex items-center gap-3.5 w-full cursor-pointer text-left"
-                      style={{ padding: '14px 18px', background: 'none', border: 'none' }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '14px 18px', width: '100%',
+                        background: 'none', border: 'none',
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="heading-sm">{s.name}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</span>
                           {s.member_count !== undefined && (
-                            <span className="text-small text-muted" style={{ fontWeight: 500 }}>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-3)', fontWeight: 500 }}>
                               {s.member_count} {s.member_count === 1 ? 'membro' : 'membros'}
                             </span>
                           )}
                         </div>
                         {s.description && (
-                          <div className="text-small mt-0.5">{s.description}</div>
+                          <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>{s.description}</div>
                         )}
                       </div>
                       {canManage && (
-                        <div className="flex gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => { setEditingSquad(s); setEditName(s.name); setEditDesc(s.description); setEditColor(s.color) }} className="btn btn-ghost">Editar</button>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => { setEditingSquad(s); setEditName(s.name); setEditDesc(s.description); setEditColor(s.color) }} style={btnGhost}>Editar</button>
                           <button
                             onClick={() => setArchiveSquadTarget(s)}
-                            className="btn btn-destructive sq-btn-archive"
+                            style={btnDestructive}
+                            className="sq-btn-archive"
                           >Arquivar</button>
                         </div>
                       )}
-                      <span className="shrink-0 text-muted transition-transform" style={{ fontSize: 16, transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+                      <span style={{ fontSize: 16, color: 'var(--color-text-3)', flexShrink: 0, transition: 'transform 0.15s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
                     </button>
 
                     {/* Painel expandido — membros + adicionar */}
@@ -711,13 +739,18 @@ export function SquadsPage() {
 
             {/* Squads arquivados — visível para admin */}
             {isAdmin && (
-              <div className="mt-7">
+              <div style={{ marginTop: 28 }}>
                 <button
                   onClick={() => setShowArchived(!showArchived)}
-                  className="flex items-center gap-1.5 cursor-pointer text-small text-muted"
-                  style={{ background: 'none', border: 'none', padding: 0, fontWeight: 600 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, color: 'var(--color-text-3)',
+                    padding: 0, fontFamily: 'var(--font-family-sans)',
+                  }}
                 >
-                  <span className="inline-block transition-transform" style={{
+                  <span style={{
+                    display: 'inline-block', transition: 'transform 0.15s',
                     transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)',
                     fontSize: 10,
                   }}>▶</span>
@@ -725,31 +758,35 @@ export function SquadsPage() {
                 </button>
 
                 {showArchived && (
-                  <div className="flex flex-col gap-2 mt-3">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
                     {archivedSquads.length === 0 && (
-                      <p className="text-small text-muted italic">
+                      <p style={{ fontSize: 12, color: 'var(--color-text-3)', fontStyle: 'italic' }}>
                         Nenhum squad arquivado.
                       </p>
                     )}
                     {archivedSquads.map((s) => (
-                      <div key={s.id} className="flex items-center gap-3 rounded-lg opacity-70" style={{
+                      <div key={s.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
                         padding: '10px 16px', background: 'var(--color-bg)',
                         border: '0.5px solid var(--color-border)',
                         borderLeft: `3px solid ${s.color || '#6b7280'}`,
+                        borderRadius: 10, opacity: 0.7,
                       }}>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-body" style={{ fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{s.name}</span>
                           {s.description && (
-                            <span className="text-small text-muted ml-2">{s.description}</span>
+                            <span style={{ fontSize: 12, color: 'var(--color-text-3)', marginLeft: 8 }}>{s.description}</span>
                           )}
                         </div>
-                        <span className="badge badge-neutral" style={{ fontWeight: 600, color: 'var(--color-text-3)' }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                          background: 'var(--color-surface-2)', color: 'var(--color-text-3)',
+                        }}>
                           Arquivado
                         </span>
                         <button
                           onClick={() => handleUnarchiveSquad(s)}
-                          className="btn btn-ghost"
-                          style={{ color: 'var(--color-green)' }}
+                          style={{ ...btnGhost, color: 'var(--color-green)', fontSize: 12 }}
                         >
                           Restaurar
                         </button>
@@ -809,33 +846,34 @@ export function SquadsPage() {
       {/* ── Modais ────────────────────────────────────────────────────────────── */}
 
       {editingSquad && (
-        <div className="modal-backdrop modal-backdrop-high" onClick={() => setEditingSquad(null)}>
-          <div className="modal-container" style={{ width: 420 }} onClick={(e) => e.stopPropagation()}>
-            <h3 className="heading-md mb-4">Editar Squad</h3>
-            <form onSubmit={handleEditSquad} className="flex flex-col gap-4">
-              <div className="flex gap-2.5">
-                <div className="flex-1">
-                  <label className="label-field">Nome</label>
-                  <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} className="input-field" required />
+        <div style={backdropStyle} onClick={() => setEditingSquad(null)}>
+          <div style={{ ...modalStyle, width: 420 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>Editar Squad</h3>
+            <form onSubmit={handleEditSquad} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelSm}>Nome</label>
+                  <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} style={inputStyle} required />
                 </div>
                 <div>
-                  <label className="label-field">Cor</label>
-                  <div className="flex gap-1 flex-wrap">
+                  <label style={labelSm}>Cor</label>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {SQUAD_COLORS.map((c) => (
-                      <button key={c} type="button" onClick={() => setEditColor(c)} className="shrink-0 cursor-pointer transition-[border-color]" style={{
+                      <button key={c} type="button" onClick={() => setEditColor(c)} style={{
                         width: 28, height: 28, borderRadius: 7, background: c, border: editColor === c ? '2.5px solid var(--color-text)' : '2px solid transparent',
+                        cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
                       }} />
                     ))}
                   </div>
                 </div>
               </div>
               <div>
-                <label className="label-field">Descrição</label>
-                <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="input-field" placeholder="Opcional" />
+                <label style={labelSm}>Descrição</label>
+                <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={inputStyle} placeholder="Opcional" />
               </div>
-              <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setEditingSquad(null)} className="btn btn-ghost">Cancelar</button>
-                <button type="submit" disabled={!editName.trim()} className="btn btn-primary btn-md">Salvar</button>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setEditingSquad(null)} style={btnGhost}>Cancelar</button>
+                <button type="submit" disabled={!editName.trim()} style={btnPrimary}>Salvar</button>
               </div>
             </form>
           </div>
@@ -843,30 +881,30 @@ export function SquadsPage() {
       )}
 
       {editingUser && (
-        <div className="modal-backdrop modal-backdrop-high" onClick={() => setEditingUser(null)}>
-          <div className="modal-container modal-sm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="heading-md mb-4">Editar Usuário</h3>
-            <form onSubmit={handleSaveUser} className="flex flex-col gap-4">
-              <div><label className="label-field">Nome</label><input autoFocus value={editUserName} onChange={(e) => setEditUserName(e.target.value)} className="input-field" required /></div>
-              <div><label className="label-field">E-mail</label><input value={editingUser.email} className="input-field opacity-50" disabled /></div>
-              <div><label className="label-field">Perfil global</label>
-                <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'admin' | 'gerente' | 'user')} className="select-field">
+        <div style={backdropStyle} onClick={() => setEditingUser(null)}>
+          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>Editar Usuário</h3>
+            <form onSubmit={handleSaveUser} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div><label style={labelSm}>Nome</label><input autoFocus value={editUserName} onChange={(e) => setEditUserName(e.target.value)} style={inputStyle} required /></div>
+              <div><label style={labelSm}>E-mail</label><input value={editingUser.email} style={{ ...inputStyle, opacity: 0.5 }} disabled /></div>
+              <div><label style={labelSm}>Perfil global</label>
+                <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'admin' | 'gerente' | 'user')} style={selectStyle}>
                   <option value="user">Usuário</option><option value="gerente">Gerente</option><option value="admin">Admin</option>
                 </select>
               </div>
               {editingUser.squads.length > 0 && (
                 <div>
-                  <label className="label-field">Squads</label>
-                  <div className="flex flex-wrap gap-1.5">
+                  <label style={labelSm}>Squads</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {editingUser.squads.map((sq) => (
-                      <span key={sq.squad_id} className="badge badge-neutral" style={{ fontSize: 11, padding: '3px 10px' }}>{sq.squad_name} — {ROLE_LABEL[sq.role]}</span>
+                      <span key={sq.squad_id} style={{ ...badgeNeutral, fontSize: 11, padding: '3px 10px' }}>{sq.squad_name} — {ROLE_LABEL[sq.role]}</span>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setEditingUser(null)} className="btn btn-ghost">Cancelar</button>
-                <button type="submit" disabled={!editUserName.trim()} className="btn btn-primary btn-md">Salvar</button>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setEditingUser(null)} style={btnGhost}>Cancelar</button>
+                <button type="submit" disabled={!editUserName.trim()} style={btnPrimary}>Salvar</button>
               </div>
             </form>
           </div>
@@ -877,16 +915,16 @@ export function SquadsPage() {
       {deleteMemberTarget && <ConfirmModal title={deleteMemberTarget.user_id === user?.id ? 'Sair do Squad' : 'Remover Membro'} description={deleteMemberTarget.user_id === user?.id ? `Sair do squad "${activeSquad?.name}"?` : `Remover ${deleteMemberTarget.profile?.display_name ?? 'este membro'} do squad?`} confirmLabel={deleteMemberTarget.user_id === user?.id ? 'Sair' : 'Remover'} onConfirm={handleRemoveMember} onCancel={() => setDeleteMemberTarget(null)} />}
 
       {showProfileForm && (
-        <div className="modal-backdrop modal-backdrop-high" onClick={() => setShowProfileForm(false)}>
-          <div className="modal-container" style={{ width: 460 }} onClick={(e) => e.stopPropagation()}>
-            <h3 className="heading-md mb-4">{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
-            <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
-              <div><label className="label-field">Nome</label><input autoFocus value={profileName} onChange={(e) => setProfileName(e.target.value)} className="input-field" required placeholder="Ex: QA Júnior, Stakeholder Avançado" /></div>
-              <div><label className="label-field">Descrição</label><input value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} className="input-field" placeholder="Opcional" /></div>
+        <div style={backdropStyle} onClick={() => setShowProfileForm(false)}>
+          <div style={{ ...modalStyle, width: 460 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 500 }}>{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div><label style={labelSm}>Nome</label><input autoFocus value={profileName} onChange={(e) => setProfileName(e.target.value)} style={inputStyle} required placeholder="Ex: QA Júnior, Stakeholder Avançado" /></div>
+              <div><label style={labelSm}>Descrição</label><input value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} style={inputStyle} placeholder="Opcional" /></div>
               <PermissionsEditor value={profilePerms} onChange={setProfilePerms} />
-              <div className="flex gap-2 justify-end mt-1">
-                <button type="button" onClick={() => setShowProfileForm(false)} className="btn btn-ghost">Cancelar</button>
-                <button type="submit" disabled={savingProfile || !profileName.trim()} className="btn btn-primary btn-md">{savingProfile ? 'Salvando...' : 'Salvar'}</button>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                <button type="button" onClick={() => setShowProfileForm(false)} style={btnGhost}>Cancelar</button>
+                <button type="submit" disabled={savingProfile || !profileName.trim()} style={{ ...btnPrimary, opacity: savingProfile || !profileName.trim() ? 0.5 : 1 }}>{savingProfile ? 'Salvando...' : 'Salvar'}</button>
               </div>
             </form>
           </div>
@@ -908,12 +946,41 @@ export function SquadsPage() {
       )}
 
       {error && (
-        <div className="msg-error fixed bottom-5 right-5 z-[9999] max-w-[300px]">
+        <div style={{ position: 'fixed', bottom: 20, right: 20, background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)', color: 'var(--color-red)', borderRadius: 8, padding: '10px 14px', fontSize: 13, zIndex: 9999, maxWidth: 300 }}>
           {error}
-          <button onClick={() => setError('')} className="ml-2 cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--color-red)', fontWeight: 700 }}>×</button>
+          <button onClick={() => setError('')} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-red)', fontWeight: 700 }}>×</button>
         </div>
       )}
     </div>
   )
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const btnPrimary: React.CSSProperties = { padding: '7px 16px', background: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }
+const btnGhost: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-text-2)', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }
+const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-red)', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', outline: 'none' }
+const selectStyle: React.CSSProperties = {
+  ...inputStyle, padding: '8px 28px 8px 12px', cursor: 'pointer', appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
+}
+const labelSm: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-2)', marginBottom: 6 }
+const badgeNeutral: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
+const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' }
+const badgeInactive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)' }
+const avatarBase: React.CSSProperties = { width: 32, height: 32, borderRadius: '50%', background: 'var(--color-blue-light)', color: 'var(--color-blue)', border: '0.5px solid var(--color-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }
+const AVATAR_STYLES: Record<string, React.CSSProperties> = {
+  admin:       { background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', border: '0.5px solid var(--color-amber-mid)' },
+  qa_lead:     { background: 'var(--color-blue-light)', color: 'var(--color-blue-text)', border: '0.5px solid var(--color-blue)' },
+  qa:          { background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' },
+  stakeholder: { background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' },
+}
+function avatarStyle(role?: string, isAdmin?: boolean): React.CSSProperties {
+  if (isAdmin) return { ...avatarBase, ...AVATAR_STYLES.admin }
+  return { ...avatarBase, ...(AVATAR_STYLES[role || 'qa'] || {}) }
+}
+const backdropStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }
+const modalStyle: React.CSSProperties = { background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '24px 22px', width: 360, maxWidth: '90vw', boxShadow: 'var(--shadow-xl)' }
+const colorInputStyle: React.CSSProperties = { width: 36, height: 36, padding: 2, border: '0.5px solid var(--color-border)', borderRadius: 8, cursor: 'pointer', background: 'var(--color-bg)' }

@@ -277,8 +277,8 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
   return (
     <div style={{ maxWidth: 1100 }}>
       {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap mb-3.5">
-        <span className="section-label" style={{ marginBottom: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Filtrar:
         </span>
         {(['todos', 'bloqueado', 'andamento', 'liberado'] as FilterValue[]).map((f) => (
@@ -604,7 +604,12 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
 
                     {/* Footer */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
-                      <button onClick={() => onReleaseClick(row.releaseId)} className="btn btn-sm btn-outline" style={{ border: '1px solid var(--color-blue)', color: 'var(--color-blue)' }}>
+                      <button onClick={() => onReleaseClick(row.releaseId)} style={{
+                        fontSize: 12, padding: '6px 16px', borderRadius: 7,
+                        border: '1px solid var(--color-blue)', color: 'var(--color-blue)',
+                        background: 'var(--color-surface)', cursor: 'pointer', fontWeight: 600,
+                        fontFamily: 'var(--font-family-sans)',
+                      }}>
                         Abrir release completa
                       </button>
                       <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>

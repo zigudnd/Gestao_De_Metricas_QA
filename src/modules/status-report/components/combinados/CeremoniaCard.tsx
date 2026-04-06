@@ -7,6 +7,13 @@ interface CeremoniaCardProps {
   onUpdate: (id: string, updates: Partial<Omit<Cerimonia, 'id'>>) => void
 }
 
+const inputSm: React.CSSProperties = {
+  padding: '4px 8px', fontSize: 12,
+  border: '1px solid var(--color-border-md)', borderRadius: 6,
+  background: 'var(--color-bg)', color: 'var(--color-text)',
+  outline: 'none', fontFamily: 'var(--font-family-sans)',
+}
+
 export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardProps) {
   const [editing, setEditing] = useState(false)
   const [nome, setNome] = useState(cerimonia.nome)
@@ -29,44 +36,54 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
 
   if (editing) {
     return (
-      <div className="card-sm flex flex-col gap-1.5" style={{
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 6,
+        padding: '10px 14px',
+        background: 'var(--color-surface)',
         border: '0.5px solid var(--color-yellow)',
+        borderRadius: 8,
       }}>
-        <div className="flex gap-1.5 flex-wrap">
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <input
             value={nome} onChange={(e) => setNome(e.target.value)}
             placeholder="Nome"
-            className="input-field"
-            style={{ flex: 2, minWidth: 100, padding: '4px 8px', fontSize: 12 }}
+            style={{ ...inputSm, flex: 2, minWidth: 100 }}
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
           />
           <input
             value={dia} onChange={(e) => setDia(e.target.value)}
             placeholder="Dia/horário"
-            className="input-field"
-            style={{ flex: 3, minWidth: 140, padding: '4px 8px', fontSize: 12 }}
+            style={{ ...inputSm, flex: 3, minWidth: 140 }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
           />
           <input
             value={duracao} onChange={(e) => setDuracao(e.target.value)}
             placeholder="Duração"
-            className="input-field"
-            style={{ flex: 1, minWidth: 70, padding: '4px 8px', fontSize: 12 }}
+            style={{ ...inputSm, flex: 1, minWidth: 70 }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
           />
         </div>
-        <div className="flex gap-1.5 justify-end">
-          <button onClick={handleCancel} className="btn btn-outline btn-sm">
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+          <button
+            onClick={handleCancel}
+            style={{
+              padding: '4px 12px', borderRadius: 5, border: '1px solid var(--color-border)',
+              background: 'none', color: 'var(--color-text-2)', fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+            }}
+          >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={!nome.trim()}
-            className="btn btn-sm"
             style={{
+              padding: '4px 12px', borderRadius: 5, border: 'none',
               background: nome.trim() ? 'var(--color-yellow)' : 'var(--color-border)',
-              color: '#fff',
+              color: '#fff', fontSize: 11, fontWeight: 600,
+              cursor: nome.trim() ? 'pointer' : 'not-allowed',
+              fontFamily: 'var(--font-family-sans)',
             }}
           >
             Salvar
@@ -77,20 +94,28 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
   }
 
   return (
-    <div className="card-sm flex items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="heading-sm" style={{ fontSize: 13 }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 14px',
+      background: 'var(--color-surface)',
+      border: '0.5px solid var(--color-border)',
+      borderRadius: 8,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
           {cerimonia.nome}
         </div>
-        <div className="text-small" style={{ marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
           {[cerimonia.dia, cerimonia.duracao].filter(Boolean).join(' · ')}
         </div>
       </div>
       <button
         onClick={() => setEditing(true)}
-        className="cerimonia-edit-btn btn btn-ghost"
+        className="cerimonia-edit-btn"
         style={{
-          width: 22, height: 22, padding: 0,
+          width: 22, height: 22, borderRadius: 4, border: 'none',
+          background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
+          fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
         }}
         title="Editar"
@@ -99,9 +124,11 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
       </button>
       <button
         onClick={() => onRemove(cerimonia.id)}
-        className="cerimonia-delete-btn btn btn-ghost"
+        className="cerimonia-delete-btn"
         style={{
-          width: 22, height: 22, padding: 0,
+          width: 22, height: 22, borderRadius: 4, border: 'none',
+          background: 'none', color: 'var(--color-text-3)', cursor: 'pointer',
+          fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, opacity: 0.4, transition: 'opacity 0.15s, color 0.15s',
         }}
         title="Remover"

@@ -266,13 +266,13 @@ export function HomePage() {
   const hasFilters = filters.squad !== 'all' || filters.status !== 'all' || filters.year !== 'all' || filters.search !== '' || filters.tipo !== 'all'
 
   if (loading) return (
-    <div className="flex items-center justify-center h-[120px]">
-      <span className="text-[var(--color-text-2)] text-[13px]">Carregando...</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+      <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
     </div>
   )
 
   return (
-    <div className="max-w-[1100px] mx-auto">
+    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <style>{`
         .hp-new-sprint-hover:not([data-disabled="true"]):hover { border-color: var(--color-blue) !important; background: var(--color-blue-light) !important; }
         .hp-fav-hover:not([data-active="true"]):hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber-mid); }
@@ -283,43 +283,48 @@ export function HomePage() {
         .hp-card-hover:hover .hp-actions { opacity: 1 !important; }
       `}</style>
       {/* Trigger oculto para o botão do Topbar */}
-      <button id="create-sprint-trigger" onClick={() => setShowCreate(true)} className="hidden" aria-hidden />
+      <button id="create-sprint-trigger" onClick={() => setShowCreate(true)} style={{ display: 'none' }} aria-hidden />
 
       {/* Hidden import input */}
-      <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      <input ref={importInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 className="heading-lg !text-xl">Cobertura QA</h1>
-          <p className="text-body mt-1">
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Cobertura QA</h1>
+          <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 4, marginBottom: 0 }}>
             Gerencie e acompanhe a cobertura de testes das suas Sprints.
           </p>
         </div>
-        <div className="flex gap-2 items-center flex-wrap">
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {compareMode ? (
             <>
               <button
                 disabled
-                className="btn btn-outline btn-md opacity-50 !cursor-default text-[var(--color-text-2)]"
+                style={{
+                  ...btnOutline,
+                  opacity: 0.5,
+                  cursor: 'default',
+                  color: 'var(--color-text-2)',
+                }}
               >
                 Selecione 2 ou mais sprints
               </button>
               {selectedIds.size >= 2 && (
-                <button data-testid="sprint-btn-compare" onClick={handleCompare} className="btn btn-primary btn-md font-semibold">
+                <button data-testid="sprint-btn-compare" onClick={handleCompare} style={btnPrimary}>
                   Comparar ({selectedIds.size})
                 </button>
               )}
-              <button onClick={toggleCompareMode} className="btn btn-outline btn-md">
+              <button onClick={toggleCompareMode} style={btnOutline}>
                 Cancelar
               </button>
             </>
           ) : (
             <>
-              <button onClick={toggleCompareMode} className="btn btn-outline btn-md">
+              <button onClick={toggleCompareMode} style={btnOutline}>
                 ⚖️ Comparar Sprints
               </button>
-              <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-md font-semibold">+ Nova Sprint</button>
+              <button onClick={() => setShowCreate(true)} style={btnPrimary}>+ Nova Sprint</button>
             </>
           )}
         </div>
@@ -340,16 +345,28 @@ export function HomePage() {
 
       {/* Empty state */}
       {sprints.length === 0 && (
-        <div className="text-center py-12 px-5 text-[var(--color-text-2)]">
-          <p className="font-semibold text-sm">Nenhuma sprint criada ainda</p>
-          <p className="text-[13px] mt-1">Clique em "Nova Sprint" para começar.</p>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '48px 20px',
+            color: 'var(--color-text-2)',
+          }}
+        >
+          <p style={{ fontWeight: 600, fontSize: 14 }}>Nenhuma sprint criada ainda</p>
+          <p style={{ fontSize: 13, marginTop: 4 }}>Clique em "Nova Sprint" para começar.</p>
         </div>
       )}
 
       {sprints.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-12 px-5 text-[var(--color-text-2)]">
-          <p className="font-semibold text-sm">Nenhuma sprint encontrada</p>
-          <p className="text-[13px] mt-1">Nenhuma sprint corresponde aos filtros.</p>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '48px 20px',
+            color: 'var(--color-text-2)',
+          }}
+        >
+          <p style={{ fontWeight: 600, fontSize: 14 }}>Nenhuma sprint encontrada</p>
+          <p style={{ fontSize: 13, marginTop: 4 }}>Nenhuma sprint corresponde aos filtros.</p>
         </div>
       )}
 
@@ -357,25 +374,33 @@ export function HomePage() {
       {filteredActive.length > 0 && (
         <>
           {filteredCompleted.length > 0 && (
-            <div className="mb-6">
-              <span className="section-label">
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Em Andamento
               </span>
             </div>
           )}
-          <div className={`flex flex-col gap-3 ${filteredCompleted.length > 0 ? 'mb-7' : ''}`}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 0 }}>
             {/* Nova sprint — compact */}
             <div
               onClick={() => { if (!compareMode) setShowCreate(true) }}
-              className="hp-new-sprint-hover flex items-center gap-2.5 rounded-[10px] p-[10px_16px] bg-[var(--color-surface)] border-[1.5px] border-dashed border-[var(--color-border-md)] transition-[border-color,background] duration-150"
+              className="hp-new-sprint-hover"
+              data-disabled={compareMode ? 'true' : undefined}
               style={{
+                background: 'var(--color-surface)',
+                border: '1.5px dashed var(--color-border-md)',
+                borderRadius: 10,
+                padding: '10px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
                 cursor: compareMode ? 'default' : 'pointer',
                 opacity: compareMode ? 0.4 : 1,
+                transition: 'border-color 0.15s, background 0.15s',
               }}
-              data-disabled={compareMode ? 'true' : undefined}
             >
-              <span className="text-base text-[var(--color-text-3)] font-bold leading-none">+</span>
-              <span className="text-[13px] font-semibold text-[var(--color-text-2)]">Nova Sprint</span>
+              <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
             </div>
 
             {filteredActive.map((sprint) => (
@@ -398,18 +423,26 @@ export function HomePage() {
 
       {/* Nova sprint card quando não há sprints ativas */}
       {filteredActive.length === 0 && sprints.length > 0 && filtered.length > 0 && (
-        <div className={`flex flex-col gap-1.5 ${filteredCompleted.length > 0 ? 'mb-7' : 'mb-4'}`}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 16 }}>
           <div
             onClick={() => { if (!compareMode) setShowCreate(true) }}
-            className="hp-new-sprint-hover flex items-center gap-2.5 rounded-[10px] p-[10px_16px] bg-[var(--color-surface)] border-[1.5px] border-dashed border-[var(--color-border-md)] transition-[border-color,background] duration-150"
+            className="hp-new-sprint-hover"
+            data-disabled={compareMode ? 'true' : undefined}
             style={{
+              background: 'var(--color-surface)',
+              border: '1.5px dashed var(--color-border-md)',
+              borderRadius: 10,
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
               cursor: compareMode ? 'default' : 'pointer',
               opacity: compareMode ? 0.4 : 1,
+              transition: 'border-color 0.15s, background 0.15s',
             }}
-            data-disabled={compareMode ? 'true' : undefined}
           >
-            <span className="text-base text-[var(--color-text-3)] font-bold leading-none">+</span>
-            <span className="text-[13px] font-semibold text-[var(--color-text-2)]">Nova Sprint</span>
+            <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
           </div>
         </div>
       )}
@@ -417,17 +450,23 @@ export function HomePage() {
       {/* Seção: Concluídas */}
       {filteredCompleted.length > 0 && (
         <>
-          <div className="divider" />
-          <div className="flex items-center gap-3 mb-6">
-            <span className="section-label !mb-0">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Concluídas
             </span>
-            <div className="flex-1 h-px bg-[var(--color-border)]" />
-            <span className="text-[11px] text-[var(--color-text-3)]">
+            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>
               {filteredCompleted.length} sprint{filteredCompleted.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="flex flex-col gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filteredCompleted.map((sprint) => (
               <SprintCard
                 key={sprint.id}
@@ -448,13 +487,24 @@ export function HomePage() {
 
       {/* When no filters active and sprints.length === 0, show new sprint card */}
       {sprints.length === 0 && (
-        <div className="flex flex-col gap-1.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div
             onClick={() => setShowCreate(true)}
-            className="hp-new-sprint-hover flex items-center gap-2.5 rounded-[10px] p-[10px_16px] bg-[var(--color-surface)] border-[1.5px] border-dashed border-[var(--color-border-md)] cursor-pointer transition-[border-color,background] duration-150"
+            className="hp-new-sprint-hover"
+            style={{
+              background: 'var(--color-surface)',
+              border: '1.5px dashed var(--color-border-md)',
+              borderRadius: 10,
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
           >
-            <span className="text-base text-[var(--color-text-3)] font-bold leading-none">+</span>
-            <span className="text-[13px] font-semibold text-[var(--color-text-2)]">Nova Sprint</span>
+            <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
           </div>
         </div>
       )}
@@ -463,8 +513,8 @@ export function HomePage() {
       {showCreate && (
         <Modal onClose={() => setShowCreate(false)} title="Nova Sprint">
           <form onSubmit={handleCreate}>
-            <div className="mb-4">
-              <label className="label-field">Título da Sprint *</label>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Título da Sprint *</label>
               <input
                 ref={titleInputRef}
                 type="text"
@@ -472,12 +522,12 @@ export function HomePage() {
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Ex: QA Dashboard — Sprint 12"
                 required
-                className="input-field"
+                style={inputStyle}
               />
             </div>
-            <div className="mb-4">
-              <label className="label-field">Tipo</label>
-              <div className="flex gap-1.5">
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Tipo</label>
+              <div style={{ display: 'flex', gap: 6 }}>
                 {([
                   { value: 'squad' as SprintType, label: 'Sprint do Squad', icon: '🎯' },
                   { value: 'regressivo' as SprintType, label: 'Regressivo', icon: '🔄' },
@@ -487,11 +537,14 @@ export function HomePage() {
                     key={opt.value}
                     type="button"
                     onClick={() => { setNewSprintType(opt.value); if (opt.value === 'squad') setNewReleaseId('') }}
-                    className={`flex-1 py-2 rounded-[7px] text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                      newSprintType === opt.value
-                        ? 'border-2 border-[var(--color-blue)] bg-[var(--color-blue-light)] text-[var(--color-blue-text)]'
-                        : 'border border-[var(--color-border-md)] bg-transparent text-[var(--color-text-2)]'
-                    }`}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                      border: newSprintType === opt.value ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
+                      background: newSprintType === opt.value ? 'var(--color-blue-light)' : 'transparent',
+                      color: newSprintType === opt.value ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                      transition: 'all 0.15s',
+                    }}
                   >
                     {opt.icon} {opt.label}
                   </button>
@@ -501,12 +554,12 @@ export function HomePage() {
 
             {/* Release vinculada — só para regressivo/integrado */}
             {(newSprintType === 'regressivo' || newSprintType === 'integrado') && (
-              <div className="mb-4">
-                <label className="label-field">Release vinculada</label>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Release vinculada</label>
                 <select
                   value={newReleaseId}
                   onChange={(e) => setNewReleaseId(e.target.value)}
-                  className="select-field"
+                  style={selectStyle}
                 >
                   <option value="">— Nenhuma release —</option>
                   {allReleases
@@ -517,7 +570,7 @@ export function HomePage() {
                       </option>
                     ))}
                 </select>
-                <p className="mt-1 text-[11px] text-[var(--color-text-3)]">
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
                   {newSprintType === 'regressivo'
                     ? 'Sprint de testes regressivos vinculada a uma release.'
                     : 'Sprint de testes integrados por features novas.'}
@@ -525,13 +578,13 @@ export function HomePage() {
               </div>
             )}
 
-            <div className="mb-5">
-              <label className="label-field">Squad</label>
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Squad</label>
               {availableSquads.length > 0 ? (
                 <select
                   value={newSquadId}
                   onChange={(e) => setNewSquadId(e.target.value)}
-                  className="select-field"
+                  style={selectStyle}
                 >
                   <option value="">— Sem squad (pessoal) —</option>
                   {availableSquads.map((s) => (
@@ -544,20 +597,20 @@ export function HomePage() {
                   value={newSquad}
                   onChange={(e) => setNewSquad(e.target.value)}
                   placeholder="Ex: Checkout, Pagamentos…"
-                  className="input-field"
+                  style={inputStyle}
                 />
               )}
               {availableSquads.length === 0 && (
-                <p className="mt-1 text-[11px] text-[var(--color-text-3)]">
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
                   Crie um squad em Squads para vincular sprints a equipes.
                 </p>
               )}
             </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setShowCreate(false)} className="btn btn-outline btn-md">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button type="button" onClick={() => setShowCreate(false)} style={btnOutline}>
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-primary btn-md font-semibold">
+              <button type="submit" style={btnPrimary}>
                 Criar
               </button>
             </div>
@@ -568,16 +621,16 @@ export function HomePage() {
       {/* Modal: Excluir Sprint */}
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)} title="Excluir Sprint" danger>
-          <p className="text-body mb-5">
+          <p style={{ fontSize: 14, color: 'var(--color-text)', lineHeight: 1.6, marginBottom: 20 }}>
             Tem certeza que deseja apagar o dashboard{' '}
             <strong>"{deleteTarget.title}"</strong>?<br />
             Todos os dados serão perdidos permanentemente.
           </p>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setDeleteTarget(null)} className="btn btn-outline btn-md">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button onClick={() => setDeleteTarget(null)} style={btnOutline}>
               Cancelar
             </button>
-            <button onClick={handleDelete} className="btn btn-danger btn-md font-semibold">
+            <button onClick={handleDelete} style={btnDanger}>
               Excluir
             </button>
           </div>
@@ -585,4 +638,76 @@ export function HomePage() {
       )}
     </div>
   )
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const btnPrimary: React.CSSProperties = {
+  padding: '7px 16px',
+  background: 'var(--color-blue)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  flexShrink: 0,
+  transition: 'all 0.15s',
+}
+
+const btnOutline: React.CSSProperties = {
+  padding: '7px 16px',
+  background: 'transparent',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontWeight: 500,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const btnDanger: React.CSSProperties = {
+  padding: '7px 16px',
+  background: 'var(--color-red)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'var(--color-text-2)',
+  marginBottom: 6,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 10px',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontSize: 13,
+  color: 'var(--color-text)',
+  background: 'var(--color-bg)',
+  fontFamily: 'var(--font-family-sans)',
+  boxSizing: 'border-box',
+}
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '8px 28px 8px 10px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
 }

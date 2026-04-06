@@ -25,15 +25,16 @@ export const SectionCard = memo(function SectionCard({
       border: '1px solid var(--color-border)',
       borderRadius: 10,
       overflow: 'hidden',
+      marginBottom: 12,
     }}>
       {/* Header */}
       <button
         onClick={onToggle}
         aria-expanded={!isCollapsed}
         aria-label={`${isCollapsed ? 'Expandir' : 'Recolher'} seção ${section.label}`}
-        className="w-full flex items-center gap-2.5"
         style={{
-          padding: '12px 16px',
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 14px',
           background: 'var(--color-surface)',
           border: 'none', cursor: 'pointer',
           borderBottom: isCollapsed ? 'none' : '1px solid var(--color-border)',
@@ -43,7 +44,7 @@ export const SectionCard = memo(function SectionCard({
           width: 4, height: 22, borderRadius: 2,
           background: section.color, flexShrink: 0,
         }} />
-        <span className="heading-sm flex-1 text-left">
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', flex: 1, textAlign: 'left' }}>
           {section.label}
         </span>
         <span style={{
@@ -53,8 +54,8 @@ export const SectionCard = memo(function SectionCard({
         }}>
           {items.length}
         </span>
-        <span className="text-muted" style={{
-          fontSize: 12,
+        <span style={{
+          fontSize: 12, color: 'var(--color-text-3)',
           transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)',
           transition: 'transform 0.15s',
         }}>
@@ -64,9 +65,9 @@ export const SectionCard = memo(function SectionCard({
 
       {/* Content */}
       {!isCollapsed && (
-        <div className="flex flex-col gap-2" style={{ padding: '10px 12px' }}>
+        <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {items.length === 0 && (
-            <div className="text-small text-muted text-center" style={{ padding: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-text-3)', textAlign: 'center', padding: 12 }}>
               Nenhum item nesta seção
             </div>
           )}
@@ -84,12 +85,13 @@ export const SectionCard = memo(function SectionCard({
           <button
             onClick={onAddItem}
             aria-label={`Adicionar item na seção ${section.label}`}
-            className="sr-add-item-btn text-small text-muted w-full"
+            className="sr-add-item-btn"
             style={{
               '--section-color': section.color,
-              padding: '8px 0',
+              width: '100%', padding: '8px 0',
               background: 'none', border: '1px dashed var(--color-border-md)',
               borderRadius: 6, cursor: 'pointer',
+              fontSize: 12, color: 'var(--color-text-3)',
               fontFamily: 'var(--font-family-sans)',
               transition: 'border-color 0.15s, color 0.15s',
             } as React.CSSProperties}

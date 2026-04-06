@@ -64,21 +64,29 @@ function statusLabel(status: ReleaseStatus): string {
   return map[status]
 }
 
-function statusBadgeClass(status: ReleaseStatus): string {
+function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
   const label = statusLabel(status)
-  switch (label) {
-    case 'Publicado': return 'badge badge-green'
-    case 'Em Regressivo': return 'badge badge-amber'
-    case 'Previsto': return 'badge badge-neutral'
-    case 'Uniu Escopo': return 'badge'
-    default: return 'badge badge-neutral'
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    fontSize: 10,
+    fontWeight: 700,
+    padding: '3px 10px',
+    borderRadius: 20,
+    whiteSpace: 'nowrap',
+    letterSpacing: 0.3,
   }
-}
-
-function statusBadgeInline(status: ReleaseStatus): React.CSSProperties {
-  const label = statusLabel(status)
-  if (label === 'Uniu Escopo') return { background: '#8b5cf618', color: '#8b5cf6', border: '1px solid #8b5cf640' }
-  return {}
+  switch (label) {
+    case 'Publicado':
+      return { ...base, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '1px solid var(--color-green-mid)' }
+    case 'Em Regressivo':
+      return { ...base, background: 'var(--color-amber-light)', color: 'var(--color-amber)', border: '1px solid var(--color-amber-mid)' }
+    case 'Previsto':
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
+    case 'Uniu Escopo':
+      return { ...base, background: '#8b5cf618', color: '#8b5cf6', border: '1px solid #8b5cf640' }
+    default:
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
+  }
 }
 
 function overallStatus(statuses: ReleaseStatus[]): ReleaseStatus {
@@ -282,8 +290,14 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
       `}</style>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-1.5 flex-wrap mb-5">
-        <span className="text-small" style={{ fontWeight: 600, marginRight: 4 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        marginBottom: 20, flexWrap: 'wrap',
+      }}>
+        <span style={{
+          fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
+          marginRight: 4,
+        }}>
           Filtrar:
         </span>
         {FILTERS.map((f) => (
@@ -291,13 +305,24 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
             key={f.value}
             onClick={() => setActiveFilter(f.value)}
             aria-pressed={activeFilter === f.value}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
             style={{
-              padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-              cursor: 'pointer', whiteSpace: 'nowrap', minHeight: 36,
-              transition: 'all 0.15s',
-              border: activeFilter === f.value ? '1px solid var(--color-blue)' : '1px solid var(--color-border-md)',
+              padding: '5px 14px',
+              borderRadius: 20,
+              border: activeFilter === f.value
+                ? '1px solid var(--color-blue)'
+                : '1px solid var(--color-border-md)',
               background: activeFilter === f.value ? 'var(--color-blue)' : 'var(--color-surface)',
               color: activeFilter === f.value ? '#fff' : 'var(--color-text-2)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+              whiteSpace: 'nowrap',
+              outline: 'none',
+              minHeight: 36,
             }}
           >
             {f.label}
@@ -306,31 +331,57 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
       </div>
 
       {/* Add release from cronograma */}
-      <div className="flex items-center gap-2.5 mb-3.5">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <div style={{ flex: 1 }} />
         {showPicker ? (
-          <div className="flex items-center gap-2">
-            <label htmlFor="cp-release-picker" className="text-small" style={{ fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label htmlFor="cp-release-picker" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)' }}>
               Adicionar Release:
             </label>
             <select
               id="cp-release-picker"
               onChange={(e) => { if (e.target.value) addToCheckpoint(e.target.value) }}
               value=""
-              className="select-field"
-              style={{ border: '1px solid var(--color-blue)', minWidth: 220, width: 'auto', fontWeight: 600 }}
+              style={{
+                padding: '7px 28px 7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                border: '1px solid var(--color-blue)', background: 'var(--color-surface)',
+                color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)',
+                cursor: 'pointer', appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+                minWidth: 220,
+              }}
             >
               <option value="">Selecione uma release...</option>
               {availableToAdd.map((r) => (
                 <option key={r.id} value={r.id}>{r.version} — {r.title}</option>
               ))}
             </select>
-            <button onClick={() => setShowPicker(false)} className="btn btn-sm btn-outline">
+            <button
+              onClick={() => setShowPicker(false)}
+              style={{
+                padding: '7px 14px', borderRadius: 7,
+                border: '1px solid var(--color-border-md)',
+                background: 'transparent', color: 'var(--color-text-2)',
+                fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                transition: 'all 0.15s',
+              }}
+            >
               Cancelar
             </button>
           </div>
         ) : (
-          <button onClick={() => setShowPicker(true)} className="btn btn-sm btn-primary" style={{ minHeight: 36 }}>
+          <button
+            onClick={() => setShowPicker(true)}
+            style={{
+              padding: '7px 16px', borderRadius: 7, border: 'none',
+              background: 'var(--color-blue)', color: '#fff',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+              minHeight: 36,
+            }}
+          >
             + Adicionar Release
           </button>
         )}
@@ -338,13 +389,16 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="text-body text-muted" style={{ textAlign: 'center', padding: '48px 20px' }}>
+        <div style={{
+          textAlign: 'center', padding: '48px 20px',
+          color: 'var(--color-text-3)', fontSize: 13,
+        }}>
           Nenhuma release encontrada para este filtro.
         </div>
       )}
 
       {/* Cards */}
-      <div className="flex flex-col gap-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {filtered.map((group) => {
           const isOpen = openCards.has(group.releaseNumber)
           const allStatuses = group.releases.map((r) => r.status)
@@ -412,7 +466,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 </div>
 
                 {/* Status badge */}
-                <span className={statusBadgeClass(overall)} style={statusBadgeInline(overall)}>
+                <span style={statusBadgeStyle(overall)}>
                   {statusLabel(overall)}
                 </span>
 
@@ -432,7 +486,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 <div style={{
                   borderTop: '1px solid var(--color-border)',
                   padding: '16px 18px',
-                  display: 'flex', flexDirection: 'column', gap: 12,
+                  display: 'flex', flexDirection: 'column', gap: 18,
                 }}>
                   {group.releases.map((release) => {
                     const relPlatforms = getReleasePlatforms(release)
@@ -471,7 +525,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                           }}>
                             {release.version}
                           </span>
-                          <span className={statusBadgeClass(release.status)} style={statusBadgeInline(release.status)}>
+                          <span style={statusBadgeStyle(release.status)}>
                             {statusLabel(release.status)}
                           </span>
                         </div>
@@ -599,27 +653,54 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                   })}
 
                   {/* ── Barra de ações ──────────────────────────────────── */}
-                  <div className="flex items-center gap-2 flex-wrap" style={{ paddingTop: 14, marginTop: 14, borderTop: '1px solid var(--color-border)' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    paddingTop: 14, marginTop: 14,
+                    borderTop: '1px solid var(--color-border)',
+                    flexWrap: 'wrap',
+                  }}>
                     {/* Concluir — só se não concluída */}
                     {overall !== 'concluida' && (
                       confirmConcludeId === group.releaseNumber ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-small" style={{ fontWeight: 600 }}>Concluir esta release?</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>Concluir esta release?</span>
                           <button
                             onClick={() => {
                               group.releases.forEach((r) => onConcludeRelease(r.id))
                               setConfirmConcludeId(null)
                               showToast('Release concluída com sucesso', 'success')
                             }}
-                            className="btn btn-sm btn-success"
+                            style={{
+                              padding: '5px 12px', borderRadius: 6, border: 'none',
+                              background: 'var(--color-green-mid)', color: '#fff',
+                              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                              fontFamily: 'var(--font-family-sans)',
+                              transition: 'all 0.15s',
+                            }}
                           >Sim, concluir</button>
-                          <button onClick={() => setConfirmConcludeId(null)} className="btn btn-sm btn-outline">Cancelar</button>
+                          <button
+                            onClick={() => setConfirmConcludeId(null)}
+                            style={{
+                              padding: '5px 12px', borderRadius: 6,
+                              border: '1px solid var(--color-border-md)',
+                              background: 'transparent', color: 'var(--color-text-2)',
+                              fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                              transition: 'all 0.15s',
+                            }}
+                          >Cancelar</button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setConfirmConcludeId(group.releaseNumber)}
                           aria-label="Concluir release"
-                          className="btn btn-sm btn-success" style={{ minHeight: 36 }}
+                          style={{
+                            padding: '6px 14px', borderRadius: 7, border: 'none',
+                            background: 'var(--color-green-mid)', color: '#fff',
+                            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)',
+                            transition: 'all 0.15s',
+                            minHeight: 36,
+                          }}
                         >
                           ✓ Concluir Release
                         </button>
@@ -630,7 +711,15 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                     <button
                       onClick={() => onReleaseClick(group.releases[0].id)}
                       aria-label="Editar release"
-                      className="btn btn-sm btn-outline" style={{ minHeight: 36 }}
+                      style={{
+                        padding: '6px 14px', borderRadius: 7,
+                        border: '1px solid var(--color-border-md)',
+                        background: 'transparent', color: 'var(--color-text-2)',
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'var(--font-family-sans)',
+                        transition: 'all 0.15s',
+                        minHeight: 36,
+                      }}
                     >
                       ✎ Editar
                     </button>
@@ -642,7 +731,14 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                       <button
                         onClick={() => group.releases.forEach((r) => removeFromCheckpoint(r.id))}
                         aria-label="Remover release do checkpoint"
-                        className="btn btn-sm btn-ghost" style={{ minHeight: 36 }}
+                        style={{
+                          padding: '6px 14px', borderRadius: 7,
+                          border: '1px solid var(--color-border-md)',
+                          background: 'transparent', color: 'var(--color-text-3)',
+                          fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                          transition: 'all 0.15s',
+                          minHeight: 36,
+                        }}
                       >
                         Remover do checkpoint
                       </button>
@@ -650,7 +746,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
 
                     {/* Excluir */}
                     {confirmDeleteId === group.releaseNumber ? (
-                      <div className="flex items-center gap-1.5">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 12, color: 'var(--color-red)', fontWeight: 600 }}>Excluir permanentemente?</span>
                         <button
                           onClick={() => {
@@ -658,15 +754,38 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                             setConfirmDeleteId(null)
                             showToast('Release excluída', 'info')
                           }}
-                          className="btn btn-sm btn-danger"
+                          style={{
+                            padding: '5px 12px', borderRadius: 6, border: 'none',
+                            background: 'var(--color-red)', color: '#fff',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)',
+                            transition: 'all 0.15s',
+                          }}
                         >Excluir</button>
-                        <button onClick={() => setConfirmDeleteId(null)} className="btn btn-sm btn-outline">Cancelar</button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          style={{
+                            padding: '5px 12px', borderRadius: 6,
+                            border: '1px solid var(--color-border-md)',
+                            background: 'transparent', color: 'var(--color-text-2)',
+                            fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                            transition: 'all 0.15s',
+                          }}
+                        >Cancelar</button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(group.releaseNumber)}
                         aria-label="Excluir release"
-                        className="btn btn-sm btn-destructive" style={{ minHeight: 36 }}
+                        style={{
+                          padding: '6px 14px', borderRadius: 7,
+                          border: '1px solid var(--color-red-mid)',
+                          background: 'transparent', color: 'var(--color-red)',
+                          fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                          fontFamily: 'var(--font-family-sans)',
+                          transition: 'all 0.15s',
+                          minHeight: 36,
+                        }}
                       >
                         🗑 Excluir
                       </button>

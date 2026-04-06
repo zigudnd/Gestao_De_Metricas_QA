@@ -45,6 +45,28 @@ function formatDateBR(dateStr: string): string {
   return `${d}/${m}/${y}`
 }
 
+// ─── Styles ─────────────────────────────────────────────────────────────────
+
+const btnIcon: React.CSSProperties = {
+  width: 30, height: 30, borderRadius: 6, border: 'none',
+  background: 'transparent', cursor: 'pointer',
+  color: 'var(--color-text-3)', fontSize: 13,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  transition: 'background 0.15s, color 0.15s',
+  flexShrink: 0,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', borderRadius: 7,
+  border: '1px solid var(--color-border-md)', fontSize: 13,
+  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 12, fontWeight: 600,
+  color: 'var(--color-text-2)', marginBottom: 4,
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function ReleasesPage() {
@@ -227,27 +249,34 @@ export function ReleasesPage() {
   const deleteTarget = releases.find((r) => r.id === deleteId)
 
   if (loading) return (
-    <div className="flex items-center justify-center" style={{ height: 120 }}>
-      <span className="text-small">Carregando...</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+      <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
     </div>
   )
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 20,
+      }}>
         <div>
-          <h1 className="heading-lg" style={{ fontSize: 20 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
             Releases
           </h1>
-          <p className="text-body" style={{ marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '4px 0 0' }}>
             Acompanhe o ciclo de homologação e produção das suas releases
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Abas de Releases" className="flex" style={{ borderBottom: '1px solid var(--color-border)', marginBottom: 20 }}>
+      <div role="tablist" aria-label="Abas de Releases" style={{
+        display: 'flex', gap: 0,
+        borderBottom: '1px solid var(--color-border)',
+        marginBottom: 20,
+      }}>
         {([
           { id: 'checkpoint' as HomeTab, label: 'Checkpoint' },
           { id: 'regressivos' as HomeTab, label: 'Regressivos' },
@@ -260,8 +289,8 @@ export function ReleasesPage() {
             role="tab"
             aria-selected={homeTab === tab.id}
             onClick={() => setHomeTab(tab.id)}
-            className="flex items-center gap-1.5"
             style={{
+              display: 'flex', alignItems: 'center', gap: 6,
               padding: '9px 18px', background: 'none', border: 'none',
               borderBottom: homeTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
               color: homeTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
@@ -384,16 +413,32 @@ export function ReleasesPage() {
       {showModal && (
         <div
           onClick={(e) => e.target === e.currentTarget && setShowModal(false)}
-          className="modal-backdrop"
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.45)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16,
+          }}
         >
-          <div className="modal-container modal-md" style={{ borderTop: '3px solid var(--color-blue)' }}>
-            <div className="heading-sm" style={{ marginBottom: 16 }}>
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderTop: '3px solid var(--color-blue)',
+            borderRadius: 12, padding: 24,
+            width: '100%', maxWidth: 480,
+            boxShadow: 'var(--shadow-xl)',
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', marginBottom: 16 }}>
               {editId ? 'Editar Release' : 'Nova Release'}
             </div>
 
             {/* Errors */}
             {formErrors.length > 0 && (
-              <div className="msg-error" style={{ marginBottom: 14, fontSize: 12 }}>
+              <div style={{
+                padding: '10px 14px', borderRadius: 8, marginBottom: 14,
+                background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)',
+                fontSize: 12, color: 'var(--color-red)',
+              }}>
                 {formErrors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
@@ -401,16 +446,16 @@ export function ReleasesPage() {
             )}
 
             {/* Name */}
-            <div style={{ marginBottom: 16 }}>
-              <label className="label-field">Nome *</label>
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Nome *</label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="Ex: Release Sprint 42"
                 autoFocus
                 disabled={!!editId}
-                className="input-field"
                 style={{
+                  ...inputStyle,
                   opacity: editId ? 0.6 : 1,
                   cursor: editId ? 'not-allowed' : undefined,
                 }}
@@ -418,15 +463,15 @@ export function ReleasesPage() {
             </div>
 
             {/* Version */}
-            <div style={{ marginBottom: 16 }}>
-              <label className="label-field">Versão *</label>
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Versão *</label>
               <input
                 value={formVersion}
                 onChange={(e) => setFormVersion(e.target.value)}
                 placeholder="Ex: v4.2.0"
                 disabled={!!editId}
-                className="input-field"
                 style={{
+                  ...inputStyle,
                   opacity: editId ? 0.6 : 1,
                   cursor: editId ? 'not-allowed' : undefined,
                 }}
@@ -434,55 +479,66 @@ export function ReleasesPage() {
             </div>
 
             {/* Dates in grid */}
-            <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label className="label-field">Data Corte *</label>
+                <label style={labelStyle}>Data Corte *</label>
                 <input
                   type="date" value={formCutoff}
                   onChange={(e) => setFormCutoff(e.target.value)}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="label-field">Início Homologação *</label>
+                <label style={labelStyle}>Início Homologação *</label>
                 <input
                   type="date" value={formHomoStart}
                   onChange={(e) => setFormHomoStart(e.target.value)}
                   min={formCutoff || undefined}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="label-field">Fim Homologação *</label>
+                <label style={labelStyle}>Fim Homologação *</label>
                 <input
                   type="date" value={formHomoEnd}
                   onChange={(e) => setFormHomoEnd(e.target.value)}
                   min={formHomoStart || undefined}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="label-field">Data Produção *</label>
+                <label style={labelStyle}>Data Produção *</label>
                 <input
                   type="date" value={formProdDate}
                   onChange={(e) => setFormProdDate(e.target.value)}
                   min={formHomoEnd || undefined}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 justify-end">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowModal(false)}
-                className="btn btn-md btn-outline"
+                style={{
+                  padding: '8px 18px', borderRadius: 8,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
-                className="btn btn-md btn-primary"
+                style={{
+                  padding: '8px 18px', borderRadius: 8, border: 'none',
+                  background: 'var(--color-blue)', color: '#fff',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 {editId ? 'Salvar' : 'Criar'}
               </button>

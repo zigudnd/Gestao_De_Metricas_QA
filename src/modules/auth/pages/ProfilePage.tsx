@@ -85,25 +85,35 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-[480px] pt-2">
-      <h1 className="heading-lg mb-6">
+    <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 8 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 24px' }}>
         Perfil
       </h1>
 
       {/* Avatar */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex shrink-0 items-center justify-center rounded-full bg-[var(--color-blue-light)] text-[var(--color-blue)] text-[26px] font-bold" style={{ width: 64, height: 64, border: '2px solid var(--color-blue-light)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%',
+          background: 'var(--color-blue-light)', color: 'var(--color-blue)',
+          border: '2px solid var(--color-blue-light)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 26, fontWeight: 700, flexShrink: 0,
+        }}>
           {initial}
         </div>
         <div>
-          <div className="heading-md" style={{ fontWeight: 600 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)' }}>
             {profile?.display_name ?? '—'}
           </div>
-          <div className="text-body mt-0.5">
+          <div style={{ fontSize: 13, color: 'var(--color-text-2)', marginTop: 2 }}>
             {profile?.email ?? ''}
           </div>
           {profile?.global_role === 'admin' && (
-            <span className="badge badge-blue mt-1 font-bold">
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: 'var(--color-blue)',
+              background: 'var(--color-blue-light)', padding: '2px 8px',
+              borderRadius: 4, marginTop: 4, display: 'inline-block',
+            }}>
               ADMIN
             </span>
           )}
@@ -111,46 +121,49 @@ export function ProfilePage() {
       </div>
 
       {/* Dados pessoais */}
-      <div className="card">
-        <div className="heading-sm mb-4 flex items-center">Dados pessoais</div>
-        <form onSubmit={handleSaveName} className="flex flex-col gap-4">
+      <div style={sectionStyle}>
+        <div style={sectionHeaderStyle}>Dados pessoais</div>
+        <form onSubmit={handleSaveName} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="section-label">Nome de exibição</label>
+            <label style={labelSm}>Nome de exibição</label>
             <input
               value={name}
               onChange={(e) => { setName(e.target.value); setSaved(false) }}
               placeholder="Seu nome"
               required
-              className="input-field"
+              style={inputStyle}
             />
           </div>
 
           <div>
-            <label className="section-label">E-mail</label>
+            <label style={labelSm}>E-mail</label>
             <input
               value={profile?.email ?? ''}
               disabled
-              className="input-field opacity-50 cursor-not-allowed"
+              style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
             />
-            <p className="text-small text-muted mt-1">
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
               O e-mail não pode ser alterado.
             </p>
           </div>
 
           {error && (
-            <p className="msg-error">{error}</p>
+            <p style={errorStyle}>{error}</p>
           )}
 
-          <div className="flex items-center gap-2.5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               type="submit"
               disabled={saving || !name.trim() || name.trim() === profile?.display_name}
-              className="btn btn-primary btn-md font-semibold"
+              style={{
+                ...btnPrimary,
+                opacity: (saving || !name.trim() || name.trim() === profile?.display_name) ? 0.5 : 1,
+              }}
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
             {saved && (
-              <span className="text-[13px] font-medium text-[var(--color-green)]">
+              <span style={{ fontSize: 13, color: 'var(--color-green)', fontWeight: 500 }}>
                 Salvo!
               </span>
             )}
@@ -159,48 +172,51 @@ export function ProfilePage() {
       </div>
 
       {/* Alterar senha */}
-      <div className="card mt-4">
-        <div className="heading-sm mb-4 flex items-center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5 align-middle">
+      <div style={{ ...sectionStyle, marginTop: 16 }}>
+        <div style={sectionHeaderStyle}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: 'middle' }}>
             <rect x="3" y="7" width="10" height="7" rx="1.5" />
             <path d="M5 7V5a3 3 0 0 1 6 0v2" />
             <circle cx="8" cy="11" r="1" fill="currentColor" stroke="none" />
           </svg>
           Alterar senha
         </div>
-        <form onSubmit={handleChangePassword} className="flex flex-col gap-3.5">
+        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="section-label">Nova senha</label>
+            <label style={labelSm}>Nova senha</label>
             <input
               type="password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setPwError('') }}
               placeholder="Mínimo 8 caracteres"
               minLength={8}
-              className="input-field"
+              style={inputStyle}
             />
           </div>
 
           <div>
-            <label className="section-label">Confirmar senha</label>
+            <label style={labelSm}>Confirmar senha</label>
             <input
               type="password"
               value={confirm}
               onChange={(e) => { setConfirm(e.target.value); setPwError('') }}
               placeholder="Repita a nova senha"
               minLength={8}
-              className="input-field"
+              style={inputStyle}
             />
           </div>
 
           {pwError && (
-            <p className="msg-error">{pwError}</p>
+            <p style={errorStyle}>{pwError}</p>
           )}
 
           <button
             type="submit"
             disabled={pwLoading || !password || !confirm}
-            className="btn btn-primary btn-md font-semibold"
+            style={{
+              ...btnPrimary,
+              opacity: (pwLoading || !password || !confirm) ? 0.5 : 1,
+            }}
           >
             {pwLoading ? 'Salvando...' : 'Alterar senha'}
           </button>
@@ -208,4 +224,68 @@ export function ProfilePage() {
       </div>
     </div>
   )
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const sectionStyle: React.CSSProperties = {
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 12,
+  padding: '22px 20px',
+}
+
+const sectionHeaderStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 700,
+  color: 'var(--color-text)',
+  marginBottom: 16,
+  display: 'flex',
+  alignItems: 'center',
+}
+
+const labelSm: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--color-text-2)',
+  marginBottom: 6,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '9px 11px',
+  background: 'var(--color-bg)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 7,
+  fontSize: 14,
+  color: 'var(--color-text)',
+  outline: 'none',
+  fontFamily: 'var(--font-family-sans)',
+}
+
+const btnPrimary: React.CSSProperties = {
+  padding: '9px 20px',
+  background: 'var(--color-blue)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 7,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const errorStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: 13,
+  color: 'var(--color-red)',
+  background: 'var(--color-red-light)',
+  border: '1px solid var(--color-red-mid)',
+  borderRadius: 6,
+  padding: '8px 12px',
 }

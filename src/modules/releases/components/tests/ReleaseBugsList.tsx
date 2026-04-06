@@ -34,23 +34,22 @@ export function ReleaseBugsList({ bugs, onAddBug, onRemoveBug, onUpdateBug }: Pr
   const openBugs = bugs.filter((b) => b.status !== 'Resolvido').length
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
       {/* Header */}
       <div
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2.5"
         style={{
-          padding: '12px 16px',
+          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
           background: 'var(--color-bg)', borderBottom: open ? '1px solid var(--color-border)' : 'none',
           cursor: 'pointer', userSelect: 'none',
         }}
       >
         <span style={{ color: 'var(--color-red)', fontWeight: 700, fontSize: 14 }}>{open ? '▾' : '▸'}</span>
-        <strong className="heading-sm">
+        <strong style={{ fontSize: 14, color: 'var(--color-text)' }}>
           Bugs ({bugs.length})
         </strong>
         {openBugs > 0 && (
-          <span className="badge badge-red">
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)', background: 'var(--color-red-light)', padding: '2px 8px', borderRadius: 10 }}>
             {openBugs} aberto{openBugs > 1 ? 's' : ''}
           </span>
         )}
@@ -58,14 +57,19 @@ export function ReleaseBugsList({ bugs, onAddBug, onRemoveBug, onUpdateBug }: Pr
         <button
           onClick={(e) => { e.stopPropagation(); onAddBug() }}
           aria-label="Adicionar bug"
-          className="btn btn-sm btn-outline"
+          style={{
+            padding: '4px 12px', borderRadius: 6, border: '1px solid var(--color-border-md)',
+            background: 'transparent', color: 'var(--color-text-2)',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-family-sans)',
+          }}
         >
           + Bug
         </button>
       </div>
 
       {open && bugs.length > 0 && (
-        <div className="flex flex-col gap-2" style={{ padding: '12px 16px' }}>
+        <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {bugs.map((bug, idx) => (
             <BugRow
               key={bug.id}
@@ -79,7 +83,7 @@ export function ReleaseBugsList({ bugs, onAddBug, onRemoveBug, onUpdateBug }: Pr
       )}
 
       {open && bugs.length === 0 && (
-        <div className="text-body text-muted" style={{ padding: 16, textAlign: 'center' }}>
+        <div style={{ padding: '16px', textAlign: 'center', fontSize: 13, color: 'var(--color-text-3)' }}>
           Nenhum bug registrado.
         </div>
       )}
@@ -108,28 +112,25 @@ function BugRow({ bug, bugIndex, onUpdate, onRemove }: {
       background: bug.status === 'Resolvido' ? 'var(--color-bg)' : 'var(--color-surface)',
       opacity: bug.status === 'Resolvido' ? 0.75 : 1,
     }}>
-      <div className="flex gap-2 flex-wrap items-start">
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <input
           type="text"
           value={bug.desc}
           onChange={(e) => onUpdate(bugIndex, 'desc', e.target.value)}
           placeholder="Descricao do bug"
-          className="input-field"
-          style={{ flex: 1, minWidth: 180, fontWeight: 600 }}
+          style={{ ...inputSm, flex: 1, minWidth: 180, fontWeight: 600 }}
         />
         <input
           type="text"
           value={bug.feature}
           onChange={(e) => onUpdate(bugIndex, 'feature', e.target.value)}
           placeholder="Funcionalidade"
-          className="input-field"
-          style={{ width: 160 }}
+          style={{ ...inputSm, width: 160 }}
         />
         <select
           value={bug.severity}
           onChange={(e) => onUpdate(bugIndex, 'severity', e.target.value as BugSeverity)}
-          className="select-field"
-          style={{ width: 110, color: sevColor, fontWeight: 600 }}
+          style={{ ...selectSm, width: 110, color: sevColor, fontWeight: 600 }}
         >
           <option value="Crítica">Critica</option>
           <option value="Alta">Alta</option>
@@ -139,8 +140,7 @@ function BugRow({ bug, bugIndex, onUpdate, onRemove }: {
         <select
           value={bug.status}
           onChange={(e) => onUpdate(bugIndex, 'status', e.target.value as BugStatus)}
-          className="select-field"
-          style={{ width: 130, color: statusColor, fontWeight: 600 }}
+          style={{ ...selectSm, width: 130, color: statusColor, fontWeight: 600 }}
         >
           <option value="Aberto">Aberto</option>
           <option value="Em Andamento">Em Andamento</option>
@@ -152,8 +152,7 @@ function BugRow({ bug, bugIndex, onUpdate, onRemove }: {
           value={bug.assignee}
           onChange={(e) => onUpdate(bugIndex, 'assignee', e.target.value)}
           placeholder="Responsavel"
-          className="input-field"
-          style={{ width: 130 }}
+          style={{ ...inputSm, width: 130 }}
         />
         <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover bug" danger>
           <IconTrash />
@@ -186,10 +185,16 @@ function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren
       onMouseLeave={() => setHov(false)}
       style={{
         background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer',
+        border: 'none',
+        padding: 6,
+        borderRadius: 6,
+        cursor: 'pointer',
         color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s', flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background 0.15s, color 0.15s',
+        flexShrink: 0,
       }}
     >
       {children}
@@ -203,4 +208,28 @@ function IconTrash() {
       <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
     </svg>
   )
+}
+
+// ─── Styles ─────────────────────────────────────────────────────────────────
+
+const inputSm: React.CSSProperties = {
+  width: '100%',
+  padding: '6px 8px',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 6,
+  fontSize: 13,
+  color: 'var(--color-text)',
+  background: 'var(--color-surface)',
+  fontFamily: 'var(--font-family-sans)',
+  boxSizing: 'border-box',
+}
+
+const selectSm: React.CSSProperties = {
+  ...inputSm,
+  padding: '6px 24px 6px 8px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
 }

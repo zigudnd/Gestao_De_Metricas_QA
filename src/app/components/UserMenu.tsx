@@ -38,23 +38,27 @@ export function UserMenu() {
   }, [open])
 
   const roleBadge = globalRole === 'admin'
-    ? { label: 'Admin', cls: 'badge badge-red' }
+    ? { label: 'Admin', bg: 'var(--color-red-light)', color: 'var(--color-red)' }
     : globalRole === 'gerente'
-    ? { label: 'Gerente', cls: 'badge badge-amber' }
+    ? { label: 'Gerente', bg: 'var(--color-amber-light)', color: 'var(--color-amber)' }
     : null
 
   const activeSquad = squads.find((s) => s.id === activeSquadId)
 
   return (
-    <div ref={menuRef} className="relative ml-2 flex items-center gap-[10px]">
+    <div ref={menuRef} style={{ position: 'relative', marginLeft: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
       {/* Squad label */}
       {activeSquad && (
-        <div className="flex items-center gap-[6px] shrink-0">
-          <span
-            className="w-2 h-2 rounded-full shrink-0"
-            style={{ background: activeSquad.color ?? 'var(--color-blue)' }}
-          />
-          <span className="text-[12px] font-semibold text-text-2 whitespace-nowrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: activeSquad.color ?? 'var(--color-blue)',
+            flexShrink: 0,
+          }} />
+          <span style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
+            whiteSpace: 'nowrap',
+          }}>
             {activeSquad.name}
           </span>
         </div>
@@ -65,9 +69,15 @@ export function UserMenu() {
         onClick={() => setOpen(!open)}
         aria-label="Menu da conta"
         aria-expanded={open}
-        className="w-[34px] h-[34px] rounded-full bg-blue-light text-blue flex items-center justify-center text-[13px] font-bold cursor-pointer shrink-0 tracking-tight transition-all"
         style={{
+          width: 34, height: 34, borderRadius: '50%',
+          background: open ? 'var(--color-blue-light)' : 'var(--color-blue-light)',
+          color: 'var(--color-blue)',
           border: open ? '2px solid var(--color-blue)' : '2px solid var(--color-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          flexShrink: 0, letterSpacing: '-0.5px',
+          transition: 'all 0.15s',
         }}
       >
         {initial}
@@ -75,22 +85,51 @@ export function UserMenu() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-[42px] right-0 w-[280px] max-w-[90vw] bg-surface border border-border rounded-[12px] shadow-xl z-[2000] overflow-hidden anim-fade-up">
+        <div style={{
+          position: 'absolute', top: 42, right: 0,
+          width: 280, maxWidth: '90vw',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 12,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          zIndex: 2000,
+          overflow: 'hidden',
+          animation: 'fadeUp 0.15s ease both',
+        }}>
           {/* User info header */}
-          <div className="p-4 pb-3 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-[42px] h-[42px] rounded-full bg-blue-light text-blue border-2 border-border flex items-center justify-center text-[17px] font-bold shrink-0">
+          <div style={{
+            padding: '16px 16px 12px',
+            borderBottom: '1px solid var(--color-border)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: '50%',
+                background: 'var(--color-blue-light)', color: 'var(--color-blue)',
+                border: '2px solid var(--color-border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 17, fontWeight: 700, flexShrink: 0,
+              }}>
                 {initial}
               </div>
-              <div className="min-w-0">
-                <div className="text-[14px] font-semibold text-text overflow-hidden text-ellipsis whitespace-nowrap">
+              <div style={{ minWidth: 0 }}>
+                <div style={{
+                  fontSize: 14, fontWeight: 600, color: 'var(--color-text)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {profile?.display_name ?? '—'}
                 </div>
-                <div className="text-[12px] text-text-3 overflow-hidden text-ellipsis whitespace-nowrap">
+                <div style={{
+                  fontSize: 12, color: 'var(--color-text-3)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {profile?.email ?? ''}
                 </div>
                 {roleBadge && (
-                  <span className={`${roleBadge.cls} mt-1`}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 4,
+                    background: roleBadge.bg, color: roleBadge.color,
+                    display: 'inline-block', marginTop: 4,
+                  }}>
                     {roleBadge.label}
                   </span>
                 )}
@@ -100,15 +139,29 @@ export function UserMenu() {
 
           {/* Squad selector */}
           {squads.length > 0 && (
-            <div className="px-4 py-[10px] border-b border-border">
-              <div className="section-label !mb-[6px]">
+            <div style={{
+              padding: '10px 16px',
+              borderBottom: '1px solid var(--color-border)',
+            }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: 'var(--color-text-3)',
+                textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6,
+              }}>
                 Squad ativo
               </div>
               <select
                 value={activeSquadId ?? ''}
                 onChange={(e) => { if (e.target.value) setActiveSquad(e.target.value) }}
                 aria-label="Selecionar squad"
-                className="select-field font-semibold"
+                style={{
+                  width: '100%', padding: '7px 28px 7px 10px', fontSize: 13, fontWeight: 600,
+                  border: '1px solid var(--color-border-md)', borderRadius: 7,
+                  background: 'var(--color-surface)', color: 'var(--color-text)',
+                  fontFamily: 'var(--font-family-sans)', cursor: 'pointer',
+                  appearance: 'none', outline: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+                }}
               >
                 {isPrivileged && <option value="all">Todos os squads</option>}
                 {squads.map((s) => (
@@ -119,13 +172,13 @@ export function UserMenu() {
           )}
 
           {/* Menu items */}
-          <div className="py-[6px]">
+          <div style={{ padding: '6px 0' }}>
             <MenuButton
               icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/></svg>}
               label="Meu perfil"
               onClick={() => { navigate('/profile'); setOpen(false) }}
             />
-            <div className="h-px bg-border mx-3 my-1" />
+            <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 12px' }} />
             <MenuButton
               icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2H4a2 2 0 00-2 2v8a2 2 0 002 2h2"/><path d="M10 12l4-4-4-4"/><path d="M14 8H6"/></svg>}
               label="Sair"
@@ -140,39 +193,61 @@ export function UserMenu() {
       {showLogout && (
         <div
           onClick={(e) => e.target === e.currentTarget && setShowLogout(false)}
-          className="modal-backdrop modal-backdrop-high"
-          style={{ zIndex: 3000 }}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 3000,
+          }}
         >
-          <div
-            className="modal-container modal-sm"
-            style={{ borderTop: '3px solid var(--color-blue)' }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-light text-blue border-2 border-border flex items-center justify-center text-[16px] font-bold shrink-0">
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderTop: '3px solid var(--color-blue)',
+            borderRadius: 12, padding: '24px 22px',
+            width: 340, maxWidth: '90vw',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'var(--color-blue-light)', color: 'var(--color-blue)',
+                border: '2px solid var(--color-border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 700, flexShrink: 0,
+              }}>
                 {initial}
               </div>
               <div>
-                <div className="text-[14px] font-semibold text-text">
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>
                   {profile?.display_name ?? '—'}
                 </div>
-                <div className="text-small">
+                <div style={{ fontSize: 12, color: 'var(--color-text-2)' }}>
                   {profile?.email ?? ''}
                 </div>
               </div>
             </div>
-            <p className="text-body mb-5">
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--color-text)', lineHeight: 1.5 }}>
               Deseja sair da sua conta?
             </p>
-            <div className="flex gap-2 justify-end">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowLogout(false)}
-                className="btn btn-outline btn-md"
+                style={{
+                  padding: '8px 16px', background: 'transparent',
+                  border: '1px solid var(--color-border-md)',
+                  borderRadius: 7, fontSize: 13, cursor: 'pointer',
+                  color: 'var(--color-text-2)', fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 Cancelar
               </button>
               <button
                 onClick={() => { setShowLogout(false); signOut() }}
-                className="btn btn-primary btn-md"
+                style={{
+                  padding: '8px 16px', background: 'var(--color-blue)',
+                  border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', color: '#fff', fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 Sair
               </button>
@@ -193,18 +268,23 @@ function MenuButton({ icon, label, onClick, danger }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-[10px] px-4 py-[9px] bg-transparent border-none cursor-pointer text-[13px] font-medium transition-colors duration-[120ms] hover:bg-surface-2"
       style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '9px 16px',
+        background: 'none', border: 'none', cursor: 'pointer',
+        fontSize: 13, fontWeight: 500,
         color: danger ? 'var(--color-red)' : 'var(--color-text)',
+        fontFamily: 'var(--font-family-sans)',
+        transition: 'background 0.12s',
       }}
       onMouseEnter={(e) => {
-        if (danger) e.currentTarget.style.background = 'var(--color-red-light)'
+        e.currentTarget.style.background = danger ? 'var(--color-red-light)' : 'var(--color-surface-2)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.background = 'none'
       }}
     >
-      <span className="shrink-0 flex">{icon}</span>
+      <span style={{ flexShrink: 0, display: 'flex' }}>{icon}</span>
       {label}
     </button>
   )

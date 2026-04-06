@@ -14,6 +14,8 @@ const NAME_W = 200
 const DAY_W = 20
 const PAD_TOP = 36
 
+// getSectionColor is defined inside the component to use props
+
 function formatWeekLabel(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0')
   const mon = String(d.getMonth() + 1).padStart(2, '0')
@@ -93,14 +95,17 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
 
   if (visibleItems.length === 0) {
     return (
-      <div className="flex items-center justify-center text-muted" style={{ height: 200, fontSize: 14 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: 200, color: 'var(--color-text-3)', fontSize: 14,
+      }}>
         Nenhum item com datas calculadas para exibir no Gantt.
       </div>
     )
   }
 
   return (
-    <div className="flex" style={{ overflow: 'hidden', border: '1px solid var(--color-border)', borderRadius: 10 }}>
+    <div style={{ display: 'flex', overflow: 'hidden', border: '1px solid var(--color-border)', borderRadius: 10 }}>
       {/* Names column */}
       <div style={{
         width: NAME_W, flexShrink: 0,
@@ -112,11 +117,11 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
           <div
             key={item.id}
             onClick={() => onItemClick(item.id)}
-            className="flex items-center text-small"
             style={{
-              height: ROW_H,
+              height: ROW_H, display: 'flex', alignItems: 'center',
               padding: '0 10px', cursor: 'pointer',
               borderBottom: '1px solid var(--color-border)',
+              fontSize: 12, color: 'var(--color-text)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}
             title={item.title}
@@ -132,7 +137,7 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
       </div>
 
       {/* SVG timeline */}
-      <div className="flex-1 relative" style={{ overflow: 'hidden' }}>
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {canScrollRight && (
           <div style={{
             position: 'absolute', top: 0, right: 0, bottom: 0, width: 32,

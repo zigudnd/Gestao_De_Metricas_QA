@@ -75,39 +75,48 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card" style={{ background: 'var(--color-bg)' }}>
-      <div className="flex items-center justify-between mb-3.5">
-        <span className="heading-sm">
+    <form onSubmit={handleSubmit} style={{
+      padding: '16px 18px',
+      background: 'var(--color-bg)',
+      border: '0.5px solid var(--color-border)',
+      borderRadius: 10,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
           Convidar membro temporário
         </span>
-        <button type="button" onClick={onCancel} className="btn btn-ghost" style={{ padding: '2px 4px' }}>×</button>
+        <button type="button" onClick={onCancel} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'var(--color-text-3)', fontSize: 14, padding: '2px 4px',
+        }}>×</button>
       </div>
 
       {/* Busca de usuario */}
-      <div className="mb-3.5">
-        <label className="section-label">Buscar usuário</label>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelSm}>Buscar usuário</label>
         {usersLoading ? (
-          <div className="flex items-center justify-center" style={{ height: 120 }}>
-            <span className="text-body">Carregando...</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+            <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>Carregando...</span>
           </div>
         ) : (
-        <div ref={dropdownRef} className="relative">
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
           <input
             autoFocus
             value={search}
             onChange={(e) => { setSearch(e.target.value); setSelectedUser(null); setShowDropdown(true) }}
             onFocus={() => { if (!selectedUser) setShowDropdown(true) }}
             placeholder="Digite o nome ou email para buscar..."
-            className="input-field"
             style={{
+              ...inputSm,
               paddingRight: selectedUser ? 32 : 12,
               ...(selectedUser ? { borderColor: 'var(--color-blue)', background: 'var(--color-blue-light)' } : {}),
             }}
           />
           {selectedUser && (
-            <button type="button" onClick={clearSelection} className="btn btn-ghost" style={{
+            <button type="button" onClick={clearSelection} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              padding: '2px 4px', lineHeight: 1,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-3)',
+              fontSize: 14, padding: '2px 4px', lineHeight: 1,
             }}>×</button>
           )}
           {showDropdown && search.length > 0 && !selectedUser && (
@@ -118,7 +127,7 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
               background: 'var(--color-surface)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
             }}>
               {filtered.length === 0 && (
-                <div className="text-small text-muted" style={{ padding: '12px 14px' }}>
+                <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--color-text-3)' }}>
                   Nenhum usuário encontrado
                 </div>
               )}
@@ -126,29 +135,31 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
                 <div
                   key={u.id}
                   onClick={() => selectUser(u)}
-                  className="time-addmember-item flex items-center gap-2.5"
+                  className="time-addmember-item"
                   style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 14px', cursor: 'pointer',
                     borderBottom: '0.5px solid var(--color-border)',
                     background: 'var(--color-surface)',
                     transition: 'background 0.1s',
                   }}
                 >
-                  <div className="flex items-center justify-center" style={{
+                  <div style={{
                     width: 28, height: 28, borderRadius: '50%',
                     background: 'var(--color-blue-light)', color: 'var(--color-blue)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, fontWeight: 600, flexShrink: 0,
                   }}>
                     {u.display_name[0]?.toUpperCase() ?? '?'}
                   </div>
-                  <div className="min-w-0">
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{u.display_name}</div>
-                    <div className="text-small text-muted">{u.email}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{u.display_name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-3)' }}>{u.email}</div>
                   </div>
                 </div>
               ))}
               {filtered.length > 10 && (
-                <div className="text-small text-muted text-center" style={{ padding: '8px 14px' }}>
+                <div style={{ padding: '8px 14px', fontSize: 11, color: 'var(--color-text-3)', textAlign: 'center' }}>
                   +{filtered.length - 10} resultados — refine a busca
                 </div>
               )}
@@ -160,10 +171,10 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
 
       {/* Papel (visível após selecionar usuario) */}
       {selectedUser && (
-        <div className="flex gap-2.5 flex-wrap mb-3.5">
-          <div className="flex-1" style={{ minWidth: 160 }}>
-            <label className="section-label">Papel</label>
-            <select value={papel} onChange={(e) => setPapel(e.target.value)} className="select-field">
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label style={labelSm}>Papel</label>
+            <select value={papel} onChange={(e) => setPapel(e.target.value)} style={inputSm}>
               {PAPEIS.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
@@ -172,11 +183,21 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
 
       {/* Ações */}
       {selectedUser && (
-        <div className="flex gap-2 justify-end">
-          <button type="button" onClick={onCancel} className="btn btn-outline btn-sm">
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button type="button" onClick={onCancel} style={{
+            padding: '7px 16px', borderRadius: 6,
+            border: '1px solid var(--color-border-md)',
+            background: 'transparent', color: 'var(--color-text-2)',
+            fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+          }}>
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary btn-sm">
+          <button type="submit" style={{
+            padding: '7px 18px', borderRadius: 6, border: 'none',
+            background: 'var(--color-blue)', color: '#fff',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-family-sans)',
+          }}>
             Convidar
           </button>
         </div>
@@ -186,4 +207,18 @@ export function AddMemberForm({ existingMemberIds, onAdd, onCancel }: AddMemberF
       `}</style>
     </form>
   )
+}
+
+const labelSm: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 500,
+  color: 'var(--color-text-2)', marginBottom: 4,
+  textTransform: 'uppercase', letterSpacing: '0.04em',
+}
+
+const inputSm: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  padding: '8px 12px', fontSize: 13,
+  border: '0.5px solid var(--color-border)', borderRadius: 7,
+  background: 'var(--color-surface)', color: 'var(--color-text)',
+  outline: 'none', fontFamily: 'var(--font-family-sans)',
 }

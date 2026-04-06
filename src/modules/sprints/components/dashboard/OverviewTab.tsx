@@ -16,7 +16,7 @@ ChartJS.register(
   ArcElement, Title, Tooltip, Legend, ChartDataLabels,
 )
 
-// --- Helpers ---
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const BASE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 function getColors(n: number) { return Array.from({ length: n }, (_, i) => BASE_COLORS[i % BASE_COLORS.length]) }
@@ -66,7 +66,7 @@ function calcMTTR(bug: Bug): number | null {
 }
 
 
-// --- OverviewTab ---
+// ─── OverviewTab ─────────────────────────────────────────────────────────────
 
 export function OverviewTab() {
   const state = useSprintStore((s) => s.state)
@@ -83,7 +83,7 @@ export function OverviewTab() {
   const suites = state.suites ?? []
   const filtered = getFilteredFeatures(state, filter)
 
-  // -- Burndown & Execucao por Dia --
+  // ── Burndown & Execução por Dia ───────────────────────────────────────────
   const globalExec: Record<string, number> = {}
   let maxDay = 0
   activeFeatures.forEach((f) => {
@@ -124,7 +124,7 @@ export function OverviewTab() {
 
   const execPerDay = Array.from({ length: sprintDays }, (_, i) => globalExec[`D${i + 1}`] || 0)
 
-  // -- Feature Progress (por suite) --
+  // ── Feature Progress (por suite) ──────────────────────────────────────────
   const visibleSuites = suites.filter((s) =>
     activeFeatures.some((f) => String(f.suiteId) === String(s.id))
   )
@@ -133,7 +133,7 @@ export function OverviewTab() {
     features: activeFeatures.filter((f) => String(f.suiteId) === String(s.id)),
   }))
 
-  // -- Blockers --
+  // ── Blockers ──────────────────────────────────────────────────────────────
   const allBlockers = state.blockers ?? []
   const blockersAll = allBlockers.reduce<Record<string, number>>((acc, b) => {
     acc[b.reason || 'Outros'] = (acc[b.reason || 'Outros'] || 0) + (b.hours || 0)
@@ -146,7 +146,7 @@ export function OverviewTab() {
   const totalHorasHoje = Object.values(blockersToday).reduce((a, b) => a + b, 0)
   const totalHorasGeral = Object.values(blockersAll).reduce((a, b) => a + b, 0)
 
-  // -- Bugs --
+  // ── Bugs ──────────────────────────────────────────────────────────────────
   const validBugs = state.bugs ?? []
   const bugsGrouped = validBugs.reduce<Record<string, number>>((acc, b) => {
     const st = b.stack || 'Não Informado'
@@ -162,7 +162,7 @@ export function OverviewTab() {
   const bugBff   = uniqueFeatBugs.map((f) => validBugs.filter((b) => (b.feature || 'Não informada') === f && b.stack === 'BFF').length)
   const bugBack  = uniqueFeatBugs.map((f) => validBugs.filter((b) => (b.feature || 'Não informada') === f && b.stack === 'Back').length)
 
-  // -- Prevention Score --
+  // ── Prevention Score ──────────────────────────────────────────────────────
   const preventionScore = validBugs.reduce((sum, b) => {
     const w = b.severity === 'Crítica' ? (state.config.psCritical ?? 10)
       : b.severity === 'Alta' ? (state.config.psHigh ?? 5)
@@ -171,7 +171,7 @@ export function OverviewTab() {
     return sum + w
   }, 0)
 
-  // -- MTTR --
+  // ── MTTR ──────────────────────────────────────────────────────────────────
   const resolvedBugs = validBugs.filter((b) => b.status === 'Resolvido' && b.openedAt && b.resolvedAt)
   const mttrDays = resolvedBugs.map(calcMTTR).filter((d): d is number => d !== null)
   const mttrGlobal = mttrDays.length ? (mttrDays.reduce((a, b) => a + b, 0) / mttrDays.length).toFixed(1) : null
@@ -189,7 +189,7 @@ export function OverviewTab() {
     }),
   }))
 
-  // -- Lists --
+  // ── Lists ─────────────────────────────────────────────────────────────────
   type BlockedItem = { id: number; name: string; suiteId: number; blockReason: string; stripe: 'blocked' | 'pending' }
   const blockedItems: BlockedItem[] = [
     ...filtered
@@ -211,7 +211,7 @@ export function OverviewTab() {
   })
   const openBugsList = validBugs.filter((b) => b.status !== 'Resolvido')
 
-  // -- Colors --
+  // ── Colors ────────────────────────────────────────────────────────────────
   const hsColor = healthScore >= 90 ? 'var(--color-green)' : healthScore >= 70 ? 'var(--color-yellow)' : 'var(--color-red)'
   const ritmoLabel = ritmoStatus === 'ok' ? 'No Ritmo' : ritmoStatus === 'warning' ? 'Atenção' : 'Em Atraso'
   const ritmoColor = ritmoStatus === 'ok' ? 'var(--color-green)' : ritmoStatus === 'warning' ? 'var(--color-yellow)' : 'var(--color-red)'
@@ -223,38 +223,38 @@ export function OverviewTab() {
   const todayReport = state.reports?.[state.currentDate] ?? ''
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* -- Status Bar -- */}
-      <div className="card-sm flex items-center gap-3 flex-wrap" style={{ padding: '14px 20px' }}>
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+      {/* ── Status Bar ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           {ritmoStatus !== 'ok' && (
-            <span className="badge badge-red" style={{ fontWeight: 800, letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: 'var(--color-red-light)', color: 'var(--color-red-mid)', border: '0.5px solid var(--color-red-mid)', letterSpacing: '0.5px', whiteSpace: 'nowrap', flexShrink: 0 }}>
               EM ATRASO
             </span>
           )}
-          <span className="heading-sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {state.config.title || 'Sprint atual'}
           </span>
           {atrasoCasos > 0 && (
-            <span className="text-small shrink-0" style={{ whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {atrasoPercent}% de atraso · {atrasoCasos} casos
             </span>
           )}
         </div>
         {suites.length >= 2 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {suites.map((suite) => {
               const active = filter.size === 0 || filter.has(String(suite.id))
               const cnt = state.features.filter((f) => String(f.suiteId) === String(suite.id)).length
               return (
-                <button key={suite.id} onClick={() => toggleSuiteFilter(String(suite.id))} aria-label={`Filtrar suite ${suite.name || 'Suite'}`} className={active ? 'badge badge-blue' : 'badge badge-neutral'} style={{ cursor: 'pointer', fontWeight: 600, padding: '4px 10px', borderRadius: 20, fontFamily: 'var(--font-family-sans)' }}>
+                <button key={suite.id} onClick={() => toggleSuiteFilter(String(suite.id))} aria-label={`Filtrar suite ${suite.name || 'Suite'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, border: `0.5px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`, background: active ? 'var(--color-blue)' : 'transparent', color: active ? '#fff' : 'var(--color-text-2)', fontWeight: 600, fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
                   {suite.name || 'Suite'} <span style={{ opacity: 0.75 }}>{cnt}f</span>
                 </button>
               )
             })}
             {filter.size > 0 && (
-              <button onClick={clearSuiteFilter} aria-label="Limpar filtros de suite" className="badge badge-neutral" style={{ cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
+              <button onClick={clearSuiteFilter} aria-label="Limpar filtros de suite" style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '0.5px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}>
                 ✕ Todas
               </button>
             )}
@@ -262,20 +262,20 @@ export function OverviewTab() {
         )}
       </div>
 
-      {/* -- Hero Cards -- */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saude geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
+      {/* ── Hero Cards ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        <HeroCard label="QA Health Score" value={`${healthScore}%`} sub="saúde geral da sprint" valueColor={hsColor} barColor={healthScore >= 90 ? 'var(--color-green-mid)' : healthScore >= 70 ? 'var(--color-amber-mid)' : 'var(--color-red-mid)'} />
         <HeroCard label="Total de Testes" value={totalTests} sub="escopo total da sprint" barColor="#6b7280" />
-        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executaveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
-        <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolucao" valueColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} barColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} highlight={openBugs > 0} />
+        <HeroCard label="Executados" value={`${execPercent}%`} sub={`${totalExec} de ${testesExecutaveis} executáveis`} barColor={execPercent >= 90 ? 'var(--color-green-mid)' : execPercent >= 50 ? 'var(--color-amber-mid)' : '#6b7280'} />
+        <HeroCard label="🐞 Bugs Abertos" value={openBugs} sub="aguardando resolução" valueColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} barColor={openBugs > 0 ? 'var(--color-red-mid)' : 'var(--color-green-mid)'} highlight={openBugs > 0} />
       </div>
 
-      {/* -- Alert Strips -- */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="card-sm flex items-start gap-2.5" style={{ background: 'var(--color-green-light)', border: '0.5px solid var(--color-green-mid)' }}>
-          <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
+      {/* ── Alert Strips ───────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ background: 'var(--color-green-light)', border: '0.5px solid var(--color-green-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-green-mid)' }} />
-            <span className="section-label" style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-green)', marginBottom: 0 }}>OK</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-green)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OK</span>
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-green)' }}>
@@ -286,74 +286,74 @@ export function OverviewTab() {
             </div>
           </div>
         </div>
-        <div className="card-sm flex items-start gap-2.5" style={{ background: 'var(--color-red-light)', border: '0.5px solid var(--color-red-mid)' }}>
-          <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
+        <div style={{ background: 'var(--color-red-light)', border: '0.5px solid var(--color-red-mid)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)' }} />
-            <span className="section-label" style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-red)', marginBottom: 0 }}>{testesComprometidos > 0 ? 'ALERTA' : 'OK'}</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-red)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{testesComprometidos > 0 ? 'ALERTA' : 'OK'}</span>
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-red)' }}>
               {testesComprometidos > 0 ? `${testesComprometidos} testes bloqueados` : 'Sem testes bloqueados'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--color-red)', opacity: 0.75, marginTop: 2 }}>
-              {testesComprometidos > 0 ? `${blockedFeatureCount} funcionalidade${blockedFeatureCount !== 1 ? 's' : ''} impedindo a execucao` : 'Todos os testes estao liberados para execucao'}
+              {testesComprometidos > 0 ? `${blockedFeatureCount} funcionalidade${blockedFeatureCount !== 1 ? 's' : ''} impedindo a execução` : 'Todos os testes estão liberados para execução'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* -- Faixas Qualitativas -- */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="card-sm flex items-start gap-2.5">
-          <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
+      {/* ── Faixas Qualitativas ────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-blue)' }} />
-            <span className="section-label" style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-blue)', marginBottom: 0 }}>MTTR</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-blue)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>MTTR</span>
           </div>
           <div>
-            <div className="heading-sm" style={{ fontSize: 13 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
               MTTR Global — {mttrGlobal !== null ? `${mttrGlobal}d` : '—'}
             </div>
-            <div className="text-small" style={{ marginTop: 2 }}>
-              tempo medio de resolucao de bugs
+            <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
+              tempo médio de resolução de bugs
             </div>
           </div>
         </div>
-        <div className="card-sm flex items-start gap-2.5">
-          <div className="flex items-center gap-1 shrink-0" style={{ marginTop: 3 }}>
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 3 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: retestIndexColor }} />
-            <span className="section-label" style={{ fontSize: 9, fontWeight: 800, color: retestIndexColor, marginBottom: 0 }}>{retestIndexLabel}</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: retestIndexColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{retestIndexLabel}</span>
           </div>
           <div>
-            <div className="heading-sm" style={{ fontSize: 13 }}>
-              Indice de Retrabalho — {retestIndex}%
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+              Índice de Retrabalho — {retestIndex}%
             </div>
-            <div className="text-small" style={{ marginTop: 2 }}>
-              {retestIndexLabel} · proporcao de revalidacoes
+            <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
+              {retestIndexLabel} · proporção de revalidações
             </div>
           </div>
         </div>
       </div>
 
-      {/* -- KPI Cards -- */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-        <KpiCard label="Testes Executaveis" value={testesExecutaveis} sub="possiveis de executar agora" />
-        <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessivel" />
+      {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        <KpiCard label="Testes Executáveis" value={testesExecutaveis} sub="possíveis de executar agora" />
+        <KpiCard label="Capacidade Real" value={`${capacidadeReal}%`} sub="do escopo acessível" />
         <KpiCard label="Meta por Dia" value={metaPerDay} sub={`Planejado / ${sprintDays} dias`} />
         <KpiCard label="Horas Bloqueadas" value={`${totalBlockedHours}h`} sub="perdidas por impedimentos" />
       </div>
 
-      {/* -- Report do Dia + Bloqueios Hoje -- */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: '3fr 2fr' }}>
+      {/* ── Report do Dia + Bloqueios Hoje ────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
         <Card
           title="Report do Dia"
           icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="3" y="1.5" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
         >
           {todayReport
-            ? <div className="text-body" style={{ whiteSpace: 'pre-wrap', color: 'var(--color-text)' }}>{todayReport}</div>
+            ? <div style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{todayReport}</div>
             : (
-              <div className="flex flex-col items-center justify-center gap-2" style={{ minHeight: 100 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 100, gap: 8 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="var(--color-text-3)" strokeWidth="1.2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="var(--color-text-3)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                <span className="text-muted" style={{ fontSize: 13 }}>Nenhum reporte registrado hoje</span>
+                <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Nenhum reporte registrado hoje</span>
               </div>
             )
           }
@@ -375,7 +375,7 @@ export function OverviewTab() {
         </Card>
       </div>
 
-      {/* -- Burndown Chart -- */}
+      {/* ── Burndown Chart ────────────────────────────────────────────────── */}
       <Card title="Burndown Chart" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 2.5L5.5 7l3-2.5 5.5 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M11 11.5h3v-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
         <div style={{ height: 280 }}>
           <Line
@@ -415,12 +415,14 @@ export function OverviewTab() {
         </div>
       </Card>
 
-      {/* -- Bugs Abertos — tabela compacta (largura total) -- */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="flex items-center gap-2" style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--color-border)' }}>
+      {/* ── Bugs Abertos — tabela compacta (largura total) ───────────────── */}
+      <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>🐞</span>
-          <span className="heading-sm" style={{ fontSize: 13 }}>Bugs Abertos</span>
-          <span className="badge badge-neutral ml-auto">{openBugsList.length} bug{openBugsList.length !== 1 ? 's' : ''}</span>
+          <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>Bugs Abertos</span>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-2)', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', fontWeight: 500 }}>
+            {openBugsList.length} bug{openBugsList.length !== 1 ? 's' : ''}
+          </span>
         </div>
         {openBugsList.length === 0 ? (
           <div style={{ padding: '14px 14px' }}><EmptyOk label="🎉 Nenhum bug aberto!" /></div>
@@ -429,28 +431,28 @@ export function OverviewTab() {
             <thead>
               <tr style={{ background: 'var(--color-bg)' }}>
                 {['ID', 'Status', 'Responsável', 'Descrição'].map((h) => (
-                  <th key={h} className="table-header" style={{ padding: '6px 8px', fontSize: 10 }}>{h}</th>
+                  <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '0.5px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {openBugsList.map((b) => {
                 const stripeColor = b.status === 'Aberto' || b.status === 'Em Andamento' ? 'var(--color-red-mid)' : b.status === 'Falhou' ? 'var(--color-amber-mid)' : 'var(--color-green-mid)'
-                const badgeClass = b.status === 'Aberto' || b.status === 'Em Andamento'
-                  ? 'badge badge-red'
+                const badgeStyle: React.CSSProperties = b.status === 'Aberto' || b.status === 'Em Andamento'
+                  ? { background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F7C1C1' }
                   : b.status === 'Falhou'
-                  ? 'badge badge-amber'
-                  : 'badge badge-green'
+                  ? { background: '#FAEEDA', color: '#854F0B', border: '0.5px solid #FAC775' }
+                  : { background: '#EAF3DE', color: '#3B6D11', border: '0.5px solid #C0DD97' }
                 return (
                   <tr key={b.id} style={{ borderBottom: '0.5px solid var(--color-border)' }}>
-                    <td className="table-cell" style={{ padding: '6px 8px', whiteSpace: 'nowrap', borderLeft: `3px solid ${stripeColor}` }}>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', borderLeft: `3px solid ${stripeColor}` }}>
                       <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>{b.id}</span>
                     </td>
-                    <td className="table-cell" style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>
-                      <span className={badgeClass}>{b.status}</span>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 10, fontWeight: 500, borderRadius: 10, padding: '2px 8px', ...badgeStyle }}>{b.status}</span>
                     </td>
-                    <td className="table-cell text-small" style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{b.assignee || '—'}</td>
-                    <td className="table-cell" style={{ padding: '6px 8px', color: 'var(--color-text)' }}>{b.desc || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text-2)', whiteSpace: 'nowrap' }}>{b.assignee || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text)' }}>{b.desc || '—'}</td>
                   </tr>
                 )
               })}
@@ -459,28 +461,30 @@ export function OverviewTab() {
         )}
       </div>
 
-      {/* -- Progresso por Funcionalidade (largura total) -- */}
+      {/* ── Progresso por Funcionalidade (largura total) ──────────────────── */}
       <Card title="Progresso de Testes por Funcionalidade" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M5.5 1.5h4M6.5 1.5v4.5L3.5 13h8l-3-7V1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
         {featsBySuite.length === 0 ? (
-          <div className="text-muted" style={{ fontStyle: 'italic', padding: '20px 0', textAlign: 'center' }}>
+          <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic', padding: '20px 0', textAlign: 'center' }}>
             Nenhuma funcionalidade ativa.
           </div>
         ) : (
-          <div className="flex flex-col">
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Legenda global */}
-            <div className="flex gap-3" style={{ marginBottom: 16 }}>
-              {([['var(--color-green-mid)','Concluido'],['var(--color-red-mid)','Falha'],['var(--color-amber-mid)','Bloqueado'],['var(--color-bg)','Pendente']] as [string,string][]).map(([color, label]) => (
-                <div key={label} className="flex items-center gap-1.5">
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              {([['var(--color-green-mid)','Concluído'],['var(--color-red-mid)','Falha'],['var(--color-amber-mid)','Bloqueado'],['var(--color-bg)','Pendente']] as [string,string][]).map(([color, label]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: color, border: color === 'var(--color-bg)' ? '0.5px solid var(--color-border)' : 'none', flexShrink: 0 }} />
-                  <span className="text-small">{label}</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-2)' }}>{label}</span>
                 </div>
               ))}
             </div>
             {featsBySuite.map(({ suite, features }, suiteIdx) => (
               <div key={suite.id} style={{ marginTop: suiteIdx > 0 ? 16 : 0 }}>
-                <div className="section-label" style={{ marginBottom: 8, marginTop: suiteIdx > 0 ? 12 : 0 }}>
+                {/* Suite label */}
+                <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, marginTop: suiteIdx > 0 ? 12 : 0 }}>
                   {suite.name || 'Suite'}
                 </div>
+                {/* Feature rows */}
                 {features.map((f) => {
                   const cases = f.cases ?? []
                   const total = cases.length
@@ -489,15 +493,15 @@ export function OverviewTab() {
                   const bloqueado = cases.filter((c) => c.status === 'Bloqueado').length
                   const pendente  = cases.filter((c) => c.status === 'Pendente').length
                   return (
-                    <div key={f.id} className="flex items-center gap-2.5" style={{ marginBottom: 6 }}>
-                      <span className="text-small" style={{ flex: '0 0 150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.name || ''}>
+                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-2)', flex: '0 0 150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.name || ''}>
                         {f.name || 'Sem nome'}
                       </span>
-                      <div className="flex flex-1" style={{ height: 20, borderRadius: 4, overflow: 'hidden', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)' }}>
+                      <div style={{ flex: 1, height: 20, borderRadius: 4, overflow: 'hidden', display: 'flex', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)' }}>
                         {total === 0 && <div style={{ flex: 1 }} />}
-                        {concluido > 0 && <div className="flex items-center justify-center" style={{ flex: concluido, background: 'var(--color-green-mid)' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{concluido}</span></div>}
-                        {falhou    > 0 && <div className="flex items-center justify-center" style={{ flex: falhou,    background: 'var(--color-red-mid)' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{falhou}</span></div>}
-                        {bloqueado > 0 && <div className="flex items-center justify-center" style={{ flex: bloqueado, background: 'var(--color-amber-mid)' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{bloqueado}</span></div>}
+                        {concluido > 0 && <div style={{ flex: concluido, background: 'var(--color-green-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{concluido}</span></div>}
+                        {falhou    > 0 && <div style={{ flex: falhou,    background: 'var(--color-red-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{falhou}</span></div>}
+                        {bloqueado > 0 && <div style={{ flex: bloqueado, background: 'var(--color-amber-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{bloqueado}</span></div>}
                         {pendente  > 0 && <div style={{ flex: pendente }} />}
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--color-text-3)', flex: '0 0 44px', textAlign: 'right', fontFamily: 'var(--font-family-mono)' }}>
@@ -512,9 +516,9 @@ export function OverviewTab() {
         )}
       </Card>
 
-      {/* -- Execucao por Dia + MTTR -- */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card title="Execucao por Dia" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 13V8.5M5.5 13V5.5M9.5 13V2.5M13.5 13V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
+      {/* ── Execução por Dia + MTTR ───────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <Card title="Execução por Dia" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 13V8.5M5.5 13V5.5M9.5 13V2.5M13.5 13V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{
@@ -536,18 +540,18 @@ export function OverviewTab() {
             />
           </div>
         </Card>
-        <Card title="MTTR — Tempo Medio de Resolucao por Stack (dias)" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.2"/><path d="M7.5 4.5V7.5L9.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
+        <Card title="MTTR — Tempo Médio de Resolução por Stack (dias)" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.2"/><path d="M7.5 4.5V7.5L9.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
               data={{ labels: STACKS, datasets: mttrDatasets }}
-              options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Dias (media)' } } }, plugins: { legend: { position: 'top' as const, labels: LEGEND_LABELS }, datalabels: { display: true, anchor: 'end' as const, align: 'top' as const, color: '#64748b', font: { weight: 'bold' as const, size: 10 }, formatter: (v: number | null) => v && v > 0 ? `${v}d` : '' } } } as object}
+              options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Dias (média)' } } }, plugins: { legend: { position: 'top' as const, labels: LEGEND_LABELS }, datalabels: { display: true, anchor: 'end' as const, align: 'top' as const, color: '#64748b', font: { weight: 'bold' as const, size: 10 }, formatter: (v: number | null) => v && v > 0 ? `${v}d` : '' } } } as object}
             />
           </div>
         </Card>
       </div>
 
-      {/* -- Bloqueios Geral + Origem dos Bugs -- */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* ── Bloqueios Geral + Origem dos Bugs ────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card title="Bloqueios Externos (Geral Acumulado)" pill={`${totalHorasGeral}h`} icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="3" y="7" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Doughnut
@@ -572,8 +576,8 @@ export function OverviewTab() {
         </Card>
       </div>
 
-      {/* -- Status Bugs/Stack + Bugs/Feature/Stack -- */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* ── Status Bugs/Stack + Bugs/Feature/Stack ────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card title="Status dos Bugs por Stack" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 5L7.5 2l6 3-6 3-6-3zM1.5 8.5l6 3 6-3M1.5 11.5l6 3 6-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
           <div style={{ height: 220 }}>
             <Bar
@@ -607,42 +611,48 @@ export function OverviewTab() {
       </div>
 
 
-      {/* -- Bloqueios de Execucao + Falhas -- */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Bloqueios de Execucao */}
-        <div className="card" style={{ padding: '18px 20px' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-            <div className="flex items-center gap-2">
+      {/* ── Bloqueios de Execução + Falhas ────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* Bloqueios de Execução — novo padrão visual */}
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '18px 20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="8" r="7" stroke="var(--color-red-mid)" strokeWidth="1.5" />
                 <text x="8" y="12" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-red-mid)">!</text>
               </svg>
-              <span className="heading-sm" style={{ fontSize: 14, fontWeight: 500 }}>Bloqueios de execucao</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Bloqueios de execução</span>
             </div>
-            <span className="badge badge-neutral">{blockedItems.length} bloqueio{blockedItems.length !== 1 ? 's' : ''}</span>
+            <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)' }}>
+              {blockedItems.length} bloqueio{blockedItems.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
+          {/* Items */}
           {blockedItems.length === 0 ? (
             <EmptyOk label="Nenhum impedimento no momento." />
           ) : (
-            <div className="flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {blockedItems.map((item) => {
                 const suiteName = suites.find((s) => String(s.id) === String(item.suiteId))?.name
                 const stripeColor = item.stripe === 'blocked' ? 'var(--color-red-mid)' : 'var(--color-amber-mid)'
                 return (
-                  <div key={`${item.stripe}-${item.id}`} className="flex" style={{ border: '0.5px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+                  <div key={`${item.stripe}-${item.id}`} style={{ display: 'flex', border: '0.5px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
                     <div style={{ width: 3, flexShrink: 0, background: stripeColor, alignSelf: 'stretch' }} />
                     <div style={{ flex: 1, padding: '11px 14px' }}>
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>
                           {item.name || 'Sem nome'}
                         </span>
                         {suiteName && (
-                          <span className="badge badge-neutral shrink-0">{suiteName}</span>
+                          <span style={{ fontSize: 10, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, padding: '1px 7px', color: 'var(--color-text-2)', flexShrink: 0 }}>
+                            {suiteName}
+                          </span>
                         )}
                       </div>
-                      <div className="text-small" style={{ marginTop: 3, fontStyle: item.blockReason ? 'normal' : 'italic', color: item.blockReason ? 'var(--color-text-2)' : 'var(--color-text-3)' }}>
-                        {item.blockReason || 'Motivo nao informado'}
+                      <div style={{ fontSize: 12, color: item.blockReason ? 'var(--color-text-2)' : 'var(--color-text-3)', marginTop: 3, fontStyle: item.blockReason ? 'normal' : 'italic' }}>
+                        {item.blockReason || 'Motivo não informado'}
                       </div>
                     </div>
                   </div>
@@ -652,35 +662,39 @@ export function OverviewTab() {
           )}
         </div>
 
-        {/* Cenarios com Falha */}
-        <div className="card" style={{ padding: '18px 20px' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-            <div className="flex items-center gap-2">
+        {/* Cenários com Falha — novo padrão visual */}
+        <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '18px 20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <circle cx="7.5" cy="7.5" r="6.5" stroke="var(--color-red-mid)" strokeWidth="1.2" />
                 <path d="M5 5l5 5M10 5l-5 5" stroke="var(--color-red-mid)" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              <span className="heading-sm" style={{ fontSize: 14, fontWeight: 500 }}>Cenarios com falha</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>Cenários com falha</span>
             </div>
-            <span className="badge badge-neutral">{failedScenarios.length} cenario{failedScenarios.length !== 1 ? 's' : ''}</span>
+            <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)' }}>
+              {failedScenarios.length} cenário{failedScenarios.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
+          {/* Tabela */}
           {failedScenarios.length === 0 ? (
-            <EmptyOk label="Nenhum cenario com falha!" />
+            <EmptyOk label="Nenhum cenário com falha!" />
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
                 <tr style={{ background: 'var(--color-bg)' }}>
-                  {['Funcionalidade', 'Cenario'].map((h) => (
-                    <th key={h} className="table-header" style={{ padding: '6px 8px', fontSize: 10 }}>{h}</th>
+                  {['Funcionalidade', 'Cenário'].map((h) => (
+                    <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, color: 'var(--color-text-2)', borderBottom: '0.5px solid var(--color-border)', whiteSpace: 'nowrap', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {failedScenarios.map((item, i) => (
                   <tr key={i} style={{ borderBottom: '0.5px solid var(--color-border)' }}>
-                    <td className="table-cell" style={{ padding: '6px 8px', whiteSpace: 'nowrap', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', borderLeft: '3px solid var(--color-red-mid)' }} title={item.featureName}>{item.featureName || '—'}</td>
-                    <td className="table-cell" style={{ padding: '6px 8px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.scenarioName}>{item.scenarioName || '—'}</td>
+                    <td style={{ padding: '6px 8px', whiteSpace: 'nowrap', color: 'var(--color-text-2)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', borderLeft: '3px solid var(--color-red-mid)' }} title={item.featureName}>{item.featureName || '—'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--color-text)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.scenarioName}>{item.scenarioName || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -689,53 +703,53 @@ export function OverviewTab() {
         </div>
       </div>
 
-      {/* -- Alinhamentos Tecnicos e de Produto -- */}
-      <Card title="Alinhamentos Tecnicos e de Produto" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><circle cx="10" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M1 13c0-2.2 1.8-4 4-4h5c2.2 0 4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
+      {/* ── Alinhamentos Técnicos e de Produto ───────────────────────────── */}
+      <Card title="Alinhamentos Técnicos e de Produto" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><circle cx="10" cy="4" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M1 13c0-2.2 1.8-4 4-4h5c2.2 0 4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}>
         {state.alignments.length === 0 ? (
-          <div className="text-body" style={{ fontStyle: 'italic' }}>
-            Nenhum alinhamento ou debito tecnico registrado no momento.
+          <div style={{ color: 'var(--color-text-2)', fontSize: 13, fontStyle: 'italic' }}>
+            Nenhum alinhamento ou débito técnico registrado no momento.
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {state.alignments.map((a, i) => (
-              <div key={a.id} className="flex gap-2.5" style={{ padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderLeft: '3px solid var(--color-border)', borderRadius: 6, lineHeight: 1.5 }}>
-                <span className="text-muted shrink-0" style={{ fontSize: 11, fontWeight: 500, paddingTop: 1 }}>{i + 1}.</span>
-                <span className="text-body" style={{ color: 'var(--color-text)' }}>{a.text || 'Nao descrito'}</span>
+              <div key={a.id} style={{ display: 'flex', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderLeft: '3px solid var(--color-border)', borderRadius: 6, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', flexShrink: 0, paddingTop: 1 }}>{i + 1}.</span>
+                <span style={{ fontSize: 13, color: 'var(--color-text)' }}>{a.text || 'Não descrito'}</span>
               </div>
             ))}
           </div>
         )}
       </Card>
 
-      {/* -- Premissas + Plano de Acao -- */}
-      <Card title="Premissas e Plano de Acao" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5v5M4.5 6.5h6M5 7v1.5a2.5 2.5 0 005 0V7M7.5 9.5V13.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
-        <div className="grid grid-cols-2 gap-5">
+      {/* ── Premissas + Plano de Ação ─────────────────────────────────────── */}
+      <Card title="Premissas e Plano de Ação" icon={<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5v5M4.5 6.5h6M5 7v1.5a2.5 2.5 0 005 0V7M7.5 9.5V13.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div>
-            <div className="section-label" style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
               Premissas do Ciclo de Testes
             </div>
             {state.notes.premises ? (
-              <div className="flex flex-col gap-1.5">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {state.notes.premises.split('\n').filter(Boolean).map((line, i) => (
                   <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--color-red-mid)', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
                 ))}
               </div>
             ) : (
-              <div className="text-muted" style={{ fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
+              <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhuma premissa registrada.</div>
             )}
           </div>
           <div>
-            <div className="section-label" style={{ marginBottom: 8 }}>
-              Plano de Acao e Gatilhos
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Plano de Ação e Gatilhos
             </div>
             {state.notes.actionPlan ? (
-              <div className="flex flex-col gap-1.5">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {state.notes.actionPlan.split('\n').filter(Boolean).map((line, i) => (
                   <div key={i} style={{ background: 'var(--color-bg)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--color-blue)', fontSize: 12, color: 'var(--color-text)', lineHeight: 1.5 }}>{line}</div>
                 ))}
               </div>
             ) : (
-              <div className="text-muted" style={{ fontStyle: 'italic' }}>Nenhum plano de acao registrado.</div>
+              <div style={{ color: 'var(--color-text-3)', fontSize: 13, fontStyle: 'italic' }}>Nenhum plano de ação registrado.</div>
             )}
           </div>
         </div>
@@ -744,21 +758,23 @@ export function OverviewTab() {
   )
 }
 
-// --- Sub-components ---
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const HeroCard = memo(function HeroCard({ label, value, sub, valueColor, barColor, highlight }: {
   label: string; value: string | number; sub?: string; valueColor?: string; barColor?: string; highlight?: boolean
 }) {
   return (
-    <div className="card-sm flex flex-col gap-1.5" style={{
-      background: highlight ? 'var(--color-red-light)' : undefined,
-      border: highlight ? '1.5px solid var(--color-red-mid)' : undefined,
+    <div style={{
+      background: highlight ? 'var(--color-red-light)' : 'var(--color-surface)',
+      border: `${highlight ? '1.5px' : '0.5px'} solid ${highlight ? 'var(--color-red-mid)' : 'var(--color-border)'}`,
+      borderRadius: 10,
       padding: '16px 18px 18px',
+      display: 'flex', flexDirection: 'column', gap: 6,
       position: 'relative', overflow: 'hidden',
     }}>
-      <div className="section-label" style={{ marginBottom: 0, lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1.3 }}>{label}</div>
       <div style={{ fontSize: highlight ? 40 : 32, fontWeight: 700, color: valueColor ?? 'var(--color-text)', lineHeight: 1 }}>{value}</div>
-      {sub && <div className="text-muted" style={{ fontSize: 11, marginBottom: 4 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginBottom: 4 }}>{sub}</div>}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: barColor ?? '#6b7280' }} />
     </div>
   )
@@ -768,24 +784,26 @@ const KpiCard = memo(function KpiCard({ label, value, sub, valueColor, borderCol
   label: string; value: string | number; sub?: string; valueColor?: string; borderColor?: string
 }) {
   return (
-    <div className="card" style={{ borderBottom: borderColor ? `3px solid ${borderColor}` : undefined, padding: '14px 16px' }}>
-      <div className="section-label" style={{ marginBottom: 6 }}>{label}</div>
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderBottom: borderColor ? `3px solid ${borderColor}` : undefined, borderRadius: 10, padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 700, color: valueColor ?? 'var(--color-text)', lineHeight: 1 }}>{value}</div>
-      {sub && <div className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 4 }}>{sub}</div>}
     </div>
   )
 })
 
 const Card = memo(function Card({ title, icon, pill, children }: { title: string; icon?: React.ReactNode; pill?: string; children: React.ReactNode }) {
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-      <div className="flex items-center justify-between" style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border)' }}>
-        <div className="flex items-center gap-2">
-          {icon && <span className="text-small flex shrink-0">{icon}</span>}
-          <span className="heading-sm" style={{ fontSize: 14, fontWeight: 500 }}>{title}</span>
+    <div style={{ background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {icon && <span style={{ color: 'var(--color-text-2)', display: 'flex', flexShrink: 0 }}>{icon}</span>}
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)' }}>{title}</span>
         </div>
         {pill && (
-          <span className="badge badge-neutral shrink-0">{pill}</span>
+          <span style={{ fontSize: 11, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '2px 8px', color: 'var(--color-text-2)', flexShrink: 0 }}>
+            {pill}
+          </span>
         )}
       </div>
       <div style={{ padding: '12px 16px' }}>{children}</div>
@@ -795,20 +813,20 @@ const Card = memo(function Card({ title, icon, pill, children }: { title: string
 
 const Section = memo(function Section({ title, icon, count, children }: { title: string; icon: string; count: number; children: React.ReactNode }) {
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-      <div className="flex items-center gap-2" style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <span>{icon}</span>
-        <span className="heading-sm" style={{ fontSize: 14 }}>{title}</span>
-        <span className="badge badge-neutral ml-auto" style={{ fontWeight: 600 }}>{count}</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>{title}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', background: 'var(--color-border)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>{count}</span>
       </div>
-      <div className="flex flex-col gap-2" style={{ padding: 12 }}>{children}</div>
+      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
     </div>
   )
 })
 
 const EmptyOk = memo(function EmptyOk({ label }: { label: string }) {
   return (
-    <div className="flex items-center justify-center" style={{ minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: 'var(--color-green-light)', borderRadius: 8, border: '1px dashed var(--color-green-mid)', fontSize: 13 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: 'var(--color-green-light)', borderRadius: 8, border: '1px dashed var(--color-green-mid)', fontSize: 13 }}>
       ✅ {label}
     </div>
   )
@@ -816,7 +834,7 @@ const EmptyOk = memo(function EmptyOk({ label }: { label: string }) {
 
 const Badge = memo(function Badge({ label, color }: { label: string; color: string }) {
   return (
-    <span className="badge" style={{ background: color, color: '#fff', fontWeight: 700, textTransform: 'uppercase' }}>{label}</span>
+    <span style={{ fontSize: 10, background: color, color: '#fff', padding: '3px 8px', borderRadius: 12, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0 }}>{label}</span>
   )
 })
 

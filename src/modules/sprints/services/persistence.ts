@@ -5,56 +5,6 @@ import { supabase } from '@/lib/supabase'
 
 export const STORAGE_KEY = (id: string) => `qaDashboardData_${id}`
 export const MASTER_KEY = 'qaDashboardMasterIndex'
-const LAST_SYNC_KEY = 'qaDashboardLastSync'
-
-// ─── Offline Queue ───────────────────────────────────────────────────────────
-
-const OFFLINE_QUEUE_KEY = 'sprintOfflineQueue'
-
-interface OfflineAction {
-  type: 'upsert' | 'delete'
-  entityId: string
-  data: any
-  timestamp: number
-  retryCount: number
-}
-
-function getOfflineQueue(): OfflineAction[] {
-  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') }
-  catch { return [] }
-}
-
-function saveOfflineQueue(queue: OfflineAction[]) {
-  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue))
-}
-
-function enqueueOffline(action: OfflineAction) {
-  const queue = getOfflineQueue()
-  // Replace existing action for same entity (latest wins)
-  const idx = queue.findIndex(a => a.entityId === action.entityId && a.type === action.type)
-  if (idx >= 0) queue[idx] = action
-  else queue.push(action)
-  saveOfflineQueue(queue)
-}
-
-export async function flushOfflineQueue() {
-  const queue = getOfflineQueue()
-  if (!queue.length) return
-  const remaining: OfflineAction[] = []
-  for (const action of queue) {
-    try {
-      if (action.type === 'upsert') {
-        await persistToServer(action.entityId, action.data)
-      } else if (action.type === 'delete') {
-        await deleteSprintFromSupabase(action.entityId)
-      }
-    } catch {
-      action.retryCount++
-      if (action.retryCount < 5) remaining.push(action)
-    }
-  }
-  saveOfflineQueue(remaining)
-}
 
 // ─── Default State ────────────────────────────────────────────────────────────
 
@@ -338,18 +288,10 @@ export function saveToStorage(sprintId: string, state: SprintState): void {
 
 // ─── Master Index helpers ─────────────────────────────────────────────────────
 
-let _fullSyncTriggered = false
-
 export function getMasterIndex(): SprintIndexEntry[] {
   try {
     const raw = localStorage.getItem(MASTER_KEY)
-    const parsed: SprintIndexEntry[] = raw ? JSON.parse(raw) : []
-    // If index is empty and we've never synced, trigger a background full sync
-    if (parsed.length === 0 && !localStorage.getItem(LAST_SYNC_KEY) && !_fullSyncTriggered) {
-      _fullSyncTriggered = true
-      syncAllFromSupabase().catch(() => { /* background sync, errors logged inside */ })
-    }
-    return parsed
+    return raw ? JSON.parse(raw) : []
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[Sprints] Failed to load master index:', e)
     return []
@@ -431,10 +373,6 @@ export async function loadFromServer(sprintId: string): Promise<SprintState | nu
  * Salva uma sprint no Supabase (upsert). Chamado pelo sprintStore a cada _commit.
  */
 export async function persistToServer(sprintId: string, state: SprintState, updatedAt?: string): Promise<void> {
-  if (!navigator.onLine) {
-    enqueueOffline({ type: 'upsert', entityId: sprintId, data: state, timestamp: Date.now(), retryCount: 0 })
-    return
-  }
   const entry = getMasterIndex().find((s) => s.id === sprintId)
   const status = entry?.status ?? 'ativa'
   const squad_id = entry?.squadId ?? null
@@ -451,14 +389,15 @@ export async function persistToServer(sprintId: string, state: SprintState, upda
   }
 }
 
+const LAST_SYNC_KEY = 'qaDashboardLastSync'
+
 /**
  * Incremental sync: fetches only sprints updated since the last sync timestamp.
  * On first load (no timestamp), does a full sync for backward compatibility.
  */
 export async function syncAllFromSupabase(): Promise<void> {
   try {
-    const isFirstSync = !localStorage.getItem(LAST_SYNC_KEY)
-    const lastSync = isFirstSync ? '1970-01-01T00:00:00Z' : localStorage.getItem(LAST_SYNC_KEY)!
+    const lastSync = localStorage.getItem(LAST_SYNC_KEY) || '1970-01-01T00:00:00Z'
     const now = new Date().toISOString()
 
     const PAGE_SIZE = 100
@@ -515,19 +454,10 @@ export async function syncAllFromSupabase(): Promise<void> {
       offset += PAGE_SIZE
     }
 
-    // On first sync, rebuild master index from all localStorage sprint data
-    if (isFirstSync && totalSynced > 0) {
-      // The localIndex was already populated from the loop above — just save it
-      if (import.meta.env.DEV) console.log('[Sync] First sync: rebuilt master index from Supabase data')
-    }
-
     saveMasterIndex(localIndex)
     localStorage.setItem(LAST_SYNC_KEY, now)
 
     if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} sprint(s) sincronizada(s)`)
-
-    // Flush any actions queued while offline
-    await flushOfflineQueue()
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[Supabase] syncAllFromSupabase falhou:', e)
   }
@@ -537,10 +467,6 @@ export async function syncAllFromSupabase(): Promise<void> {
  * Remove uma sprint do Supabase. Fire-and-forget.
  */
 export async function deleteSprintFromSupabase(sprintId: string): Promise<void> {
-  if (!navigator.onLine) {
-    enqueueOffline({ type: 'delete', entityId: sprintId, data: null, timestamp: Date.now(), retryCount: 0 })
-    return
-  }
   const { error } = await supabase.from('sprints').delete().eq('id', sprintId)
   if (error) {
     if (import.meta.env.DEV) console.error('[Sprints] deleteSprintFromSupabase failed:', error.message)

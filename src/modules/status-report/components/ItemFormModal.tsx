@@ -18,6 +18,28 @@ const STACK_OPTIONS: { value: Stack; label: string }[] = [
   { value: 'back', label: 'Back' },
 ]
 
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 12, fontWeight: 600,
+  color: 'var(--color-text-2)', marginBottom: 4,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '7px 10px', borderRadius: 7,
+  border: '1px solid var(--color-border-md)', fontSize: 13,
+  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+  background: 'var(--color-surface)',
+}
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '7px 28px 7px 10px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+}
+
 export function ItemFormModal({ defaultSection, sections, existingItems, onConfirm, onCancel }: ItemFormModalProps) {
   const [title, setTitle] = useState('')
   const [section, setSection] = useState<SectionId>(defaultSection)
@@ -80,44 +102,55 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         if (e.key === 'Escape') { onCancel() }
         if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { handleSubmit() }
       }}
-      className="modal-backdrop"
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.45)', zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}
     >
-      <div ref={modalContentRef} tabIndex={-1} className="modal-container modal-md" style={{
+      <div ref={modalContentRef} tabIndex={-1} style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
         borderTop: '3px solid var(--color-blue)',
+        borderRadius: 12, padding: 24,
+        width: '100%', maxWidth: 520,
         maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
         outline: 'none',
       }}>
-        <div className="heading-sm" style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', marginBottom: 16 }}>
           Novo Item
         </div>
 
         {/* Title */}
         <div style={{ marginBottom: 12 }}>
-          <label className="label-field">Título *</label>
+          <label style={labelStyle}>Título *</label>
           <input
             value={title} onChange={(e) => setTitle(e.target.value)}
-            placeholder="Nome do item" autoFocus className="input-field"
+            placeholder="Nome do item" autoFocus style={inputStyle}
           />
         </div>
 
         {/* Section + Priority */}
-        <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
           <div>
-            <label className="label-field">Seção</label>
-            <select value={section} onChange={(e) => setSection(e.target.value as SectionId)} className="select-field">
+            <label style={labelStyle}>Seção</label>
+            <select value={section} onChange={(e) => setSection(e.target.value as SectionId)} style={selectStyle}>
               {sections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="label-field">Prioridade</label>
-            <div className="flex gap-1.5">
+            <label style={labelStyle}>Prioridade</label>
+            <div style={{ display: 'flex', gap: 6 }}>
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPriority(p)}
                   aria-pressed={priority === p}
-                  className="btn btn-sm flex-1"
                   style={{
+                    flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
                     border: priority === p ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                     background: priority === p ? 'var(--color-blue-light)' : 'transparent',
                     color: priority === p ? 'var(--color-blue-text)' : 'var(--color-text-2)',
@@ -132,15 +165,16 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
 
         {/* Stacks */}
         <div style={{ marginBottom: 12 }}>
-          <label className="label-field">Stacks</label>
-          <div className="flex gap-1.5">
+          <label style={labelStyle}>Stacks</label>
+          <div style={{ display: 'flex', gap: 6 }}>
             {STACK_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => toggleStack(opt.value)}
                 aria-pressed={stacks.includes(opt.value)}
-                className="btn btn-sm"
                 style={{
+                  padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
                   border: stacks.includes(opt.value)
                     ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
                   background: stacks.includes(opt.value)
@@ -156,9 +190,9 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         </div>
 
         {/* Pct + Resp — always visible */}
-        <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
           <div>
-            <label className="label-field">% Conclusão: {pct}%</label>
+            <label style={labelStyle}>% Conclusão: {pct}%</label>
             <input
               type="range" min={0} max={100} step={5} value={pct}
               onChange={(e) => setPct(parseInt(e.target.value))}
@@ -166,8 +200,8 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
             />
           </div>
           <div>
-            <label className="label-field">Responsável</label>
-            <input value={resp} onChange={(e) => setResp(e.target.value)} className="input-field" />
+            <label style={labelStyle}>Responsável</label>
+            <input value={resp} onChange={(e) => setResp(e.target.value)} style={inputStyle} />
           </div>
         </div>
 
@@ -175,10 +209,12 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="btn btn-ghost flex items-center gap-1.5"
           style={{
-            color: 'var(--color-blue-text)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 12, fontWeight: 600, color: 'var(--color-blue-text)',
             padding: '4px 0', marginBottom: showAdvanced ? 12 : 16,
+            fontFamily: 'var(--font-family-sans)',
           }}
         >
           <span style={{
@@ -192,9 +228,9 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         {showAdvanced && (
           <>
             {/* Duration + Start + Deadline (auto-cálculo bidirecional) */}
-            <div className="grid grid-cols-3 gap-3" style={{ marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
-                <label className="label-field">Duração (dias)</label>
+                <label style={labelStyle}>Duração (dias)</label>
                 <input
                   type="number" min={1} value={durationDays}
                   onChange={(e) => {
@@ -207,14 +243,14 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                       setDeadlineDate(end.toISOString().split('T')[0])
                     }
                   }}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="label-field">
+                <label style={labelStyle}>
                   Início manual
                   {dependsOn.length > 0 && (
-                    <span className="text-muted" style={{ fontWeight: 400, fontSize: 10, display: 'block', marginTop: 1 }}>
+                    <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--color-text-3)', display: 'block', marginTop: 1 }}>
                       Calculado pelos predecessores
                     </span>
                   )}
@@ -232,14 +268,13 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                     }
                   }}
                   disabled={dependsOn.length > 0}
-                  className="input-field"
-                  style={{ opacity: dependsOn.length > 0 ? 0.5 : 1 }}
+                  style={{ ...inputStyle, opacity: dependsOn.length > 0 ? 0.5 : 1 }}
                 />
               </div>
               <div>
-                <label className="label-field">
+                <label style={labelStyle}>
                   Deadline
-                  <span className="text-muted" style={{ fontWeight: 400, fontSize: 10, display: 'block', marginTop: 1 }}>
+                  <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--color-text-3)', display: 'block', marginTop: 1 }}>
                     {startDate ? 'Auto-calculado' : 'Manual'}
                   </span>
                 </label>
@@ -257,16 +292,16 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                       if (diff >= 1) setDurationDays(diff)
                     }
                   }}
-                  className="input-field"
+                  style={inputStyle}
                 />
               </div>
             </div>
 
             {/* Predecessors */}
             <div style={{ marginBottom: 12 }}>
-              <label className="label-field">
+              <label style={labelStyle}>
                 Predecessores{dependsOn.length > 0 && (
-                  <span className="badge badge-blue" style={{ marginLeft: 6, fontWeight: 700 }}>
+                  <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 10, fontSize: 10, fontWeight: 700, background: 'var(--color-blue)', color: '#fff' }}>
                     {dependsOn.length}
                   </span>
                 )}
@@ -276,7 +311,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                 border: '1px solid var(--color-border)', borderRadius: 7, padding: 6,
               }}>
                 {grouped.length === 0 && (
-                  <div className="text-small text-muted" style={{ padding: 4 }}>Nenhum item disponível</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-3)', padding: 4 }}>Nenhum item disponível</div>
                 )}
                 {grouped.map((g) => (
                   <div key={g.id}>
@@ -284,13 +319,13 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
                       {g.label.split(' – ')[0]}
                     </div>
                     {g.items.map((item) => (
-                      <label key={item.id} className="flex items-center gap-1.5" style={{ padding: '3px 8px', fontSize: 12, cursor: 'pointer' }}>
+                      <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 8px', fontSize: 12, cursor: 'pointer' }}>
                         <input
                           type="checkbox"
                           checked={dependsOn.includes(item.id)}
                           onChange={() => toggleDep(item.id)}
                         />
-                        <span>{item.title}</span>
+                        <span style={{ color: 'var(--color-text)' }}>{item.title}</span>
                       </label>
                     ))}
                   </div>
@@ -300,36 +335,57 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
 
             {/* Notes */}
             <div style={{ marginBottom: 12 }}>
-              <label className="label-field">Notas / sub-itens (cada linha = sub-item)</label>
+              <label style={labelStyle}>Notas / sub-itens (cada linha = sub-item)</label>
               <textarea
                 value={notes} onChange={(e) => setNotes(e.target.value)}
-                rows={3} className="textarea-field" style={{ fontFamily: 'var(--font-family-mono)', fontSize: 12 }}
+                rows={3} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-family-mono)', fontSize: 12 }}
               />
             </div>
 
             {/* Jira */}
             <div style={{ marginBottom: 16 }}>
-              <label className="label-field">Link Jira</label>
-              <input value={jira} onChange={(e) => setJira(e.target.value)} placeholder="https://jira..." className="input-field" />
+              <label style={labelStyle}>Link Jira</label>
+              <input value={jira} onChange={(e) => setJira(e.target.value)} placeholder="https://jira..." style={inputStyle} />
             </div>
           </>
         )}
 
+        {/* Actions */}
         {/* Validation error */}
         {validationError && (
-          <div className="msg-error" style={{ marginBottom: 12, fontSize: 12, fontWeight: 600 }}>
+          <div style={{
+            padding: '8px 12px', borderRadius: 7, marginBottom: 12,
+            background: 'var(--color-red-light)', color: 'var(--color-red)',
+            fontSize: 12, fontWeight: 600,
+          }}>
             {validationError}
           </div>
         )}
 
-        <div className="flex gap-2 justify-end">
-          <button onClick={onCancel} className="btn btn-outline btn-md">
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px', borderRadius: 8,
+              border: '1px solid var(--color-border-md)',
+              background: 'transparent', color: 'var(--color-text-2)',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+            }}
+          >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={!title.trim()}
-            className="btn btn-primary btn-md"
+            style={{
+              padding: '8px 18px', borderRadius: 8, border: 'none',
+              background: title.trim() ? 'var(--color-blue)' : '#ccc',
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: title.trim() ? 'pointer' : 'not-allowed',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'all 0.15s',
+            }}
           >
             Adicionar
           </button>

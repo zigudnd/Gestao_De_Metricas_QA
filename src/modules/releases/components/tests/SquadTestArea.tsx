@@ -80,38 +80,53 @@ export function SquadTestArea({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Overall stats */}
-      <div className="card flex gap-4 flex-wrap">
+      <div style={{
+        display: 'flex', gap: 16, flexWrap: 'wrap', padding: '12px 16px',
+        background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+        borderRadius: 10,
+      }}>
         <StatChip label="Total" value={totalTests} />
         <StatChip label="Concluidos" value={completedTests} color="var(--color-green)" />
         <StatChip label="Falhas" value={failedTests} color="var(--color-red)" />
         <StatChip label="Bloqueados" value={blockedTests} color="var(--color-amber)" />
         <StatChip label="Bugs abertos" value={openBugs} color="var(--color-red)" />
         <div style={{ flex: 1 }} />
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 100, height: 8, background: 'var(--color-border)', borderRadius: 4, overflow: 'hidden' }}>
             <div style={{ width: `${overallPct}%`, height: '100%', background: 'var(--color-green)', borderRadius: 4, transition: 'width 0.3s' }} />
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-family-mono)' }} className="heading-sm">
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', fontFamily: 'var(--font-family-mono)' }}>
             {overallPct}%
           </span>
         </div>
       </div>
 
       {/* Toolbar with filter chips + action buttons */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 8,
+      }}>
         {/* Left side: filter chips + counter */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex" style={{ background: 'var(--color-surface-2)', borderRadius: 6, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            display: 'flex', gap: 0,
+            background: 'var(--color-surface-2)', borderRadius: 6,
+            overflow: 'hidden',
+          }}>
             {FILTER_CHIPS.map((chip) => (
               <button
                 key={chip.id}
                 onClick={() => setActiveFilter(chip.id)}
                 aria-pressed={activeFilter === chip.id}
                 style={{
-                  padding: '5px 12px', border: 'none', fontSize: 11, fontWeight: 600,
-                  fontFamily: 'var(--font-family-sans)', cursor: 'pointer',
+                  padding: '5px 12px',
+                  border: 'none',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-family-sans)',
+                  cursor: 'pointer',
                   background: activeFilter === chip.id ? 'var(--color-blue)' : 'transparent',
                   color: activeFilter === chip.id ? '#fff' : 'var(--color-text-2)',
                   transition: 'background 0.15s, color 0.15s',
@@ -121,14 +136,19 @@ export function SquadTestArea({
               </button>
             ))}
           </div>
-          <span className="text-muted" style={{ fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-family-mono)', marginLeft: 4 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600,
+            fontFamily: 'var(--font-family-mono)',
+            color: 'var(--color-text-3)',
+            marginLeft: 4,
+          }}>
             {executedTests}/{totalTests} executados
           </span>
         </div>
 
         {/* Right side: action buttons */}
-        <div className="flex gap-1.5">
-          <button onClick={onAddSuite} className="btn btn-sm btn-outline">
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={onAddSuite} style={btnOutline}>
             + Nova Suite
           </button>
         </div>
@@ -162,7 +182,7 @@ export function SquadTestArea({
       })}
 
       {suites.length === 0 && (
-        <div className="text-body text-muted" style={{ textAlign: 'center', padding: '32px 16px' }}>
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--color-text-3)', fontSize: 13 }}>
           Nenhuma suite criada. Clique em &quot;+ Nova Suite&quot; para comecar.
         </div>
       )}
@@ -210,13 +230,27 @@ export function SquadTestArea({
 
 function StatChip({ label, value, color }: { label: string; value: number; color?: string }) {
   return (
-    <div className="flex flex-col items-center" style={{ minWidth: 60 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
       <span style={{ fontSize: 18, fontWeight: 700, color: color ?? 'var(--color-text)', fontFamily: 'var(--font-family-mono)' }}>
         {value}
       </span>
-      <span className="section-label" style={{ marginBottom: 0 }}>
+      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         {label}
       </span>
     </div>
   )
+}
+
+// ─── Styles ─────────────────────────────────────────────────────────────────
+
+const btnOutline: React.CSSProperties = {
+  padding: '6px 14px',
+  background: 'transparent',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
 }

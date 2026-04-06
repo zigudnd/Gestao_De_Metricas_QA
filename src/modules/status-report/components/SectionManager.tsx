@@ -37,7 +37,12 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
     <>
       <div
         onClick={(e) => e.target === e.currentTarget && onClose()}
-        className="modal-backdrop"
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.45)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16,
+        }}
       >
         <div
           ref={modalRef}
@@ -46,35 +51,47 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
           aria-modal="true"
           aria-label="Gerenciar Seções"
           onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
-          className="modal-container modal-md"
           style={{
-            borderTop: '3px solid var(--color-blue)',
-            maxHeight: '85vh', overflow: 'hidden',
-            outline: 'none',
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="heading-sm">
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderTop: '3px solid var(--color-blue)',
+          borderRadius: 12, padding: 24,
+          width: '100%', maxWidth: 520,
+          maxHeight: '85vh', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          outline: 'none',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 16,
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>
               Gerenciar Seções
             </div>
             <button
               onClick={onClose}
               aria-label="Fechar"
-              className="btn btn-ghost flex items-center justify-center"
-              style={{ width: 28, height: 28 }}
+              style={{
+                width: 28, height: 28, borderRadius: 6, border: 'none',
+                background: 'var(--color-surface-2)', cursor: 'pointer',
+                fontSize: 14, color: 'var(--color-text-2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}
             >
               ×
             </button>
           </div>
 
           {/* Existing sections */}
-          <div className="flex-1 mb-4" style={{ overflowY: 'auto' }}>
-            <div className="flex flex-col gap-1.5">
+          <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {sections.map((sec) => (
                 <div
                   key={sec.id}
-                  className="flex items-center gap-2"
                   style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
                     padding: '8px 10px',
                     background: 'var(--color-surface-2)',
                     borderRadius: 8,
@@ -89,19 +106,26 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
                         onBlur={() => setEditingId(null)}
-                        className="input-field flex-1"
-                        style={{ padding: '4px 8px', borderColor: 'var(--color-blue)' }}
+                        style={{
+                          flex: 1, padding: '4px 8px', borderRadius: 5,
+                          border: '1px solid var(--color-blue)', fontSize: 13,
+                          fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                          outline: 'none',
+                        }}
                       />
                       <select
                         value={sec.side}
                         onChange={(e) => onUpdate(sec.id, { side: e.target.value as 'left' | 'right' })}
-                        className="select-field"
-                        style={{ width: 'auto', padding: '4px 6px', fontSize: 11 }}
+                        style={{
+                          padding: '4px 6px', borderRadius: 5, fontSize: 11,
+                          border: '1px solid var(--color-border-md)',
+                          fontFamily: 'var(--font-family-sans)',
+                        }}
                       >
                         <option value="left">Esquerda</option>
                         <option value="right">Direita</option>
                       </select>
-                      <div className="flex gap-0.5" style={{ flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
                         {SECTION_COLORS.slice(0, 8).map((c) => (
                           <button
                             key={c}
@@ -119,18 +143,29 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                     </>
                   ) : (
                     <>
-                      <span className="heading-sm flex-1">
+                      <span style={{
+                        flex: 1, fontSize: 13, fontWeight: 600,
+                        color: 'var(--color-text)',
+                      }}>
                         {sec.label}
                       </span>
-                      <span className="badge badge-neutral">
+                      <span style={{
+                        fontSize: 10, color: 'var(--color-text-3)',
+                        padding: '2px 6px', borderRadius: 4,
+                        background: 'var(--color-surface)',
+                      }}>
                         {sec.side === 'left' ? 'Esq' : 'Dir'}
                       </span>
                       <button
                         onClick={() => setEditingId(sec.id)}
                         title="Editar"
                         aria-label="Editar"
-                        className="btn btn-ghost"
-                        style={{ width: 24, height: 24, padding: 0 }}
+                        style={{
+                          width: 24, height: 24, borderRadius: 5, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          fontSize: 12, color: 'var(--color-text-3)',
+                          transition: 'all 0.15s',
+                        }}
                       >
                         ✏️
                       </button>
@@ -139,10 +174,12 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
                         title="Excluir"
                         aria-label="Excluir"
                         disabled={sections.length <= 1}
-                        className="btn btn-ghost"
                         style={{
-                          width: 24, height: 24, padding: 0,
+                          width: 24, height: 24, borderRadius: 5, border: 'none',
+                          background: 'transparent', cursor: sections.length > 1 ? 'pointer' : 'not-allowed',
+                          fontSize: 12, color: 'var(--color-text-3)',
                           opacity: sections.length > 1 ? 1 : 0.3,
+                          transition: 'all 0.15s',
                         }}
                       >
                         🗑
@@ -155,28 +192,38 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
           </div>
 
           {/* Add new section */}
-          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 14 }}>
-            <div className="label-field" style={{ marginBottom: 8 }}>
+          <div style={{
+            borderTop: '1px solid var(--color-border)',
+            paddingTop: 14,
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginBottom: 8 }}>
               Nova seção
             </div>
-            <div className="flex gap-2 items-center">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Nome da seção"
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                className="input-field flex-1"
+                style={{
+                  flex: 1, padding: '7px 10px', borderRadius: 7,
+                  border: '1px solid var(--color-border-md)', fontSize: 13,
+                  fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                }}
               />
               <select
                 value={newSide}
                 onChange={(e) => setNewSide(e.target.value as 'left' | 'right')}
-                className="select-field"
-                style={{ width: 'auto', padding: '7px 6px', fontSize: 12 }}
+                style={{
+                  padding: '7px 6px', borderRadius: 7, fontSize: 12,
+                  border: '1px solid var(--color-border-md)',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 <option value="left">Esq</option>
                 <option value="right">Dir</option>
               </select>
-              <div className="flex gap-0.5" style={{ flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
                 {SECTION_COLORS.slice(0, 6).map((c) => (
                   <button
                     key={c}
@@ -194,8 +241,15 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
               <button
                 onClick={handleAdd}
                 disabled={!newLabel.trim()}
-                className="btn btn-primary btn-sm"
-                style={{ whiteSpace: 'nowrap' }}
+                style={{
+                  padding: '7px 14px', borderRadius: 7, border: 'none',
+                  background: newLabel.trim() ? 'var(--color-blue)' : '#ccc',
+                  color: '#fff', fontSize: 12, fontWeight: 600,
+                  cursor: newLabel.trim() ? 'pointer' : 'not-allowed',
+                  fontFamily: 'var(--font-family-sans)',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s',
+                }}
               >
                 + Adicionar
               </button>

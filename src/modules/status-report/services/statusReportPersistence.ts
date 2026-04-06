@@ -8,53 +8,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 export const STORAGE_KEY = (id: string) => `statusReport_${id}`
 export const INDEX_KEY = 'statusReportMasterIndex'
 
-// ─── Offline Queue ──────────────────────────────────────────────────────────
-
-const OFFLINE_QUEUE_KEY = 'statusReportOfflineQueue'
-
-interface OfflineAction {
-  type: 'upsert' | 'delete'
-  entityId: string
-  data: any
-  squadId: string | null
-  timestamp: number
-  retryCount: number
-}
-
-function getOfflineQueue(): OfflineAction[] {
-  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') }
-  catch { return [] }
-}
-
-function saveOfflineQueue(queue: OfflineAction[]) {
-  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue))
-}
-
-function enqueueOffline(action: OfflineAction) {
-  const queue = getOfflineQueue()
-  const idx = queue.findIndex(a => a.entityId === action.entityId && a.type === action.type)
-  if (idx >= 0) queue[idx] = action
-  else queue.push(action)
-  saveOfflineQueue(queue)
-}
-
-export async function flushOfflineQueue() {
-  const queue = getOfflineQueue()
-  if (!queue.length) return
-  const remaining: OfflineAction[] = []
-  for (const action of queue) {
-    try {
-      if (action.type === 'upsert') {
-        await persistToServer(action.data, action.squadId ?? undefined)
-      }
-    } catch {
-      action.retryCount++
-      if (action.retryCount < 5) remaining.push(action)
-    }
-  }
-  saveOfflineQueue(remaining)
-}
-
 // ─── Default State ───────────────────────────────────────────────────────────
 
 export const DEFAULT_CONFIG: StatusReportConfig = {
@@ -244,10 +197,6 @@ export function removeFromMasterIndex(id: string): void {
 // ─── Supabase ────────────────────────────────────────────────────────────────
 
 export async function persistToServer(state: StatusReportState, squadId?: string, updatedAt?: string): Promise<void> {
-  if (!navigator.onLine) {
-    enqueueOffline({ type: 'upsert', entityId: state.id, data: state, squadId: squadId ?? null, timestamp: Date.now(), retryCount: 0 })
-    return
-  }
   const entry = getMasterIndex().find((e) => e.id === state.id)
   const status = entry?.status ?? 'active'
   const { error } = await supabase.from('status_reports').upsert({
@@ -345,8 +294,6 @@ export async function syncAllFromSupabase(): Promise<void> {
     localStorage.setItem(LAST_SYNC_KEY, now)
 
     if (import.meta.env.DEV) console.log(`[Sync] ${totalSynced} status report(s) sincronizado(s)`)
-
-    await flushOfflineQueue()
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[StatusReport] syncAllFromSupabase falhou — usando dados locais.', e)
   }

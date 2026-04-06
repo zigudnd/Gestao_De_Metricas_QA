@@ -27,16 +27,10 @@ export function showToast(
   _listeners.forEach((fn) => fn(toast))
 }
 
-const TYPE_MAP: Record<string, string> = {
-  success: 'msg-success',
-  error:   'msg-error',
-  info:    'msg-info',
-}
-
-const TYPE_BTN_BG: Record<string, string> = {
-  success: 'var(--color-green)',
-  error:   'var(--color-red)',
-  info:    'var(--color-blue)',
+const TYPE_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  success: { bg: 'var(--color-green-light)', color: 'var(--color-green)', border: 'var(--color-green-mid)' },
+  error:   { bg: 'var(--color-red-light)',   color: 'var(--color-red)',   border: 'var(--color-red-mid)' },
+  info:    { bg: 'var(--color-blue-light)',   color: 'var(--color-blue)',  border: 'var(--color-blue)' },
 }
 
 export function ToastContainer() {
@@ -65,26 +59,43 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div
-      role="status"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[5000] flex flex-col gap-2 pointer-events-none"
-    >
+    <div role="status" style={{
+      position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 5000, display: 'flex', flexDirection: 'column', gap: 8,
+      pointerEvents: 'none',
+    }}>
       {toasts.map((t) => {
-        const cls = TYPE_MAP[t.type] ?? TYPE_MAP.info
+        const s = TYPE_STYLES[t.type] ?? TYPE_STYLES.info
         return (
           <div
             key={t.id}
-            className={`${cls} flex items-center gap-[10px] font-semibold shadow-lg pointer-events-auto min-w-[240px]`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 16px',
+              background: s.bg, color: s.color,
+              border: `1px solid ${s.border}`,
+              borderRadius: 10,
+              fontSize: 13, fontWeight: 600,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              pointerEvents: 'auto',
+              fontFamily: 'var(--font-family-sans)',
+              minWidth: 240,
+            }}
           >
-            <span className="flex-1">{t.message}</span>
+            <span style={{ flex: 1 }}>{t.message}</span>
             {t.action && (
               <button
                 onClick={() => {
                   t.action!.onClick()
                   setToasts((prev) => prev.filter((x) => x.id !== t.id))
                 }}
-                className="btn btn-sm whitespace-nowrap"
-                style={{ background: TYPE_BTN_BG[t.type], color: '#fff' }}
+                style={{
+                  padding: '4px 10px', borderRadius: 6, border: 'none',
+                  background: s.color, color: '#fff',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  whiteSpace: 'nowrap',
+                }}
               >
                 {t.action.label}
               </button>

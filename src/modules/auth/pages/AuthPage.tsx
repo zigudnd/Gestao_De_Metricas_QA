@@ -84,31 +84,58 @@ export function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] p-6">
-      <div className="card w-full max-w-[380px]" style={{ padding: '32px 28px' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--color-bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 380,
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 12,
+        padding: '32px 28px',
+      }}>
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-7">
-          <div className="flex shrink-0 items-center justify-center rounded-[9px] bg-[var(--color-blue-text)] text-white text-sm font-bold tracking-tight" style={{ width: 34, height: 34 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+          <div style={{
+            width: 34,
+            height: 34,
+            background: 'var(--color-blue-text)',
+            borderRadius: 9,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: '-0.5px',
+            flexShrink: 0,
+          }}>
             TS
           </div>
-          <span className="heading-md" style={{ fontWeight: 600 }}>
+          <span style={{ fontWeight: 600, fontSize: 16, color: 'var(--color-text)' }}>
             ToStatos QA
           </span>
         </div>
 
         {/* Title */}
-        <h1 className="mb-1 text-xl font-semibold text-[var(--color-text)]">
+        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 600, color: 'var(--color-text)' }}>
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
         </h1>
-        <p className="text-body mb-6">
+        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--color-text-2)' }}>
           {mode === 'login'
             ? 'Acesse seu workspace de QA.'
             : 'Crie sua conta para colaborar com squads.'}
         </p>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {mode === 'register' && (
             <Field label="Seu nome">
               <input
@@ -119,7 +146,7 @@ export function AuthPage() {
                 placeholder="Ex: Ana Lima"
                 required
                 autoFocus
-                className="input-field"
+                style={inputStyle}
               />
             </Field>
           )}
@@ -133,12 +160,12 @@ export function AuthPage() {
               placeholder="voce@empresa.com"
               required
               autoFocus={mode === 'login'}
-              className="input-field"
+              style={inputStyle}
             />
           </Field>
 
           <Field label="Senha">
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
                 data-testid="auth-input-password"
                 type={showPassword ? 'text' : 'password'}
@@ -147,7 +174,7 @@ export function AuthPage() {
                 placeholder={mode === 'register' ? 'Mínimo 8 caracteres' : ''}
                 required
                 minLength={8}
-                className="input-field pr-[38px]"
+                style={{ ...inputStyle, paddingRight: 38 }}
               />
               <button
                 type="button"
@@ -155,7 +182,14 @@ export function AuthPage() {
                 tabIndex={-1}
                 title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                className="auth-pwd-toggle absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center border-none bg-transparent p-0.5 leading-none text-[var(--color-text-3)] cursor-pointer transition-colors"
+                className="auth-pwd-toggle"
+                style={{
+                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-3)', padding: '2px',
+                  lineHeight: 1, transition: 'color 0.15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
               >
                 {showPassword ? (
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -175,7 +209,9 @@ export function AuthPage() {
           </Field>
 
           {error && (
-            <p className="msg-error">{error}</p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-red-mid)', background: 'var(--color-red-light)', border: '1px solid var(--color-red)', borderRadius: 6, padding: '8px 12px' }}>
+              {error}
+            </p>
           )}
           {info && (
             <p style={{ margin: 0, fontSize: 13, color: 'var(--color-blue)', background: 'var(--color-blue-light)', border: '1px solid var(--color-blue)', borderRadius: 6, padding: '8px 12px' }}>
@@ -187,7 +223,19 @@ export function AuthPage() {
             data-testid={mode === 'login' ? 'auth-btn-login' : 'auth-btn-signup'}
             type="submit"
             disabled={loading}
-            className="btn btn-primary btn-lg mt-1 w-full justify-center font-semibold"
+            style={{
+              marginTop: 4,
+              padding: '10px 0',
+              opacity: loading ? 0.65 : 1,
+              background: 'var(--color-blue)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 7,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+            }}
           >
             {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
           </button>
@@ -196,30 +244,59 @@ export function AuthPage() {
         {/* SSO Login — condicional via VITE_SSO_ENABLED */}
         {SSO_ENABLED && mode === 'login' && (
           <>
-            <div className="flex items-center gap-3 my-4.5">
-              <div className="flex-1 h-px bg-[var(--color-border-md)]" />
-              <span className="text-small text-muted font-medium">ou</span>
-              <div className="flex-1 h-px bg-[var(--color-border-md)]" />
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              margin: '18px 0',
+            }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-border-md)' }} />
+              <span style={{ fontSize: 12, color: 'var(--color-text-3)', fontWeight: 500 }}>ou</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-border-md)' }} />
             </div>
 
             <button
               onClick={handleSSOLogin}
               disabled={ssoLoading}
-              className="btn btn-outline btn-lg auth-sso-btn w-full justify-center font-semibold"
+              className="auth-sso-btn"
+              style={{
+                width: '100%',
+                padding: '10px 0',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border-md)',
+                borderRadius: 7,
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--color-text)',
+                cursor: ssoLoading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'background 0.15s, border-color 0.15s',
+                fontFamily: 'var(--font-family-sans)',
+              }}
             >
-              <span className="text-base">{SSO_ICONS[SSO_PROVIDER] || '🔑'}</span>
+              <span style={{ fontSize: 16 }}>{SSO_ICONS[SSO_PROVIDER] || '🔑'}</span>
               {ssoLoading ? 'Redirecionando...' : SSO_LABEL}
             </button>
           </>
         )}
 
         {/* Toggle mode */}
-        <p className="text-body mt-5 text-center">
+        <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-2)' }}>
           {mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}{' '}
           <button
             data-testid="auth-link-toggle"
             onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setPassword(''); setError(''); setInfo('') }}
-            className="border-none bg-transparent p-0 text-[13px] font-semibold text-[var(--color-blue)] cursor-pointer transition-colors"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-blue)',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 13,
+              padding: 0,
+              transition: 'all 0.15s',
+            }}
           >
             {mode === 'login' ? 'Criar conta' : 'Fazer login'}
           </button>
@@ -237,13 +314,25 @@ export function AuthPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="section-label" style={{ marginBottom: 0 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-2)', letterSpacing: '0.04em' }}>
         {label.toUpperCase()}
       </span>
       {children}
     </label>
   )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box' as const,
+  padding: '9px 11px',
+  background: 'var(--color-bg)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 7,
+  fontSize: 14,
+  color: 'var(--color-text)',
+  outline: 'none',
 }
 
 function translateError(msg: string): string {

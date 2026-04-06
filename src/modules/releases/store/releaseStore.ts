@@ -16,9 +16,6 @@ import {
   normalizeRelease,
   createDefaultRelease,
   initRealtimeSubscription,
-  loadCalendarSlots,
-  persistCalendarSlots,
-  syncCalendarSlots,
 } from '../services/releasePersistence'
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
@@ -180,14 +177,25 @@ interface ReleaseStore {
 
 const EMPTY_RELEASE = createDefaultRelease('')
 
+const CALENDAR_LS_KEY = 'releaseCalendarSlots'
+
+function loadSlotsFromLS(): CalendarSlot[] {
+  try {
+    const raw = localStorage.getItem(CALENDAR_LS_KEY)
+    return raw ? JSON.parse(raw) as CalendarSlot[] : []
+  } catch (e) { if (import.meta.env.DEV) console.warn('[Releases] Failed to load calendar slots from localStorage:', e); return [] }
+}
+
+function saveSlotsToLS(slots: CalendarSlot[]): void {
+  localStorage.setItem(CALENDAR_LS_KEY, JSON.stringify(slots))
+}
+
 export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   // Calendar slots
   calendarSlots: [],
 
   loadCalendarSlots: () => {
-    // Load from localStorage immediately, then sync from Supabase in background
-    set({ calendarSlots: loadCalendarSlots() })
-    syncCalendarSlots().then((slots) => set({ calendarSlots: slots })).catch(() => {})
+    set({ calendarSlots: loadSlotsFromLS() })
   },
 
   addCalendarSlot: (slot) => {
@@ -197,26 +205,26 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       createdAt: new Date().toISOString(),
     }
     const updated = [...get().calendarSlots, newSlot]
+    saveSlotsToLS(updated)
     set({ calendarSlots: updated })
-    persistCalendarSlots(updated).catch(() => {})
   },
 
   updateCalendarSlot: (id, updates) => {
     const updated = get().calendarSlots.map((s) => s.id === id ? { ...s, ...updates } : s)
+    saveSlotsToLS(updated)
     set({ calendarSlots: updated })
-    persistCalendarSlots(updated).catch(() => {})
   },
 
   removeCalendarSlot: (id) => {
     const updated = get().calendarSlots.filter((s) => s.id !== id)
+    saveSlotsToLS(updated)
     set({ calendarSlots: updated })
-    persistCalendarSlots(updated).catch(() => {})
   },
 
   linkSlotToRelease: (slotId, releaseId) => {
     const updated = get().calendarSlots.map((s) => s.id === slotId ? { ...s, releaseId } : s)
+    saveSlotsToLS(updated)
     set({ calendarSlots: updated })
-    persistCalendarSlots(updated).catch(() => {})
   },
 
   // List state

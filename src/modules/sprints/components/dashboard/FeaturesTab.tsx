@@ -9,7 +9,7 @@ import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { showToast } from '@/app/components/Toast'
 import { NewBugModal } from '@/app/components/NewBugModal'
 
-// --- Helpers ---
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function dayKeyToDate(dayKey: string, startDate: string, excludeWeekends: boolean): string {
   if (!dayKey || !startDate) return ''
@@ -43,7 +43,7 @@ const COMPLEXITY_COLORS: Record<string, string> = {
   Alta: 'var(--color-red-mid)',
 }
 
-// --- SVG icon components ---
+// ─── SVG icon components ──────────────────────────────────────────────────────
 
 function IconExportCSV() {
   return (
@@ -109,8 +109,22 @@ function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }
         onClick={onClick}
         title={title}
         aria-label={ariaLabel}
-        className={`btn-ghost shrink-0 ${danger ? 'feat-action-btn-danger' : 'feat-action-btn'}`}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 32, minHeight: 32, padding: 8 }}
+        className={danger ? 'feat-action-btn-danger' : 'feat-action-btn'}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 8,
+          minWidth: 32,
+          minHeight: 32,
+          borderRadius: 8,
+          cursor: 'pointer',
+          color: 'var(--color-text-2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background 0.15s, color 0.15s',
+          flexShrink: 0,
+        }}
       >
         {children}
       </button>
@@ -122,7 +136,7 @@ function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }
   )
 }
 
-// --- FeaturesTab ---
+// ─── FeaturesTab ─────────────────────────────────────────────────────────────
 
 export function FeaturesTab() {
   const state = useSprintStore((s) => s.state)
@@ -139,11 +153,11 @@ export function FeaturesTab() {
   const hasFilter = activeSuiteFilter.size > 0
 
   return (
-    <div className="flex flex-col gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Suite Filter + Management */}
       {suites.length >= 2 && (
-        <div className="card-sm flex items-center gap-2 flex-wrap">
-          <span className="section-label shrink-0" style={{ marginBottom: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>
             Filtrar Suites:
           </span>
           {suites.map((suite) => {
@@ -153,8 +167,16 @@ export function FeaturesTab() {
               <button
                 key={suite.id}
                 onClick={() => toggleSuiteFilter(String(suite.id))}
-                className={active ? 'badge badge-blue' : 'badge badge-neutral'}
-                style={{ cursor: 'pointer', padding: '3px 10px', borderRadius: 20, fontFamily: 'var(--font-family-sans)' }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '3px 10px', borderRadius: 20,
+                  border: active ? '0.5px solid var(--color-blue-light)' : '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-blue-light)' : 'var(--color-bg)',
+                  color: active ? 'var(--color-blue)' : 'var(--color-text-2)',
+                  fontWeight: 500, fontSize: 11, cursor: 'pointer',
+                  transition: 'background 0.15s',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
               >
                 {suite.name || 'Suite'}
                 <span style={{ fontSize: 11 }}>{count}f</span>
@@ -162,7 +184,7 @@ export function FeaturesTab() {
             )
           })}
           {hasFilter && (
-            <button onClick={clearSuiteFilter} className="btn btn-sm btn-outline" style={{ borderRadius: 10 }}>
+            <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 10, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer' }}>
               ✕ Ver todas
             </button>
           )}
@@ -170,8 +192,8 @@ export function FeaturesTab() {
       )}
 
       {/* Suite management */}
-      <div className="flex justify-end gap-2">
-        <button onClick={() => addSuite()} className="btn btn-md btn-outline">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button onClick={() => addSuite()} style={btnOutline}>
           + Nova Suite
         </button>
       </div>
@@ -193,7 +215,7 @@ export function FeaturesTab() {
   )
 }
 
-// --- SuiteAccordion ---
+// ─── SuiteAccordion ───────────────────────────────────────────────────────────
 
 function SuiteAccordion({
   suiteId, suiteName, suiteIndex, onRename, onRemove, onDuplicate, onAddFeature,
@@ -234,9 +256,9 @@ function SuiteAccordion({
       reader.onload = (ev) => {
         try {
           const result = parseFeatureText(ev.target!.result as string, suiteId)
-          if (result.totalScenarios === 0) { showToast('Nenhum cenario encontrado no arquivo.', 'error'); return }
+          if (result.totalScenarios === 0) { showToast('Nenhum cenário encontrado no arquivo.', 'error'); return }
           importFeatures(suiteId, result.features)
-          showToast(`${result.totalScenarios} cenario(s) importado(s) em ${result.features.length} funcionalidade(s)`, 'success')
+          showToast(`${result.totalScenarios} cenário(s) importado(s) em ${result.features.length} funcionalidade(s)`, 'success')
         } catch (err: unknown) {
           showToast(String(err instanceof Error ? err.message : err), 'error')
         }
@@ -248,14 +270,14 @@ function SuiteAccordion({
         try {
           const result = parseCSVText(ev.target!.result as string, suiteId)
           importFeatures(suiteId, result.features)
-          showToast(`${result.totalScenarios} cenario(s) importado(s) de CSV`, 'success')
+          showToast(`${result.totalScenarios} cenário(s) importado(s) de CSV`, 'success')
         } catch (err: unknown) {
           showToast(String(err instanceof Error ? err.message : err), 'error')
         }
       }
       reader.readAsText(file, 'UTF-8')
     } else {
-      showToast('Formato nao suportado. Use: .feature ou .csv', 'error')
+      showToast('Formato não suportado. Use: .feature ou .csv', 'error')
     }
     if (importInputRef.current) importInputRef.current.value = ''
   }
@@ -265,15 +287,18 @@ function SuiteAccordion({
   const blockedCount = suiteFeatures.filter(({ f }) => f.status === 'Bloqueada').length
 
   return (
-    <div className="card" style={{ padding: 0, border: '2px solid var(--color-border)', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
       {/* Suite header */}
       <div
-        className="flex items-center gap-2.5 flex-wrap cursor-pointer select-none"
-        style={{ padding: '14px 20px', background: 'var(--color-bg)', borderBottom: open ? '1px solid var(--color-border)' : 'none' }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px',
+          background: 'var(--color-bg)', borderBottom: open ? '1px solid var(--color-border)' : 'none',
+          cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap',
+        }}
         onClick={() => setOpen((o) => !o)}
       >
         <span style={{ color: 'var(--color-blue)', fontWeight: 700, fontSize: 14 }}>{open ? '▾' : '▸'}</span>
-        <span className="shrink-0" style={{ width: 4, height: 20, background: 'var(--color-blue)', borderRadius: 4 }} />
+        <span style={{ width: 4, height: 20, background: 'var(--color-blue)', borderRadius: 4, flexShrink: 0 }} />
 
         {editingName ? (
           <input
@@ -284,8 +309,7 @@ function SuiteAccordion({
             onChange={(e) => setNameVal(e.target.value)}
             onBlur={() => { onRename(nameVal); setEditingName(false) }}
             onKeyDown={(e) => { if (e.key === 'Enter') { onRename(nameVal); setEditingName(false) } }}
-            className="input-field"
-            style={{ fontSize: 15, fontWeight: 700, padding: '2px 8px', width: 'auto' }}
+            style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-family-sans)', background: 'var(--color-surface)' }}
           />
         ) : (
           <strong style={{ fontSize: 15, color: 'var(--color-text)' }}>
@@ -294,17 +318,19 @@ function SuiteAccordion({
         )}
 
         {blockedCount > 0 && (
-          <span className="badge badge-red">{blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}</span>
+          <span style={{ fontSize: 10, fontWeight: 500, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)', padding: '2px 8px', borderRadius: 10 }}>
+            {blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
+          </span>
         )}
 
-        <span className="ml-auto text-small" style={{ fontWeight: 600 }}>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>
           {suiteFeatures.length} func. · {totalTests} testes · {totalExec} executados
         </span>
 
-        <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
           <ActionBtn
             onClick={() => { const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId)); exportSuiteAsCSV(suiteName, sFeatures) }}
-            title="Exportar casos desta suite para reimportacao (CSV)"
+            title="Exportar casos desta suite para reimportação (CSV)"
             aria-label="Exportar CSV da suite"
           ><IconExportCSV /></ActionBtn>
           <ActionBtn
@@ -348,7 +374,7 @@ function SuiteAccordion({
                 transition: 'opacity 0.15s',
               }}
             >
-              <div className="flex items-start gap-1">
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
                 <div
                   title="Arraste para reordenar"
                   style={{ cursor: 'grab', color: 'var(--color-text-3)', fontSize: 16, padding: '12px 2px 0', flexShrink: 0, userSelect: 'none', lineHeight: 1 }}
@@ -361,18 +387,16 @@ function SuiteAccordion({
               </div>
             </div>
           ))}
-          <div className="flex gap-2" style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button
               onClick={(e) => { e.stopPropagation(); onAddFeature() }}
-              className="btn btn-md flex-1"
-              style={{ border: '2px dashed var(--color-border-md)', background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, padding: 12 }}
+              style={{ flex: 1, padding: 12, border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
             >
               + Adicionar Funcionalidade
             </button>
             <label
               title="Importar .feature ou .csv"
-              className="btn btn-md flex items-center gap-1.5 cursor-pointer"
-              style={{ border: '1px solid var(--color-border-md)', background: 'var(--color-bg)', color: 'var(--color-text-2)', fontWeight: 600, whiteSpace: 'nowrap' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', border: '1px solid var(--color-border-md)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap' }}
             >
               📥 Importar
               <input
@@ -390,7 +414,7 @@ function SuiteAccordion({
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Suite"
-          description={`Tem certeza que deseja excluir a suite "${suiteName || 'Sem nome'}" e todas as suas funcionalidades? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir a suite "${suiteName || 'Sem nome'}" e todas as suas funcionalidades? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Suite"
           onConfirm={() => { onRemove(); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
@@ -400,7 +424,7 @@ function SuiteAccordion({
   )
 }
 
-// --- FeatureAccordion ---
+// ─── FeatureAccordion ─────────────────────────────────────────────────────────
 
 function FeatureAccordion({ feature, featureIndex }: { feature: Feature; featureIndex: number }) {
   const [open, setOpen] = useState(false)
@@ -429,8 +453,8 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   function handleMockupUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { showToast('Tipo de arquivo nao permitido. Use PNG, JPG, WebP ou GIF.', 'error'); return }
-    if (file.size > 5 * 1024 * 1024) { showToast('Imagem muito grande. Maximo 5MB.', 'error'); return }
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { showToast('Tipo de arquivo não permitido. Use PNG, JPG, WebP ou GIF.', 'error'); return }
+    if (file.size > 5 * 1024 * 1024) { showToast('Imagem muito grande. Máximo 5MB.', 'error'); return }
     const reader = new FileReader()
     reader.onload = (ev) => {
       if (ev.target?.result) setMockupImage(featureIndex, ev.target.result as string)
@@ -451,14 +475,19 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
     >
       <div
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between cursor-pointer select-none gap-2"
         style={{
           padding: '10px 14px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           background: statusBg ?? 'var(--color-bg)',
           borderBottom: open ? `1px solid ${statusBorder}` : 'none',
+          userSelect: 'none',
+          gap: 8,
         }}
       >
-        <span className="flex items-center gap-2 min-w-0">
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <span style={{ fontSize: 14, color: 'var(--color-text-2)' }}>{open ? '▾' : '▶'}</span>
           <span
             style={{
@@ -474,12 +503,12 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
             {feature.name || 'Funcionalidade sem nome'}
           </span>
           {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, display: 'inline-block' }} />}
-          {isCancelled && <span className="badge badge-neutral" style={{ fontWeight: 700 }}>Cancelada</span>}
+          {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
         </span>
-        <span className="flex items-center gap-2 shrink-0">
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {/* Mini progress dots */}
           {cases.length > 0 && (
-            <span className="flex gap-0.5">
+            <span style={{ display: 'flex', gap: 2 }}>
               {(() => {
                 const done = cases.filter(c => c.status === 'Concluído').length
                 const failed = cases.filter(c => c.status === 'Falhou').length
@@ -487,16 +516,16 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 const pending = cases.length - done - failed - blocked
                 return (
                   <>
-                    {done > 0 && <span className="badge badge-green" style={{ fontSize: 10, fontWeight: 700, padding: '1px 5px' }}>{done}✓</span>}
-                    {failed > 0 && <span className="badge badge-red" style={{ fontSize: 10, fontWeight: 700, padding: '1px 5px' }}>{failed}✗</span>}
-                    {blocked > 0 && <span className="badge badge-amber" style={{ fontSize: 10, fontWeight: 700, padding: '1px 5px' }}>{blocked}⊘</span>}
-                    {pending > 0 && <span className="text-muted" style={{ fontSize: 10, fontWeight: 600 }}>{pending}○</span>}
+                    {done > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-green)', background: 'var(--color-green-light)', padding: '1px 5px', borderRadius: 4 }}>{done}✓</span>}
+                    {failed > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)', background: 'var(--color-red-light)', padding: '1px 5px', borderRadius: 4 }}>{failed}✗</span>}
+                    {blocked > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-amber)', background: 'var(--color-amber-light)', padding: '1px 5px', borderRadius: 4 }}>{blocked}⊘</span>}
+                    {pending > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-3)' }}>{pending}○</span>}
                   </>
                 )
               })()}
             </span>
           )}
-          <span className="text-small" style={{ fontWeight: 700, flexShrink: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
             {feature.tests} Testes
           </span>
         </span>
@@ -505,21 +534,20 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
       {/* Feature body */}
       {open && <div style={{ padding: '14px 16px' }}>
         {/* Feature settings */}
-        <div className="flex flex-col gap-3" style={{ background: 'var(--color-bg)', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid var(--color-border)' }}>
-          <div className="flex gap-3.5 flex-wrap items-end">
+        <div style={{ background: 'var(--color-bg)', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flexGrow: 1, minWidth: 200 }}>
-              <label className="label-field">Nome da Funcionalidade</label>
+              <label style={labelSm}>Nome da Funcionalidade</label>
               <input
                 type="text"
                 value={feature.name}
                 onChange={(e) => updateFeature(featureIndex, 'name', e.target.value)}
                 placeholder="Ex: Tela de Login"
-                className="input-field"
-                style={{ fontSize: 13, padding: '6px 8px' }}
+                style={inputSm}
               />
             </div>
             <div style={{ width: 160 }}>
-              <label className="label-field">Status</label>
+              <label style={labelSm}>Status</label>
               <select
                 value={feature.status}
                 onChange={(e) => {
@@ -535,9 +563,8 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                     if (val === 'Ativa') updateFeature(featureIndex, 'blockReason', '')
                   }
                 }}
-                className="select-field"
                 style={{
-                  fontSize: 13, padding: '6px 24px 6px 8px',
+                  ...selectSm,
                   fontWeight: 700,
                   color: isBlocked ? 'var(--color-red)' : isCancelled ? 'var(--color-text-2)' : 'var(--color-green)',
                 }}
@@ -549,14 +576,13 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
             </div>
             {(isBlocked || isCancelled) && (
               <div style={{ flexGrow: 1, minWidth: 200 }}>
-                <label className="label-field">{isBlocked ? 'Motivo do Bloqueio' : 'Motivo do Cancelamento'}</label>
+                <label style={labelSm}>{isBlocked ? 'Motivo do Bloqueio' : 'Motivo do Cancelamento'}</label>
                 <input
                   type="text"
                   value={feature.blockReason}
                   onChange={(e) => updateFeature(featureIndex, 'blockReason', e.target.value)}
                   placeholder="Descreva o motivo…"
-                  className="input-field"
-                  style={{ fontSize: 13, padding: '6px 8px' }}
+                  style={inputSm}
                 />
               </div>
             )}
@@ -566,8 +592,8 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
           </div>
 
           {/* Mockup */}
-          <div className="flex items-center gap-3 flex-wrap" style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
-            <label className="label-field shrink-0" style={{ margin: 0 }}>Imagem de Referencia</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
+            <label style={{ ...labelSm, flexShrink: 0, margin: 0 }}>Imagem de Referência</label>
             {feature.mockupImage ? (
               <>
                 <img
@@ -579,12 +605,12 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   🔄 Substituir
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleMockupUpload} />
                 </label>
-                <button onClick={() => removeMockupImage(featureIndex)} className="btn-ghost" style={{ fontSize: 12, color: 'var(--color-red)', fontWeight: 600 }}>
+                <button onClick={() => removeMockupImage(featureIndex)} style={{ fontSize: 12, color: 'var(--color-red)', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
                   🗑️ Remover
                 </button>
               </>
             ) : (
-              <label className="btn btn-sm btn-outline flex items-center gap-1.5 cursor-pointer">
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--color-text-2)', cursor: 'pointer', fontWeight: 500, background: 'none', border: '0.5px solid var(--color-border)', padding: '5px 12px', borderRadius: 8, fontFamily: 'var(--font-family-sans)', transition: 'background 0.15s' }}>
                 <IconAttach />
                 Anexar Mockup
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleMockupUpload} />
@@ -594,21 +620,27 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
         </div>
 
         {/* Test cases */}
-        <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
-          <h4 className="heading-sm" style={{ margin: 0 }}>
-            Cenarios Gherkin ({cases.length})
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+            Cenários Gherkin ({cases.length})
           </h4>
-          <div className="flex items-center gap-2">
-            <label className="text-small" style={{ fontWeight: 600 }}>Filtrar:</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>Filtrar:</label>
             <select
               value={activeFilter}
               onChange={(e) => updateFeature(featureIndex, 'activeFilter', e.target.value)}
-              className="select-field"
-              style={{ fontSize: 12, padding: '4px 24px 4px 8px', width: 'auto' }}
+              style={{
+                fontSize: 12, padding: '4px 24px 4px 8px', borderRadius: 6,
+                border: '1px solid var(--color-border-md)', background: 'var(--color-bg)',
+                color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)',
+                cursor: 'pointer', appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+              }}
             >
               <option value="Todos">Todos</option>
               <option value="Pendente">Pendentes</option>
-              <option value="Concluído">Concluidos</option>
+              <option value="Concluído">Concluídos</option>
               <option value="Falhou">Falharam</option>
               <option value="Bloqueado">Bloqueados</option>
             </select>
@@ -635,8 +667,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
 
         <button
           onClick={() => addTestCase(featureIndex)}
-          className="btn btn-md w-full"
-          style={{ marginTop: 8, border: '2px dashed var(--color-border-md)', background: 'transparent', color: 'var(--color-blue)', fontWeight: 600 }}
+          style={{ width: '100%', marginTop: 8, padding: '10px', border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
         >
           + Adicionar Caso de Teste
         </button>
@@ -645,15 +676,17 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
       {blockModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setBlockModal(false)}
-          className="modal-backdrop"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div className="modal-container" style={{ maxWidth: 420, borderTop: '3px solid var(--color-red)' }}>
-            <div className="heading-md">🛑 Bloquear Funcionalidade</div>
-            <div className="text-body" style={{ lineHeight: 1.5 }}>
-              Informe o motivo do bloqueio de <strong>"{feature.name || 'Sem nome'}"</strong>. Este campo e obrigatorio.
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>🛑 Bloquear Funcionalidade</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Informe o motivo do bloqueio de <strong>"{feature.name || 'Sem nome'}"</strong>. Este campo é obrigatório.
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="section-label">Motivo do Bloqueio *</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Motivo do Bloqueio *
+              </label>
               <textarea
                 autoFocus
                 value={blockReason}
@@ -661,11 +694,16 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                 placeholder="Descreva o motivo do bloqueio…"
                 rows={3}
                 onKeyDown={(e) => { if (e.key === 'Escape') setBlockModal(false) }}
-                className="textarea-field"
+                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
               />
             </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setBlockModal(false)} className="btn btn-md btn-outline">Cancelar</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setBlockModal(false)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Cancelar
+              </button>
               <button
                 disabled={!blockReason.trim()}
                 onClick={() => {
@@ -673,8 +711,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   updateFeature(featureIndex, 'blockReason', blockReason.trim())
                   setBlockModal(false)
                 }}
-                className="btn btn-md btn-danger"
-                style={{ opacity: blockReason.trim() ? 1 : 0.5, cursor: blockReason.trim() ? 'pointer' : 'not-allowed' }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-red)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: blockReason.trim() ? 'pointer' : 'not-allowed', opacity: blockReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
               >
                 Confirmar Bloqueio
               </button>
@@ -687,28 +724,35 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
       {cancelModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setCancelModal(false)}
-          className="modal-backdrop"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div className="modal-container" style={{ maxWidth: 460, borderTop: '3px solid var(--color-text-3)' }}>
-            <div className="heading-md">⛔ Cancelar Funcionalidade</div>
-            <div className="text-body" style={{ lineHeight: 1.5 }}>
-              Registre o alinhamento tecnico referente ao cancelamento de <strong>"{feature.name || 'Sem nome'}"</strong>.
-              O registro ficara visivel na aba <strong>Alinhamentos</strong>.
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-text-3)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 460, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>⛔ Cancelar Funcionalidade</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Registre o alinhamento técnico referente ao cancelamento de <strong>"{feature.name || 'Sem nome'}"</strong>.
+              O registro ficará visível na aba <strong>Alinhamentos</strong>.
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="section-label">Alinhamento Tecnico *</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Alinhamento Técnico *
+              </label>
               <textarea
                 autoFocus
                 value={cancelAlignment}
                 onChange={(e) => setCancelAlignment(e.target.value)}
-                placeholder={`Ex: Funcionalidade "${feature.name || ''}" cancelada por decisao do PO em alinhamento com o time tecnico…`}
+                placeholder={`Ex: Funcionalidade "${feature.name || ''}" cancelada por decisão do PO em alinhamento com o time técnico…`}
                 rows={4}
                 onKeyDown={(e) => { if (e.key === 'Escape') setCancelModal(false) }}
-                className="textarea-field"
+                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
               />
             </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setCancelModal(false)} className="btn btn-md btn-outline">Voltar</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setCancelModal(false)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Voltar
+              </button>
               <button
                 disabled={!cancelAlignment.trim()}
                 onClick={() => {
@@ -717,8 +761,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
                   addAlignmentFull(`[Cancelamento] ${feature.name || 'Funcionalidade'}: ${cancelAlignment.trim()}`)
                   setCancelModal(false)
                 }}
-                className="btn btn-md"
-                style={{ background: 'var(--color-text-3)', color: '#fff', fontWeight: 600, opacity: cancelAlignment.trim() ? 1 : 0.5, cursor: cancelAlignment.trim() ? 'pointer' : 'not-allowed' }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-text-3)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: cancelAlignment.trim() ? 'pointer' : 'not-allowed', opacity: cancelAlignment.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
               >
                 Confirmar Cancelamento
               </button>
@@ -731,7 +774,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Funcionalidade"
-          description={`Tem certeza que deseja excluir "${feature.name || 'Sem nome'}" e todos os seus casos de teste? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir "${feature.name || 'Sem nome'}" e todos os seus casos de teste? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Funcionalidade"
           onConfirm={() => { removeFeature(featureIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
@@ -741,7 +784,7 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
   )
 }
 
-// --- TestCaseCard ---
+// ─── TestCaseCard ─────────────────────────────────────────────────────────────
 
 function TestCaseCard({
   testCase, caseIndex, featureIndex, featureName, startDate, endDate, sprintDays, excludeWeekends, mockupImage,
@@ -789,6 +832,7 @@ function TestCaseCard({
       setConcluindoDate(execDateVal || today)
     } else if (newStatus === 'Falhou') {
       updateTestCase(featureIndex, caseIndex, 'status', 'Falhou')
+      // Atribuir data de execução automaticamente (o cenário foi executado e falhou)
       if (!testCase.executionDay) {
         const today = new Date().toISOString().split('T')[0]
         const dayKey = dateToDayKey(today, startDate, sprintDays, excludeWeekends)
@@ -813,7 +857,7 @@ function TestCaseCard({
     <div
       style={{
         background: testCase.status === 'Concluído' ? 'var(--color-bg)' : 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
+        border: `1px solid var(--color-border)`,
         borderLeft: `4px solid ${borderColor}`,
         borderRadius: 8,
         padding: '12px 14px',
@@ -821,24 +865,25 @@ function TestCaseCard({
         opacity: testCase.status === 'Concluído' ? 0.85 : 1,
       }}
     >
-      <div className="flex gap-2.5 flex-wrap items-start" style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: 10 }}>
         <input
           type="text"
           value={testCase.name}
           onChange={(e) => updateTestCase(featureIndex, caseIndex, 'name', e.target.value)}
-          placeholder="Titulo do Caso de Teste"
-          className="input-field"
-          style={{ flexGrow: 1, minWidth: 200, fontWeight: 600, fontSize: 13, padding: '6px 8px' }}
+          placeholder="Título do Caso de Teste"
+          style={{ ...inputSm, flexGrow: 1, minWidth: 200, fontWeight: 600 }}
         />
         <select
           value={testCase.complexity}
           onChange={(e) => updateTestCase(featureIndex, caseIndex, 'complexity', e.target.value as TestCaseComplexity)}
-          className="select-field"
           style={{
+            ...selectSm,
             width: 130,
             color: COMPLEXITY_COLORS[testCase.complexity] ?? 'var(--color-text-2)',
-            fontWeight: 500, fontSize: 12, padding: '4px 24px 4px 10px',
+            fontWeight: 500,
+            fontSize: 12,
             border: '0.5px solid var(--color-border)',
+            padding: '4px 24px 4px 10px',
           }}
         >
           <option value="Baixa">Baixa</option>
@@ -848,54 +893,66 @@ function TestCaseCard({
         <select
           value={testCase.status}
           onChange={(e) => handleStatusChange(e.target.value as TestCaseStatus)}
-          className="select-field"
           style={{
+            ...selectSm,
             width: 140,
             color: STATUS_TEXT_COLORS[testCase.status] ?? 'var(--color-text-2)',
-            fontWeight: 500, fontSize: 12, padding: '4px 24px 4px 10px',
+            fontWeight: 500,
+            fontSize: 12,
             border: '0.5px solid var(--color-border)',
+            padding: '4px 24px 4px 10px',
           }}
         >
           <option value="Pendente">Pendente</option>
-          <option value="Concluído">Concluido</option>
+          <option value="Concluído">Concluído</option>
           <option value="Falhou">Falhou</option>
           <option value="Bloqueado">Bloqueado</option>
         </select>
-        <div className="flex items-center gap-1.5">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <input
             type="date"
             value={execDateVal}
             min={startDate || undefined}
             max={endDate || undefined}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="input-field"
-            style={{ width: 148, fontSize: 13, padding: '6px 8px' }}
-            title={!startDate ? 'Configure a Data de Inicio para ativar' : 'Data de execucao'}
+            style={{ ...inputSm, width: 148 }}
+            title={!startDate ? 'Configure a Data de Início para ativar' : 'Data de execução'}
           />
           {testCase.executionDay && (
-            <span className="badge badge-blue" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-blue)', background: 'var(--color-blue-light)', border: '1px solid var(--color-blue)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>
               {testCase.executionDay}
             </span>
           )}
         </div>
-        <div className="flex gap-0.5 shrink-0">
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
           <ActionBtn onClick={() => duplicateTestCase(featureIndex, caseIndex)} title="Clonar caso de teste" aria-label="Clonar caso de teste"><IconClone /></ActionBtn>
           <ActionBtn onClick={() => setConfirmRemove(true)} title="Remover caso de teste" danger aria-label="Remover caso de teste"><IconTrash /></ActionBtn>
         </div>
       </div>
 
-      <div className="flex gap-3 items-start">
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <textarea
           value={testCase.gherkin}
           onChange={(e) => updateTestCase(featureIndex, caseIndex, 'gherkin', e.target.value)}
-          placeholder="Escreva o cenario em Gherkin…"
+          placeholder="Escreva o cenário em Gherkin…"
           rows={4}
-          className="textarea-field"
-          style={{ fontFamily: 'var(--font-family-mono)', flex: 1, minWidth: 0 }}
+          style={{
+            fontFamily: 'var(--font-family-mono)',
+            fontSize: 13,
+            resize: 'vertical',
+            flex: 1,
+            minWidth: 0,
+            border: '1px solid var(--color-border-md)',
+            borderRadius: 6,
+            padding: 10,
+            background: 'var(--color-bg)',
+            color: 'var(--color-text)',
+            boxSizing: 'border-box',
+          }}
         />
         {mockupImage && (
-          <div className="shrink-0" style={{ width: 'clamp(100px, 30%, 220px)' }}>
-            <div className="section-label" style={{ fontSize: 10, marginBottom: 4 }}>📎 Referencia</div>
+          <div style={{ flexShrink: 0, width: 'clamp(100px, 30%, 220px)' }}>
+            <div style={{ fontSize: 10, color: 'var(--color-text-3)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>📎 Referência</div>
             <img src={mockupImage} alt="Mockup" style={{ width: '100%', borderRadius: 6, border: '1px solid var(--color-border)', objectFit: 'contain', maxHeight: 130, background: '#fff' }} />
           </div>
         )}
@@ -904,7 +961,7 @@ function TestCaseCard({
       {confirmRemove && (
         <ConfirmModal
           title="Excluir Caso de Teste"
-          description={`Tem certeza que deseja excluir o caso "${testCase.name || 'Sem titulo'}"? Esta acao nao pode ser desfeita.`}
+          description={`Tem certeza que deseja excluir o caso "${testCase.name || 'Sem título'}"? Esta ação não pode ser desfeita.`}
           confirmLabel="Excluir Caso"
           onConfirm={() => { removeTestCase(featureIndex, caseIndex); setConfirmRemove(false) }}
           onCancel={() => setConfirmRemove(false)}
@@ -926,12 +983,12 @@ function TestCaseCard({
       {concluindoDate !== null && (
         <div
           onClick={(e) => e.target === e.currentTarget && setConcluindoDate(null)}
-          className="modal-backdrop"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-          <div className="modal-container" style={{ maxWidth: 380, borderTop: '3px solid var(--color-green)' }}>
-            <div className="heading-md">✅ Data de Execucao</div>
-            <div className="text-body" style={{ lineHeight: 1.5 }}>
-              Informe a data em que o caso <strong>"{testCase.name || 'Sem titulo'}"</strong> foi executado.
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-green)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 380, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>✅ Data de Execução</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Informe a data em que o caso <strong>"{testCase.name || 'Sem título'}"</strong> foi executado.
             </div>
             <input
               type="date"
@@ -939,17 +996,20 @@ function TestCaseCard({
               min={startDate || undefined}
               max={endDate || undefined}
               onChange={(e) => setConcluindoDate(e.target.value)}
-              className="input-field"
-              style={{ fontSize: 14 }}
+              style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 6, fontSize: 14, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
               autoFocus
             />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setConcluindoDate(null)} className="btn btn-md btn-outline">Cancelar</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConcluindoDate(null)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Cancelar
+              </button>
               <button
                 onClick={confirmConcluido}
                 disabled={!concluindoDate}
-                className="btn btn-md btn-success"
-                style={{ opacity: concluindoDate ? 1 : undefined, cursor: concluindoDate ? 'pointer' : 'default' }}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: concluindoDate ? 'var(--color-green)' : 'var(--color-border)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: concluindoDate ? 'pointer' : 'default', fontFamily: 'var(--font-family-sans)' }}
               >
                 Confirmar
               </button>
@@ -959,4 +1019,62 @@ function TestCaseCard({
       )}
     </div>
   )
+}
+
+// ─── Shared styles ────────────────────────────────────────────────────────────
+
+const labelSm: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontWeight: 500,
+  color: 'var(--color-text-2)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: 6,
+}
+
+const inputSm: React.CSSProperties = {
+  width: '100%',
+  padding: '6px 8px',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 6,
+  fontSize: 13,
+  color: 'var(--color-text)',
+  background: 'var(--color-surface)',
+  fontFamily: 'var(--font-family-sans)',
+  boxSizing: 'border-box',
+}
+
+const selectSm: React.CSSProperties = {
+  ...inputSm,
+  padding: '6px 24px 6px 8px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
+}
+
+const btnOutline: React.CSSProperties = {
+  padding: '6px 14px',
+  background: 'transparent',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+}
+
+const iconBtn: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 6,
+  borderRadius: 6,
+  cursor: 'pointer',
+  color: 'var(--color-text-2)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }

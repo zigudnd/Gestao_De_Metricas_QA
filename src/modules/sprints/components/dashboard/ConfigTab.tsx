@@ -75,7 +75,7 @@ export function ConfigTab() {
     setConfirming(true)
     setConfirmError('')
     try {
-      // Verificar senha com cliente isolado para nao interferir na sessao ativa
+      // Verificar senha com cliente isolado para não interferir na sessão ativa
       const email = (await supabase.auth.getUser()).data.user?.email
       if (!email) { setConfirmError('Erro ao obter email.'); setConfirming(false); return }
       const verifyClient = createClient(
@@ -86,7 +86,7 @@ export function ConfigTab() {
       const { error } = await verifyClient.auth.signInWithPassword({ email, password: confirmPassword })
       if (error) { setConfirmError('Senha incorreta.'); setConfirming(false); return }
 
-      // Aplicar mudanca
+      // Aplicar mudança
       const newSquad = squads.find((s) => s.id === pendingSquadId)
       if (newSquad) {
         updateConfig('squad', newSquad.name)
@@ -128,41 +128,46 @@ export function ConfigTab() {
         type={type}
         value={String(value ?? '')}
         onChange={(e) => updateConfig(key, type === 'number' ? Number(e.target.value) : e.target.value)}
-        className="input-field"
+        style={inputStyle}
       />
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {saved && (
-        <span className="badge badge-green self-end" style={{ transition: 'opacity 0.3s' }}>
+        <span style={{
+          fontSize: 12, color: 'var(--color-green)', fontWeight: 600,
+          alignSelf: 'flex-end', padding: '2px 8px',
+          background: 'var(--color-green-light)', borderRadius: 6,
+          transition: 'opacity 0.3s',
+        }}>
           Salvo &#10003;
         </span>
       )}
       {/* Sprint info */}
-      <Card title="Informacoes da Sprint">
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
-          <FormGroup label="Titulo">
+      <Card title="Informações da Sprint">
+        <div style={grid2}>
+          <FormGroup label="Título">
             <input
               type="text"
               value={state.config.title}
               onChange={(e) => updateConfig('title', e.target.value)}
-              className="input-field"
+              style={inputStyle}
               placeholder="Ex: QA Dashboard — Sprint 12"
             />
           </FormGroup>
           <FormGroup label="Squad / Time">
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {squadsLoading ? (
-                <select disabled className="select-field opacity-60 cursor-not-allowed">
+                <select disabled style={{ ...selectStyle, opacity: 0.6, cursor: 'not-allowed' }}>
                   <option>Carregando squads...</option>
                 </select>
               ) : squads.length > 0 ? (
                 <select
                   value={squads.find((s) => s.name === state.config.squad)?.id ?? ''}
                   onChange={(e) => handleSquadSelectChange(e.target.value)}
-                  className="select-field"
+                  style={selectStyle}
                 >
                   <option value="">— Selecionar squad —</option>
                   {squads.map((s) => (
@@ -176,19 +181,19 @@ export function ConfigTab() {
                   type="text"
                   value={state.config.squad}
                   onChange={(e) => updateConfig('squad', e.target.value)}
-                  className="input-field"
+                  style={inputStyle}
                   placeholder="Nome do squad"
                 />
               )}
             </div>
           </FormGroup>
-          {/* Release vinculada — so para regressivo/integrado */}
+          {/* Release vinculada — só para regressivo/integrado */}
           {isLinkedType && (
             <FormGroup label={`Release vinculada (${sprintType === 'regressivo' ? 'Regressivo' : 'Integrado'})`}>
               <select
                 value={currentReleaseId}
                 onChange={(e) => handleReleaseSelectChange(e.target.value)}
-                className="select-field"
+                style={selectStyle}
               >
                 <option value="">— Nenhuma release —</option>
                 {allReleases
@@ -201,159 +206,159 @@ export function ConfigTab() {
               </select>
             </FormGroup>
           )}
-          <FormGroup label="QA Responsavel">
+          <FormGroup label="QA Responsável">
             {field('qaName')}
           </FormGroup>
-          <FormGroup label="Versao Alvo">
+          <FormGroup label="Versão Alvo">
             {field('targetVersion')}
           </FormGroup>
-          <FormGroup label="Data de Inicio">
+          <FormGroup label="Data de Início">
             {field('startDate', 'date')}
           </FormGroup>
           <FormGroup label="Data de Fim">
             {field('endDate', 'date')}
           </FormGroup>
-          <FormGroup label="Duracao (dias)">
+          <FormGroup label="Duração (dias)">
             <input
               type="number"
               value={state.config.sprintDays}
               onChange={(e) => updateConfig('sprintDays', Number(e.target.value))}
-              className="input-field"
+              style={inputStyle}
               min={1}
               placeholder="20"
             />
           </FormGroup>
           <FormGroup label="Fins de semana">
-            <label className="flex items-center gap-2.5 cursor-pointer" style={{ paddingTop: 6 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', paddingTop: 6 }}>
               <input
                 type="checkbox"
                 checked={!state.config.excludeWeekends}
                 onChange={(e) => updateConfig('excludeWeekends', !e.target.checked)}
                 style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--color-blue)' }}
               />
-              <span className="text-body" style={{ color: 'var(--color-text)' }}>
-                Incluir fins de semana na duracao
+              <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
+                Incluir fins de semana na duração
               </span>
             </label>
           </FormGroup>
         </div>
       </Card>
 
-      <div className="divider-sm" />
-
-      {/* Outros Responsaveis */}
-      <Card title="Outros Responsaveis">
-        <p className="text-body" style={{ marginBottom: 16 }}>
-          Adicione os demais responsaveis da sprint (PO, TL, Coordenador, Gerente, etc.).
-          Eles aparecerao no Termo de Conclusao.
+      {/* Outros Responsáveis */}
+      <Card title="Outros Responsáveis">
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
+          Adicione os demais responsáveis da sprint (PO, TL, Coordenador, Gerente, etc.).
+          Eles aparecerão no Termo de Conclusão.
         </p>
         <datalist id="role-suggestions">
           {ROLE_SUGGESTIONS.map((r) => <option key={r} value={r} />)}
         </datalist>
-        <div className="flex flex-col gap-2" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {(state.responsibles ?? []).map((r, i) => (
-            <div key={r.id} className="grid items-center gap-2" style={{ gridTemplateColumns: '160px 1fr 32px' }}>
+            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 32px', gap: 8, alignItems: 'center' }}>
               <input
                 type="text"
                 list="role-suggestions"
                 placeholder="Cargo (ex: PO)"
                 value={r.role}
                 onChange={(e) => updateResponsible(i, 'role', e.target.value)}
-                className="input-field"
+                style={inputStyle}
               />
               <input
                 type="text"
                 placeholder="Nome completo"
                 value={r.name}
                 onChange={(e) => updateResponsible(i, 'name', e.target.value)}
-                className="input-field"
+                style={inputStyle}
               />
               <button
                 onClick={() => removeResponsible(i)}
                 title="Remover"
-                aria-label="Remover responsavel"
-                className="btn-ghost"
-                style={{ fontSize: 16, lineHeight: 1 }}
+                aria-label="Remover responsável"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-text-2)', lineHeight: 1, transition: 'all 0.15s' }}
               >✕</button>
             </div>
           ))}
         </div>
         <button
           onClick={addResponsible}
-          aria-label="Adicionar responsavel"
-          className="btn btn-outline btn-md"
-          style={{ border: '1px dashed var(--color-border-md)' }}
+          aria-label="Adicionar responsável"
+          style={{ padding: '7px 14px', border: '1px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', transition: 'all 0.15s' }}
         >
-          + Adicionar responsavel
+          + Adicionar responsável
         </button>
       </Card>
-
-      <div className="divider-sm" />
 
       {/* Advanced weights accordion */}
       <button
         onClick={() => setShowWeights(!showWeights)}
-        aria-label={showWeights ? 'Ocultar pesos avancados' : 'Mostrar configuracoes avancadas'}
+        aria-label={showWeights ? 'Ocultar pesos avançados' : 'Mostrar configurações avançadas'}
         aria-expanded={showWeights}
-        className="btn-ghost self-start"
-        style={{ marginTop: 8, color: 'var(--color-blue-text)', fontWeight: 600 }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 12, fontWeight: 600, color: 'var(--color-blue-text)',
+          padding: '4px 0', marginTop: 8,
+          fontFamily: 'var(--font-family-sans)',
+          transition: 'all 0.15s',
+        }}
       >
         <span style={{
           display: 'inline-block', transition: 'transform 0.15s',
           transform: showWeights ? 'rotate(90deg)' : 'rotate(0deg)',
           fontSize: 10,
         }}>&#9654;</span>
-        {showWeights ? 'Ocultar pesos avancados' : 'Configuracoes avancadas (Health Score e Impacto Prevenido)'}
+        {showWeights ? 'Ocultar pesos avançados' : 'Configurações avançadas (Health Score e Impacto Prevenido)'}
       </button>
 
       {showWeights && (<>
       {/* Health Score */}
       <Card title="Health Score — Pesos das Penalidades">
-        <p className="text-body" style={{ marginBottom: 16 }}>
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
           Configura o quanto cada evento desconta do Health Score (base 100).
         </p>
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
-          <FormGroup label="Bug Critico">
-            <input type="number" min={0} value={state.config.hsCritical} onChange={(e) => updateConfig('hsCritical', Number(e.target.value))} className="input-field" />
+        <div style={grid4}>
+          <FormGroup label="Bug Crítico">
+            <input type="number" min={0} value={state.config.hsCritical} onChange={(e) => updateConfig('hsCritical', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Bug Alto">
-            <input type="number" min={0} value={state.config.hsHigh} onChange={(e) => updateConfig('hsHigh', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.hsHigh} onChange={(e) => updateConfig('hsHigh', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
-          <FormGroup label="Bug Medio">
-            <input type="number" min={0} value={state.config.hsMedium} onChange={(e) => updateConfig('hsMedium', Number(e.target.value))} className="input-field" />
+          <FormGroup label="Bug Médio">
+            <input type="number" min={0} value={state.config.hsMedium} onChange={(e) => updateConfig('hsMedium', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Bug Baixo">
-            <input type="number" min={0} value={state.config.hsLow} onChange={(e) => updateConfig('hsLow', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.hsLow} onChange={(e) => updateConfig('hsLow', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Reteste">
-            <input type="number" min={0} value={state.config.hsRetest} onChange={(e) => updateConfig('hsRetest', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.hsRetest} onChange={(e) => updateConfig('hsRetest', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Tela Bloqueada">
-            <input type="number" min={0} value={state.config.hsBlocked} onChange={(e) => updateConfig('hsBlocked', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.hsBlocked} onChange={(e) => updateConfig('hsBlocked', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Caso em Atraso">
-            <input type="number" min={0} value={state.config.hsDelayed} onChange={(e) => updateConfig('hsDelayed', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.hsDelayed} onChange={(e) => updateConfig('hsDelayed', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
         </div>
       </Card>
 
       {/* Impacto Prevenido */}
       <Card title="Impacto Prevenido — Pesos por Severidade">
-        <p className="text-body" style={{ marginBottom: 16 }}>
-          Configura o peso de cada bug pelo nivel de criticidade no calculo do Impacto Prevenido (Sigma peso x qtd bugs).
+        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 16 }}>
+          Configura o peso de cada bug pelo nível de criticidade no cálculo do Impacto Prevenido (Σ peso × qtd bugs).
         </p>
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
-          <FormGroup label="Bug Critico">
-            <input type="number" min={0} value={state.config.psCritical} onChange={(e) => updateConfig('psCritical', Number(e.target.value))} className="input-field" />
+        <div style={grid4}>
+          <FormGroup label="Bug Crítico">
+            <input type="number" min={0} value={state.config.psCritical} onChange={(e) => updateConfig('psCritical', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Bug Alto">
-            <input type="number" min={0} value={state.config.psHigh} onChange={(e) => updateConfig('psHigh', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.psHigh} onChange={(e) => updateConfig('psHigh', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
-          <FormGroup label="Bug Medio">
-            <input type="number" min={0} value={state.config.psMedium} onChange={(e) => updateConfig('psMedium', Number(e.target.value))} className="input-field" />
+          <FormGroup label="Bug Médio">
+            <input type="number" min={0} value={state.config.psMedium} onChange={(e) => updateConfig('psMedium', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
           <FormGroup label="Bug Baixo">
-            <input type="number" min={0} value={state.config.psLow} onChange={(e) => updateConfig('psLow', Number(e.target.value))} className="input-field" />
+            <input type="number" min={0} value={state.config.psLow} onChange={(e) => updateConfig('psLow', Number(e.target.value))} style={inputStyle} />
           </FormGroup>
         </div>
       </Card>
@@ -363,10 +368,22 @@ export function ConfigTab() {
       {showSquadChangeModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setShowSquadChangeModal(false)}
-          className="modal-backdrop modal-backdrop-high"
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2000,
+          }}
         >
-          <div className="modal-container" style={{ width: 420, borderTop: '3px solid var(--color-amber-mid)' }}>
-            <h3 className="heading-sm" style={{ margin: '0 0 12px', fontSize: 15 }}>
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '0.5px solid var(--color-border)',
+            borderTop: '3px solid var(--color-amber-mid)',
+            borderRadius: 12, padding: '24px 22px',
+            width: 420, maxWidth: '90vw',
+            boxShadow: 'var(--shadow-xl)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
               Alterar Squad da Sprint
             </h3>
             <div style={{
@@ -374,28 +391,28 @@ export function ConfigTab() {
               background: 'var(--color-amber-light)', border: '1px solid var(--color-amber-mid)',
               fontSize: 13, color: 'var(--color-amber)', lineHeight: 1.6,
             }}>
-              <strong style={{ display: 'block', marginBottom: 4 }}>Atencao — esta acao tem impacto:</strong>
+              <strong style={{ display: 'block', marginBottom: 4 }}>Atenção — esta ação tem impacto:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
-                <li>A sprint sera movida para outro squad</li>
-                <li>Membros do squad anterior perderao acesso a esta sprint</li>
-                <li>Membros do novo squad passarao a ver e editar esta sprint</li>
-                <li>Dados da sprint (testes, bugs, reports) serao preservados</li>
+                <li>A sprint será movida para outro squad</li>
+                <li>Membros do squad anterior perderão acesso a esta sprint</li>
+                <li>Membros do novo squad passarão a ver e editar esta sprint</li>
+                <li>Dados da sprint (testes, bugs, reports) serão preservados</li>
               </ul>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div className="flex items-center gap-2" style={{ marginBottom: 12 }}>
-                <span className="text-small">De:</span>
-                <span className="heading-sm" style={{ fontSize: 13 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>De:</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
                   {state.config.squad || '(sem squad)'}
                 </span>
-                <span className="text-muted" style={{ fontSize: 12 }}>&rarr;</span>
+                <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>→</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-blue)' }}>
                   {squads.find((s) => s.id === pendingSquadId)?.name ?? '—'}
                 </span>
               </div>
 
-              <label className="label-field">
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
                 Digite sua senha para confirmar
               </label>
               <input
@@ -405,8 +422,10 @@ export function ConfigTab() {
                 onChange={(e) => { setConfirmPassword(e.target.value); setConfirmError('') }}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSquadChange() }}
                 placeholder="Senha da sua conta"
-                className="input-field"
-                style={{ borderColor: confirmError ? 'var(--color-red)' : undefined }}
+                style={{
+                  ...inputStyle,
+                  borderColor: confirmError ? 'var(--color-red)' : undefined,
+                }}
               />
               {confirmError && (
                 <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-red)' }}>
@@ -415,24 +434,32 @@ export function ConfigTab() {
               )}
             </div>
 
-            <div className="flex gap-2 justify-end">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowSquadChangeModal(false)}
-                className="btn btn-outline btn-md"
+                style={{
+                  padding: '8px 18px', borderRadius: 8,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
+                }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmSquadChange}
                 disabled={confirming || !confirmPassword.trim()}
-                className="btn btn-md"
                 style={{
+                  padding: '8px 18px', borderRadius: 8, border: 'none',
                   background: confirming || !confirmPassword.trim() ? 'var(--color-border)' : 'var(--color-amber-mid)',
-                  color: '#fff', fontWeight: 600,
+                  color: '#fff', fontSize: 13, fontWeight: 600,
                   cursor: confirming ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
                 }}
               >
-                {confirming ? 'Verificando...' : 'Confirmar alteracao'}
+                {confirming ? 'Verificando...' : 'Confirmar alteração'}
               </button>
             </div>
           </div>
@@ -443,10 +470,22 @@ export function ConfigTab() {
       {showReleaseChangeModal && createPortal(
         <div
           onClick={(e) => e.target === e.currentTarget && setShowReleaseChangeModal(false)}
-          className="modal-backdrop modal-backdrop-high"
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2000,
+          }}
         >
-          <div className="modal-container" style={{ width: 420, borderTop: '3px solid var(--color-amber-mid)' }}>
-            <h3 className="heading-sm" style={{ margin: '0 0 12px', fontSize: 15 }}>
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '0.5px solid var(--color-border)',
+            borderTop: '3px solid var(--color-amber-mid)',
+            borderRadius: 12, padding: '24px 22px',
+            width: 420, maxWidth: '90vw',
+            boxShadow: 'var(--shadow-xl)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
               Alterar Release Vinculada
             </h3>
             <div style={{
@@ -454,23 +493,23 @@ export function ConfigTab() {
               background: 'var(--color-amber-light)', border: '1px solid var(--color-amber-mid)',
               fontSize: 13, color: 'var(--color-amber)', lineHeight: 1.6,
             }}>
-              <strong style={{ display: 'block', marginBottom: 4 }}>Atencao — esta acao tem impacto:</strong>
+              <strong style={{ display: 'block', marginBottom: 4 }}>Atenção — esta ação tem impacto:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Esta sprint sera desvinculada da release atual</li>
-                <li>Os dados de testes da sprint NAO serao alterados</li>
-                <li>A aba Regressivos da release anterior deixara de contabilizar esta sprint</li>
-                <li>A nova release passara a incluir esta sprint nas metricas consolidadas</li>
+                <li>Esta sprint será desvinculada da release atual</li>
+                <li>Os dados de testes da sprint NÃO serão alterados</li>
+                <li>A aba Regressivos da release anterior deixará de contabilizar esta sprint</li>
+                <li>A nova release passará a incluir esta sprint nas métricas consolidadas</li>
               </ul>
             </div>
 
-            <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
-              <span className="text-small">De:</span>
-              <span className="heading-sm" style={{ fontSize: 13 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>De:</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
                 {currentReleaseId
                   ? allReleases.find((r) => r.id === currentReleaseId)?.version + ' — ' + allReleases.find((r) => r.id === currentReleaseId)?.title
                   : 'Nenhuma'}
               </span>
-              <span className="text-muted" style={{ fontSize: 12 }}>&rarr;</span>
+              <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>→</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-blue)' }}>
                 {pendingReleaseId
                   ? allReleases.find((r) => r.id === pendingReleaseId)?.version + ' — ' + allReleases.find((r) => r.id === pendingReleaseId)?.title
@@ -478,19 +517,30 @@ export function ConfigTab() {
               </span>
             </div>
 
-            <div className="flex gap-2 justify-end">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowReleaseChangeModal(false)}
-                className="btn btn-outline btn-md"
+                style={{
+                  padding: '8px 18px', borderRadius: 8,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)',
+                  fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
+                }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmReleaseChange}
-                className="btn btn-md"
-                style={{ background: 'var(--color-amber-mid)', color: '#fff', fontWeight: 600 }}
+                style={{
+                  padding: '8px 18px', borderRadius: 8, border: 'none',
+                  background: 'var(--color-amber-mid)',
+                  color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s',
+                }}
               >
-                Confirmar alteracao
+                Confirmar alteração
               </button>
             </div>
           </div>
@@ -501,12 +551,12 @@ export function ConfigTab() {
   )
 }
 
-// --- Sub-components ---
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
-      <div className="heading-sm" style={{ padding: '12px 20px', borderBottom: '1px solid var(--color-border)', fontSize: 14 }}>
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--color-border)', fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>
         {title}
       </div>
       <div style={{ padding: 20 }}>
@@ -519,8 +569,44 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function FormGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="label-field">{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-text-2)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+        {label}
+      </label>
       {children}
     </div>
   )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 10px',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontSize: 13,
+  color: 'var(--color-text)',
+  background: 'var(--color-bg)',
+  fontFamily: 'var(--font-family-sans)',
+  boxSizing: 'border-box',
+}
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  padding: '8px 28px 8px 10px',
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+}
+
+const grid2: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+  gap: 16,
+}
+
+const grid4: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+  gap: 16,
 }

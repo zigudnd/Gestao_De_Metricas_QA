@@ -13,10 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "start": "node server.js",
-    "seed": "node scripts/seed-local.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "seed": "node scripts/seed-local.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
@@ -43,12 +40,10 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
-    "vite": "^6.4.1",
-    "vitest": "^4.1.2"
+    "vite": "^6.4.1"
   }
 }

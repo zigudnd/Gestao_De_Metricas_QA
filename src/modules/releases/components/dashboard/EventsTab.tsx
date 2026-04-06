@@ -117,54 +117,60 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
   return (
     <div style={{ maxWidth: 700 }}>
       {/* ── Eventos ── */}
-      <div style={{ marginBottom: 24 }}>
-        <div className="flex items-center justify-between mb-3.5">
-          <div className="flex items-center gap-2.5">
-            <span className="heading-sm">Eventos</span>
-            <span className="badge badge-blue">{calendarEvents.length}</span>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>Eventos</span>
+            <span style={{
+              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+              background: 'var(--color-blue-light)', color: 'var(--color-blue-text)',
+            }}>{calendarEvents.length}</span>
           </div>
           {!showAddEvent && (
-            <button onClick={() => setShowAddEvent(true)} aria-label="Adicionar evento" className="btn btn-sm btn-primary">+ Evento</button>
+            <button onClick={() => setShowAddEvent(true)} aria-label="Adicionar evento" style={btnAdd}>+ Evento</button>
           )}
         </div>
 
         {/* Add event form */}
         {showAddEvent && (
-          <div className="card-sm" style={{ background: 'var(--color-bg)', marginBottom: 14 }}>
-            <div className="flex gap-2 flex-wrap mb-2.5">
+          <div style={formCard}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
               <div style={{ flex: 2, minWidth: 160 }}>
-                <label className="section-label">Nome *</label>
+                <label style={labelSm}>Nome *</label>
                 <input autoFocus value={eventName} onChange={(e) => setEventName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddEvent()}
-                  placeholder="Ex: Black Friday" className="input-field" />
+                  placeholder="Ex: Black Friday" style={inputSm} />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
-                <label className="section-label">Data início *</label>
-                <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="input-field" />
+                <label style={labelSm}>Data início *</label>
+                <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} style={inputSm} />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
-                <label className="section-label">Data fim (opcional)</label>
+                <label style={labelSm}>Data fim (opcional)</label>
                 <input type="date" value={eventDateEnd} min={eventDate || undefined}
-                  onChange={(e) => setEventDateEnd(e.target.value)} className="input-field" />
+                  onChange={(e) => setEventDateEnd(e.target.value)} style={inputSm} />
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowAddEvent(false)} className="btn btn-sm btn-outline">Cancelar</button>
-              <button onClick={handleAddEvent} disabled={!eventName.trim() || !eventDate} className="btn btn-sm btn-primary">Adicionar</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddEvent(false)} style={btnGhost}>Cancelar</button>
+              <button onClick={handleAddEvent} disabled={!eventName.trim() || !eventDate} style={{
+                ...btnPrimary, opacity: !eventName.trim() || !eventDate ? 0.5 : 1,
+              }}>Adicionar</button>
             </div>
           </div>
         )}
 
         {/* Event cards */}
         {calendarEvents.length === 0 && !showAddEvent && (
-          <div className="text-body text-muted" style={{ textAlign: 'center', padding: '20px 16px' }}>Nenhum evento cadastrado. Clique em &quot;+ Evento&quot; para adicionar.</div>
+          <div style={emptyState}>Nenhum evento cadastrado. Clique em &quot;+ Evento&quot; para adicionar.</div>
         )}
-        <div className="flex flex-col gap-1.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {calendarEvents.map((evt) => {
             const badge = proximityBadge(evt.date, evt.dateEnd)
             const isPast = daysUntil(evt.dateEnd || evt.date) < 0
             return (
-              <div key={evt.id} className="flex items-center gap-2.5" style={{
+              <div key={evt.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 14px',
                 background: 'var(--color-surface)',
                 border: '0.5px solid var(--color-border)',
@@ -173,21 +179,21 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
                 opacity: isPast ? 0.5 : 1,
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="heading-sm" style={{ fontSize: 13 }}>{evt.name}</div>
-                  <div className="text-small" style={{ marginTop: 2 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{evt.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
                     {evt.dateLabel || fmtDate(evt.date)}
                     {evt.dateEnd && !evt.dateLabel && ` — ${fmtDate(evt.dateEnd)}`}
                   </div>
                 </div>
                 {badge && (
-                  <span className="badge" style={{
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
                     background: badge.bg, color: badge.color, flexShrink: 0,
                   }}>{badge.label}</span>
                 )}
-                <button onClick={() => onRemove(evt.id)}
+                <button onClick={() => onRemove(evt.id)} style={btnRemove}
                   aria-label="Remover evento"
-                  className="btn-destructive events-remove-btn"
-                  style={{ width: 22, height: 22, padding: 0, borderRadius: 4, border: 'none', background: 'none', color: 'var(--color-red)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.3, transition: 'opacity 0.15s' }}
+                  className="events-remove-btn"
                 >×</button>
               </div>
             )
@@ -195,53 +201,56 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 24 }} />
-
       {/* ── Feriados ── */}
       <div>
-        <div className="flex items-center justify-between mb-3.5">
-          <div className="flex items-center gap-2.5">
-            <span className="heading-sm">Feriados</span>
-            <span className="badge badge-red">{holidays.length}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>Feriados</span>
+            <span style={{
+              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+              background: 'var(--color-red-light)', color: 'var(--color-red)',
+            }}>{holidays.length}</span>
           </div>
           {!showAddHoliday && (
-            <button onClick={() => setShowAddHoliday(true)} aria-label="Adicionar feriado" className="btn btn-sm btn-primary">+ Feriado</button>
+            <button onClick={() => setShowAddHoliday(true)} aria-label="Adicionar feriado" style={btnAdd}>+ Feriado</button>
           )}
         </div>
 
         {/* Add holiday form */}
         {showAddHoliday && (
-          <div className="card-sm" style={{ background: 'var(--color-bg)', marginBottom: 14 }}>
-            <div className="flex gap-2 flex-wrap mb-2.5">
+          <div style={formCard}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
               <div style={{ flex: 2, minWidth: 160 }}>
-                <label className="section-label">Nome *</label>
+                <label style={labelSm}>Nome *</label>
                 <input autoFocus value={holidayName} onChange={(e) => setHolidayName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddHoliday()}
-                  placeholder="Ex: Dia de Tiradentes" className="input-field" />
+                  placeholder="Ex: Dia de Tiradentes" style={inputSm} />
               </div>
               <div style={{ flex: 1, minWidth: 140 }}>
-                <label className="section-label">Data *</label>
-                <input type="date" value={holidayDate} onChange={(e) => setHolidayDate(e.target.value)} className="input-field" />
+                <label style={labelSm}>Data *</label>
+                <input type="date" value={holidayDate} onChange={(e) => setHolidayDate(e.target.value)} style={inputSm} />
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowAddHoliday(false)} className="btn btn-sm btn-outline">Cancelar</button>
-              <button onClick={handleAddHoliday} disabled={!holidayName.trim() || !holidayDate} className="btn btn-sm btn-primary">Adicionar</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddHoliday(false)} style={btnGhost}>Cancelar</button>
+              <button onClick={handleAddHoliday} disabled={!holidayName.trim() || !holidayDate} style={{
+                ...btnPrimary, opacity: !holidayName.trim() || !holidayDate ? 0.5 : 1,
+              }}>Adicionar</button>
             </div>
           </div>
         )}
 
         {/* Holiday cards */}
         {holidays.length === 0 && !showAddHoliday && (
-          <div className="text-body text-muted" style={{ textAlign: 'center', padding: '20px 16px' }}>Nenhum feriado cadastrado.</div>
+          <div style={emptyState}>Nenhum feriado cadastrado.</div>
         )}
-        <div className="flex flex-col gap-1.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {holidays.map((hol) => {
             const badge = proximityBadge(hol.date)
             const isPast = daysUntil(hol.date) < 0
             return (
-              <div key={hol.id} className="flex items-center gap-2.5" style={{
+              <div key={hol.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 14px',
                 background: 'var(--color-surface)',
                 border: '0.5px solid var(--color-border)',
@@ -250,20 +259,20 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
                 opacity: isPast ? 0.5 : 1,
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="heading-sm" style={{ fontSize: 13 }}>{hol.name}</div>
-                  <div className="text-small" style={{ marginTop: 2 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{hol.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-2)', marginTop: 2 }}>
                     {hol.dateLabel || fmtDate(hol.date)}
                   </div>
                 </div>
                 {badge && (
-                  <span className="badge" style={{
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
                     background: badge.bg, color: badge.color, flexShrink: 0,
                   }}>{badge.label}</span>
                 )}
-                <button onClick={() => onRemove(hol.id)}
+                <button onClick={() => onRemove(hol.id)} style={btnRemove}
                   aria-label="Remover feriado"
                   className="events-remove-btn"
-                  style={{ width: 22, height: 22, borderRadius: 4, border: 'none', background: 'none', color: 'var(--color-red)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.3, transition: 'opacity 0.15s' }}
                 >×</button>
               </div>
             )
@@ -272,14 +281,14 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
       </div>
 
       {/* Legend */}
-      <div className="flex gap-3.5 flex-wrap" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
+      <div style={{ display: 'flex', gap: 14, marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
         {[
           { bg: '#fff7ed', color: '#c2410c', label: 'Em 7 dias' },
           { bg: 'var(--color-amber-light)', color: 'var(--color-amber)', label: 'Em 30 dias' },
           { bg: 'var(--color-green-light)', color: 'var(--color-green)', label: 'Hoje/Ativo' },
           { bg: 'var(--color-surface-2)', color: 'var(--color-text-3)', label: 'Encerrado' },
         ].map((l) => (
-          <div key={l.label} className="flex items-center gap-1.5 text-muted" style={{ fontSize: 11 }}>
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-text-3)' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.bg, border: `1px solid ${l.color}`, flexShrink: 0 }} />
             {l.label}
           </div>
@@ -290,4 +299,61 @@ export function EventsTab({ events, onAdd, onRemove, onUpdate }: EventsTabProps)
       `}</style>
     </div>
   )
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const btnAdd: React.CSSProperties = {
+  padding: '6px 14px', borderRadius: 7, border: 'none',
+  background: 'var(--color-blue)', color: '#fff',
+  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const btnGhost: React.CSSProperties = {
+  padding: '6px 14px', borderRadius: 6,
+  border: '1px solid var(--color-border-md)',
+  background: 'transparent', color: 'var(--color-text-2)',
+  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const btnPrimary: React.CSSProperties = {
+  padding: '6px 14px', borderRadius: 6, border: 'none',
+  background: 'var(--color-blue)', color: '#fff',
+  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'all 0.15s',
+}
+
+const btnRemove: React.CSSProperties = {
+  width: 22, height: 22, borderRadius: 4, border: 'none',
+  background: 'none', color: 'var(--color-red)', cursor: 'pointer',
+  fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  flexShrink: 0, opacity: 0.3, transition: 'opacity 0.15s',
+}
+
+const formCard: React.CSSProperties = {
+  background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
+  borderRadius: 10, padding: '14px 16px', marginBottom: 14,
+}
+
+const labelSm: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 500,
+  color: 'var(--color-text-2)', marginBottom: 4,
+  textTransform: 'uppercase', letterSpacing: '0.04em',
+}
+
+const inputSm: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  padding: '7px 10px', fontSize: 13,
+  border: '0.5px solid var(--color-border)', borderRadius: 6,
+  background: 'var(--color-surface)', color: 'var(--color-text)',
+  outline: 'none', fontFamily: 'var(--font-family-sans)',
+}
+
+const emptyState: React.CSSProperties = {
+  textAlign: 'center', padding: '20px 16px',
+  color: 'var(--color-text-3)', fontSize: 13,
 }

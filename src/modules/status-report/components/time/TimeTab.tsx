@@ -29,13 +29,13 @@ export function TimeTab() {
   return (
     <div style={{ maxWidth: 900 }}>
       {/* ── Membros do Time ────────────────────────────────────────────────── */}
-      <div className="mb-7">
-        <div className="flex items-center justify-between mb-3.5">
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <h3 className="heading-md" style={{ margin: 0 }}>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
               Membros do time
             </h3>
-            <p className="text-small text-muted" style={{ margin: '2px 0 0' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
               {efetivos.length} efetivo{efetivos.length !== 1 ? 's' : ''}
               {temporarios.length > 0 && ` + ${temporarios.length} temporário${temporarios.length !== 1 ? 's' : ''}`}
             </p>
@@ -43,7 +43,12 @@ export function TimeTab() {
           {!showAddMember && (
             <button
               onClick={() => setShowAddMember(true)}
-              className="btn btn-primary btn-sm"
+              style={{
+                padding: '7px 16px', borderRadius: 7, border: 'none',
+                background: 'var(--color-blue)', color: '#fff',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-family-sans)',
+              }}
             >
               + Convidar membro
             </button>
@@ -52,7 +57,7 @@ export function TimeTab() {
 
         {/* Form de convidar */}
         {showAddMember && (
-          <div className="mb-4">
+          <div style={{ marginBottom: 16 }}>
             <AddMemberForm
               existingMemberIds={existingUserIds}
               onAdd={(m) => { addMembro(m); setShowAddMember(false) }}
@@ -63,11 +68,14 @@ export function TimeTab() {
 
         {/* Efetivos */}
         {efetivos.length > 0 && (
-          <div className="mb-6">
-            <span className="section-label" style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: temporarios.length > 0 ? 16 : 0 }}>
+            <span style={{
+              display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)',
+              textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8,
+            }}>
               Efetivos do squad
             </span>
-            <div className="flex flex-col gap-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {efetivos.map((m) => (
                 <MemberRow key={m.id} membro={m} />
               ))}
@@ -75,18 +83,16 @@ export function TimeTab() {
           </div>
         )}
 
-        {/* Divider between efetivos and temporarios */}
-        {efetivos.length > 0 && temporarios.length > 0 && (
-          <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 24 }} />
-        )}
-
         {/* Temporarios */}
         {temporarios.length > 0 && (
-          <div className="mb-6">
-            <span className="section-label" style={{ color: 'var(--color-amber)', marginBottom: 8 }}>
+          <div>
+            <span style={{
+              display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--color-amber)',
+              textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8,
+            }}>
               Temporários / Rotação
             </span>
-            <div className="flex flex-col gap-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {temporarios.map((m) => (
                 <MemberRow key={m.id} membro={m} onRemove={removeMembro} onUpdate={updateMembro} />
               ))}
@@ -96,11 +102,11 @@ export function TimeTab() {
 
         {/* Empty state */}
         {efetivos.length === 0 && temporarios.length === 0 && !showAddMember && (
-          <div className="text-center text-muted" style={{ padding: '24px 16px' }}>
-            <p className="text-body" style={{ margin: '0 0 4px' }}>
+          <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--color-text-3)' }}>
+            <p style={{ fontSize: 13, margin: '0 0 4px' }}>
               Nenhum membro no time.
             </p>
-            <p className="text-small" style={{ margin: 0 }}>
+            <p style={{ fontSize: 12, margin: 0 }}>
               Membros efetivos aparecem automaticamente do cadastro do squad. Use &quot;Convidar membro&quot; para adicionar temporários.
             </p>
           </div>
@@ -112,19 +118,24 @@ export function TimeTab() {
 
       {/* ── Offs / Ferias ─────────────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center justify-between mb-3.5">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <h3 className="heading-md" style={{ margin: 0 }}>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
               Períodos de Off / Férias
             </h3>
-            <p className="text-small text-muted" style={{ margin: '2px 0 0' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
               {offsEnriquecidos.length} {offsEnriquecidos.length === 1 ? 'período' : 'períodos'}
             </p>
           </div>
           {!showAddOff && (
             <button
               onClick={() => setShowAddOff(true)}
-              className="btn btn-primary btn-sm"
+              style={{
+                padding: '7px 16px', borderRadius: 7, border: 'none',
+                background: 'var(--color-blue)', color: '#fff',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-family-sans)',
+              }}
             >
               + Registrar período
             </button>
@@ -132,7 +143,7 @@ export function TimeTab() {
         </div>
 
         {showAddOff && (
-          <div className="mb-3.5">
+          <div style={{ marginBottom: 14 }}>
             <AddOffForm
               membros={membros}
               onAdd={(off) => { addOff(off); setShowAddOff(false) }}
