@@ -10,6 +10,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { logAudit } from '@/lib/auditService'
+import { uid } from '@/lib/uid'
+import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
@@ -54,11 +56,13 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (_lastPendingState) {
       const entry = getMasterIndex().find((s) => s.id === _lastPendingState!.sprintId)
+      const token = useAuthStore.getState().session?.access_token ?? null
       const payload = JSON.stringify({
         id: _lastPendingState.sprintId,
         data: _lastPendingState.state,
         squad_id: entry?.squadId || null,
-        status: 'ativa',
+        status: entry?.status ?? 'ativa',
+        token,
       })
       const blob = new Blob([payload], { type: 'application/json' })
       navigator.sendBeacon?.('/api/sprint-flush', blob)
@@ -95,7 +99,7 @@ interface SprintStore {
   duplicateSuite: (index: number) => void
 
   // Features
-  addFeature: (suiteId: number) => void
+  addFeature: (suiteId: number | string) => void
   updateFeature: (index: number, field: keyof Feature, value: unknown) => void
   removeFeature: (index: number) => void
   updateFeatureExecution: (featureIndex: number, dayKey: string, value: number) => void
@@ -135,10 +139,10 @@ interface SprintStore {
   clearSuiteFilter: () => void
 
   // Import features from file (merges into existing features)
-  importFeatures: (suiteId: number, newFeatures: Array<Omit<import('../types/sprint.types').Feature, 'id'>>) => void
+  importFeatures: (suiteId: number | string, newFeatures: Array<Omit<import('../types/sprint.types').Feature, 'id'>>) => void
 
   // Reorder features within a suite (drag-drop)
-  reorderFeatures: (suiteId: number, fromDomIdx: number, toDomIdx: number) => void
+  reorderFeatures: (suiteId: number | string, fromDomIdx: number, toDomIdx: number) => void
 
   // Mockup
   setMockupImage: (fi: number, base64: string) => void
@@ -238,7 +242,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   // ── Suites ─────────────────────────────────────────────────────────────────
   addSuite: () => {
     const { state, _commit } = get()
-    const newId = Date.now()
+    const newId = uid()
     _commit({ ...state, suites: [...state.suites, { id: newId, name: '' }] })
     return newId
   },
@@ -262,7 +266,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     const suite = state.suites[index]
     if (!suite) return
-    const newSuiteId = Date.now()
+    const newSuiteId = uid()
     const newSuite = { id: newSuiteId, name: `${suite.name} (cópia)` }
     const suites = [
       ...state.suites.slice(0, index + 1),
@@ -270,10 +274,9 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
       ...state.suites.slice(index + 1),
     ]
     const suiteFeatures = state.features.filter((f) => String(f.suiteId) === String(suite.id))
-    const now = Date.now()
-    const copiedFeatures = suiteFeatures.map((f, i) => ({
+    const copiedFeatures = suiteFeatures.map((f) => ({
       ...structuredClone(f),
-      id: now + i + 1,
+      id: uid(),
       suiteId: newSuiteId,
     }))
     _commit({ ...state, suites, features: [...state.features, ...copiedFeatures] })
@@ -282,7 +285,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   // ── Features ───────────────────────────────────────────────────────────────
   addFeature: (suiteId) => {
     const { state, _commit } = get()
-    const newId = Date.now()
+    const newId = uid()
     const newFeature: Feature = {
       id: newId, suiteId, name: '', tests: 0, manualTests: 0, exec: 0,
       execution: {}, manualExecData: {}, gherkinExecs: {},
@@ -322,7 +325,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   addTestCase: (fi) => {
     const { state, _commit } = get()
     const newCase: TestCase = {
-      id: Date.now(),
+      id: uid(),
       name: '', complexity: 'Baixa', status: 'Pendente', executionDay: '', gherkin: '',
     }
     const features = state.features.map((f, i) =>
@@ -355,7 +358,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const features = state.features.map((f, i) => {
       if (i !== fi) return f
       const cases = [...(f.cases ?? [])]
-      const copy = { ...cases[ci], id: Date.now() }
+      const copy = { ...cases[ci], id: uid() }
       cases.splice(ci + 1, 0, copy)
       return { ...f, cases }
     })
@@ -378,7 +381,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   addBug: () => {
     const { state, _commit } = get()
     const newBug: Bug = {
-      id: `BUG-${String(Date.now()).slice(-6)}`,
+      id: `BUG-${uid()}`,
       desc: '', feature: '', stack: 'Front', severity: 'Média',
       assignee: '', status: 'Aberto', retests: 0,
       openedAt: state.currentDate,
@@ -390,7 +393,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, sprintId, _commit } = get()
     const newBug: Bug = {
       ...data,
-      id: `BUG-${String(Date.now()).slice(-6)}`,
+      id: `BUG-${uid()}`,
       retests: 0,
     }
     _commit({ ...state, bugs: [newBug, ...state.bugs] })
@@ -419,7 +422,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
 
   duplicateBug: (index) => {
     const { state, _commit } = get()
-    const copy = { ...structuredClone(state.bugs[index]), id: `BUG-${String(Date.now()).slice(-6)}` }
+    const copy = { ...structuredClone(state.bugs[index]), id: `BUG-${uid()}` }
     const bugs = [...state.bugs]
     bugs.splice(index + 1, 0, copy)
     _commit({ ...state, bugs })
@@ -430,7 +433,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     _commit({
       ...state,
-      blockers: [...state.blockers, { id: Date.now(), date: state.currentDate, reason: '', hours: 0 }],
+      blockers: [...state.blockers, { id: uid(), date: state.currentDate, reason: '', hours: 0 }],
     })
   },
 
@@ -452,7 +455,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     _commit({
       ...state,
-      alignments: [...state.alignments, { id: Date.now(), text: '' }],
+      alignments: [...state.alignments, { id: uid(), text: '' }],
     })
   },
 
@@ -460,7 +463,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     _commit({
       ...state,
-      alignments: [...state.alignments, { id: Date.now(), text }],
+      alignments: [...state.alignments, { id: uid(), text }],
     })
   },
 
@@ -482,7 +485,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     _commit({
       ...state,
-      responsibles: [...(state.responsibles ?? []), { id: Date.now(), role: '', name: '' }],
+      responsibles: [...(state.responsibles ?? []), { id: uid(), role: '', name: '' }],
     })
   },
 
@@ -527,8 +530,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
   // ── Import features ────────────────────────────────────────────────────────
   importFeatures: (suiteId, newFeatures) => {
     const { state, _commit } = get()
-    const now = Date.now()
-    const toAdd = newFeatures.map((f, idx) => {
+    const toAdd = newFeatures.map((f) => {
       // Merge into existing feature with same name in same suite, or create new
       const existing = state.features.find(
         (ef) => ef.name.toLowerCase() === f.name.toLowerCase() && String(ef.suiteId) === String(suiteId)
@@ -536,7 +538,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
       if (existing) {
         return { ...existing, cases: [...(existing.cases ?? []), ...(f.cases ?? [])] }
       }
-      return { ...f, id: now + idx, suiteId }
+      return { ...f, id: uid(), suiteId }
     })
 
     // Replace merged features, prepend brand-new ones

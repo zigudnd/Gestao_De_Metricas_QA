@@ -1,6 +1,8 @@
 import type { SprintState, SprintIndexEntry, SprintConfig, Feature, Notes } from '../types/sprint.types'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/auditService'
+import { showToast } from '@/app/components/Toast'
+import { uid } from '@/lib/uid'
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ export function normalizeState(rawState: any): SprintState {
 
   // ── Migração: dados antigos sem suites ──────────────────────────────────────
   if (!Array.isArray(s.suites) || s.suites.length === 0) {
-    const defaultSuiteId = Date.now()
+    const defaultSuiteId = uid()
     s.suites = [{ id: defaultSuiteId, name: 'Suite Principal' }]
     if (Array.isArray(s.features)) {
       s.features.forEach((f) => { f.suiteId = defaultSuiteId })
@@ -284,6 +286,9 @@ export function saveToStorage(sprintId: string, state: SprintState): void {
     localStorage.setItem(STORAGE_KEY(sprintId), JSON.stringify(state))
   } catch (e) {
     if (import.meta.env.DEV) console.error('Erro ao salvar no localStorage:', e)
+    if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
+      showToast('Armazenamento local cheio. Seus dados podem não ter sido salvos.', 'error')
+    }
   }
 }
 
@@ -504,6 +509,7 @@ export async function reactivateSprint(sprintId: string): Promise<void> {
   const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'ativa' }
   saveMasterIndex(index)
+  logAudit('sprint', sprintId, 'update', { status: { old: 'concluida', new: 'ativa' } })
   const { error } = await supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
   if (error) {
     // Revert local state on server failure

@@ -121,7 +121,7 @@ router.post(
       // Build bug object
       const today = new Date().toISOString().slice(0, 10);
       const bug = {
-        id: 'bug_api_' + Date.now(),
+        id: 'bug_api_' + crypto.randomUUID(),
         ...req.validatedBody,
         status: 'Aberto',
         retests: 0,

@@ -11,6 +11,7 @@ export interface Profile {
   email: string
   display_name: string
   global_role: GlobalRole
+  active: boolean
 }
 
 interface AuthState {
@@ -57,7 +58,7 @@ async function loadProfile(userId: string) {
   try {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, display_name, global_role')
+      .select('id, email, display_name, global_role, active')
       .eq('id', userId)
       .single()
     if (data) {

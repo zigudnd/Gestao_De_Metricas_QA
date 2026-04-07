@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useAuthStore } from '@/modules/auth/store/authStore'
 import type {
   Release, ReleaseSquad, ReleaseStatus, ReleaseIndexEntry,
   Feature, TestCase, Bug, Blocker, CalendarSlot,
@@ -18,6 +19,7 @@ import {
   initRealtimeSubscription,
 } from '../services/releasePersistence'
 import { logAudit } from '@/lib/auditService'
+import { uid } from '@/lib/uid'
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
@@ -67,6 +69,7 @@ function getActiveSquadId(): string | null {
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (_lastPendingState) {
+      const token = useAuthStore.getState().session?.access_token ?? null
       const payload = JSON.stringify({
         id: _lastPendingState.id,
         data: _lastPendingState,
@@ -75,6 +78,7 @@ if (typeof window !== 'undefined') {
         version: _lastPendingState.version || null,
         production_date: _lastPendingState.productionDate || null,
         updated_at: new Date().toISOString(),
+        token,
       })
       const blob = new Blob([payload], { type: 'application/json' })
       navigator.sendBeacon?.('/api/release-flush', blob)
@@ -146,7 +150,7 @@ interface ReleaseStore {
   removeSuite: (squadId: string, suiteIndex: number) => void
 
   // Squad-level: Features
-  addFeature: (squadId: string, suiteId: number) => void
+  addFeature: (squadId: string, suiteId: number | string) => void
   removeFeature: (squadId: string, featureIndex: number) => void
   updateFeature: (squadId: string, featureIndex: number, field: keyof Feature, value: unknown) => void
 
@@ -168,7 +172,7 @@ interface ReleaseStore {
   updateSuiteName: (squadId: string, suiteIndex: number, name: string) => void
 
   // Squad-level: Import features
-  importFeatures: (squadId: string, suiteId: number, newFeatures: Array<Omit<Feature, 'id'>>) => void
+  importFeatures: (squadId: string, suiteId: number | string, newFeatures: Array<Omit<Feature, 'id'>>) => void
 
   // Non-blocking features
   updateNonBlockingFeatures: (features: string[]) => void
@@ -202,7 +206,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   addCalendarSlot: (slot) => {
     const newSlot: CalendarSlot = {
       ...slot,
-      id: 'slot_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      id: 'slot_' + uid(),
       createdAt: new Date().toISOString(),
     }
     const updated = [...get().calendarSlots, newSlot]
@@ -251,10 +255,17 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   },
 
   addRelease: (release) => {
+    // Duplicate prevention: skip if a release with the same version already exists
+    const existing = get().releases
+    if (release.version && existing.some((r) => r.version === release.version)) {
+      if (import.meta.env.DEV) console.warn(`[Releases] Release duplicada ignorada: versão "${release.version}" já existe`)
+      return
+    }
+
     saveToLocalStorage(release)
     upsertMasterIndex(release)
     persistToServer(release).catch((e) => { if (import.meta.env.DEV) console.warn('[Releases] Failed to persist new release:', e) })
-    const releases = [...get().releases, release]
+    const releases = [...existing, release]
     const index = getMasterIndex()
     set({ releases, index })
     logAudit('release', release.id, 'create', { title: { old: null, new: release.title }, version: { old: null, new: release.version } })
@@ -335,9 +346,17 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     upsertMasterIndex(normalized)
     queueRemotePersist(normalized)
 
+    // Update the releases array so list views stay in sync with single-release state
+    const currentReleases = get().releases
+    const idx = currentReleases.findIndex((r) => r.id === normalized.id)
+    const updatedReleases = idx >= 0
+      ? currentReleases.map((r) => r.id === normalized.id ? normalized : r)
+      : [...currentReleases, normalized]
+
     set({
       releaseId: normalized.id,
       release: normalized,
+      releases: updatedReleases,
       isLoading: false,
     })
 
@@ -346,7 +365,8 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     _cleanupRealtime = initRealtimeSubscription(id, (incoming) => {
       // Ignora echo da nossa própria persistência
       if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
-      set({ release: incoming })
+      const realtimeReleases = get().releases.map((r) => r.id === incoming.id ? incoming : r)
+      set({ release: incoming, releases: realtimeReleases })
     })
   },
 
@@ -404,11 +424,11 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   addSquad: (partial) => {
     const { release, _commit } = get()
     const newSquad: ReleaseSquad = {
-      id: 'rsq_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      id: 'rsq_' + uid(),
       squadId: partial.squadId,
       squadName: partial.squadName,
       status: 'not_started',
-      suites: [{ id: Date.now(), name: 'Suite Principal' }],
+      suites: [{ id: uid(), name: 'Suite Principal' }],
       features: [],
       bugs: [],
       blockers: [],
@@ -434,7 +454,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     const { release, _commit } = get()
     _commit(mapSquad(release, squadId, (sq) => ({
       ...sq,
-      suites: [...sq.suites, { id: Date.now(), name: '' }],
+      suites: [...sq.suites, { id: uid(), name: '' }],
     })))
   },
 
@@ -459,7 +479,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     _commit(mapSquad(release, squadId, (sq) => ({
       ...sq,
       features: [...sq.features, {
-        id: Date.now(),
+        id: uid(),
         suiteId,
         name: '',
         tests: 0,
@@ -504,7 +524,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       features: sq.features.map((f, i) => {
         if (i !== featureIndex) return f
         const newCase: TestCase = {
-          id: Date.now(),
+          id: uid(),
           name: '',
           complexity: 'Baixa',
           status: 'Pendente',
@@ -550,7 +570,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     _commit(mapSquad(release, squadId, (sq) => ({
       ...sq,
       bugs: [...sq.bugs, {
-        id: 'bug_' + Date.now(),
+        id: 'bug_' + uid(),
         desc: '',
         feature: '',
         stack: 'Front' as const,
@@ -587,7 +607,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     _commit(mapSquad(release, squadId, (sq) => ({
       ...sq,
       blockers: [...sq.blockers, {
-        id: Date.now(),
+        id: uid(),
         date: new Date().toISOString().split('T')[0],
         reason: '',
         hours: 0,
@@ -618,15 +638,14 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   importFeatures: (squadId, suiteId, newFeatures) => {
     const { release, _commit } = get()
     _commit(mapSquad(release, squadId, (sq) => {
-      const now = Date.now()
-      const toAdd = newFeatures.map((f, idx) => {
+      const toAdd = newFeatures.map((f) => {
         const existing = sq.features.find(
           (ef) => ef.name.toLowerCase() === f.name.toLowerCase() && String(ef.suiteId) === String(suiteId)
         )
         if (existing) {
           return { ...existing, cases: [...(existing.cases ?? []), ...(f.cases ?? [])] }
         }
-        return { ...f, id: now + idx, suiteId } as Feature
+        return { ...f, id: uid(), suiteId } as Feature
       })
       const existingNames = new Set(
         toAdd.filter((f) => sq.features.some((ef) => ef.id === f.id)).map((f) => f.id)

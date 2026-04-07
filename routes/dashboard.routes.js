@@ -48,7 +48,7 @@ function validateKey(req, res, next) {
  *       500:
  *         description: Erro interno
  */
-router.get('/:projectKey', validateKey, async (req, res) => {
+router.get('/:projectKey', validateKey, requireAdminAuth, async (req, res) => {
   try {
     const { projectKey } = req.params;
     const supabase = req.app.locals.supabase;

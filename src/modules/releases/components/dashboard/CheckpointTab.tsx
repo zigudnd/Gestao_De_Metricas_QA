@@ -56,10 +56,14 @@ function statusLabel(status: ReleaseStatus): string {
     corte: 'Em Regressivo',
     em_homologacao: 'Em Regressivo',
     em_regressivo: 'Em Regressivo',
+    em_qa: 'Em QA',
+    aguardando_aprovacao: 'Aguardando Aprovação',
     aprovada: 'Publicado',
     em_producao: 'Publicado',
     concluida: 'Publicado',
     uniu_escopo: 'Uniu Escopo',
+    rollback: 'Rollback',
+    cancelada: 'Cancelada',
   }
   return map[status]
 }

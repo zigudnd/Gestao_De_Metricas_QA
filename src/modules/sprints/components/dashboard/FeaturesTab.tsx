@@ -220,7 +220,7 @@ export function FeaturesTab() {
 function SuiteAccordion({
   suiteId, suiteName, suiteIndex, onRename, onRemove, onDuplicate, onAddFeature,
 }: {
-  suiteId: number
+  suiteId: number | string
   suiteName: string
   suiteIndex: number
   onRename: (name: string) => void

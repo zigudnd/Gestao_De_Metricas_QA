@@ -7,10 +7,12 @@ import { DEFAULT_SECTIONS } from '../types/statusReport.types'
 import {
   saveToLocalStorage, upsertMasterIndex, persistToServer,
   loadFromLocalStorage, loadFromServer, normalizeState,
-  createDefaultState, initRealtimeSubscription,
+  createDefaultState, initRealtimeSubscription, getMasterIndex,
 } from '../services/statusReportPersistence'
 import { SEED_ITEMS } from './seedData'
 import { logAudit } from '@/lib/auditService'
+import { uid } from '@/lib/uid'
+import { useAuthStore } from '@/modules/auth/store/authStore'
 
 // ─── Remote persist queue ────────────────────────────────────────────────────
 
@@ -64,12 +66,15 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (_lastPendingState) {
       // sendBeacon para garantir envio mesmo ao fechar
+      const entry = getMasterIndex().find((e) => e.id === _lastPendingState!.id)
+      const token = useAuthStore.getState().session?.access_token ?? null
       const payload = JSON.stringify({
         id: _lastPendingState.id,
         data: _lastPendingState,
         squad_id: _lastPendingSquadId || null,
-        status: 'active',
+        status: entry?.status ?? 'active',
         updated_at: new Date().toISOString(),
+        token,
       })
       const blob = new Blob([payload], { type: 'application/json' })
       navigator.sendBeacon?.('/api/status-report-flush', blob)
@@ -279,7 +284,7 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
     const now = new Date().toISOString()
     const newItem: StatusReportItem = {
       ...data,
-      id: 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      id: 'sr_' + uid(),
       createdAt: now,
       updatedAt: now,
     }

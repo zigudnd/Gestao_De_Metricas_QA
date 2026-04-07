@@ -21,7 +21,7 @@ const createApiKeySchema = z.object({
 
 /**
  * @openapi
- * /api/v1/apikeys:
+ * /api/v1/api-keys:
  *   post:
  *     tags: [API Keys]
  *     summary: Create a new API key
@@ -64,14 +64,17 @@ const createApiKeySchema = z.object({
  *             schema:
  *               type: object
  *               properties:
- *                 id: { type: string, format: uuid }
- *                 name: { type: string }
- *                 key: { type: string, description: "Raw API key — shown only once" }
- *                 key_prefix: { type: string, example: "tok_abc123de..." }
- *                 permissions: { type: object }
- *                 squad_ids: { type: array, items: { type: string } }
- *                 expires_at: { type: string, format: date-time, nullable: true }
- *                 created_at: { type: string, format: date-time }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, format: uuid }
+ *                     name: { type: string }
+ *                     rawToken: { type: string, description: "Raw API key — shown only once" }
+ *                     key_prefix: { type: string, example: "tok_abc123de..." }
+ *                     permissions: { type: object }
+ *                     squad_ids: { type: array, items: { type: string } }
+ *                     expires_at: { type: string, format: date-time, nullable: true }
+ *                     created_at: { type: string, format: date-time }
  *       400: { description: Invalid input }
  *       401: { description: Authentication required }
  *       403: { description: Admin/gerente role required }
@@ -107,8 +110,7 @@ router.post('/', requireAdminAuth, validateBody(createApiKeySchema), async (req,
     }
 
     return res.status(201).json({
-      ...data,
-      key: raw, // Raw key shown only once
+      data: { ...data, rawToken: raw }, // Raw token shown only once
     });
   } catch (err) {
     console.error('[apikeys] Unexpected error:', err);
@@ -118,7 +120,7 @@ router.post('/', requireAdminAuth, validateBody(createApiKeySchema), async (req,
 
 /**
  * @openapi
- * /api/v1/apikeys:
+ * /api/v1/api-keys:
  *   get:
  *     tags: [API Keys]
  *     summary: List all API keys
@@ -180,7 +182,7 @@ router.get('/', requireAdminAuth, async (req, res) => {
 
 /**
  * @openapi
- * /api/v1/apikeys/{id}:
+ * /api/v1/api-keys/{id}:
  *   delete:
  *     tags: [API Keys]
  *     summary: Revoke an API key

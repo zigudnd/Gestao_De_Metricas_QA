@@ -1,5 +1,6 @@
 import type { SprintState } from '../types/sprint.types'
 import { normalizeState, saveToStorage, upsertSprintInMasterIndex } from './persistence'
+import { uid } from '@/lib/uid'
 
 export async function exportToImage(): Promise<void> {
   const el = document.getElementById('overview-tab-content')
@@ -39,7 +40,7 @@ export function importFromJSON(file: File): Promise<string> {
       try {
         const raw = JSON.parse(ev.target!.result as string) as SprintState
         const normalized = normalizeState(raw)
-        const sprintId = 'sprint_' + Date.now()
+        const sprintId = 'sprint_' + uid()
         saveToStorage(sprintId, normalized)
         upsertSprintInMasterIndex(sprintId, normalized)
         resolve(sprintId)

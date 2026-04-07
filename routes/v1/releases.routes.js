@@ -3,16 +3,9 @@
 const { Router } = require('express');
 const { z } = require('zod');
 const { requireApiKey } = require('../../middleware/requireApiKey');
-const { success, paginated, error } = require('./helpers');
+const { success, paginated, error, RELEASE_STATUSES } = require('./helpers');
 
 const router = Router();
-
-// ── Validation Schemas ──────────────────────────────────────────────────────
-
-const RELEASE_STATUSES = [
-  'planejada', 'em_desenvolvimento', 'corte', 'em_homologacao',
-  'em_regressivo', 'aprovada', 'em_producao', 'concluida', 'uniu_escopo',
-];
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -116,7 +109,7 @@ function computeReleaseMetrics(release) {
  *         name: status
  *         schema:
  *           type: string
- *           enum: [planejada, em_desenvolvimento, corte, em_homologacao, em_regressivo, aprovada, em_producao, concluida, uniu_escopo]
+ *           enum: [planejada, em_desenvolvimento, corte, em_homologacao, em_regressivo, em_qa, aguardando_aprovacao, aprovada, em_producao, concluida, uniu_escopo, rollback, cancelada]
  *         description: Filter by release status
  *     responses:
  *       200:

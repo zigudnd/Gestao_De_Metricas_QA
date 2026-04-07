@@ -1,4 +1,5 @@
 import type { Feature, TestCase } from '../types/sprint.types'
+import { uid } from '@/lib/uid'
 
 // ─── Sanitização de texto importado ──────────────────────────────────────────
 
@@ -19,7 +20,7 @@ export interface ImportResult {
   summary: string[]
 }
 
-export function parseFeatureText(text: string, suiteId: number): ImportResult {
+export function parseFeatureText(text: string, suiteId: number | string): ImportResult {
   const featureRegex = /^(funcionalidade|feature)\s*:/i
   const scenarioRegex = /^(cenario|cenário|scenario|esquema do cenario|esquema do cenário|scenario outline)\s*:/i
 
@@ -61,12 +62,11 @@ export function parseFeatureText(text: string, suiteId: number): ImportResult {
   const features: Omit<Feature, 'id'>[] = []
   let totalScenarios = 0
   const summary: string[] = []
-  const now = Date.now()
 
   featuresWithScenarios.forEach((featureName, _fi) => {
     const scenarios = featuresMap[featureName]
-    const cases: TestCase[] = scenarios.map((sc, i) => ({
-      id: now + totalScenarios + i + Math.floor(Math.random() * 10000),
+    const cases: TestCase[] = scenarios.map((sc) => ({
+      id: uid(),
       name: sc.name || 'Cenário Sem Nome',
       complexity: 'Baixa',
       status: 'Pendente',
@@ -115,7 +115,7 @@ function parseCSVRaw(text: string): string[][] {
   return rows
 }
 
-export function parseCSVText(text: string, suiteId: number): ImportResult {
+export function parseCSVText(text: string, suiteId: number | string): ImportResult {
   const rows = parseCSVRaw(text).filter((r) => r.some((c) => c.trim()))
   if (rows.length < 2) throw new Error('Arquivo CSV vazio ou inválido.')
   if (rows[0].length < 2) throw new Error('O arquivo CSV precisa ter pelo menos 2 colunas:\nColuna 1 → Funcionalidade\nColuna 2 → Cenário')
@@ -137,15 +137,14 @@ function buildFromRows(
   colScenario: number,
   colGherkin: number,
   colComplex: number,
-  suiteId: number,
+  suiteId: number | string,
   defaultFeatureName: string,
 ): ImportResult {
   const featuresMap: Record<string, TestCase[]> = {}
   const featuresOrder: string[] = []
   let totalScenarios = 0
-  const now = Date.now()
 
-  rows.forEach((cols, idx) => {
+  rows.forEach((cols) => {
     const featureName = sanitize(String((cols[colFeature] as string) || '').trim()) || defaultFeatureName
     const scenarioName = sanitize(String((cols[colScenario] as string) || '').trim())
     if (!scenarioName) return
@@ -159,7 +158,7 @@ function buildFromRows(
       featuresOrder.push(featureName)
     }
     featuresMap[featureName].push({
-      id: now + idx + Math.floor(Math.random() * 10000),
+      id: uid(),
       name: scenarioName, complexity, status: 'Pendente', executionDay: '', gherkin,
     })
     totalScenarios++

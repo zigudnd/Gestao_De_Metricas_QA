@@ -12,7 +12,7 @@ interface RegressivosTabProps {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface SuiteDetail {
-  id: number
+  id: number | string
   name: string
   totalTests: number
   executed: number
@@ -101,7 +101,7 @@ function computeSprintDetail(sprintId: string, entry: SprintIndexEntry): SprintD
   }
 
   // Compute per-suite metrics
-  const suiteMap = new Map<number, SuiteDetail>()
+  const suiteMap = new Map<number | string, SuiteDetail>()
   for (const suite of (state.suites || [])) {
     suiteMap.set(suite.id, {
       id: suite.id, name: suite.name,

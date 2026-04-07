@@ -108,9 +108,10 @@ describe('POST /api/v1/apikeys (create)', () => {
     await handler(req, res, () => {});
 
     assert.equal(res._status, 201);
-    assert.ok(res._json.key, 'Response should include the raw key');
-    assert.ok(res._json.key.startsWith('tok_'), 'Raw key should start with tok_');
-    assert.equal(res._json.id, 'new-key-uuid');
+    assert.ok(res._json.data, 'Response should include data wrapper');
+    assert.ok(res._json.data.rawToken, 'Response should include the raw token');
+    assert.ok(res._json.data.rawToken.startsWith('tok_'), 'Raw token should start with tok_');
+    assert.equal(res._json.data.id, 'new-key-uuid');
   });
 
   it('returns 500 on database insert error', async () => {

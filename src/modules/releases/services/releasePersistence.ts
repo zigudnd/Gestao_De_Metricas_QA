@@ -1,6 +1,7 @@
 import type { Release, ReleaseIndexEntry } from '../types/release.types'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { uid } from '@/lib/uid'
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
 
@@ -41,9 +42,9 @@ export function normalizeRelease(raw: any): Release {
   const now = new Date().toISOString()
   const r: Release = raw
     ? structuredClone(raw)
-    : createDefaultRelease('rel_' + Date.now())
+    : createDefaultRelease('rel_' + uid())
 
-  if (!r.id) r.id = 'rel_' + Date.now()
+  if (!r.id) r.id = 'rel_' + uid()
   if (!r.version) r.version = ''
   if (!r.title) r.title = ''
   if (!r.description) r.description = ''
@@ -64,7 +65,7 @@ export function normalizeRelease(raw: any): Release {
   if (!r.updatedAt) r.updatedAt = now
 
   r.squads.forEach((sq) => {
-    if (!sq.id) sq.id = 'sq_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+    if (!sq.id) sq.id = 'sq_' + uid()
     if (!sq.squadId) sq.squadId = ''
     if (!sq.squadName) sq.squadName = ''
     if (!sq.status) sq.status = 'not_started'

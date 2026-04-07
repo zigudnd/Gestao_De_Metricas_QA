@@ -2,6 +2,7 @@ import type { StatusReportState, StatusReportConfig, StatusReportIndexEntry } fr
 import { DEFAULT_SECTIONS } from '../types/statusReport.types'
 import { supabase } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { uid } from '@/lib/uid'
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
 
@@ -38,9 +39,9 @@ export function normalizeState(raw: any): StatusReportState {
   const now = new Date().toISOString()
   const s: StatusReportState = raw
     ? structuredClone(raw)
-    : createDefaultState('sr_' + Date.now())
+    : createDefaultState('sr_' + uid())
 
-  if (!s.id) s.id = 'sr_' + Date.now()
+  if (!s.id) s.id = 'sr_' + uid()
   if (!s.config) s.config = { ...DEFAULT_CONFIG }
   if (!s.config.title) s.config.title = 'Status Report'
   if (!s.config.date) s.config.date = new Date().toISOString().split('T')[0]
@@ -56,7 +57,7 @@ export function normalizeState(raw: any): StatusReportState {
   if (!s.updatedAt) s.updatedAt = now
 
   s.items.forEach((item) => {
-    if (!item.id) item.id = 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+    if (!item.id) item.id = 'sr_' + uid()
     if (!item.stacks) item.stacks = []
     if (!Array.isArray(item.dependsOn)) item.dependsOn = []
     if (item.pct === undefined) item.pct = 0

@@ -4,23 +4,9 @@ const { Router } = require('express');
 const { z } = require('zod');
 const { requireApiKey } = require('../../middleware/requireApiKey');
 const { validateBody } = require('../../middleware/validate');
-const { success, error } = require('./helpers');
+const { success, error, RELEASE_STATUSES } = require('./helpers');
 
 const router = Router();
-
-// ── Validation Schemas ──────────────────────────────────────────────────────
-
-const RELEASE_STATUSES = [
-  'planejada',
-  'em_desenvolvimento',
-  'em_qa',
-  'aguardando_aprovacao',
-  'aprovada',
-  'em_producao',
-  'concluida',
-  'rollback',
-  'cancelada',
-];
 
 const updateStatusSchema = z.object({
   status: z.enum(RELEASE_STATUSES),
@@ -60,7 +46,7 @@ const updateRolloutSchema = z.object({
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [planejada, em_desenvolvimento, em_qa, aguardando_aprovacao, aprovada, em_producao, concluida, rollback, cancelada]
+ *                 enum: [planejada, em_desenvolvimento, corte, em_homologacao, em_regressivo, em_qa, aguardando_aprovacao, aprovada, em_producao, concluida, uniu_escopo, rollback, cancelada]
  *               reason:
  *                 type: string
  *                 default: ""

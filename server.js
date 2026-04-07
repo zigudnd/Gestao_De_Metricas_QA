@@ -61,7 +61,7 @@ app.locals.supabase = supabaseAdmin;
 
 // ── Global Middleware ───────────────────────────────────────────────────────
 
-app.set('trust proxy', 1);
+app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : false);
 app.use(helmet());
 
 const allowedOrigins = (process.env.CORS_ORIGINS || `http://localhost:5173,http://localhost:${PORT}`)
@@ -96,10 +96,12 @@ const swaggerSpec = swaggerJsdoc({
   apis: ['./routes/*.routes.js', './routes/v1/*.routes.js', './server.js'],
 });
 
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'ToStatos API Docs',
-}));
+if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ToStatos API Docs',
+  }));
+}
 
 // ── Inline Routes (config.js + health) ──────────────────────────────────────
 

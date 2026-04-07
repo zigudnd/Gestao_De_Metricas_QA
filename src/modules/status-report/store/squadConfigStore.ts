@@ -7,6 +7,7 @@ import {
   persistToServer, getDefaultState, normalizeState, initRealtimeSubscription,
 } from '../services/squadConfigPersistence'
 import { listSquadMembers } from '@/modules/squads/services/squadsService'
+import { uid } from '@/lib/uid'
 
 // ─── Remote persist queue ────────────────────────────────────────────────────
 
@@ -37,8 +38,8 @@ function queueRemotePersist(state: SquadConfigState, delay = 700) {
 
 // ─── UID helper ──────────────────────────────────────────────────────────────
 
-function uid(): string {
-  return 'sc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+function scUid(): string {
+  return 'sc_' + uid()
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -225,7 +226,7 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
 
   addCerimonia: (c) => {
     const { cerimonias, _commit } = get()
-    _commit({ cerimonias: [...cerimonias, { ...c, id: uid() }] })
+    _commit({ cerimonias: [...cerimonias, { ...c, id: scUid() }] })
   },
   removeCerimonia: (id) => {
     const { cerimonias, _commit } = get()
@@ -246,7 +247,7 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
   addMembro: (m) => {
     const { membros, _commit } = get()
     const tipo = m.tipo ?? 'temporario'
-    _commit({ membros: [...membros, { ...m, tipo, id: uid(), createdAt: new Date().toISOString() }] })
+    _commit({ membros: [...membros, { ...m, tipo, id: scUid(), createdAt: new Date().toISOString() }] })
   },
   removeMembro: (id) => {
     const { membros, _commit } = get()
@@ -261,7 +262,7 @@ export const useSquadConfigStore = create<SquadConfigStore>((set, get) => ({
 
   addOff: (off) => {
     const { offs, _commit } = get()
-    _commit({ offs: [...offs, { ...off, id: uid(), createdAt: new Date().toISOString() }] })
+    _commit({ offs: [...offs, { ...off, id: scUid(), createdAt: new Date().toISOString() }] })
   },
   removeOff: (id) => {
     const { offs, _commit } = get()

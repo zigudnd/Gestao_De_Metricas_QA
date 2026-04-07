@@ -4,6 +4,22 @@ const express = require('express');
 const router = require('express').Router();
 const { flushLimiter } = require('../middleware/rateLimiter');
 
+/**
+ * Validates a Supabase access_token sent in the request body.
+ * Used by sendBeacon endpoints that can't send Authorization headers.
+ * Returns the authenticated user or null.
+ */
+async function validateBeaconToken(supabaseAdmin, token) {
+  if (!token || typeof token !== 'string') return null;
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !user) return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 // ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
 /**
  * @openapi
@@ -38,6 +54,10 @@ router.post('/status-report-flush', flushLimiter, express.text({ type: '*/*', li
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
+    const user = await validateBeaconToken(supabaseAdmin, payload.token);
+    if (!user) {
+      return res.status(401).json({ error: 'Token inválido ou ausente.' });
+    }
     if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
       return res.status(400).json({ error: 'ID inválido.' });
     }
@@ -96,6 +116,10 @@ router.post('/release-flush', flushLimiter, express.text({ type: '*/*', limit: '
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
+    const user = await validateBeaconToken(supabaseAdmin, payload.token);
+    if (!user) {
+      return res.status(401).json({ error: 'Token inválido ou ausente.' });
+    }
     if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
       return res.status(400).json({ error: 'ID inválido.' });
     }
@@ -155,6 +179,10 @@ router.post('/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '1
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase não configurado.' });
   try {
     const payload = JSON.parse(req.body);
+    const user = await validateBeaconToken(supabaseAdmin, payload.token);
+    if (!user) {
+      return res.status(401).json({ error: 'Token inválido ou ausente.' });
+    }
     if (!payload.id || typeof payload.id !== 'string' || payload.id.length > 100) {
       return res.status(400).json({ error: 'ID inválido.' });
     }

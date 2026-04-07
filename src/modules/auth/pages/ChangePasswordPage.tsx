@@ -21,27 +21,16 @@ export function ChangePasswordPage() {
     if (!/[0-9]/.test(password)) { setError('A senha deve conter pelo menos um número.'); return }
     if (!/[^a-zA-Z0-9]/.test(password)) { setError('A senha deve conter pelo menos um caractere especial.'); return }
     if (password !== confirm) { setError('As senhas não coincidem.'); return }
+    if (password === 'Mudar@123') { setError('A nova senha não pode ser igual à senha temporária.'); return }
 
     setLoading(true)
     try {
-      // Atualiza a senha
-      const { error: pwErr } = await supabase.auth.updateUser({ password })
+      // Atualiza a senha e remove a flag must_change_password em uma única chamada
+      const { error: pwErr } = await supabase.auth.updateUser({
+        password,
+        data: { must_change_password: false },
+      })
       if (pwErr) throw pwErr
-
-      // Remove a flag must_change_password (com retry para evitar loop infinito)
-      let metaUpdated = false
-      for (let attempt = 0; attempt < 3 && !metaUpdated; attempt++) {
-        const { error: metaErr } = await supabase.auth.updateUser({
-          data: { must_change_password: false },
-        })
-        if (!metaErr) {
-          metaUpdated = true
-        } else if (attempt === 2) {
-          // Senha já foi alterada — navega mesmo assim para evitar redirect loop.
-          // O usuário pode precisar trocar novamente se o flag persistir.
-          console.warn('[Auth] Failed to clear must_change_password flag after 3 attempts:', metaErr)
-        }
-      }
 
       navigate('/sprints', { replace: true })
     } catch (err: unknown) {

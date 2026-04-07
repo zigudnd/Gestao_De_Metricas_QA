@@ -27,7 +27,7 @@ interface Props {
   onRenameSuite: (suiteIndex: number, name: string) => void
   onRemoveSuite: (suiteIndex: number) => void
   // Feature actions
-  onAddFeature: (suiteId: number) => void
+  onAddFeature: (suiteId: number | string) => void
   onRemoveFeature: (featureIndex: number) => void
   onUpdateFeature: (featureIndex: number, field: keyof Feature, value: unknown) => void
   // TestCase actions
@@ -39,9 +39,9 @@ interface Props {
   onRemoveBug: (bugIndex: number) => void
   onUpdateBug: (bugIndex: number, field: keyof Bug, value: unknown) => void
   // Import
-  onImportFile: (suiteId: number, file: File) => void
+  onImportFile: (suiteId: number | string, file: File) => void
   // Import features in bulk (for adding parsed features)
-  onImportFeatures?: (suiteId: number, features: Array<Omit<Feature, 'id'>>) => void
+  onImportFeatures?: (suiteId: number | string, features: Array<Omit<Feature, 'id'>>) => void
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────

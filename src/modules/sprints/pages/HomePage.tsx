@@ -8,6 +8,7 @@ import {
 } from '../services/persistence'
 import { showToast } from '@/app/components/Toast'
 import { importFromJSON } from '../services/exportService'
+import { uid } from '@/lib/uid'
 import { listMySquads, getMySquadIds, type Squad } from '@/modules/squads/services/squadsService'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 import { useReleaseStore } from '@/modules/releases/store/releaseStore'
@@ -88,7 +89,7 @@ export function HomePage() {
     e.preventDefault()
     const title = newTitle.trim()
     if (!title) return
-    const sprintId = 'sprint_' + Date.now()
+    const sprintId = 'sprint_' + uid()
     const newState = structuredClone(DEFAULT_STATE)
     newState.config.title = title
     // Se selecionou um squad, usa o nome dele como texto; senão usa campo livre
@@ -127,7 +128,7 @@ export function HomePage() {
       showToast('Erro ao carregar sprint para duplicar', 'error')
       return
     }
-    const newId = 'sprint_' + Date.now()
+    const newId = 'sprint_' + uid()
     const cloned = structuredClone(source)
     cloned.config.title = (source.config.title || 'Sprint') + ' (copia)'
     // Reset execution data

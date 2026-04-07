@@ -190,7 +190,7 @@ export function OverviewTab() {
   }))
 
   // ── Lists ─────────────────────────────────────────────────────────────────
-  type BlockedItem = { id: number; name: string; suiteId: number; blockReason: string; stripe: 'blocked' | 'pending' }
+  type BlockedItem = { id: number | string; name: string; suiteId: number | string; blockReason: string; stripe: 'blocked' | 'pending' }
   const blockedItems: BlockedItem[] = [
     ...filtered
       .filter((f) => f.status === 'Bloqueada')

@@ -12,10 +12,14 @@ export type ReleaseStatus =
   | 'corte'
   | 'em_homologacao'
   | 'em_regressivo'
+  | 'em_qa'
+  | 'aguardando_aprovacao'
   | 'aprovada'
   | 'em_producao'
   | 'concluida'
   | 'uniu_escopo'
+  | 'rollback'
+  | 'cancelada'
 
 export type ReleaseSquadStatus =
   | 'not_started'

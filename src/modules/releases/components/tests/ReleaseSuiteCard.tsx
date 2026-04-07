@@ -12,14 +12,14 @@ interface Props {
   nonBlockingFeatureIds?: string[]
   onRenameSuite: (suiteIndex: number, name: string) => void
   onRemoveSuite: (suiteIndex: number) => void
-  onAddFeature: (suiteId: number) => void
+  onAddFeature: (suiteId: number | string) => void
   onUpdateFeature: (featureIndex: number, field: keyof Feature, value: unknown) => void
   onRemoveFeature: (featureIndex: number) => void
   onAddTestCase: (featureIndex: number) => void
   onUpdateTestCase: (featureIndex: number, caseIndex: number, field: keyof TestCase, value: unknown) => void
   onRemoveTestCase: (featureIndex: number, caseIndex: number) => void
   onBugRequest: (featureName: string, testCaseName: string) => void
-  onImportFile: (suiteId: number, file: File) => void
+  onImportFile: (suiteId: number | string, file: File) => void
   index?: number
 }
 

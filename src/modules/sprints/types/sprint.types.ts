@@ -4,7 +4,7 @@ export type TestCaseStatus = 'Pendente' | 'Concluído' | 'Falhou' | 'Bloqueado'
 export type TestCaseComplexity = 'Baixa' | 'Moderada' | 'Alta'
 
 export interface TestCase {
-  id: number
+  id: number | string
   name: string
   complexity: TestCaseComplexity
   status: TestCaseStatus
@@ -17,8 +17,8 @@ export interface TestCase {
 export type FeatureStatus = 'Ativa' | 'Bloqueada' | 'Cancelada'
 
 export interface Feature {
-  id: number
-  suiteId: number
+  id: number | string
+  suiteId: number | string
   name: string
   tests: number          // calculado: cases.length + manualTests
   manualTests: number
@@ -36,7 +36,7 @@ export interface Feature {
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
 export interface Suite {
-  id: number
+  id: number | string
   name: string
 }
 
@@ -64,7 +64,7 @@ export interface Bug {
 // ─── Blocker ──────────────────────────────────────────────────────────────────
 
 export interface Blocker {
-  id: number
+  id: number | string
   date: string           // ISO date string
   reason: string
   hours: number
@@ -73,14 +73,14 @@ export interface Blocker {
 // ─── Alignment ────────────────────────────────────────────────────────────────
 
 export interface Alignment {
-  id: number
+  id: number | string
   text: string
 }
 
 // ─── Responsible ──────────────────────────────────────────────────────────────
 
 export interface ResponsiblePerson {
-  id: number
+  id: number | string
   role: string   // PO, TL, Coordenador, Gerente, etc.
   name: string
 }

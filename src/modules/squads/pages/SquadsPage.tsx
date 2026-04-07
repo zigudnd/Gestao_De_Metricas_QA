@@ -15,6 +15,7 @@ import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { showToast } from '@/app/components/Toast'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 import type { Profile } from '@/modules/auth/store/authStore'
+import { useActiveSquadStore } from '../store/activeSquadStore'
 import { PermissionsEditor } from '../components/PermissionsEditor'
 import { ProfilesPanel } from '../components/ProfilesPanel'
 import { UsersPanel } from '../components/UsersPanel'
@@ -263,6 +264,7 @@ export function SquadsPage() {
       setNewNameError('')
       setShowNewSquadForm(false)
       showToast('Squad criado', 'success')
+      useActiveSquadStore.getState().loadSquads()
     } catch (e) { setError(errMsg(e)) }
     finally { setCreating(false) }
   }
@@ -277,6 +279,7 @@ export function SquadsPage() {
       if (activeSquad?.id === editingSquad.id) setActiveSquad(updated)
       setEditingSquad(null)
       showToast('Squad atualizado', 'success')
+      useActiveSquadStore.getState().loadSquads()
     } catch (e) { setError(errMsg(e)) }
   }
 
@@ -289,6 +292,7 @@ export function SquadsPage() {
       setSquads((prev) => prev.filter((s) => s.id !== archiveSquadTarget.id))
       if (activeSquad?.id === archiveSquadTarget.id) setActiveSquad(null)
       showToast(`"${archiveSquadTarget.name}" arquivado`, 'info')
+      useActiveSquadStore.getState().loadSquads()
     } catch (e) { setError(errMsg(e)) }
     finally { setArchiveSquadTarget(null) }
   }
@@ -299,6 +303,7 @@ export function SquadsPage() {
       setArchivedSquads((prev) => prev.filter((s) => s.id !== squad.id))
       setSquads((prev) => [...prev, { ...squad, archived: false }])
       showToast(`"${squad.name}" restaurado`, 'success')
+      useActiveSquadStore.getState().loadSquads()
     } catch (e) { setError(errMsg(e)) }
   }
 

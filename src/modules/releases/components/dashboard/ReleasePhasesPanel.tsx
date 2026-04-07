@@ -24,6 +24,7 @@ const PHASES: PhaseDef[] = [
   { key: 'geracao',  label: 'Geração',      dateField: 'buildDate',        statusWhenActive: 'em_desenvolvimento', color: 'var(--color-blue)', icon: '⚙️' },
   { key: 'homolog',  label: 'Homologação',  dateField: 'homologacaoStart', dateEndField: 'homologacaoEnd', statusWhenActive: 'em_homologacao', color: '#06b6d4', icon: '🧪' },
   { key: 'beta',     label: 'Beta',         dateField: 'betaDate',         statusWhenActive: 'em_regressivo',      color: 'var(--color-amber-mid)', icon: '📱' },
+  { key: 'aprovada', label: 'Aprovação',    dateField: 'betaDate',         statusWhenActive: 'aprovada',           color: 'var(--color-green)', icon: '✅' },
   { key: 'producao', label: 'Produção',     dateField: 'productionDate',   statusWhenActive: 'em_producao',        color: 'var(--color-green-mid)', icon: '🚀' },
 ]
 
@@ -39,8 +40,9 @@ type PhaseState = 'done' | 'active' | 'pending'
 
 function getPhaseIndex(status: ReleaseStatus): number {
   switch (status) {
-    case 'concluida': return 5
-    case 'em_producao': case 'aprovada': return 4
+    case 'concluida': return 6
+    case 'em_producao': return 5
+    case 'aprovada': return 4
     case 'em_regressivo': return 3
     case 'em_homologacao': return 2
     case 'em_desenvolvimento': return 1

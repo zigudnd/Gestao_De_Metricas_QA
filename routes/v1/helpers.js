@@ -25,4 +25,22 @@ function error(res, status, code, message) {
   });
 }
 
-module.exports = { success, paginated, error };
+// ── Unified Release Statuses ────────────────────────────────────────────────
+// Single source of truth for all valid release statuses across read & write routes.
+const RELEASE_STATUSES = [
+  'planejada',
+  'em_desenvolvimento',
+  'corte',
+  'em_homologacao',
+  'em_regressivo',
+  'em_qa',
+  'aguardando_aprovacao',
+  'aprovada',
+  'em_producao',
+  'concluida',
+  'uniu_escopo',
+  'rollback',
+  'cancelada',
+];
+
+module.exports = { success, paginated, error, RELEASE_STATUSES };

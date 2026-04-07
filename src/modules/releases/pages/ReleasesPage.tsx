@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReleaseStore } from '../store/releaseStore'
+import { syncAllReleases } from '../services/releasePersistence'
 import type { Release, ReleaseStatus } from '../types/release.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { showToast } from '@/app/components/Toast'
@@ -8,6 +9,7 @@ import { CheckpointTab } from '../components/dashboard/CheckpointTab'
 import { CronogramaTab } from '../components/dashboard/CronogramaTab'
 import { EventsTab, DEFAULT_EVENTS, type CalendarEvent } from '../components/dashboard/EventsTab'
 import { RegressivosTab } from '../components/dashboard/RegressivosTab'
+import { uid } from '@/lib/uid'
 
 type HomeTab = 'checkpoint' | 'regressivos' | 'historico' | 'cronograma' | 'eventos'
 
@@ -19,10 +21,14 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
   corte: 'Corte',
   em_homologacao: 'Em Homologação',
   em_regressivo: 'Em Regressivo',
+  em_qa: 'Em QA',
+  aguardando_aprovacao: 'Aguardando Aprovação',
   aprovada: 'Aprovada',
   em_producao: 'Em Produção',
   concluida: 'Concluída',
   uniu_escopo: 'Uniu Escopo',
+  rollback: 'Rollback',
+  cancelada: 'Cancelada',
 }
 
 const STATUS_COLORS: Record<ReleaseStatus, string> = {
@@ -31,10 +37,14 @@ const STATUS_COLORS: Record<ReleaseStatus, string> = {
   corte: '#8b5cf6',
   em_homologacao: 'var(--color-amber)',
   em_regressivo: '#f97316',
+  em_qa: '#06b6d4',
+  aguardando_aprovacao: '#eab308',
   aprovada: 'var(--color-green)',
   em_producao: '#06b6d4',
   concluida: 'var(--color-green)',
   uniu_escopo: '#8b5cf6',
+  rollback: '#ef4444',
+  cancelada: 'var(--color-text-3)',
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -109,7 +119,19 @@ export function ReleasesPage() {
   useEffect(() => {
     load()
     loadCalendarSlots()
-    setLoading(false)
+
+    // If localStorage is empty (first visit), wait for Supabase sync then re-load
+    const currentReleases = useReleaseStore.getState().releases
+    if (currentReleases.length === 0) {
+      syncAllReleases().then(() => {
+        load()
+        setLoading(false)
+      }).catch(() => {
+        setLoading(false)
+      })
+    } else {
+      setLoading(false)
+    }
   }, []) // eslint-disable-line
 
   // ── Sorted releases ─────────────────────────────────────────────────────
@@ -209,7 +231,7 @@ export function ReleasesPage() {
     } else {
       const now = new Date().toISOString()
       const newRelease: Release = {
-        id: `release_${Date.now()}`,
+        id: `release_${uid()}`,
         title: formName.trim(),
         version: formVersion.trim(),
         description: '',
@@ -349,7 +371,7 @@ export function ReleasesPage() {
           onAddRelease={(data) => {
             const now = new Date().toISOString()
             const newRelease: Release = {
-              id: `release_${Date.now()}`,
+              id: `release_${uid()}`,
               title: data.title,
               version: data.version,
               description: '',
@@ -379,7 +401,7 @@ export function ReleasesPage() {
             const now = new Date().toISOString()
             const newRelease: Release = {
               ...structuredClone(source),
-              id: `release_${Date.now()}`,
+              id: `release_${uid()}`,
               title: source.title + ' (cópia)',
               status: 'planejada' as const,
               rolloutPct: 0,
@@ -403,7 +425,7 @@ export function ReleasesPage() {
       {homeTab === 'eventos' && (
         <EventsTab
           events={calendarEvents}
-          onAdd={(evt) => saveEvents([...calendarEvents, { ...evt, id: 'evt_' + Date.now() }])}
+          onAdd={(evt) => saveEvents([...calendarEvents, { ...evt, id: 'evt_' + uid() }])}
           onRemove={(id) => saveEvents(calendarEvents.filter((e) => e.id !== id))}
           onUpdate={(id, updates) => saveEvents(calendarEvents.map((e) => e.id === id ? { ...e, ...updates } : e))}
         />

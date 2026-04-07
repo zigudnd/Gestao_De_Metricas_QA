@@ -13,6 +13,7 @@ import { showToast } from '@/app/components/Toast'
 import { CombinadosTab } from '../components/combinados/CombinadosTab'
 import { TimeTab } from '../components/time/TimeTab'
 import { useSquadConfigStore } from '../store/squadConfigStore'
+import { uid } from '@/lib/uid'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
 
 type HomeTabId = 'reports' | 'combinados' | 'time'
@@ -111,7 +112,7 @@ export function StatusReportHomePage() {
   function handleCreate() {
     const title = newTitle.trim() || 'Novo Status Report'
     const selectedSquad = squads.find((s) => s.id === newSquadId)
-    const id = 'sr_' + Date.now()
+    const id = 'sr_' + uid()
     const state = createDefaultState(id)
     state.config.title = title
     state.config.squad = selectedSquad?.name ?? ''
@@ -156,7 +157,7 @@ export function StatusReportHomePage() {
   function handleDuplicate(sourceId: string) {
     const source = loadFromLocalStorage(sourceId)
     if (!source) return
-    const newId = 'sr_' + Date.now()
+    const newId = 'sr_' + uid()
     const now = new Date().toISOString()
     const cloned = normalizeState({
       ...structuredClone(source),
@@ -165,7 +166,7 @@ export function StatusReportHomePage() {
       createdAt: now,
       updatedAt: now,
       items: source.items.map((item: StatusReportItem) => {
-        const newItemId = 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+        const newItemId = 'sr_' + uid()
         return { ...item, id: newItemId, _oldId: item.id, createdAt: now, updatedAt: now }
       }),
     })
@@ -219,7 +220,7 @@ export function StatusReportHomePage() {
     const now = new Date().toISOString()
     const idMap = new Map<string, string>()
     const copiedItems: StatusReportItem[] = source.items.map((item) => {
-      const newId = 'sr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+      const newId = 'sr_' + uid()
       idMap.set(item.id, newId)
       return {
         ...item,

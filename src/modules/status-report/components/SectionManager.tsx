@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { SectionDef, SectionId } from '../types/statusReport.types'
 import { SECTION_COLORS } from '../types/statusReport.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { uid } from '@/lib/uid'
 
 interface SectionManagerProps {
   sections: SectionDef[]
@@ -20,7 +21,7 @@ export function SectionManager({ sections, onAdd, onUpdate, onRemove, onClose }:
 
   function handleAdd() {
     if (!newLabel.trim()) return
-    const id = 'sec_' + Date.now()
+    const id = 'sec_' + uid()
     onAdd({ id, label: newLabel.trim(), color: newColor, side: newSide })
     setNewLabel('')
   }

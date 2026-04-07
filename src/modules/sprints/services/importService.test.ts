@@ -230,7 +230,7 @@ describe('parseFeatureText', () => {
     expect(tc.complexity).toBe('Baixa')
     expect(tc.status).toBe('Pendente')
     expect(tc.executionDay).toBe('')
-    expect(tc.id).toBeTypeOf('number')
+    expect(tc.id).toBeDefined()
   })
 })
 

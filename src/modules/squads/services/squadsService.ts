@@ -246,6 +246,11 @@ export async function createSquad(name: string, description = '', color = '#185F
 export async function updateSquad(squadId: string, fields: { name?: string; description?: string; color?: string }): Promise<void> {
   const { error } = await supabase.from('squads').update(fields).eq('id', squadId)
   if (error) throw error
+  logAudit('squad', squadId, 'update', {
+    ...(fields.name !== undefined ? { name: { old: null, new: fields.name } } : {}),
+    ...(fields.description !== undefined ? { description: { old: null, new: fields.description } } : {}),
+    ...(fields.color !== undefined ? { color: { old: null, new: fields.color } } : {}),
+  })
 }
 
 export async function deleteSquad(squadId: string): Promise<void> {
@@ -286,19 +291,25 @@ export async function addMember(
 }
 
 export async function updateMemberRole(memberId: string, role: SquadRole): Promise<void> {
+  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id').eq('id', memberId).single()
   const { error } = await supabase.from('squad_members').update({ role }).eq('id', memberId)
   if (error) throw error
+  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_role_updated: { old: null, new: role }, user_id: { old: null, new: member?.user_id ?? memberId } })
 }
 
 export async function updateMemberPermissions(memberId: string, permissions: MemberPermissions): Promise<void> {
+  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id').eq('id', memberId).single()
   const { error } = await supabase.from('squad_members').update({ permissions }).eq('id', memberId)
   if (error) throw new Error(error.message)
+  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_permissions_updated: { old: null, new: true }, user_id: { old: null, new: member?.user_id ?? memberId } })
 }
 
 export async function removeMember(memberId: string): Promise<void> {
+  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id').eq('id', memberId).single()
+  const squadId = member?.squad_id ?? memberId
   const { error } = await supabase.from('squad_members').delete().eq('id', memberId)
   if (error) throw error
-  logAudit('squad', memberId, 'update', { member_removed: { old: memberId, new: null } })
+  logAudit('squad', squadId, 'update', { member_removed: { old: member?.user_id ?? memberId, new: null } })
 }
 
 export async function getMyRole(squadId: string): Promise<SquadRole | null> {
