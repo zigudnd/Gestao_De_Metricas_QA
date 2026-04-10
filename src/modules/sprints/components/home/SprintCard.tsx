@@ -52,6 +52,9 @@ export function SprintCard({
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      role="button"
+      tabIndex={0}
       onDragOver={(e) => { if (!compareMode) e.preventDefault() }}
       onDrop={(e) => { if (!compareMode) onDrop(e, sprint.id) }}
       className="hp-card-hover"

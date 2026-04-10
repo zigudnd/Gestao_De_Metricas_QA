@@ -385,6 +385,9 @@ export function HomePage() {
             {/* Nova sprint — compact */}
             <div
               onClick={() => { if (!compareMode) setShowCreate(true) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!compareMode) setShowCreate(true) } }}
+              role="button"
+              tabIndex={0}
               className="hp-new-sprint-hover"
               data-disabled={compareMode ? 'true' : undefined}
               style={{
@@ -427,6 +430,9 @@ export function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 16 }}>
           <div
             onClick={() => { if (!compareMode) setShowCreate(true) }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!compareMode) setShowCreate(true) } }}
+            role="button"
+            tabIndex={0}
             className="hp-new-sprint-hover"
             data-disabled={compareMode ? 'true' : undefined}
             style={{
@@ -491,6 +497,9 @@ export function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div
             onClick={() => setShowCreate(true)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowCreate(true) } }}
+            role="button"
+            tabIndex={0}
             className="hp-new-sprint-hover"
             style={{
               background: 'var(--color-surface)',

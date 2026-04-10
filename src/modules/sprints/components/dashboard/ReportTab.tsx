@@ -84,6 +84,9 @@ export function ReportTab() {
                   <div
                     key={dt}
                     onClick={() => changeDate(dt)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); changeDate(dt) } }}
+                    role="button"
+                    tabIndex={0}
                     style={{
                       padding: '10px 14px',
                       background: isCurrent ? 'var(--color-blue-light)' : 'var(--color-bg)',

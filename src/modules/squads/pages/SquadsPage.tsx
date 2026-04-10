@@ -869,7 +869,7 @@ export function SquadsPage() {
 
       {editingSquad && (
         <div style={backdropStyle} onClick={() => setEditingSquad(null)}>
-          <div style={{ ...modalStyle, width: 420 }} onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label="Editar Squad" style={{ ...modalStyle, width: 420 }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>Editar Squad</h3>
             <form onSubmit={handleEditSquad} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -904,7 +904,7 @@ export function SquadsPage() {
 
       {editingUser && (
         <div style={backdropStyle} onClick={() => setEditingUser(null)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label="Editar Usuário" style={modalStyle} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>Editar Usuário</h3>
             <form onSubmit={handleSaveUser} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div><label style={labelSm}>Nome</label><input autoFocus value={editUserName} onChange={(e) => setEditUserName(e.target.value)} style={inputStyle} required /></div>
@@ -938,7 +938,7 @@ export function SquadsPage() {
 
       {showProfileForm && (
         <div style={backdropStyle} onClick={() => setShowProfileForm(false)}>
-          <div style={{ ...modalStyle, width: 460 }} onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label={editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'} style={{ ...modalStyle, width: 460 }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 500 }}>{editingProfile ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h3>
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div><label style={labelSm}>Nome</label><input autoFocus value={profileName} onChange={(e) => setProfileName(e.target.value)} style={inputStyle} required placeholder="Ex: QA Júnior, Stakeholder Avançado" /></div>

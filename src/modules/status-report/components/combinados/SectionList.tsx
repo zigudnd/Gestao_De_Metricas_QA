@@ -59,7 +59,7 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
         </span>
         <span style={{
           fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 10,
-          background: color + '18', color,
+          background: `color-mix(in srgb, ${color} 10%, transparent)`, color,
         }}>
           {items.length}
         </span>
@@ -155,9 +155,6 @@ export function SectionList({ title, color, items, onAdd, onRemove, onUpdate, pl
           </div>
         </div>
       )}
-      <style>{`
-        .combinados-remove-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
-      `}</style>
     </div>
   )
 }

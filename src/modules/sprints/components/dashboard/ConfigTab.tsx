@@ -375,7 +375,7 @@ export function ConfigTab() {
             zIndex: 2000,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label="Alterar Squad da Sprint" style={{
             background: 'var(--color-surface)',
             border: '0.5px solid var(--color-border)',
             borderTop: '3px solid var(--color-amber-mid)',
@@ -477,7 +477,7 @@ export function ConfigTab() {
             zIndex: 2000,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label="Alterar Release Vinculada" style={{
             background: 'var(--color-surface)',
             border: '0.5px solid var(--color-border)',
             borderTop: '3px solid var(--color-amber-mid)',

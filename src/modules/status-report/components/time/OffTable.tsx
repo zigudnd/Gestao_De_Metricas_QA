@@ -135,9 +135,6 @@ export function OffTable({ offs, onRemove }: OffTableProps) {
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-red-light)', marginRight: 4 }} />Férias em até 7 dias</span>
         <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--color-green-light)', marginRight: 4 }} />Período ativo ou agendado</span>
       </div>
-      <style>{`
-        .time-off-delete:hover { opacity: 1 !important; color: var(--color-red) !important; }
-      `}</style>
     </div>
   )
 }

@@ -442,7 +442,7 @@ export function ReleasesPage() {
             padding: 16,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label={editId ? 'Editar Release' : 'Nova Release'} style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderTop: '3px solid var(--color-blue)',

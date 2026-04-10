@@ -66,8 +66,10 @@ export function UserMenu() {
 
       {/* Avatar button */}
       <button
+        id="user-menu-button"
         onClick={() => setOpen(!open)}
         aria-label="Menu da conta"
+        aria-haspopup="true"
         aria-expanded={open}
         style={{
           width: 34, height: 34, borderRadius: '50%',
@@ -85,7 +87,10 @@ export function UserMenu() {
 
       {/* Dropdown */}
       {open && (
-        <div style={{
+        <div
+          role="menu"
+          aria-labelledby="user-menu-button"
+          style={{
           position: 'absolute', top: 42, right: 0,
           width: 280, maxWidth: '90vw',
           background: 'var(--color-surface)',
@@ -200,7 +205,7 @@ export function UserMenu() {
             zIndex: 3000,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label="Confirmar logout" style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderTop: '3px solid var(--color-blue)',
@@ -267,6 +272,7 @@ function MenuButton({ icon, label, onClick, danger }: {
 }) {
   return (
     <button
+      role="menuitem"
       onClick={onClick}
       style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10,

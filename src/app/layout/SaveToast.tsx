@@ -14,6 +14,8 @@ export function SaveToast() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed',
         bottom: 24,

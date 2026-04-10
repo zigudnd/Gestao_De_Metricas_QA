@@ -88,13 +88,16 @@ export function Topbar() {
   return (
     <header style={headerStyle}>
       {/* Breadcrumb */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-2)' }}>
+      <nav aria-label="Navegação" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-2)' }}>
         {crumbs.map((crumb, i) => (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {i > 0 && <span style={{ opacity: 0.35 }}>/</span>}
+            {i > 0 && <span aria-hidden="true" style={{ opacity: 0.35 }}>/</span>}
             {crumb.path ? (
               <span
+                role="link"
+                tabIndex={0}
                 onClick={() => navigate(crumb.path!)}
+                onKeyDown={(e) => { if (e.key === 'Enter') navigate(crumb.path!) }}
                 className="topbar-breadcrumb-link"
                 style={{ cursor: 'pointer', fontWeight: 500, transition: 'color 0.15s' }}
               >

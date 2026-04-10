@@ -56,10 +56,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Focus visible — global */
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+/* ── Focus Accessibility (WCAG 2.4.7) ────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: -1px;
+  border-color: var(--color-blue);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
 }
 
 /* Scrollbar */
@@ -82,3 +95,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .anim-fade-up {
   animation: fadeUp 0.25s ease both;
 }
+
+/* ── Component hover states ──────────────────────────────────── */
+
+/* ItemRow */
+.sr-item-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+div:hover > .move-arrows { opacity: 1 !important; }
+
+/* SectionCard — add item button */
+.sr-add-item-btn:hover { border-color: var(--section-color) !important; color: var(--section-color) !important; }
+
+/* CeremoniaCard */
+.cerimonia-edit-btn:hover { opacity: 1 !important; color: var(--color-yellow) !important; }
+.cerimonia-delete-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
+
+/* SectionList (combinados) */
+.combinados-remove-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
+
+/* OffTable */
+.time-off-delete:hover { opacity: 1 !important; color: var(--color-red) !important; }

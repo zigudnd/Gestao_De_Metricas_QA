@@ -34,6 +34,9 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      role="button"
+      tabIndex={0}
       className="sr-item-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
@@ -167,11 +170,6 @@ export const ItemRow = memo(function ItemRow({ item, computed, onClick, sectionC
         </div>
       )}
 
-      {/* Inline CSS for hover */}
-      <style>{`
-        .sr-item-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
-        div:hover > .move-arrows { opacity: 1 !important; }
-      `}</style>
     </div>
   )
 })

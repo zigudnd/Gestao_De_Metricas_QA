@@ -89,6 +89,7 @@ const NavItem = ({
   onClick?: () => void
 }) => (
   <button
+    aria-label={expanded ? undefined : label}
     title={expanded ? undefined : (disabled ? `${label} — em breve` : label)}
     onClick={disabled ? undefined : onClick}
     style={{

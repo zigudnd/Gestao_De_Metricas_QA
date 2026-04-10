@@ -109,7 +109,7 @@ export function ItemFormModal({ defaultSection, sections, existingItems, onConfi
         padding: 16,
       }}
     >
-      <div ref={modalContentRef} tabIndex={-1} style={{
+      <div ref={modalContentRef} role="dialog" aria-modal="true" aria-label="Novo Item" tabIndex={-1} style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderTop: '3px solid var(--color-blue)',

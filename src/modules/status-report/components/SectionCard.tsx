@@ -49,7 +49,7 @@ export const SectionCard = memo(function SectionCard({
         </span>
         <span style={{
           fontSize: 11, fontWeight: 700, color: section.color,
-          background: section.color + '18',
+          background: `color-mix(in srgb, ${section.color} 10%, transparent)`,
           padding: '2px 8px', borderRadius: 10,
         }}>
           {items.length}
@@ -98,9 +98,6 @@ export const SectionCard = memo(function SectionCard({
           >
             + Adicionar item
           </button>
-          <style>{`
-            .sr-add-item-btn:hover { border-color: var(--section-color) !important; color: var(--section-color) !important; }
-          `}</style>
         </div>
       )}
     </div>

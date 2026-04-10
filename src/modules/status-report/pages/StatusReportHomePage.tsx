@@ -489,6 +489,9 @@ export function StatusReportHomePage() {
                 transition: 'box-shadow 0.15s',
               }}
               onClick={() => navigate(`/status-report/${report.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/status-report/${report.id}`) } }}
+              role="button"
+              tabIndex={0}
               className="sr-home-card-hover"
             >
               {/* Favorite star */}
@@ -647,7 +650,7 @@ export function StatusReportHomePage() {
             padding: 16,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label="Novo Status Report" style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderTop: '3px solid var(--color-blue)',
@@ -726,7 +729,7 @@ export function StatusReportHomePage() {
             padding: 16,
           }}
         >
-          <div style={{
+          <div role="dialog" aria-modal="true" aria-label="Migrar itens" style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderTop: '3px solid var(--color-amber-mid)',

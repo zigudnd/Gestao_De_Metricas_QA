@@ -135,10 +135,6 @@ export function CeremoniaCard({ cerimonia, onRemove, onUpdate }: CeremoniaCardPr
       >
         ×
       </button>
-      <style>{`
-        .cerimonia-edit-btn:hover { opacity: 1 !important; color: var(--color-yellow) !important; }
-        .cerimonia-delete-btn:hover { opacity: 1 !important; color: var(--color-red) !important; }
-      `}</style>
     </div>
   )
 }
