@@ -72,6 +72,7 @@ export function parseFeatureText(text: string, suiteId: number | string): Import
       status: 'Pendente',
       executionDay: '',
       gherkin: sc.gherkin.trim(),
+      blockReason: '',
     }))
     features.push({
       suiteId, name: featureName,
@@ -159,7 +160,7 @@ function buildFromRows(
     }
     featuresMap[featureName].push({
       id: uid(),
-      name: scenarioName, complexity, status: 'Pendente', executionDay: '', gherkin,
+      name: scenarioName, complexity, status: 'Pendente', executionDay: '', gherkin, blockReason: '',
     })
     totalScenarios++
   })

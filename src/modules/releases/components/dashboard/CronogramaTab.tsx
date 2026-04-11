@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, memo } from 'react'
 import type { Release, ReleaseStatus, CalendarSlot } from '../../types/release.types'
 import { showToast } from '@/app/components/Toast'
+import { PLATFORM_ICON, PLATFORM_COLOR, ALL_PLATFORMS, type Platform } from '../../constants/platforms'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,8 +19,6 @@ interface CronogramaTabProps {
   onRemoveCalendarSlot?: (id: string) => void
   onCreateReleaseFromSlot?: (slotId: string) => void
 }
-
-type Platform = 'iOS' | 'Android' | 'Front' | 'BFF' | 'Back' | 'Infra'
 
 interface CronogramaRow {
   releaseNum: number
@@ -64,15 +63,6 @@ function extractReleaseNum(version: string): number {
   return match ? parseInt(match[1], 10) : 0
 }
 
-const PLATFORM_ICON: Record<Platform, string> = {
-  iOS: '🍎', Android: '🤖', Front: '🌐', BFF: '🔗', Back: '🖥', Infra: '☁️',
-}
-
-const PLATFORM_COLOR: Record<Platform, string> = {
-  iOS: '#555', Android: '#3dba4e', Front: '#3b82f6', BFF: '#8b5cf6', Back: '#2C2C2A', Infra: '#06b6d4',
-}
-
-const ALL_PLATFORMS: Platform[] = ['iOS', 'Android', 'Front', 'BFF', 'Back', 'Infra']
 
 function normalizePlatform(name: string): Platform {
   const lower = name.toLowerCase().trim()

@@ -18,6 +18,7 @@ interface Milestone {
   dateEnd?: string
   color: string
   position: number // 0–100%
+  labelBelow?: boolean // collision avoidance flag
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -126,6 +127,17 @@ export function ReleaseTimeline({
       })
     }
 
+    // Collision detection: alternate labels above/below when milestones are too close
+    const COLLISION_THRESHOLD = 12 // percentage distance
+    const sorted = [...milestones].sort((a, b) => a.position - b.position)
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].position - sorted[i - 1].position < COLLISION_THRESHOLD) {
+        // If the previous one is above (default), push this one below; alternate
+        sorted[i].labelBelow = !sorted[i - 1].labelBelow
+      }
+    }
+    // Apply labelBelow back to milestones array (they share same object references)
+
     const today = todayISO()
     const todayDate = parseDate(today)
     const todayPos = (() => {
@@ -154,7 +166,7 @@ export function ReleaseTimeline({
   const { milestones, todayPos, fillPct, isPastProduction } = data
 
   const BAR_HEIGHT = 36
-  const BAR_TOP = 28
+  const BAR_TOP = 32
 
   return (
     <div style={{
@@ -173,7 +185,7 @@ export function ReleaseTimeline({
       )}
 
       {/* Timeline bar area */}
-      <div style={{ position: 'relative', minHeight: BAR_TOP + BAR_HEIGHT + 30, marginBottom: 8 }}>
+      <div style={{ position: 'relative', minHeight: BAR_TOP + BAR_HEIGHT + 40, marginBottom: 8 }}>
         {/* Background bar — rounded pill */}
         <div style={{
           position: 'absolute', top: BAR_TOP, left: 0, right: 0,
@@ -191,51 +203,113 @@ export function ReleaseTimeline({
         }} />
 
         {/* Milestones */}
-        {milestones.map((m) => (
-          <div
-            key={m.key}
-            style={{
-              position: 'absolute',
-              left: `${m.position}%`,
-              transform: 'translateX(-50%)',
-              top: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              width: 'max-content',
-            }}
-          >
-            {/* Label above */}
-            <div style={{
-              fontSize: 8, fontWeight: 600, color: m.color,
-              whiteSpace: 'nowrap', marginBottom: 4,
-              textTransform: 'uppercase',
-            }}>
-              {m.label}
-            </div>
+        {milestones.map((m) => {
+          const dateLabel = m.dateEnd
+            ? `${formatDateBR(m.date)}–${formatDateBR(m.dateEnd)}`
+            : formatDateBR(m.date)
+          const tooltipText = `${m.label} — ${dateLabel}`
 
-            {/* Dot — positioned inside the bar */}
-            <div style={{
-              width: 12, height: 12, borderRadius: '50%',
-              background: m.color,
-              border: '2px solid var(--color-bg)',
-              position: 'relative', zIndex: 2,
-              marginTop: (BAR_HEIGHT - 12) / 2,
-            }} />
+          if (m.labelBelow) {
+            // Label rendered below the bar to avoid collision
+            return (
+              <div
+                key={m.key}
+                style={{
+                  position: 'absolute',
+                  left: `${m.position}%`,
+                  transform: 'translateX(-50%)',
+                  top: BAR_TOP,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  width: 'max-content',
+                }}
+              >
+                {/* Dot — centered in the bar */}
+                <div
+                  title={tooltipText}
+                  style={{
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: m.color,
+                    border: '2px solid var(--color-bg)',
+                    position: 'relative', zIndex: 2,
+                    marginTop: (BAR_HEIGHT - 12) / 2,
+                    cursor: 'default',
+                  }}
+                />
 
-            {/* Date below — show range for homolog */}
-            <div style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: 'var(--color-text-2)',
-              fontFamily: 'var(--font-family-mono)',
-              marginTop: (BAR_HEIGHT - 12) / 2 + 4,
-              whiteSpace: 'nowrap',
-            }}>
-              {m.dateEnd
-                ? `${formatDateBR(m.date)}–${formatDateBR(m.dateEnd)}`
-                : formatDateBR(m.date)}
+                {/* Label below the bar */}
+                <div style={{
+                  fontSize: 8, fontWeight: 600, color: m.color,
+                  whiteSpace: 'nowrap',
+                  textTransform: 'uppercase',
+                  marginTop: (BAR_HEIGHT - 12) / 2 + 4,
+                }}>
+                  {m.label}
+                </div>
+
+                {/* Date below label */}
+                <div style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: 'var(--color-text-2)',
+                  fontFamily: 'var(--font-family-mono)',
+                  marginTop: 2,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {dateLabel}
+                </div>
+              </div>
+            )
+          }
+
+          // Default: label above the bar
+          return (
+            <div
+              key={m.key}
+              style={{
+                position: 'absolute',
+                left: `${m.position}%`,
+                transform: 'translateX(-50%)',
+                top: 0,
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                width: 'max-content',
+              }}
+            >
+              {/* Label above */}
+              <div style={{
+                fontSize: 8, fontWeight: 600, color: m.color,
+                whiteSpace: 'nowrap', marginBottom: 4,
+                textTransform: 'uppercase',
+              }}>
+                {m.label}
+              </div>
+
+              {/* Date above (under label) */}
+              <div style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: 'var(--color-text-2)',
+                fontFamily: 'var(--font-family-mono)',
+                marginBottom: 4,
+                whiteSpace: 'nowrap',
+              }}>
+                {dateLabel}
+              </div>
+
+              {/* Dot — positioned inside the bar */}
+              <div
+                title={tooltipText}
+                style={{
+                  width: 12, height: 12, borderRadius: '50%',
+                  background: m.color,
+                  border: '2px solid var(--color-bg)',
+                  position: 'relative', zIndex: 2,
+                  marginTop: (BAR_HEIGHT - 12) / 2 - 8,
+                  cursor: 'default',
+                }}
+              />
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Today indicator */}
         {todayPos >= 0 && todayPos <= 100 && !isPastProduction && (

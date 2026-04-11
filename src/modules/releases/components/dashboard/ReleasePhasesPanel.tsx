@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Release, ReleaseStatus } from '../../types/release.types'
 
 interface ReleasePhasesPanelProps {
@@ -72,8 +72,18 @@ const selectSm: React.CSSProperties = {
 
 export function ReleasePhasesPanel({ release, onUpdateField, onTransition }: ReleasePhasesPanelProps) {
   const [editingPhase, setEditingPhase] = useState<string | null>(null)
+  const [confirmingPhase, setConfirmingPhase] = useState<number | null>(null)
   const currentIdx = getPhaseIndex(release.status)
   const isConcluida = release.status === 'concluida'
+
+  const cancelConfirmation = useCallback(() => setConfirmingPhase(null), [])
+
+  // Auto-cancel confirmation after 5 seconds
+  useEffect(() => {
+    if (confirmingPhase === null) return
+    const timer = setTimeout(cancelConfirmation, 5000)
+    return () => clearTimeout(timer)
+  }, [confirmingPhase, cancelConfirmation])
 
   return (
     <div style={{
@@ -164,34 +174,100 @@ export function ReleasePhasesPanel({ release, onUpdateField, onTransition }: Rel
                 {/* Action buttons — always visible */}
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                   {isNext && !isConcluida && (
-                    <button
-                      onClick={() => onTransition(phase.statusWhenActive)}
-                      aria-label={`Iniciar ${phase.label}`}
-                      style={{
-                        padding: '6px 14px', borderRadius: 7, border: 'none',
-                        background: phase.color, color: '#fff',
-                        fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                        fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
-                        transition: 'all 0.15s', minHeight: 36,
-                      }}
-                    >
-                      ▶ Iniciar
-                    </button>
+                    confirmingPhase === i ? (
+                      <>
+                        <button
+                          onClick={() => { setConfirmingPhase(null); onTransition(phase.statusWhenActive) }}
+                          aria-label={`Confirmar iniciar ${phase.label}`}
+                          style={{
+                            padding: '6px 14px', borderRadius: 7, border: 'none',
+                            background: 'var(--color-amber-mid)', color: '#fff',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                            transition: 'all 0.15s', minHeight: 36,
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                          }}
+                        >
+                          Confirmar?
+                        </button>
+                        <button
+                          onClick={cancelConfirmation}
+                          aria-label="Cancelar"
+                          style={{
+                            padding: '6px 10px', borderRadius: 7,
+                            border: '1px solid var(--color-border-md)',
+                            background: 'var(--color-surface)', color: 'var(--color-text-2)',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                            transition: 'all 0.15s', minHeight: 36,
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmingPhase(i)}
+                        aria-label={`Iniciar ${phase.label}`}
+                        style={{
+                          padding: '6px 14px', borderRadius: 7, border: 'none',
+                          background: phase.color, color: '#fff',
+                          fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                          fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                          transition: 'all 0.15s', minHeight: 36,
+                        }}
+                      >
+                        ▶ Iniciar
+                      </button>
+                    )
                   )}
                   {state === 'active' && i < PHASES.length - 1 && !isConcluida && (
-                    <button
-                      onClick={() => onTransition(PHASES[i + 1].statusWhenActive)}
-                      aria-label={`Concluir ${phase.label}`}
-                      style={{
-                        padding: '6px 14px', borderRadius: 7, border: 'none',
-                        background: 'var(--color-green-mid)', color: '#fff',
-                        fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                        fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
-                        transition: 'all 0.15s', minHeight: 36,
-                      }}
-                    >
-                      ✓ Concluir
-                    </button>
+                    confirmingPhase === i ? (
+                      <>
+                        <button
+                          onClick={() => { setConfirmingPhase(null); onTransition(PHASES[i + 1].statusWhenActive) }}
+                          aria-label={`Confirmar concluir ${phase.label}`}
+                          style={{
+                            padding: '6px 14px', borderRadius: 7, border: 'none',
+                            background: 'var(--color-amber-mid)', color: '#fff',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                            transition: 'all 0.15s', minHeight: 36,
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                          }}
+                        >
+                          Confirmar?
+                        </button>
+                        <button
+                          onClick={cancelConfirmation}
+                          aria-label="Cancelar"
+                          style={{
+                            padding: '6px 10px', borderRadius: 7,
+                            border: '1px solid var(--color-border-md)',
+                            background: 'var(--color-surface)', color: 'var(--color-text-2)',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                            transition: 'all 0.15s', minHeight: 36,
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmingPhase(i)}
+                        aria-label={`Concluir ${phase.label}`}
+                        style={{
+                          padding: '6px 14px', borderRadius: 7, border: 'none',
+                          background: 'var(--color-green-mid)', color: '#fff',
+                          fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                          fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+                          transition: 'all 0.15s', minHeight: 36,
+                        }}
+                      >
+                        ✓ Concluir
+                      </button>
+                    )
                   )}
                 </div>
 
@@ -283,19 +359,52 @@ export function ReleasePhasesPanel({ release, onUpdateField, onTransition }: Rel
             </span>
           </div>
           {release.rolloutPct >= 100 && !isConcluida && (
-            <button
-              onClick={() => onTransition('concluida')}
-              aria-label="Concluir release"
-              style={{
-                marginTop: 10, padding: '7px 16px', borderRadius: 7, border: 'none',
-                background: 'var(--color-green-mid)', color: '#fff',
-                fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-                transition: 'all 0.15s', minHeight: 36,
-              }}
-            >
-              ✓ Concluir Release (100% distribuído)
-            </button>
+            confirmingPhase === -1 ? (
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                <button
+                  onClick={() => { setConfirmingPhase(null); onTransition('concluida') }}
+                  aria-label="Confirmar concluir release"
+                  style={{
+                    padding: '7px 16px', borderRadius: 7, border: 'none',
+                    background: 'var(--color-amber-mid)', color: '#fff',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                    transition: 'all 0.15s', minHeight: 36,
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }}
+                >
+                  Confirmar conclusão?
+                </button>
+                <button
+                  onClick={cancelConfirmation}
+                  aria-label="Cancelar"
+                  style={{
+                    padding: '7px 12px', borderRadius: 7,
+                    border: '1px solid var(--color-border-md)',
+                    background: 'var(--color-surface)', color: 'var(--color-text-2)',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                    transition: 'all 0.15s', minHeight: 36,
+                  }}
+                >
+                  ✕ Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingPhase(-1)}
+                aria-label="Concluir release"
+                style={{
+                  marginTop: 10, padding: '7px 16px', borderRadius: 7, border: 'none',
+                  background: 'var(--color-green-mid)', color: '#fff',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'all 0.15s', minHeight: 36,
+                }}
+              >
+                ✓ Concluir Release (100% distribuído)
+              </button>
+            )
           )}
         </div>
       )}

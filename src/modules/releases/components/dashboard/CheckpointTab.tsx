@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { showToast } from '@/app/components/Toast'
 import type { Release, ReleaseStatus } from '../../types/release.types'
+import { PLATFORM_ICON, PLATFORM_COLOR, type Platform } from '../../constants/platforms'
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -143,15 +144,6 @@ function getPhaseDates(release: Release): string[] {
   ]
 }
 
-type Platform = 'iOS' | 'Android' | 'Front' | 'BFF' | 'Back' | 'Infra'
-
-const PLATFORM_ICON: Record<Platform, string> = {
-  iOS: '🍎', Android: '🤖', Front: '🌐', BFF: '🔗', Back: '🖥', Infra: '☁️',
-}
-
-const PLATFORM_COLOR: Record<Platform, string> = {
-  iOS: '#555', Android: '#3dba4e', Front: '#3b82f6', BFF: '#8b5cf6', Back: '#2C2C2A', Infra: '#06b6d4',
-}
 
 function detectPlatform(release: Release): Platform | null {
   const platforms = getReleasePlatforms(release)

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { Suite, Feature, TestCase } from '@/modules/sprints/types/sprint.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
 import { ReleaseFeatureRow } from './ReleaseFeatureRow'
+import { ActionBtn, IconTrash } from '../shared/ActionBtn'
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -200,48 +201,12 @@ export function ReleaseSuiteCard({
   )
 }
 
-// ─── Shared sub-components ──────────────────────────────────────────────────
-
-function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
-  const [hov, setHov] = useState(false)
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 6,
-        borderRadius: 6,
-        cursor: 'pointer',
-        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </button>
-  )
-}
+// ─── Local sub-components ───────────────────────────────────────────────────
 
 function IconEdit() {
   return (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M10.5 2.5l2 2L5 12H3v-2L10.5 2.5z"/>
-    </svg>
-  )
-}
-
-function IconTrash() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
     </svg>
   )
 }

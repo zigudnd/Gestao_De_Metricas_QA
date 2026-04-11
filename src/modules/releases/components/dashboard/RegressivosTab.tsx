@@ -300,7 +300,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 18 }}>
         {[
           { label: 'Versoes ativas', value: kpis.total, color: 'var(--color-blue)', sub: 'com regressivo' },
           { label: 'Bloqueadas', value: kpis.bloqueado, color: 'var(--color-red)', sub: 'impeditivos' },
@@ -333,11 +333,11 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
 
       {/* Table */}
       {filtered.length > 0 && (
-        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflowX: 'auto' }}>
           {/* Header */}
           <div style={{
             display: 'grid', gridTemplateColumns: '140px 80px 1fr 90px 100px 90px 36px',
-            padding: '10px 14px', background: 'var(--color-surface-2)',
+            padding: '10px 14px', background: 'var(--color-surface-2)', minWidth: 700,
             borderBottom: '1px solid var(--color-border)',
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.35px', color: 'var(--color-text-2)',
           }}>
@@ -365,7 +365,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                   className={isOpen ? '' : 'regressivos-row'}
                   style={{
                     display: 'grid', gridTemplateColumns: '140px 80px 1fr 90px 100px 90px 36px',
-                    padding: '11px 14px', borderBottom: '1px solid var(--color-border)',
+                    padding: '11px 14px', borderBottom: '1px solid var(--color-border)', minWidth: 700,
                     cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center',
                     background: isOpen ? 'var(--color-blue-light)' : 'var(--color-surface)',
                   }}
@@ -408,7 +408,7 @@ export function RegressivosTab({ releases, onReleaseClick }: RegressivosTabProps
                 {isOpen && (
                   <div style={{ padding: '16px 18px', background: 'var(--color-blue-light)', borderBottom: '1px solid var(--color-border)' }}>
                     {/* KPIs detalhados */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
                       {[
                         { label: 'Total', value: row.totalTests, color: 'var(--color-text)' },
                         { label: 'Executados', value: row.executedTests, color: 'var(--color-blue)' },

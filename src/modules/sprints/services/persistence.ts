@@ -69,6 +69,7 @@ export const DEFAULT_STATE: SprintState = {
           status: 'Pendente',
           executionDay: '',
           gherkin: '',
+          blockReason: '',
         },
       ],
     },

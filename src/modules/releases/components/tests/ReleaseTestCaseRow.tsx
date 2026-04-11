@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { TestCase, TestCaseStatus, TestCaseComplexity } from '@/modules/sprints/types/sprint.types'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { ActionBtn, IconTrash } from '../shared/ActionBtn'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -43,16 +44,38 @@ export function ReleaseTestCaseRow({
   onUpdate, onRemove, onBugRequest,
 }: Props) {
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pendingFalhou, setPendingFalhou] = useState(false)
+  const [blockModal, setBlockModal] = useState(false)
+  const [blockReason, setBlockReason] = useState('')
 
   const borderColor = STATUS_COLORS[testCase.status] ?? 'var(--color-blue)'
 
   function handleStatusChange(newStatus: TestCaseStatus) {
     if (newStatus === 'Falhou') {
-      onUpdate(caseIndex, 'status', 'Falhou')
-      onBugRequest(featureName, testCase.name)
+      setPendingFalhou(true)
+    } else if (newStatus === 'Bloqueado') {
+      setBlockReason(testCase.blockReason || '')
+      setBlockModal(true)
     } else {
       onUpdate(caseIndex, 'status', newStatus)
+      onUpdate(caseIndex, 'blockReason', '')
     }
+  }
+
+  function confirmFalhou() {
+    onUpdate(caseIndex, 'status', 'Falhou')
+    onBugRequest(featureName, testCase.name)
+    setPendingFalhou(false)
+  }
+
+  function cancelFalhou() {
+    setPendingFalhou(false)
+  }
+
+  function confirmBlock() {
+    onUpdate(caseIndex, 'status', 'Bloqueado')
+    onUpdate(caseIndex, 'blockReason', blockReason.trim())
+    setBlockModal(false)
   }
 
   return (
@@ -125,6 +148,79 @@ export function ReleaseTestCaseRow({
         </div>
       </div>
 
+      {/* Inline confirmation for "Falhou" status */}
+      {pendingFalhou && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '8px 12px',
+          marginBottom: 10,
+          background: 'var(--color-red-light)',
+          border: '1px solid var(--color-red-mid)',
+          borderRadius: 8,
+          fontSize: 13,
+          color: 'var(--color-text)',
+        }}>
+          <span style={{ fontWeight: 600, flex: 1 }}>
+            Marcar como falhou e criar bug para &quot;{testCase.name || 'Sem título'}&quot;?
+          </span>
+          <button
+            onClick={confirmFalhou}
+            style={{
+              padding: '5px 14px',
+              borderRadius: 6,
+              border: 'none',
+              background: 'var(--color-red)',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+            }}
+          >
+            Confirmar
+          </button>
+          <button
+            onClick={cancelFalhou}
+            style={{
+              padding: '5px 14px',
+              borderRadius: 6,
+              border: '1px solid var(--color-border-md)',
+              background: 'transparent',
+              color: 'var(--color-text-2)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+            }}
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      {/* Block reason display when status is Bloqueado */}
+      {testCase.status === 'Bloqueado' && testCase.blockReason && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 10px',
+          marginBottom: 10,
+          background: 'var(--color-amber-light)',
+          border: '1px solid var(--color-amber-mid)',
+          borderRadius: 6,
+          fontSize: 12,
+          color: 'var(--color-text)',
+        }}>
+          <span style={{ fontWeight: 700, color: 'var(--color-amber)', textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.5px' }}>
+            Bloqueio:
+          </span>
+          <span style={{ flex: 1 }}>{testCase.blockReason}</span>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <textarea
           value={testCase.gherkin}
@@ -162,44 +258,51 @@ export function ReleaseTestCaseRow({
           onCancel={() => setConfirmRemove(false)}
         />
       )}
+
+      {/* Block reason modal — same pattern as ReleaseFeatureRow */}
+      {blockModal && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setBlockModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div role="dialog" aria-modal="true" aria-label="Bloquear Caso de Teste" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-amber)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>Bloquear Caso de Teste</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Informe o motivo do bloqueio de <strong>&quot;{testCase.name || 'Sem título'}&quot;</strong>.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Motivo do Bloqueio *
+              </label>
+              <textarea
+                autoFocus
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Descreva o motivo do bloqueio..."
+                rows={3}
+                onKeyDown={(e) => { if (e.key === 'Escape') setBlockModal(false) }}
+                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 13, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', resize: 'vertical', boxSizing: 'border-box', width: '100%' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setBlockModal(false)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={!blockReason.trim()}
+                onClick={confirmBlock}
+                style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: 'var(--color-amber)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: blockReason.trim() ? 'pointer' : 'not-allowed', opacity: blockReason.trim() ? 1 : 0.5, fontFamily: 'var(--font-family-sans)' }}
+              >
+                Confirmar Bloqueio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
-
-// ─── Shared sub-components ──────────────────────────────────────────────────
-
-function ActionBtn({ onClick, title, children, danger }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean }>) {
-  const [hov, setHov] = useState(false)
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background: hov ? (danger ? 'var(--color-red-light)' : 'var(--color-bg)') : 'none',
-        border: 'none',
-        padding: 6,
-        borderRadius: 6,
-        cursor: 'pointer',
-        color: hov && danger ? 'var(--color-red)' : 'var(--color-text-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function IconTrash() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 4h13M5 4V2h5v2M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9"/>
-    </svg>
   )
 }
 

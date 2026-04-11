@@ -10,50 +10,12 @@ import { CronogramaTab } from '../components/dashboard/CronogramaTab'
 import { EventsTab, DEFAULT_EVENTS, type CalendarEvent } from '../components/dashboard/EventsTab'
 import { RegressivosTab } from '../components/dashboard/RegressivosTab'
 import { uid } from '@/lib/uid'
+import { STATUS_LABELS, STATUS_COLORS } from '../constants/status'
+import { fmtDateFull } from '../utils/dateFormat'
 
 type HomeTab = 'checkpoint' | 'regressivos' | 'historico' | 'cronograma' | 'eventos'
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<ReleaseStatus, string> = {
-  planejada: 'Planejada',
-  em_desenvolvimento: 'Em Desenvolvimento',
-  corte: 'Corte',
-  em_homologacao: 'Em Homologação',
-  em_regressivo: 'Em Regressivo',
-  em_qa: 'Em QA',
-  aguardando_aprovacao: 'Aguardando Aprovação',
-  aprovada: 'Aprovada',
-  em_producao: 'Em Produção',
-  concluida: 'Concluída',
-  uniu_escopo: 'Uniu Escopo',
-  rollback: 'Rollback',
-  cancelada: 'Cancelada',
-}
-
-const STATUS_COLORS: Record<ReleaseStatus, string> = {
-  planejada: 'var(--color-text-3)',
-  em_desenvolvimento: 'var(--color-blue)',
-  corte: '#8b5cf6',
-  em_homologacao: 'var(--color-amber)',
-  em_regressivo: '#f97316',
-  em_qa: '#06b6d4',
-  aguardando_aprovacao: '#eab308',
-  aprovada: 'var(--color-green)',
-  em_producao: '#06b6d4',
-  concluida: 'var(--color-green)',
-  uniu_escopo: '#8b5cf6',
-  rollback: '#ef4444',
-  cancelada: 'var(--color-text-3)',
-}
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function formatDateBR(dateStr: string): string {
-  if (!dateStr) return '--'
-  const [y, m, d] = dateStr.split('-')
-  return `${d}/${m}/${y}`
-}
+const formatDateBR = fmtDateFull
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -84,10 +46,12 @@ export function ReleasesPage() {
   const {
     releases, load, addRelease, updateRelease, deleteRelease,
     calendarSlots, loadCalendarSlots, addCalendarSlot, removeCalendarSlot, updateCalendarSlot, linkSlotToRelease,
+    syncStatus,
   } = useReleaseStore()
 
   const [homeTab, setHomeTab] = useState<HomeTab>('checkpoint')
   const [loading, setLoading] = useState(true)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   // Events state (localStorage)
   const EVENTS_KEY = 'releaseCalendarEvents'
@@ -123,16 +87,30 @@ export function ReleasesPage() {
     // If localStorage is empty (first visit), wait for Supabase sync then re-load
     const currentReleases = useReleaseStore.getState().releases
     if (currentReleases.length === 0) {
+      setSyncError(null)
       syncAllReleases().then(() => {
         load()
         setLoading(false)
       }).catch(() => {
+        setSyncError('Falha ao sincronizar releases. Verifique sua conexão e tente novamente.')
         setLoading(false)
       })
     } else {
       setLoading(false)
     }
   }, []) // eslint-disable-line
+
+  function handleRetrySync() {
+    setLoading(true)
+    setSyncError(null)
+    syncAllReleases().then(() => {
+      load()
+      setLoading(false)
+    }).catch(() => {
+      setSyncError('Falha ao sincronizar releases. Verifique sua conexão e tente novamente.')
+      setLoading(false)
+    })
+  }
 
   // ── Sorted releases ─────────────────────────────────────────────────────
 
@@ -291,13 +269,50 @@ export function ReleasesPage() {
             Acompanhe o ciclo de homologação e produção das suas releases
           </p>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {syncStatus === 'saving' && (
+            <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>Salvando...</span>
+          )}
+          {syncStatus === 'saved' && (
+            <span style={{ fontSize: 12, color: 'var(--color-green)' }}>Salvo</span>
+          )}
+          {syncStatus === 'error' && (
+            <span style={{ fontSize: 12, color: 'var(--color-red)' }}>Erro ao salvar</span>
+          )}
+          <button
+            onClick={() => { setEditId(null); setShowModal(true); setFormName(''); setFormVersion(''); setFormCutoff(''); setFormHomoStart(''); setFormHomoEnd(''); setFormProdDate(''); setFormErrors([]); setFromSlotId(null) }}
+            style={{
+              padding: '8px 16px', borderRadius: 8, border: 'none',
+              background: 'var(--color-blue)', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            + Nova Release
+          </button>
+        </div>
       </div>
+
+      {/* Error banner */}
+      {syncError && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/40 dark:text-red-300 mb-4">
+          <span>{syncError}</span>
+          <button
+            onClick={handleRetrySync}
+            className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div role="tablist" aria-label="Abas de Releases" style={{
         display: 'flex', gap: 0,
         borderBottom: '1px solid var(--color-border)',
         marginBottom: 20,
+        overflowX: 'auto',
       }}>
         {([
           { id: 'checkpoint' as HomeTab, label: 'Checkpoint' },
@@ -319,6 +334,7 @@ export function ReleasesPage() {
               fontWeight: homeTab === tab.id ? 700 : 500,
               fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
               fontFamily: 'var(--font-family-sans)', marginBottom: -1,
+              flexShrink: 0,
             }}
           >
             {tab.label}

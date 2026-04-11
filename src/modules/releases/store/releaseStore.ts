@@ -21,6 +21,24 @@ import {
 import { logAudit } from '@/lib/auditService'
 import { uid } from '@/lib/uid'
 
+// ─── Valid status transitions ────────────────────────────────────────────────
+
+export const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
+  planejada: ['em_desenvolvimento', 'cancelada'],
+  em_desenvolvimento: ['corte', 'cancelada'],
+  corte: ['em_homologacao', 'em_qa', 'cancelada'],
+  em_homologacao: ['em_regressivo', 'cancelada'],
+  em_qa: ['em_regressivo', 'aguardando_aprovacao', 'cancelada'],
+  em_regressivo: ['aprovada', 'aguardando_aprovacao', 'cancelada'],
+  aguardando_aprovacao: ['aprovada', 'em_regressivo', 'cancelada'],
+  aprovada: ['em_producao', 'cancelada'],
+  em_producao: ['concluida', 'rollback'],
+  concluida: [],
+  rollback: ['em_desenvolvimento', 'cancelada'],
+  cancelada: ['planejada'],
+  uniu_escopo: ['em_desenvolvimento'],
+}
+
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
 
 let _remotePersistTimeout: ReturnType<typeof setTimeout> | null = null
@@ -29,19 +47,25 @@ let _remotePersistQueued = false
 let _cleanupRealtime: (() => void) | null = null
 let _lastPendingState: Release | null = null
 let _lastPersistedAt: string | null = null
+let _syncResetTimeout: ReturnType<typeof setTimeout> | null = null
 
 async function doPersistToServer(release: Release, updatedAt?: string) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
+  useReleaseStore.setState({ syncStatus: 'saving' })
   // Save and clear pending state locally — new calls may set it again while we await
   const pendingSnapshot = _lastPendingState
   _lastPendingState = null
   try {
     await persistToServer(release, updatedAt)
+    useReleaseStore.setState({ syncStatus: 'saved' })
+    if (_syncResetTimeout) clearTimeout(_syncResetTimeout)
+    _syncResetTimeout = setTimeout(() => useReleaseStore.setState({ syncStatus: 'idle' }), 3000)
   } catch (e) {
     if (import.meta.env.DEV) console.error('[Release] Erro ao sincronizar:', e)
     _lastPendingState = _lastPendingState ?? release
+    useReleaseStore.setState({ syncStatus: 'error' })
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued) {
@@ -55,6 +79,7 @@ async function doPersistToServer(release: Release, updatedAt?: string) {
 function queueRemotePersist(release: Release, delay = 2500, updatedAt?: string) {
   if (_remotePersistTimeout) clearTimeout(_remotePersistTimeout)
   _lastPendingState = release
+  useReleaseStore.setState({ syncStatus: 'saving' })
   _remotePersistTimeout = setTimeout(() => doPersistToServer(release, updatedAt), delay)
 }
 
@@ -119,6 +144,7 @@ interface ReleaseStore {
   release: Release
   isLoading: boolean
   lastSaved: number
+  syncStatus: 'idle' | 'saving' | 'saved' | 'error'
 
   // List-mode operations
   load: () => void
@@ -160,7 +186,7 @@ interface ReleaseStore {
   updateTestCase: (squadId: string, featureIndex: number, caseIndex: number, field: keyof TestCase, value: unknown) => void
 
   // Squad-level: Bugs
-  addBug: (squadId: string) => void
+  addBug: (squadId: string, initialFields?: Partial<Bug>) => void
   removeBug: (squadId: string, bugIndex: number) => void
   updateBug: (squadId: string, bugIndex: number, field: keyof Bug, value: unknown) => void
 
@@ -241,6 +267,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   release: structuredClone(EMPTY_RELEASE),
   isLoading: false,
   lastSaved: 0,
+  syncStatus: 'idle',
 
   // ── List-mode operations ───────────────────────────────────────────────────
 
@@ -405,6 +432,26 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   updateStatus: (status, reason = '') => {
     const { release, _commit } = get()
     const oldStatus = release.status
+
+    // Validate transition
+    const allowed = VALID_TRANSITIONS[oldStatus]
+    if (allowed) {
+      if (!allowed.includes(status)) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[Release] Transição inválida bloqueada: "${oldStatus}" → "${status}". ` +
+            `Transições permitidas: [${allowed.join(', ')}]`,
+          )
+        }
+        return
+      }
+    } else if (import.meta.env.DEV) {
+      // Unknown source state — allow but warn
+      console.warn(
+        `[Release] Estado de origem desconhecido "${oldStatus}". Transição para "${status}" permitida por fallback.`,
+      )
+    }
+
     const change = {
       from: oldStatus,
       to: status,
@@ -530,6 +577,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
           status: 'Pendente',
           executionDay: '',
           gherkin: '',
+          blockReason: '',
         }
         return { ...f, cases: [...f.cases, newCase] }
       }),
@@ -565,7 +613,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
 
   // ── Squad-level: Bugs ──────────────────────────────────────────────────────
 
-  addBug: (squadId) => {
+  addBug: (squadId, initialFields) => {
     const { release, _commit } = get()
     _commit(mapSquad(release, squadId, (sq) => ({
       ...sq,
@@ -578,6 +626,7 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
         assignee: '',
         status: 'Aberto' as const,
         retests: 0,
+        ...initialFields,
       }],
     })))
   },

@@ -35,7 +35,7 @@ interface Props {
   onRemoveTestCase: (featureIndex: number, caseIndex: number) => void
   onUpdateTestCase: (featureIndex: number, caseIndex: number, field: keyof TestCase, value: unknown) => void
   // Bug actions
-  onAddBug: () => void
+  onAddBug: (initialFields?: Partial<Bug>) => void
   onRemoveBug: (bugIndex: number) => void
   onUpdateBug: (bugIndex: number, field: keyof Bug, value: unknown) => void
   // Import
@@ -204,19 +204,16 @@ export function SquadTestArea({
           currentDate={new Date().toISOString().split('T')[0]}
           initialDraft={{ feature: bugModalDefaults.feature, desc: bugModalDefaults.desc }}
           onConfirm={(draft) => {
-            onAddBug()
-            // The store adds a blank bug, so we update it immediately with draft values
-            const newBugIdx = bugs.length // will be the newly added bug
-            setTimeout(() => {
-              onUpdateBug(newBugIdx, 'desc', draft.desc)
-              onUpdateBug(newBugIdx, 'feature', draft.feature)
-              onUpdateBug(newBugIdx, 'stack', draft.stack)
-              onUpdateBug(newBugIdx, 'severity', draft.severity)
-              onUpdateBug(newBugIdx, 'assignee', draft.assignee)
-              onUpdateBug(newBugIdx, 'status', draft.status)
-              if (draft.notes) onUpdateBug(newBugIdx, 'notes', draft.notes)
-              if (draft.openedAt) onUpdateBug(newBugIdx, 'openedAt', draft.openedAt)
-            }, 50)
+            onAddBug({
+              desc: draft.desc,
+              feature: draft.feature,
+              stack: draft.stack,
+              severity: draft.severity,
+              assignee: draft.assignee,
+              status: draft.status,
+              ...(draft.notes ? { notes: draft.notes } : {}),
+              ...(draft.openedAt ? { openedAt: draft.openedAt } : {}),
+            })
             setBugModalOpen(false)
           }}
           onCancel={() => setBugModalOpen(false)}

@@ -10,6 +10,7 @@ export interface TestCase {
   status: TestCaseStatus
   executionDay: string   // 'D1', 'D2', ... ou ''
   gherkin: string
+  blockReason: string
 }
 
 // ─── Feature ──────────────────────────────────────────────────────────────────

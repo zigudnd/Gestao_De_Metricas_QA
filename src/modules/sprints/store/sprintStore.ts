@@ -326,7 +326,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const { state, _commit } = get()
     const newCase: TestCase = {
       id: uid(),
-      name: '', complexity: 'Baixa', status: 'Pendente', executionDay: '', gherkin: '',
+      name: '', complexity: 'Baixa', status: 'Pendente', executionDay: '', gherkin: '', blockReason: '',
     }
     const features = state.features.map((f, i) =>
       i === fi ? { ...f, cases: [...(f.cases ?? []), newCase] } : f
