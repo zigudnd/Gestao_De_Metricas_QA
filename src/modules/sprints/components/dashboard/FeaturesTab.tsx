@@ -196,12 +196,14 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
         </div>
       )}
 
-      {/* Suite management */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button onClick={() => addSuite()} style={btnOutline}>
-          + Nova Suite
-        </button>
-      </div>
+      {/* Suite management — oculto em sprints integradas (suites = squads automáticos) */}
+      {!isIntegrated && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button onClick={() => addSuite()} style={btnOutline}>
+            + Nova Suite
+          </button>
+        </div>
+      )}
 
       {/* Suites with features */}
       {suites.map((suite, sIndex) => (
@@ -213,7 +215,24 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
           onRename={(name) => updateSuite(sIndex, 'name', name)}
           onRemove={() => removeSuite(sIndex)}
           onDuplicate={() => duplicateSuite(sIndex)}
-          onAddFeature={() => addFeature(suite.id)}
+          onAddFeature={() => {
+            addFeature(suite.id)
+            // Auto-set squadId for integrated sprints based on suite name matching squad
+            if (isIntegrated && availableSquads) {
+              const matchingSquad = availableSquads.find((sq) => sq.name.toLowerCase() === suite.name.toLowerCase())
+              if (matchingSquad) {
+                const { state: s } = useSprintStore.getState()
+                const newFeatureIdx = s.features.filter((f) => String(f.suiteId) === String(suite.id)).length - 1
+                const globalIdx = s.features.findIndex((f, i) => {
+                  const sameFeatures = s.features.filter((ff) => String(ff.suiteId) === String(suite.id))
+                  return sameFeatures[newFeatureIdx] === f
+                })
+                if (globalIdx >= 0) {
+                  useSprintStore.getState().updateFeature(globalIdx, 'squadId', matchingSquad.id)
+                }
+              }
+            }
+          }}
           isIntegrated={isIntegrated}
           availableSquads={availableSquads}
         />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useSprintStore } from '../store/sprintStore'
 import { loadFromStorage, loadFromServer, getMasterIndex, DEFAULT_STATE } from '../services/persistence'
@@ -13,6 +13,7 @@ import { ReportTab } from '../components/dashboard/ReportTab'
 import { IntegratedSquadsPanel } from '../components/dashboard/IntegratedSquadsPanel'
 import type { SprintIndexEntry } from '../types/sprint.types'
 import { supabase } from '@/lib/supabase'
+import { uid } from '@/lib/uid'
 
 type TabId = 'overview' | 'config' | 'features' | 'bugs' | 'blockers' | 'alignments' | 'notes' | 'report'
 
@@ -96,6 +97,27 @@ export function SprintDashboard() {
     fetchSquadsWithApprovedPRs()
     return () => { cancelled = true }
   }, [isIntegrated, sprintEntry?.releaseId])
+
+  // Auto-create suites from approved squads (one suite per squad) — runs once
+  const suitesCreatedRef = useRef(false)
+  useEffect(() => {
+    if (!isIntegrated || availableSquads.length === 0 || suitesCreatedRef.current) return
+    const currentState = useSprintStore.getState().state
+    if (!currentState) return
+
+    const existingSuiteNames = new Set(currentState.suites.map((s) => s.name.toLowerCase()))
+    const missingSquads = availableSquads.filter((sq) => !existingSuiteNames.has(sq.name.toLowerCase()))
+    if (missingSquads.length === 0) {
+      suitesCreatedRef.current = true
+      return
+    }
+
+    // Build new suites + commit once
+    const newSuites = missingSquads.map((sq) => ({ id: uid(), name: sq.name }))
+    const { _commit } = useSprintStore.getState()
+    _commit({ ...currentState, suites: [...currentState.suites, ...newSuites] })
+    suitesCreatedRef.current = true
+  }, [isIntegrated, availableSquads])
 
   // Build squad summaries from the current sprint's features, grouped by squadId.
   // Each suite in an "integrado" sprint represents a participating squad.

@@ -30,15 +30,6 @@ interface SquadData {
   hasTests: boolean
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const BADGE_RADIUS = 12
-
-const COMPLIANCE = {
-  conforme: { label: 'Conforme', color: 'var(--color-green)', bg: 'var(--color-green-light)' },
-  pendente: { label: 'Pendente', color: 'var(--color-amber)', bg: 'var(--color-amber-light)' },
-} as const
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSquadsPanelProps) {
@@ -69,7 +60,6 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
 
       const rows = (data ?? []) as unknown as ApprovedPRRow[]
 
-      // Group by squad_id and count approved PRs
       const prCountMap = new Map<string, { count: number; name: string; color: string }>()
       for (const row of rows) {
         const existing = prCountMap.get(row.squad_id)
@@ -84,7 +74,6 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
         }
       }
 
-      // Build squad list by merging PR data with sprint squads
       const sprintSquadMap = new Map(sprintSquads.map((s) => [s.squadId, s]))
       const allSquadIds = new Set([...prCountMap.keys(), ...sprintSquads.map((s) => s.squadId)])
 
@@ -104,7 +93,6 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
         })
       }
 
-      // Sort: squads with tests first, then alphabetical
       merged.sort((a, b) => {
         if (a.hasTests !== b.hasTests) return a.hasTests ? -1 : 1
         return a.squadName.localeCompare(b.squadName)
@@ -118,21 +106,16 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
     return () => { cancelled = true }
   }, [releaseId, sprintSquads])
 
-  // ── Derived ──
   const conformeCount = squads.filter((s) => s.hasTests).length
   const totalCount = squads.length
 
   // ── Loading ──
   if (loading) {
     return (
-      <div
-        role="region"
-        aria-label="Squads participantes"
-        style={{
-          textAlign: 'center', padding: '32px 20px',
-          color: 'var(--color-text-3)', fontSize: 13,
-        }}
-      >
+      <div role="status" aria-live="polite" style={{
+        textAlign: 'center', padding: '24px 20px',
+        color: 'var(--color-text-3)', fontSize: 13,
+      }}>
         Carregando squads participantes...
       </div>
     )
@@ -141,14 +124,11 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
   // ── Error ──
   if (error) {
     return (
-      <div
-        role="region"
-        aria-label="Squads participantes"
-        style={{
-          textAlign: 'center', padding: '32px 20px',
-          color: 'var(--color-red)', fontSize: 13,
-        }}
-      >
+      <div role="alert" style={{
+        padding: '12px 16px', borderRadius: 10, fontSize: 13,
+        background: 'var(--color-red-light)', color: 'var(--color-red)',
+        border: '1px solid var(--color-red)',
+      }}>
         Erro ao carregar squads: {error}
       </div>
     )
@@ -157,101 +137,126 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
   // ── Empty ──
   if (squads.length === 0) {
     return (
-      <div
-        role="region"
-        aria-label="Squads participantes"
-        style={{
-          textAlign: 'center', padding: '48px 20px',
-          color: 'var(--color-text-3)', fontSize: 13,
-        }}
-      >
+      <div style={{
+        textAlign: 'center', padding: '32px 20px',
+        color: 'var(--color-text-3)', fontSize: 13,
+      }}>
         Nenhum squad com PRs aprovados nesta release.
       </div>
     )
   }
 
+  const allConforme = conformeCount === totalCount
+  const pendingCount = totalCount - conformeCount
+
   return (
-    <div role="region" aria-label="Squads participantes">
-      {/* Summary badge */}
+    <div role="region" aria-label="Squads participantes" style={{
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
+      borderRadius: 12,
+      padding: '18px 20px',
+      marginBottom: 20,
+    }}>
+      {/* Header */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        marginBottom: 16,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 16, gap: 12, flexWrap: 'wrap',
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>
+            Testes Integrados por Squad
+          </span>
+          <span style={{
+            fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+            background: 'var(--color-surface-2)', color: 'var(--color-text-2)',
+          }}>
+            {totalCount} squad{totalCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        {/* Status geral */}
         <span style={{
-          fontSize: 12, fontWeight: 700, padding: '4px 12px',
+          fontSize: 12, fontWeight: 700, padding: '5px 14px',
           borderRadius: 20, whiteSpace: 'nowrap',
-          background: conformeCount === totalCount
-            ? 'var(--color-green-light)'
-            : 'var(--color-amber-light)',
-          color: conformeCount === totalCount
-            ? 'var(--color-green)'
-            : 'var(--color-amber)',
+          background: allConforme ? 'var(--color-green-light)' : 'var(--color-amber-light)',
+          color: allConforme ? 'var(--color-green)' : 'var(--color-amber)',
+          border: `1px solid ${allConforme ? 'var(--color-green-mid)' : 'var(--color-amber-mid)'}`,
         }}>
-          {conformeCount} de {totalCount} squads com testes cadastrados
+          {allConforme
+            ? `✅ Todos os ${totalCount} squads com testes`
+            : `⚠️ ${pendingCount} de ${totalCount} squad${pendingCount !== 1 ? 's' : ''} sem testes`
+          }
         </span>
       </div>
 
-      {/* Squad cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {squads.map((squad, index) => {
-          const compliance = squad.hasTests ? COMPLIANCE.conforme : COMPLIANCE.pendente
+      {/* Progress bar */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', marginBottom: 4,
+        }}>
+          <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>Progresso de cobertura</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text)' }}>
+            {totalCount > 0 ? Math.round((conformeCount / totalCount) * 100) : 0}%
+          </span>
+        </div>
+        <div style={{
+          height: 6, borderRadius: 3,
+          background: 'var(--color-surface-2)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%', borderRadius: 3,
+            width: totalCount > 0 ? `${(conformeCount / totalCount) * 100}%` : '0%',
+            background: allConforme ? 'var(--color-green)' : 'var(--color-amber-mid)',
+            transition: 'width 0.4s ease',
+          }} />
+        </div>
+      </div>
+
+      {/* Squad list */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
+        {squads.map((squad) => {
+          const isConforme = squad.hasTests
 
           return (
             <div
               key={squad.squadId}
-              className="anim-fade-up"
               style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 12,
-                padding: '14px 18px',
-                animationDelay: `${index * 0.05}s`,
+                padding: '10px 12px',
+                background: isConforme ? 'var(--color-bg)' : 'var(--color-surface)',
+                borderLeft: `3px solid ${isConforme ? 'var(--color-green)' : 'var(--color-amber)'}`,
+                border: `1px solid ${isConforme ? 'var(--color-green-mid)' : 'var(--color-border)'}`,
+                borderRadius: 8,
               }}
             >
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                flexWrap: 'wrap',
-              }}>
-                {/* Color dot + name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
-                    background: squad.squadColor,
-                  }} />
-                  <span style={{
-                    fontSize: 14, fontWeight: 700, color: 'var(--color-text)',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
-                    {squad.squadName}
-                  </span>
-                </div>
-
-                {/* Approved PRs badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: squad.squadColor,
+                }} />
                 <span style={{
-                  fontSize: 10, fontWeight: 700, padding: '2px 8px',
-                  borderRadius: BADGE_RADIUS, whiteSpace: 'nowrap',
-                  background: 'var(--color-green-light)', color: 'var(--color-green)',
+                  fontSize: 12, fontWeight: 700, color: 'var(--color-text)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  flex: 1,
                 }}>
-                  {squad.approvedPRs} PR{squad.approvedPRs !== 1 ? 's' : ''} aprovado{squad.approvedPRs !== 1 ? 's' : ''}
+                  {squad.squadName}
                 </span>
-
-                {/* Test count badge */}
+                <span style={{ fontSize: 12 }}>{isConforme ? '✅' : '⏳'}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <span style={{
-                  fontSize: 10, fontWeight: 700, padding: '2px 8px',
-                  borderRadius: BADGE_RADIUS, whiteSpace: 'nowrap',
-                  background: 'var(--color-surface-2)', color: 'var(--color-text-2)',
+                  fontSize: 10, fontWeight: 600, padding: '2px 6px',
+                  borderRadius: 10, background: 'var(--color-blue-light)', color: 'var(--color-blue-text)',
                 }}>
-                  {squad.testCount} caso{squad.testCount !== 1 ? 's' : ''} de teste
+                  {squad.approvedPRs} PR{squad.approvedPRs !== 1 ? 's' : ''}
                 </span>
-
-                {/* Compliance badge */}
                 <span style={{
-                  fontSize: 10, fontWeight: 700, padding: '3px 10px',
-                  borderRadius: 20, whiteSpace: 'nowrap',
-                  background: compliance.bg, color: compliance.color,
-                  letterSpacing: 0.3,
+                  fontSize: 10, fontWeight: 600, padding: '2px 6px',
+                  borderRadius: 10,
+                  background: isConforme ? 'var(--color-green-light)' : 'var(--color-amber-light)',
+                  color: isConforme ? 'var(--color-green)' : 'var(--color-amber)',
                 }}>
-                  {squad.hasTests ? '\u2705' : '\u26A0\uFE0F'} {compliance.label}
+                  {squad.testCount > 0 ? `${squad.testCount} teste${squad.testCount !== 1 ? 's' : ''}` : 'Sem testes'}
                 </span>
               </div>
             </div>
