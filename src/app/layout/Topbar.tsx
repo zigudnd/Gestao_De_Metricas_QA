@@ -57,6 +57,7 @@ export function Topbar() {
   const isStatusReport = location.pathname.startsWith('/status-report')
   const isReleases = location.pathname.startsWith('/releases')
   const isSquads = location.pathname.startsWith('/squads')
+  const isPRs = location.pathname === '/prs'
   const isDocs = location.pathname === '/docs'
   const isProfile = location.pathname === '/profile'
   const isChangePassword = location.pathname === '/change-password'
@@ -76,6 +77,7 @@ export function Topbar() {
       if (isDetail) return [home, { label: 'Releases', path: '/releases' }, { label: 'Dashboard Release' }]
       return [home, { label: 'Releases' }]
     }
+    if (isPRs) return [home, { label: 'Gestão de PRs' }]
     if (isSquads) return [home, { label: 'Cadastros' }]
     if (isDocs) return [home, { label: 'Documentação' }]
     if (isProfile) return [home, { label: 'Perfil' }]

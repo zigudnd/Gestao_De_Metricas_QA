@@ -9,11 +9,12 @@ import { CheckpointTab } from '../components/dashboard/CheckpointTab'
 import { CronogramaTab } from '../components/dashboard/CronogramaTab'
 import { EventsTab, DEFAULT_EVENTS, type CalendarEvent } from '../components/dashboard/EventsTab'
 import { RegressivosTab } from '../components/dashboard/RegressivosTab'
+import { PRsTabHome } from '../components/prs/PRsTabHome'
 import { uid } from '@/lib/uid'
 import { STATUS_LABELS, STATUS_COLORS } from '../constants/status'
 import { fmtDateFull } from '../utils/dateFormat'
 
-type HomeTab = 'checkpoint' | 'regressivos' | 'historico' | 'cronograma' | 'eventos'
+type HomeTab = 'checkpoint' | 'regressivos' | 'historico' | 'cronograma' | 'eventos' | 'prs'
 
 const formatDateBR = fmtDateFull
 
@@ -279,18 +280,6 @@ export function ReleasesPage() {
           {syncStatus === 'error' && (
             <span style={{ fontSize: 12, color: 'var(--color-red)' }}>Erro ao salvar</span>
           )}
-          <button
-            onClick={() => { setEditId(null); setShowModal(true); setFormName(''); setFormVersion(''); setFormCutoff(''); setFormHomoStart(''); setFormHomoEnd(''); setFormProdDate(''); setFormErrors([]); setFromSlotId(null) }}
-            style={{
-              padding: '8px 16px', borderRadius: 8, border: 'none',
-              background: 'var(--color-blue)', color: '#fff',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            + Nova Release
-          </button>
         </div>
       </div>
 
@@ -320,6 +309,7 @@ export function ReleasesPage() {
           { id: 'historico' as HomeTab, label: 'Histórico' },
           { id: 'cronograma' as HomeTab, label: 'Cronograma' },
           { id: 'eventos' as HomeTab, label: 'Eventos' },
+          { id: 'prs' as HomeTab, label: 'PRs' },
         ]).map((tab) => (
           <button
             key={tab.id}
@@ -445,6 +435,11 @@ export function ReleasesPage() {
           onRemove={(id) => saveEvents(calendarEvents.filter((e) => e.id !== id))}
           onUpdate={(id, updates) => saveEvents(calendarEvents.map((e) => e.id === id ? { ...e, ...updates } : e))}
         />
+      )}
+
+      {/* Tab: PRs */}
+      {homeTab === 'prs' && (
+        <PRsTabHome />
       )}
 
       {/* Create/Edit Modal */}

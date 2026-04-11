@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
 import { showToast } from '@/app/components/Toast'
+import { ConfirmModal } from '@/app/components/ConfirmModal'
 import type { Release, ReleaseStatus } from '../../types/release.types'
 import { PLATFORM_ICON, PLATFORM_COLOR, type Platform } from '../../constants/platforms'
+import { STATUS_LABELS } from '../../constants/status'
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -14,11 +16,12 @@ interface CheckpointTabProps {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-type FilterValue = 'todos' | 'Publicado' | 'Em Regressivo' | 'Previsto' | Platform
+type FilterValue = 'todos' | 'Publicado' | 'Em Corte' | 'Em Regressivo' | 'Previsto' | Platform
 
 const FILTERS: { value: FilterValue; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'Publicado', label: '✔ Publicado' },
+  { value: 'Em Corte', label: '✂ Em Corte' },
   { value: 'Em Regressivo', label: '◉ Em Regressivo' },
   { value: 'Previsto', label: '○ Previsto' },
   { value: 'iOS', label: '🍎 iOS' },
@@ -38,8 +41,9 @@ const DOT_COLORS = {
 } as const
 
 const STATUS_FILTER_MAP: Record<string, ReleaseStatus[]> = {
-  Publicado: ['concluida'],
-  'Em Regressivo': ['em_regressivo', 'em_homologacao'],
+  Publicado: ['concluida', 'em_producao'],
+  'Em Corte': ['corte'],
+  'Em Regressivo': ['em_regressivo', 'em_homologacao', 'em_qa'],
   Previsto: ['planejada', 'em_desenvolvimento'],
 }
 
@@ -50,16 +54,16 @@ function extractReleaseNumber(version: string): string {
   return match ? match[1] : version
 }
 
-function statusLabel(status: ReleaseStatus): string {
+function statusGroup(status: ReleaseStatus): string {
   const map: Record<ReleaseStatus, string> = {
     planejada: 'Previsto',
     em_desenvolvimento: 'Previsto',
-    corte: 'Em Regressivo',
+    corte: 'Em Corte',
     em_homologacao: 'Em Regressivo',
     em_regressivo: 'Em Regressivo',
     em_qa: 'Em QA',
     aguardando_aprovacao: 'Aguardando Aprovação',
-    aprovada: 'Publicado',
+    aprovada: 'Aprovada',
     em_producao: 'Publicado',
     concluida: 'Publicado',
     uniu_escopo: 'Uniu Escopo',
@@ -70,7 +74,7 @@ function statusLabel(status: ReleaseStatus): string {
 }
 
 function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
-  const label = statusLabel(status)
+  const label = statusGroup(status)
   const base: React.CSSProperties = {
     display: 'inline-block',
     fontSize: 10,
@@ -83,6 +87,10 @@ function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
   switch (label) {
     case 'Publicado':
       return { ...base, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '1px solid var(--color-green-mid)' }
+    case 'Em Corte':
+      return { ...base, background: '#ede9fe', color: '#8b5cf6', border: '1px solid #8b5cf640' }
+    case 'Aprovada':
+      return { ...base, background: 'var(--color-blue-light)', color: 'var(--color-blue)', border: '1px solid var(--color-blue)' }
     case 'Em Regressivo':
       return { ...base, background: 'var(--color-amber-light)', color: 'var(--color-amber)', border: '1px solid var(--color-amber-mid)' }
     case 'Previsto':
@@ -95,10 +103,16 @@ function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
 }
 
 function overallStatus(statuses: ReleaseStatus[]): ReleaseStatus {
-  if (statuses.some((s) => s === 'em_regressivo' || s === 'em_homologacao')) return 'em_regressivo'
+  if (statuses.some((s) => s === 'em_regressivo' || s === 'em_homologacao' || s === 'em_qa')) return 'em_regressivo'
+  if (statuses.some((s) => s === 'corte')) return 'corte'
   if (statuses.some((s) => s === 'uniu_escopo')) return 'uniu_escopo'
+  if (statuses.some((s) => s === 'aprovada' || s === 'aguardando_aprovacao')) return 'aprovada'
+  if (statuses.some((s) => s === 'em_producao')) return 'em_producao'
   if (statuses.some((s) => s === 'planejada' || s === 'em_desenvolvimento')) return 'planejada'
-  return 'concluida'
+  if (statuses.some((s) => s === 'rollback')) return 'rollback'
+  if (statuses.some((s) => s === 'cancelada')) return 'cancelada'
+  if (statuses.every((s) => s === 'concluida')) return 'concluida'
+  return statuses[0] ?? 'planejada'
 }
 
 function formatDateShort(dateStr: string): string {
@@ -199,29 +213,26 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
   const [showPicker, setShowPicker] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmConcludeId, setConfirmConcludeId] = useState<string | null>(null)
+  const [confirmUnlinkId, setConfirmUnlinkId] = useState<string | null>(null)
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [linkSearch, setLinkSearch] = useState('')
 
-  // Releases visíveis no checkpoint (somente as selecionadas, ou todas se nenhuma foi selecionada ainda)
+  // Releases vinculadas ao checkpoint
   const visibleReleases = useMemo(() => {
-    if (visibleIds.size === 0) return releases
+    if (visibleIds.size === 0) return []
     return releases.filter((r) => visibleIds.has(r.id))
   }, [releases, visibleIds])
 
-  // Releases disponíveis para adicionar (as que não estão no checkpoint)
+  // Releases disponíveis para vincular (existem no cronograma mas não no checkpoint)
   const availableToAdd = useMemo(() => {
-    if (visibleIds.size === 0) return [] // todas já visíveis
     return releases.filter((r) => !visibleIds.has(r.id))
   }, [releases, visibleIds])
 
   function addToCheckpoint(id: string) {
     const next = new Set(visibleIds)
-    // Se é a primeira seleção, adicionar todas as que já estão visíveis + a nova
-    if (visibleIds.size === 0) {
-      releases.forEach((r) => next.add(r.id))
-    }
     next.add(id)
     setVisibleIds(next)
     saveVisibleIds(next)
-    setShowPicker(false)
   }
 
   function removeFromCheckpoint(id: string) {
@@ -285,100 +296,61 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
         .cp-release-hover:hover { background: var(--color-blue-light) !important; }
       `}</style>
 
-      {/* Filter bar */}
+      {/* Filter bar + Vincular */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        marginBottom: 20, flexWrap: 'wrap',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 20, gap: 10,
       }}>
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
-          marginRight: 4,
-        }}>
-          Filtrar:
-        </span>
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setActiveFilter(f.value)}
-            aria-pressed={activeFilter === f.value}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-            style={{
-              padding: '5px 14px',
-              borderRadius: 20,
-              border: activeFilter === f.value
-                ? '1px solid var(--color-blue)'
-                : '1px solid var(--color-border-md)',
-              background: activeFilter === f.value ? 'var(--color-blue)' : 'var(--color-surface)',
-              color: activeFilter === f.value ? '#fff' : 'var(--color-text-2)',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-              transition: 'all 0.15s',
-              whiteSpace: 'nowrap',
-              outline: 'none',
-              minHeight: 36,
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Add release from cronograma */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <div style={{ flex: 1 }} />
-        {showPicker ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <label htmlFor="cp-release-picker" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)' }}>
-              Adicionar Release:
-            </label>
-            <select
-              id="cp-release-picker"
-              onChange={(e) => { if (e.target.value) addToCheckpoint(e.target.value) }}
-              value=""
-              style={{
-                padding: '7px 28px 7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                border: '1px solid var(--color-blue)', background: 'var(--color-surface)',
-                color: 'var(--color-text)', fontFamily: 'var(--font-family-sans)',
-                cursor: 'pointer', appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-                minWidth: 220,
-              }}
-            >
-              <option value="">Selecione uma release...</option>
-              {availableToAdd.map((r) => (
-                <option key={r.id} value={r.id}>{r.version} — {r.title}</option>
-              ))}
-            </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
+            marginRight: 4,
+          }}>
+            Filtrar:
+          </span>
+          {FILTERS.map((f) => (
             <button
-              onClick={() => setShowPicker(false)}
+              key={f.value}
+              onClick={() => setActiveFilter(f.value)}
+              aria-pressed={activeFilter === f.value}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
               style={{
-                padding: '7px 14px', borderRadius: 7,
-                border: '1px solid var(--color-border-md)',
-                background: 'transparent', color: 'var(--color-text-2)',
-                fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                padding: '5px 14px',
+                borderRadius: 20,
+                border: activeFilter === f.value
+                  ? '1px solid var(--color-blue)'
+                  : '1px solid var(--color-border-md)',
+                background: activeFilter === f.value ? 'var(--color-blue)' : 'var(--color-surface)',
+                color: activeFilter === f.value ? '#fff' : 'var(--color-text-2)',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-family-sans)',
                 transition: 'all 0.15s',
+                whiteSpace: 'nowrap',
+                outline: 'none',
+                minHeight: 36,
               }}
             >
-              Cancelar
+              {f.label}
             </button>
-          </div>
-        ) : (
+          ))}
+        </div>
+
+        {/* Vincular release ao checkpoint */}
+        {availableToAdd.length > 0 && (
           <button
-            onClick={() => setShowPicker(true)}
+            onClick={() => { setShowLinkModal(true); setLinkSearch('') }}
             style={{
-              padding: '7px 16px', borderRadius: 7, border: 'none',
-              background: 'var(--color-blue)', color: '#fff',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'var(--font-family-sans)',
-              transition: 'all 0.15s',
-              minHeight: 36,
+              padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              border: 'none', background: 'var(--color-blue)',
+              color: '#fff', fontFamily: 'var(--font-family-sans)',
+              cursor: 'pointer', minHeight: 36, whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
             }}
           >
-            + Adicionar Release
+            🔗 Vincular Release
           </button>
         )}
       </div>
@@ -463,7 +435,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
 
                 {/* Status badge */}
                 <span style={statusBadgeStyle(overall)}>
-                  {statusLabel(overall)}
+                  {STATUS_LABELS[overall]}
                 </span>
 
                 {/* Chevron */}
@@ -522,7 +494,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                             {release.version}
                           </span>
                           <span style={statusBadgeStyle(release.status)}>
-                            {statusLabel(release.status)}
+                            {STATUS_LABELS[release.status]}
                           </span>
                         </div>
 
@@ -722,70 +694,43 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
 
                     <div style={{ flex: 1 }} />
 
-                    {/* Remover do checkpoint */}
+                    {/* Desvincular do checkpoint */}
                     {visibleIds.size > 0 && (
                       <button
-                        onClick={() => group.releases.forEach((r) => removeFromCheckpoint(r.id))}
-                        aria-label="Remover release do checkpoint"
+                        onClick={() => setConfirmUnlinkId(group.releaseNumber)}
+                        title="Desvincular do checkpoint"
+                        aria-label="Desvincular release do checkpoint"
                         style={{
-                          padding: '6px 14px', borderRadius: 7,
-                          border: '1px solid var(--color-border-md)',
-                          background: 'transparent', color: 'var(--color-text-3)',
-                          fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-                          transition: 'all 0.15s',
-                          minHeight: 36,
-                        }}
-                      >
-                        Remover do checkpoint
-                      </button>
-                    )}
-
-                    {/* Excluir */}
-                    {confirmDeleteId === group.releaseNumber ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, color: 'var(--color-red)', fontWeight: 600 }}>Excluir permanentemente?</span>
-                        <button
-                          onClick={() => {
-                            group.releases.forEach((r) => onDeleteRelease(r.id))
-                            setConfirmDeleteId(null)
-                            showToast('Release excluída', 'info')
-                          }}
-                          style={{
-                            padding: '5px 12px', borderRadius: 6, border: 'none',
-                            background: 'var(--color-red)', color: '#fff',
-                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                            fontFamily: 'var(--font-family-sans)',
-                            transition: 'all 0.15s',
-                          }}
-                        >Excluir</button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          style={{
-                            padding: '5px 12px', borderRadius: 6,
-                            border: '1px solid var(--color-border-md)',
-                            background: 'transparent', color: 'var(--color-text-2)',
-                            fontSize: 11, cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-                            transition: 'all 0.15s',
-                          }}
-                        >Cancelar</button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(group.releaseNumber)}
-                        aria-label="Excluir release"
-                        style={{
-                          padding: '6px 14px', borderRadius: 7,
-                          border: '1px solid var(--color-red-mid)',
-                          background: 'transparent', color: 'var(--color-red)',
+                          padding: '6px 10px', borderRadius: 7,
+                          border: '1px solid var(--color-amber-mid)',
+                          background: 'var(--color-amber-light)', color: 'var(--color-amber)',
                           fontSize: 12, fontWeight: 600, cursor: 'pointer',
                           fontFamily: 'var(--font-family-sans)',
                           transition: 'all 0.15s',
                           minHeight: 36,
+                          display: 'flex', alignItems: 'center', gap: 4,
                         }}
                       >
-                        🗑 Excluir
+                        ↩ Desvincular
                       </button>
                     )}
+
+                    {/* Excluir */}
+                    <button
+                      onClick={() => setConfirmDeleteId(group.releaseNumber)}
+                      aria-label="Excluir release"
+                      style={{
+                        padding: '6px 14px', borderRadius: 7,
+                        border: '1px solid var(--color-red-mid)',
+                        background: 'transparent', color: 'var(--color-red)',
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'var(--font-family-sans)',
+                        transition: 'all 0.15s',
+                        minHeight: 36,
+                      }}
+                    >
+                      🗑 Excluir
+                    </button>
                   </div>
                 </div>
               )}
@@ -793,6 +738,143 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
           )
         })}
       </div>
+
+      {/* Modal — vincular release ao checkpoint */}
+      {showLinkModal && (
+        <div
+          onClick={() => setShowLinkModal(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog" aria-modal="true" aria-label="Vincular Release ao Checkpoint"
+            style={{
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+              borderTop: '3px solid var(--color-blue)', borderRadius: 12,
+              padding: '20px 22px', width: '100%', maxWidth: 460,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+              maxHeight: '80vh', display: 'flex', flexDirection: 'column',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+                🔗 Vincular Release
+              </h2>
+              <button onClick={() => setShowLinkModal(false)} aria-label="Fechar" style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--color-text-3)', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--color-text-2)', margin: '0 0 12px', lineHeight: 1.5 }}>
+              Selecione uma release do cronograma para acompanhar no checkpoint.
+            </p>
+
+            {/* Busca */}
+            <input
+              value={linkSearch}
+              onChange={(e) => setLinkSearch(e.target.value)}
+              placeholder="Buscar por versão ou título..."
+              autoFocus
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: 7,
+                border: '1px solid var(--color-border-md)', fontSize: 13,
+                fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                background: 'var(--color-bg)', boxSizing: 'border-box', marginBottom: 12,
+              }}
+            />
+
+            {/* Lista de releases */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {availableToAdd
+                .filter((r) => {
+                  if (!linkSearch.trim()) return true
+                  const q = linkSearch.toLowerCase()
+                  return (r.version?.toLowerCase().includes(q)) || (r.title?.toLowerCase().includes(q))
+                })
+                .map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      addToCheckpoint(r.id)
+                      setShowLinkModal(false)
+                      showToast(`Release ${r.version} vinculada ao checkpoint`, 'success')
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', borderRadius: 8,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)', cursor: 'pointer',
+                      textAlign: 'left', fontFamily: 'var(--font-family-sans)',
+                      transition: 'background 0.12s, border-color 0.12s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-light)'; e.currentTarget.style.borderColor = 'var(--color-blue)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
+                        {r.version} — {r.title || 'Sem título'}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 2, display: 'flex', gap: 8 }}>
+                        {r.productionDate && <span>Prod: {r.productionDate.split('-').reverse().join('/')}</span>}
+                        {r.cutoffDate && <span>Corte: {r.cutoffDate.split('-').reverse().join('/')}</span>}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 12,
+                      background: 'var(--color-blue-light)', color: 'var(--color-blue-text)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Vincular
+                    </span>
+                  </button>
+                ))}
+
+              {availableToAdd.filter((r) => {
+                if (!linkSearch.trim()) return true
+                const q = linkSearch.toLowerCase()
+                return (r.version?.toLowerCase().includes(q)) || (r.title?.toLowerCase().includes(q))
+              }).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--color-text-3)', fontSize: 13 }}>
+                  {linkSearch.trim() ? 'Nenhuma release encontrada para esta busca.' : 'Todas as releases já estão vinculadas ao checkpoint.'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação — excluir release */}
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Excluir Release"
+          description="Deseja excluir esta release permanentemente? Esta ação não pode ser desfeita."
+          confirmLabel="Excluir"
+          onConfirm={() => {
+            const g = groups.find((gr: ReleaseGroup) => gr.releaseNumber === confirmDeleteId)
+            if (g) g.releases.forEach((r: Release) => onDeleteRelease(r.id))
+            setConfirmDeleteId(null)
+            showToast('Release excluída', 'info')
+          }}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {/* Modal de confirmação — desvincular do checkpoint */}
+      {confirmUnlinkId && (
+        <ConfirmModal
+          title="Desvincular Release"
+          description="Deseja desvincular esta release do checkpoint? Ela continuará disponível no cronograma e poderá ser vinculada novamente."
+          confirmLabel="Desvincular"
+          onConfirm={() => {
+            const g = groups.find((gr: ReleaseGroup) => gr.releaseNumber === confirmUnlinkId)
+            if (g) g.releases.forEach((r: Release) => removeFromCheckpoint(r.id))
+            setConfirmUnlinkId(null)
+            showToast('Release desvinculada do checkpoint', 'info')
+          }}
+          onCancel={() => setConfirmUnlinkId(null)}
+        />
+      )}
     </div>
   )
 }

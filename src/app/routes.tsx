@@ -17,6 +17,7 @@ const ReleaseDashboard = lazy(() => import('@/modules/releases/pages/ReleaseDash
 const StatusReportPage = lazy(() => import('@/modules/status-report/pages/StatusReportPage').then(m => ({ default: m.StatusReportPage })))
 const SquadsPage = lazy(() => import('@/modules/squads/pages/SquadsPage').then(m => ({ default: m.SquadsPage })))
 const DocsPage = lazy(() => import('@/app/pages/DocsPage').then(m => ({ default: m.DocsPage })))
+const PRsPage = lazy(() => import('@/modules/releases/pages/PRsPage').then(m => ({ default: m.PRsPage })))
 
 const LazyFallback = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
@@ -61,6 +62,7 @@ export const router = createHashRouter([
       { path: 'status-report/:reportId', element: <SuspenseWrap><StatusReportPage /></SuspenseWrap> },
       { path: 'releases', element: <ReleasesPage /> },
       { path: 'releases/:releaseId', element: <SuspenseWrap><ReleaseDashboard /></SuspenseWrap> },
+      { path: 'prs', element: <SuspenseWrap><PRsPage /></SuspenseWrap> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'docs', element: <SuspenseWrap><DocsPage /></SuspenseWrap> },
     ],

@@ -89,6 +89,16 @@ const IconReleases = () => (
   </svg>
 )
 
+const IconPRs = () => (
+  <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="6" cy="5.5" r="2" />
+    <circle cx="14" cy="14.5" r="2" />
+    <path d="M6 7.5v9" />
+    <path d="M14 12.5V8c0-1.5-1-2.5-2.5-2.5H9" />
+    <path d="M11 3.5L9 5.5l2 2" />
+  </svg>
+)
+
 const IconDocs = () => (
   <svg width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 4c1.5-.8 3.5-1 5-1 1.5 0 2.5.5 2.5.5" />
@@ -243,6 +253,17 @@ export function DashboardHome() {
             { label: 'Gerenciar', value: '\u2192' },
           ]}
           onClick={() => navigate('/releases')}
+        />
+
+        <NavCard
+          icon={<IconPRs />}
+          title="Gestão de PRs"
+          description="Cadastre e acompanhe PRs das releases em corte"
+          color="#8b5cf6"
+          stats={[
+            { label: 'Gerenciar', value: '→' },
+          ]}
+          onClick={() => navigate('/prs')}
         />
 
         <NavCard

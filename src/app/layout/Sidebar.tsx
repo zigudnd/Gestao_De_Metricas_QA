@@ -46,6 +46,17 @@ const IconReleases = () => (
   </svg>
 )
 
+const IconPRs = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {/* Git pull request icon */}
+    <circle cx="6" cy="5.5" r="2" />
+    <circle cx="14" cy="14.5" r="2" />
+    <path d="M6 7.5v9" />
+    <path d="M14 12.5V8c0-1.5-1-2.5-2.5-2.5H9" />
+    <path d="M11 3.5L9 5.5l2 2" />
+  </svg>
+)
+
 const IconDocs = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 4c1.5-.8 3.5-1 5-1 1.5 0 2.5.5 2.5.5" />
@@ -141,6 +152,7 @@ export function Sidebar() {
   const isSquads  = location.pathname.startsWith('/squads')
   const isStatusReport = location.pathname.startsWith('/status-report')
   const isReleases = location.pathname.startsWith('/releases')
+  const isPRs = location.pathname.startsWith('/prs')
 
   return (
     <aside
@@ -202,6 +214,7 @@ export function Sidebar() {
       <NavItem icon={<IconStatusReport />} label="Status Report" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
       <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
       <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />
+      <NavItem icon={<IconPRs />} label="Gestão de PRs" active={isPRs} expanded={expanded} onClick={() => navigate('/prs')} />
 
       <div style={{ flex: 1 }} />
 

@@ -22,6 +22,7 @@ const squadsRoutes = require('./routes/v1/squads.routes');
 const sprintsWriteRoutes = require('./routes/v1/sprints.write.routes');
 const releasesWriteRoutes = require('./routes/v1/releases.write.routes');
 const auditRoutes = require('./routes/v1/audit.routes');
+const prsRoutes = require('./routes/v1/prs.routes');
 
 // ── App & Config ────────────────────────────────────────────────────────────
 
@@ -163,6 +164,7 @@ app.use('/api/v1/releases', releasesRoutes);
 app.use('/api/v1/sprints', sprintsRoutes);
 app.use('/api/v1/squads', squadsRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
+app.use('/api/v1/releases', prsRoutes);
 app.use('/api/v1', sprintsWriteRoutes);
 app.use('/api/v1', releasesWriteRoutes);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useReleaseStore } from '../store/releaseStore'
 import type { Release, ReleaseStatus } from '../types/release.types'
@@ -26,7 +26,7 @@ const labelStyle: React.CSSProperties = {
 export function ReleaseDashboard() {
   const { releaseId } = useParams<{ releaseId: string }>()
   const navigate = useNavigate()
-  const { releases, load, updateRelease, initRelease, resetRelease } = useReleaseStore()
+  const { releases, load, updateRelease, updateStatus, initRelease, resetRelease } = useReleaseStore()
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => { load(); setLoaded(true) }, []) // eslint-disable-line
@@ -78,13 +78,7 @@ export function ReleaseDashboard() {
 
   function handleStatusTransition(newStatus: ReleaseStatus) {
     if (!releaseId || !release) return
-    updateRelease(releaseId, {
-      status: newStatus,
-      statusHistory: [
-        ...release.statusHistory,
-        { from: release.status, to: newStatus, timestamp: new Date().toISOString(), reason: '' },
-      ],
-    })
+    updateStatus(newStatus)
     showToast(`Status alterado para ${STATUS_LABELS[newStatus]}`, 'success')
   }
 
