@@ -573,7 +573,7 @@ export function HomePage() {
                 >
                   <option value="">— Nenhuma release —</option>
                   {allReleases
-                    .filter((r) => r.status !== 'concluida')
+                    .filter((r) => r.status !== 'concluida' && r.status !== 'em_producao')
                     .map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.version} — {r.title}
