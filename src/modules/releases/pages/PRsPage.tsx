@@ -7,6 +7,7 @@ import { useAuthStore } from '@/modules/auth/store/authStore'
 import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ReleasePR } from '../types/pr.types'
+import { getMasterIndex, loadFromStorage } from '@/modules/sprints/services/persistence'
 import { PRAnalysisPanel } from '../components/prs/PRAnalysisPanel'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -397,6 +398,40 @@ export function PRsPage() {
       (b.release?.productionDate ?? '').localeCompare(a.release?.productionDate ?? '')
     )
   }, [filtered, releases])
+
+  const testCompliance = useMemo(() => {
+    const sprintIndex = getMasterIndex()
+    const result: Record<string, { total: number; withTests: number }> = {}
+
+    for (const group of groupedByRelease) {
+      const releaseId = group.release?.id
+      if (!releaseId) continue
+
+      const approvedSquads = new Set(
+        group.prs
+          .filter(p => p.review_status === 'approved' && p.squad_id)
+          .map(p => p.squad_id)
+      )
+      if (approvedSquads.size === 0) continue
+
+      const linkedSprints = sprintIndex.filter(
+        s => s.sprintType === 'integrado' && s.releaseId === releaseId
+      )
+      if (linkedSprints.length === 0) continue
+
+      let squadsWithTests = 0
+      for (const squadId of approvedSquads) {
+        const hasTests = linkedSprints.some(s => {
+          const data = loadFromStorage(s.id)
+          return data && data.features.length > 0
+        })
+        if (hasTests) squadsWithTests++
+      }
+
+      result[releaseId] = { total: approvedSquads.size, withTests: squadsWithTests }
+    }
+    return result
+  }, [groupedByRelease])
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
@@ -803,6 +838,21 @@ export function PRsPage() {
                     <span style={{ margin: '0 4px' }}>&middot;</span>
                     <span style={{ color: 'var(--color-red)' }}>{groupRejected} rejeitados</span>
                   </span>
+                  {testCompliance[groupId] && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 20,
+                      whiteSpace: 'nowrap', letterSpacing: 0.3,
+                      background: testCompliance[groupId].withTests === testCompliance[groupId].total
+                        ? 'var(--color-green-light)' : 'var(--color-amber-light)',
+                      color: testCompliance[groupId].withTests === testCompliance[groupId].total
+                        ? 'var(--color-green)' : 'var(--color-amber)',
+                    }}>
+                      {testCompliance[groupId].withTests === testCompliance[groupId].total
+                        ? '\u2705 Testes ok'
+                        : `\u26A0\uFE0F ${testCompliance[groupId].total - testCompliance[groupId].withTests} squads sem testes`
+                      }
+                    </span>
+                  )}
                 </div>
 
                 {/* Group Table */}

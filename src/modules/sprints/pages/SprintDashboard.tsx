@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useSprintStore } from '../store/sprintStore'
-import { loadFromStorage, loadFromServer, DEFAULT_STATE } from '../services/persistence'
+import { loadFromStorage, loadFromServer, getMasterIndex, DEFAULT_STATE } from '../services/persistence'
 import { OverviewTab } from '../components/dashboard/OverviewTab'
 import { ConfigTab } from '../components/dashboard/ConfigTab'
 import { FeaturesTab } from '../components/dashboard/FeaturesTab'
@@ -10,6 +10,8 @@ import { BlockersTab } from '../components/dashboard/BlockersTab'
 import { AlignmentsTab } from '../components/dashboard/AlignmentsTab'
 import { NotesTab } from '../components/dashboard/NotesTab'
 import { ReportTab } from '../components/dashboard/ReportTab'
+import { IntegratedSquadsPanel } from '../components/dashboard/IntegratedSquadsPanel'
+import type { SprintIndexEntry } from '../types/sprint.types'
 
 type TabId = 'overview' | 'config' | 'features' | 'bugs' | 'blockers' | 'alignments' | 'notes' | 'report'
 
@@ -27,6 +29,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 export function SprintDashboard() {
   const { sprintId = '' } = useParams<{ sprintId: string }>()
   const initSprint = useSprintStore((s) => s.initSprint)
+  const state = useSprintStore((s) => s.state)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
@@ -47,6 +50,34 @@ export function SprintDashboard() {
     return () => { cancelled = true }
   }, [sprintId, initSprint])
 
+  // ── Integrated sprint: resolve entry from master index ─────────────────────
+  const sprintEntry: SprintIndexEntry | undefined = useMemo(
+    () => getMasterIndex().find((s) => s.id === sprintId),
+    // Re-derive when loading finishes (state is set) or sprintId changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sprintId, loading],
+  )
+
+  const isIntegrated = sprintEntry?.sprintType === 'integrado' && !!sprintEntry.releaseId
+
+  // Build squad summaries from the current sprint's features, grouped by suite.
+  // Each suite in an "integrado" sprint represents a participating squad.
+  const sprintSquads = useMemo(() => {
+    if (!isIntegrated) return []
+
+    return state.suites.map((suite) => {
+      const suiteFeatures = state.features.filter((f) => String(f.suiteId) === String(suite.id))
+      const featureCount = suiteFeatures.length
+      const testCount = suiteFeatures.reduce((acc, f) => acc + (f.cases?.length ?? 0), 0)
+      return {
+        squadId: String(suite.id),
+        squadName: suite.name || 'Sem nome',
+        featureCount,
+        testCount,
+      }
+    })
+  }, [isIntegrated, state.suites, state.features])
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
@@ -57,6 +88,14 @@ export function SprintDashboard() {
 
   return (
     <div id="sprint-dashboard" style={{ maxWidth: 1200, margin: '0 auto' }}>
+      {/* Integrated Sprint: Squads Participantes */}
+      {isIntegrated && (
+        <IntegratedSquadsPanel
+          releaseId={sprintEntry!.releaseId!}
+          sprintSquads={sprintSquads}
+        />
+      )}
+
       {/* Tab Navigation */}
       <div
         role="tablist"

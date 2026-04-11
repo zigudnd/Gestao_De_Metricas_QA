@@ -1,6 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { showToast } from '@/app/components/Toast'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
+import { supabase } from '@/lib/supabase'
+import { getMasterIndex } from '@/modules/sprints/services/persistence'
+import { loadFromStorage } from '@/modules/sprints/services/persistence'
 import type { Release, ReleaseStatus } from '../../types/release.types'
 import { PLATFORM_ICON, PLATFORM_COLOR, type Platform } from '../../constants/platforms'
 import { STATUS_LABELS } from '../../constants/status'
@@ -184,6 +187,71 @@ function getReleasePlatforms(release: Release): Platform[] {
   return ['iOS']
 }
 
+// ─── PR Alert types ─────────────────────────────────────────────────────────
+
+interface PrAlertData {
+  total: number
+  withTests: number
+  pending: string[]
+}
+
+async function fetchPrAlertsForRelease(releaseId: string): Promise<PrAlertData | null> {
+  try {
+    const { data, error } = await supabase
+      .from('release_prs')
+      .select('squad_id, squads:squad_id(name)')
+      .eq('release_id', releaseId)
+      .eq('review_status', 'approved')
+
+    if (error || !data || data.length === 0) return null
+
+    // Deduplicate squads with approved PRs
+    const squadMap = new Map<string, string>()
+    for (const row of data) {
+      const sid = row.squad_id as string
+      if (!sid) continue
+      const squadObj = row.squads as unknown as { name: string } | null
+      const name = squadObj?.name ?? sid
+      squadMap.set(sid, name)
+    }
+
+    if (squadMap.size === 0) return null
+
+    // Check master index for integrated sprints linked to this release
+    const masterIndex = getMasterIndex()
+    const integratedSprints = masterIndex.filter(
+      (s) => s.sprintType === 'integrado' && s.releaseId === releaseId,
+    )
+
+    // For each squad, check if there is an integrated sprint with test data
+    const squadsWithTests = new Set<string>()
+    for (const sprint of integratedSprints) {
+      const squadId = sprint.squadId
+      if (!squadId || !squadMap.has(squadId)) continue
+      // Check if the sprint has features/test cases
+      if (sprint.totalTests > 0) {
+        squadsWithTests.add(squadId)
+        continue
+      }
+      // Fallback: load sprint data to check features
+      const state = loadFromStorage(sprint.id)
+      if (state && state.features.some((f) => f.tests > 0 || (f.cases && f.cases.length > 0))) {
+        squadsWithTests.add(squadId)
+      }
+    }
+
+    const pending: string[] = []
+    for (const [sid, name] of squadMap) {
+      if (!squadsWithTests.has(sid)) pending.push(name)
+    }
+
+    return { total: squadMap.size, withTests: squadsWithTests.size, pending }
+  } catch {
+    // Table may not exist in local dev — fail silently
+    return null
+  }
+}
+
 // ─── Grouped release type ───────────────────────────────────────────────────
 
 interface ReleaseGroup {
@@ -216,6 +284,30 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
   const [confirmUnlinkId, setConfirmUnlinkId] = useState<string | null>(null)
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [linkSearch, setLinkSearch] = useState('')
+  const [prAlerts, setPrAlerts] = useState<Record<string, PrAlertData>>({})
+
+  // Fetch PR alert data for all visible releases
+  useEffect(() => {
+    if (visibleIds.size === 0) return
+    let cancelled = false
+    const releaseIds = releases.filter((r) => visibleIds.has(r.id)).map((r) => r.id)
+
+    Promise.all(
+      releaseIds.map(async (id) => {
+        const data = await fetchPrAlertsForRelease(id)
+        return { id, data }
+      }),
+    ).then((results) => {
+      if (cancelled) return
+      const next: Record<string, PrAlertData> = {}
+      for (const { id, data } of results) {
+        if (data) next[id] = data
+      }
+      setPrAlerts(next)
+    })
+
+    return () => { cancelled = true }
+  }, [releases, visibleIds])
 
   // Releases vinculadas ao checkpoint
   const visibleReleases = useMemo(() => {
@@ -437,6 +529,54 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 <span style={statusBadgeStyle(overall)}>
                   {STATUS_LABELS[overall]}
                 </span>
+
+                {/* PR integrated tests alert badge */}
+                {(() => {
+                  // Show badge for each release in the group that has PR data
+                  const releaseId = group.releases[0]?.id
+                  const alert = releaseId ? prAlerts[releaseId] : undefined
+                  if (!alert) return null
+                  if (alert.pending.length > 0) {
+                    return (
+                      <span
+                        title={`Squads pendentes: ${alert.pending.join(', ')}`}
+                        style={{
+                          display: 'inline-block',
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: '3px 10px',
+                          borderRadius: 20,
+                          whiteSpace: 'nowrap',
+                          letterSpacing: 0.3,
+                          background: 'var(--color-amber-light)',
+                          color: 'var(--color-amber)',
+                          border: '1px solid var(--color-amber-mid)',
+                        }}
+                      >
+                        {'\u26A0\uFE0F'} {alert.pending.length} de {alert.total} squads sem testes integrados
+                      </span>
+                    )
+                  }
+                  return (
+                    <span
+                      title="Todos os squads com PRs aprovados possuem testes integrados registrados"
+                      style={{
+                        display: 'inline-block',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: 20,
+                        whiteSpace: 'nowrap',
+                        letterSpacing: 0.3,
+                        background: 'var(--color-green-light)',
+                        color: 'var(--color-green)',
+                        border: '1px solid var(--color-green-mid)',
+                      }}
+                    >
+                      {'\u2705'} Todos os squads com testes
+                    </span>
+                  )
+                })()}
 
                 {/* Chevron */}
                 <span aria-hidden="true" style={{
