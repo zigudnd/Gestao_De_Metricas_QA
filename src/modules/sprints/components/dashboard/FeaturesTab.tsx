@@ -138,7 +138,12 @@ function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }
 
 // ─── FeaturesTab ─────────────────────────────────────────────────────────────
 
-export function FeaturesTab() {
+interface FeaturesTabProps {
+  isIntegrated?: boolean
+  availableSquads?: Array<{ id: string; name: string }>
+}
+
+export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps = {}) {
   const state = useSprintStore((s) => s.state)
   const toggleSuiteFilter = useSprintStore((s) => s.toggleSuiteFilter)
   const clearSuiteFilter = useSprintStore((s) => s.clearSuiteFilter)
@@ -209,6 +214,8 @@ export function FeaturesTab() {
           onRemove={() => removeSuite(sIndex)}
           onDuplicate={() => duplicateSuite(sIndex)}
           onAddFeature={() => addFeature(suite.id)}
+          isIntegrated={isIntegrated}
+          availableSquads={availableSquads}
         />
       ))}
     </div>
@@ -218,7 +225,7 @@ export function FeaturesTab() {
 // ─── SuiteAccordion ───────────────────────────────────────────────────────────
 
 function SuiteAccordion({
-  suiteId, suiteName, suiteIndex, onRename, onRemove, onDuplicate, onAddFeature,
+  suiteId, suiteName, suiteIndex, onRename, onRemove, onDuplicate, onAddFeature, isIntegrated, availableSquads,
 }: {
   suiteId: number | string
   suiteName: string
@@ -227,6 +234,8 @@ function SuiteAccordion({
   onRemove: () => void
   onDuplicate: () => void
   onAddFeature: () => void
+  isIntegrated?: boolean
+  availableSquads?: Array<{ id: string; name: string }>
 }) {
   const [open, setOpen] = useState(true)
   const [editingName, setEditingName] = useState(false)
@@ -382,7 +391,7 @@ function SuiteAccordion({
                   ⠿
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <FeatureAccordion feature={f} featureIndex={i} />
+                  <FeatureAccordion feature={f} featureIndex={i} isIntegrated={isIntegrated} availableSquads={availableSquads} />
                 </div>
               </div>
             </div>
@@ -426,7 +435,7 @@ function SuiteAccordion({
 
 // ─── FeatureAccordion ─────────────────────────────────────────────────────────
 
-function FeatureAccordion({ feature, featureIndex }: { feature: Feature; featureIndex: number }) {
+function FeatureAccordion({ feature, featureIndex, isIntegrated, availableSquads }: { feature: Feature; featureIndex: number; isIntegrated?: boolean; availableSquads?: Array<{ id: string; name: string }> }) {
   const [open, setOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [blockModal, setBlockModal] = useState(false)
@@ -504,6 +513,32 @@ function FeatureAccordion({ feature, featureIndex }: { feature: Feature; feature
           </span>
           {isBlocked && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-red-mid)', flexShrink: 0, display: 'inline-block' }} />}
           {isCancelled && <span style={{ fontSize: 11, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', padding: '2px 7px', borderRadius: 10, fontWeight: 700, flexShrink: 0 }}>Cancelada</span>}
+          {isIntegrated && availableSquads && availableSquads.length > 0 && (
+            <select
+              value={feature.squadId ?? ''}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation()
+                updateFeature(featureIndex, 'squadId', e.target.value || undefined)
+              }}
+              style={{
+                ...selectSm,
+                width: 'auto',
+                minWidth: 120,
+                maxWidth: 180,
+                fontSize: 11,
+                padding: '3px 22px 3px 6px',
+                flexShrink: 0,
+                color: feature.squadId ? 'var(--color-blue)' : 'var(--color-text-3)',
+                fontWeight: feature.squadId ? 600 : 400,
+              }}
+            >
+              <option value="">Squad...</option>
+              {availableSquads.map((sq) => (
+                <option key={sq.id} value={sq.id}>{sq.name}</option>
+              ))}
+            </select>
+          )}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {/* Mini progress dots */}

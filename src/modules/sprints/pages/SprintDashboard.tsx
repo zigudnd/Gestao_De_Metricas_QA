@@ -12,6 +12,7 @@ import { NotesTab } from '../components/dashboard/NotesTab'
 import { ReportTab } from '../components/dashboard/ReportTab'
 import { IntegratedSquadsPanel } from '../components/dashboard/IntegratedSquadsPanel'
 import type { SprintIndexEntry } from '../types/sprint.types'
+import { supabase } from '@/lib/supabase'
 
 type TabId = 'overview' | 'config' | 'features' | 'bugs' | 'blockers' | 'alignments' | 'notes' | 'report'
 
@@ -60,23 +61,71 @@ export function SprintDashboard() {
 
   const isIntegrated = sprintEntry?.sprintType === 'integrado' && !!sprintEntry.releaseId
 
-  // Build squad summaries from the current sprint's features, grouped by suite.
+  // Fetch squads with approved PRs for integrated sprints (used in FeaturesTab squad select)
+  const [availableSquads, setAvailableSquads] = useState<Array<{ id: string; name: string }>>([])
+
+  useEffect(() => {
+    if (!isIntegrated || !sprintEntry?.releaseId) {
+      setAvailableSquads([])
+      return
+    }
+    let cancelled = false
+
+    async function fetchSquadsWithApprovedPRs() {
+      const { data } = await supabase
+        .from('release_prs')
+        .select('squad_id, squads:squad_id(name)')
+        .eq('release_id', sprintEntry!.releaseId!)
+        .eq('review_status', 'approved')
+
+      if (cancelled) return
+
+      const rows = (data ?? []) as unknown as Array<{ squad_id: string; squads: { name: string } | null }>
+      const squadMap = new Map<string, string>()
+      for (const row of rows) {
+        if (!squadMap.has(row.squad_id)) {
+          squadMap.set(row.squad_id, row.squads?.name ?? 'Squad desconhecido')
+        }
+      }
+
+      setAvailableSquads(
+        Array.from(squadMap.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+      )
+    }
+
+    fetchSquadsWithApprovedPRs()
+    return () => { cancelled = true }
+  }, [isIntegrated, sprintEntry?.releaseId])
+
+  // Build squad summaries from the current sprint's features, grouped by squadId.
   // Each suite in an "integrado" sprint represents a participating squad.
   const sprintSquads = useMemo(() => {
     if (!isIntegrated) return []
 
-    return state.suites.map((suite) => {
-      const suiteFeatures = state.features.filter((f) => String(f.suiteId) === String(suite.id))
-      const featureCount = suiteFeatures.length
-      const testCount = suiteFeatures.reduce((acc, f) => acc + (f.cases?.length ?? 0), 0)
-      return {
-        squadId: String(suite.id),
-        squadName: suite.name || 'Sem nome',
-        featureCount,
-        testCount,
+    // Group features by squadId
+    const squadMap = new Map<string, { featureCount: number; testCount: number }>()
+    for (const f of state.features) {
+      if (!f.squadId) continue
+      const existing = squadMap.get(f.squadId)
+      const testCount = f.cases?.length ?? 0
+      if (existing) {
+        existing.featureCount++
+        existing.testCount += testCount
+      } else {
+        squadMap.set(f.squadId, { featureCount: 1, testCount })
       }
-    })
-  }, [isIntegrated, state.suites, state.features])
+    }
+
+    // Merge with availableSquads for names
+    const squadNameMap = new Map(availableSquads.map((s) => [s.id, s.name]))
+
+    return Array.from(squadMap.entries()).map(([squadId, data]) => ({
+      squadId,
+      squadName: squadNameMap.get(squadId) ?? 'Squad desconhecido',
+      featureCount: data.featureCount,
+      testCount: data.testCount,
+    }))
+  }, [isIntegrated, state.features, availableSquads])
 
   if (loading) {
     return (
@@ -149,7 +198,7 @@ export function SprintDashboard() {
         <OverviewTab />
       </div>
       {activeTab === 'config'     && <ConfigTab />}
-      {activeTab === 'features'   && <FeaturesTab />}
+      {activeTab === 'features'   && <FeaturesTab isIntegrated={isIntegrated} availableSquads={isIntegrated ? availableSquads : undefined} />}
       {activeTab === 'bugs'       && <BugsTab />}
       {activeTab === 'blockers'   && <BlockersTab />}
       {activeTab === 'alignments' && <AlignmentsTab />}
