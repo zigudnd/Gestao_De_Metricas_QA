@@ -358,7 +358,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const features = state.features.map((f, i) => {
       if (i !== fi) return f
       const cases = [...(f.cases ?? [])]
-      const copy = { ...cases[ci], id: uid() }
+      const copy = { ...cases[ci], id: uid(), name: `${cases[ci].name} (cópia)` }
       cases.splice(ci + 1, 0, copy)
       return { ...f, cases }
     })

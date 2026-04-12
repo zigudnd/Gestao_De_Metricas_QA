@@ -199,11 +199,18 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
             {totalCount > 0 ? Math.round((conformeCount / totalCount) * 100) : 0}%
           </span>
         </div>
-        <div style={{
-          height: 6, borderRadius: 3,
-          background: 'var(--color-surface-2)',
-          overflow: 'hidden',
-        }}>
+        <div
+          role="progressbar"
+          aria-valuenow={totalCount > 0 ? Math.round((conformeCount / totalCount) * 100) : 0}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Progresso de cobertura de testes integrados"
+          style={{
+            height: 6, borderRadius: 3,
+            background: 'var(--color-surface-2)',
+            overflow: 'hidden',
+          }}
+        >
           <div style={{
             height: '100%', borderRadius: 3,
             width: totalCount > 0 ? `${(conformeCount / totalCount) * 100}%` : '0%',
@@ -224,8 +231,10 @@ export function IntegratedSquadsPanel({ releaseId, sprintSquads }: IntegratedSqu
               style={{
                 padding: '10px 12px',
                 background: isConforme ? 'var(--color-bg)' : 'var(--color-surface)',
+                borderTop: `1px solid ${isConforme ? 'var(--color-green-mid)' : 'var(--color-border)'}`,
+                borderRight: `1px solid ${isConforme ? 'var(--color-green-mid)' : 'var(--color-border)'}`,
+                borderBottom: `1px solid ${isConforme ? 'var(--color-green-mid)' : 'var(--color-border)'}`,
                 borderLeft: `3px solid ${isConforme ? 'var(--color-green)' : 'var(--color-amber)'}`,
-                border: `1px solid ${isConforme ? 'var(--color-green-mid)' : 'var(--color-border)'}`,
                 borderRadius: 8,
               }}
             >

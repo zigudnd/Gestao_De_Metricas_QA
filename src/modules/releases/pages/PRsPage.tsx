@@ -9,6 +9,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ReleasePR } from '../types/pr.types'
 import { getMasterIndex, loadFromStorage } from '@/modules/sprints/services/persistence'
 import { PRAnalysisPanel } from '../components/prs/PRAnalysisPanel'
+import { ConfirmModal } from '@/app/components/ConfirmModal'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,10 @@ export function PRsPage() {
   const [formSquadId, setFormSquadId] = useState('')
   const [saving, setSaving] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [editPrId, setEditPrId] = useState<string | null>(null)
+  const [rejectingPrId, setRejectingPrId] = useState<string | null>(null)
+  const [rejectObs, setRejectObs] = useState('')
+  const [deletingPrId, setDeletingPrId] = useState<string | null>(null)
 
   const closeModal = useCallback(() => setShowForm(false), [])
   const modalRef = useFocusTrap(showForm, closeModal)
@@ -182,6 +187,7 @@ export function PRsPage() {
     setFormType('feature')
     setFormSquadId('')
     setFormErrors({})
+    setEditPrId(null)
   }
 
   // ── PR actions ──
@@ -198,26 +204,29 @@ export function PRsPage() {
     loadPRs()
   }
 
-  async function handleRejectPR(prId: string) {
-    const obs = prompt('Motivo da rejeição (obrigatório):')
-    if (!obs || obs.trim().length < 3) { showToast('Informe o motivo da rejeição', 'error'); return }
+  async function handleConfirmReject() {
+    if (!rejectingPrId) return
+    if (!rejectObs || rejectObs.trim().length < 3) { showToast('Informe o motivo da rejeição (mínimo 3 caracteres)', 'error'); return }
     const { data: { user: authUser } } = await supabase.auth.getUser()
     const { error } = await supabase.from('release_prs').update({
       review_status: 'rejected',
       reviewed_by: authUser?.id,
       reviewed_at: new Date().toISOString(),
-      review_observation: obs.trim(),
-    }).eq('id', prId)
+      review_observation: rejectObs.trim(),
+    }).eq('id', rejectingPrId)
     if (error) { showToast(error.message || 'Erro ao rejeitar', 'error'); return }
     showToast('PR rejeitado', 'success')
+    setRejectingPrId(null)
+    setRejectObs('')
     loadPRs()
   }
 
-  async function handleDeletePR(prId: string) {
-    if (!confirm('Tem certeza que deseja excluir este PR?')) return
-    const { error } = await supabase.from('release_prs').delete().eq('id', prId)
+  async function handleConfirmDelete() {
+    if (!deletingPrId) return
+    const { error } = await supabase.from('release_prs').delete().eq('id', deletingPrId)
     if (error) { showToast(error.message || 'Erro ao excluir', 'error'); return }
     showToast('PR excluído', 'success')
+    setDeletingPrId(null)
     loadPRs()
   }
 
@@ -238,25 +247,36 @@ export function PRsPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) { setFormErrors({ submit: 'Sessao expirada. Faca login novamente.' }); setSaving(false); return }
 
-      const { error } = await supabase.from('release_prs').insert({
+      const payload = {
         release_id: formReleaseId,
         pr_link: formPrLink.trim(),
         repository: repo,
         description: formDesc.trim() || '',
         change_type: formType,
         squad_id: formSquadId || null,
-        user_id: authUser.id,
-      })
-      if (error) {
-        if (error.code === '42P01') {
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let queryError: any = null
+
+      if (editPrId) {
+        const result = await supabase.from('release_prs').update(payload).eq('id', editPrId)
+        queryError = result.error
+      } else {
+        const result = await supabase.from('release_prs').insert({ ...payload, user_id: authUser.id })
+        queryError = result.error
+      }
+
+      if (queryError) {
+        if (queryError.code === '42P01') {
           setFormErrors({ submit: 'Tabela release_prs nao encontrada. Execute a migration: supabase db push --local' })
         } else {
-          setFormErrors({ submit: error.message || 'Erro ao cadastrar PR' })
+          setFormErrors({ submit: queryError.message || (editPrId ? 'Erro ao atualizar PR' : 'Erro ao cadastrar PR') })
         }
         setSaving(false)
         return
       }
-      showToast('PR cadastrado com sucesso', 'success')
+      showToast(editPrId ? 'PR atualizado com sucesso' : 'PR cadastrado com sucesso', 'success')
       setShowForm(false)
       resetForm()
       loadPRs()
@@ -508,7 +528,7 @@ export function PRsPage() {
           <div
             ref={modalRef}
             onClick={(e) => e.stopPropagation()}
-            role="dialog" aria-modal="true" aria-label="Cadastrar PR"
+            role="dialog" aria-modal="true" aria-label={editPrId ? 'Editar PR' : 'Cadastrar PR'}
             style={{
               background: 'var(--color-surface)', border: '1px solid var(--color-border)',
               borderRadius: 14, padding: '24px 22px', width: '100%', maxWidth: 500,
@@ -517,7 +537,7 @@ export function PRsPage() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
-                Cadastrar PR
+                {editPrId ? 'Editar PR' : 'Cadastrar PR'}
               </h2>
               <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--color-text-3)', cursor: 'pointer' }}>×</button>
             </div>
@@ -687,7 +707,7 @@ export function PRsPage() {
                     fontFamily: 'var(--font-family-sans)',
                   }}
                 >
-                  {saving ? 'Salvando...' : 'Cadastrar PR'}
+                  {saving ? 'Salvando...' : editPrId ? 'Salvar alterações' : 'Cadastrar PR'}
                 </button>
               </div>
             </form>
@@ -981,7 +1001,7 @@ export function PRsPage() {
                                         Aprovar
                                       </button>
                                       <button
-                                        onClick={() => handleRejectPR(pr.id)}
+                                        onClick={() => { setRejectingPrId(pr.id); setRejectObs('') }}
                                         title="Rejeitar PR"
                                         aria-label="Rejeitar PR"
                                         style={{
@@ -1002,7 +1022,7 @@ export function PRsPage() {
                                   )}
 
                                   <button
-                                    onClick={() => handleDeletePR(pr.id)}
+                                    onClick={() => setDeletingPrId(pr.id)}
                                     title="Excluir PR"
                                     aria-label="Excluir PR"
                                     style={{
@@ -1052,6 +1072,7 @@ export function PRsPage() {
             loadPRs()
           }}
           onEdit={() => {
+            setEditPrId(selectedPR.id)
             setFormReleaseId(selectedPR.release_id)
             setFormPrLink(selectedPR.pr_link)
             setFormRepo(selectedPR.repository)
@@ -1061,8 +1082,87 @@ export function PRsPage() {
             setSelectedPR(null)
             setShowForm(true)
           }}
-          onDelete={async () => { await handleDeletePR(selectedPR.id); setSelectedPR(null) }}
+          onDelete={() => { setDeletingPrId(selectedPR.id); setSelectedPR(null) }}
           onClose={() => setSelectedPR(null)}
+        />
+      )}
+
+      {/* Modal de rejeição */}
+      {rejectingPrId && (
+        <div
+          onClick={() => { setRejectingPrId(null); setRejectObs('') }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog" aria-modal="true" aria-label="Rejeitar PR"
+            style={{
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+              borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24,
+              width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column', gap: 12,
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>
+              Rejeitar PR
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.6 }}>
+              Informe o motivo da rejeição (obrigatório, mínimo 3 caracteres):
+            </div>
+            <textarea
+              value={rejectObs}
+              onChange={(e) => setRejectObs(e.target.value)}
+              placeholder="Motivo da rejeição..."
+              rows={3}
+              autoFocus
+              style={{
+                width: '100%', padding: '8px 10px', borderRadius: 7, resize: 'vertical',
+                border: '1px solid var(--color-border-md)', fontSize: 13,
+                fontFamily: 'var(--font-family-sans)', color: 'var(--color-text)',
+                background: 'var(--color-surface)', boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+              <button
+                onClick={() => { setRejectingPrId(null); setRejectObs('') }}
+                style={{
+                  padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)',
+                  background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={rejectObs.trim().length < 3}
+                style={{
+                  padding: '7px 18px', borderRadius: 8, border: 'none',
+                  background: rejectObs.trim().length < 3 ? 'var(--color-border-md)' : 'var(--color-red)',
+                  color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: rejectObs.trim().length < 3 ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                }}
+              >
+                Rejeitar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão */}
+      {deletingPrId && (
+        <ConfirmModal
+          title="Excluir PR"
+          description="Tem certeza que deseja excluir este PR? Esta ação não pode ser desfeita."
+          confirmLabel="Excluir"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeletingPrId(null)}
         />
       )}
     </div>

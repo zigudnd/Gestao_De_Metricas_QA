@@ -5,9 +5,12 @@ import type { ReleasePR, PRFilters, ReviewStatus, SquadPRSummary } from '../type
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) {
+    throw new Error('Sessão expirada. Faça login novamente.')
+  }
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${session?.access_token}`,
+    Authorization: `Bearer ${session.access_token}`,
   }
 }
 
@@ -20,6 +23,7 @@ function parseResponse<T>(text: string, res: Response, fallbackMsg: string): T {
       : (json.error as string) || fallbackMsg
     throw new Error(errMsg)
   }
+  if (!json.data && json.data !== false) throw new Error('Resposta sem dados')
   return json.data as T
 }
 

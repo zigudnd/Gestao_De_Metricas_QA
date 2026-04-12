@@ -135,7 +135,10 @@ function getPhaseStates(status: ReleaseStatus): PhaseState[] {
       return ['done', 'done', 'done', 'done', 'done']
     case 'em_regressivo':
     case 'em_homologacao':
+    case 'em_qa':
       return ['done', 'done', 'active', 'pending', 'pending']
+    case 'aguardando_aprovacao':
+      return ['done', 'done', 'done', 'done', 'active']
     case 'corte':
       return ['active', 'pending', 'pending', 'pending', 'pending']
     case 'em_desenvolvimento':
