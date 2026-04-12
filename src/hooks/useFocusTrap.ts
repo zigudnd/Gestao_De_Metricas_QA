@@ -9,6 +9,7 @@ export function useFocusTrap(active: boolean, onEscape?: () => void) {
     const focusable = el.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     )
+    if (focusable.length === 0) return
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
 

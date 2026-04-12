@@ -63,13 +63,13 @@ const STATUS_LABEL: Record<string, string> = {
   planejada: 'Planejada',
   em_desenvolvimento: 'Em Desenvolvimento',
   corte: 'Em Corte',
-  em_homologacao: 'Em Homologacao',
+  em_homologacao: 'Em Homologação',
   em_regressivo: 'Em Regressivo',
   em_qa: 'Em QA',
-  aguardando_aprovacao: 'Aguardando Aprovacao',
+  aguardando_aprovacao: 'Aguardando Aprovação',
   aprovada: 'Aprovada',
-  em_producao: 'Em Producao',
-  concluida: 'Concluida',
+  em_producao: 'Em Produção',
+  concluida: 'Concluída',
   uniu_escopo: 'Uniu Escopo',
   rollback: 'Rollback',
   cancelada: 'Cancelada',
@@ -350,7 +350,7 @@ export function PRsPage() {
       if (filterStatus !== 'all' && pr.review_status !== filterStatus) return false
       if (filterRelease !== 'all' && pr.release_id !== filterRelease) return false
       if (needle) {
-        const haystack = [pr.repository, pr.description, pr.pr_link].join(' ').toLowerCase()
+        const haystack = [pr.repository, pr.description, pr.pr_link, pr.squad_name].join(' ').toLowerCase()
         if (!haystack.includes(needle)) return false
       }
       return true
@@ -895,7 +895,7 @@ export function PRsPage() {
                               ) : null}
                             </th>
                           ))}
-                          <th style={{ ...TH_STYLE, width: 180, textAlign: 'center' }}>Acoes</th>
+                          <th style={{ ...TH_STYLE, width: 180, textAlign: 'center' }}>Ações</th>
                         </tr>
                       </thead>
                       <tbody>

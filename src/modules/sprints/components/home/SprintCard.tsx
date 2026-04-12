@@ -123,7 +123,7 @@ export function SprintCard({
           {sprint.sprintType && sprint.sprintType !== 'squad' && (
             <span style={{
               fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 8, flexShrink: 0,
-              background: sprint.sprintType === 'regressivo' ? '#f97316' + '18' : 'var(--color-blue-light)',
+              background: sprint.sprintType === 'regressivo' ? 'color-mix(in srgb, #f97316 10%, transparent)' : 'var(--color-blue-light)',
               color: sprint.sprintType === 'regressivo' ? '#f97316' : 'var(--color-blue-text)',
               textTransform: 'uppercase',
             }}>

@@ -11,7 +11,7 @@ export async function exportToImage(): Promise<void> {
     const canvas = await html2canvas(el, {
       scale: 1.5,
       useCORS: true,
-      backgroundColor: '#f7f6f2',
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#f7f6f2',
       logging: false,
     })
     canvas.toBlob(

@@ -25,18 +25,18 @@ import { uid } from '@/lib/uid'
 
 export const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
   planejada: ['em_desenvolvimento', 'corte', 'cancelada'],
-  em_desenvolvimento: ['corte', 'cancelada'],
+  em_desenvolvimento: ['em_homologacao', 'em_qa', 'corte', 'cancelada'],
   corte: ['em_homologacao', 'em_qa', 'cancelada'],
   em_homologacao: ['em_regressivo', 'cancelada'],
   em_qa: ['em_regressivo', 'aguardando_aprovacao', 'cancelada'],
   em_regressivo: ['aprovada', 'aguardando_aprovacao', 'cancelada'],
-  aguardando_aprovacao: ['aprovada', 'em_regressivo', 'cancelada'],
+  aguardando_aprovacao: ['aprovada', 'em_regressivo', 'em_qa', 'cancelada'],
   aprovada: ['em_producao', 'cancelada'],
   em_producao: ['concluida', 'rollback'],
-  concluida: [],
+  concluida: ['rollback'],
   rollback: ['em_desenvolvimento', 'cancelada'],
   cancelada: ['planejada'],
-  uniu_escopo: ['em_desenvolvimento'],
+  uniu_escopo: ['em_desenvolvimento', 'cancelada'],
 }
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
@@ -445,11 +445,14 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
         }
         return
       }
-    } else if (import.meta.env.DEV) {
-      // Unknown source state — allow but warn
-      console.warn(
-        `[Release] Estado de origem desconhecido "${oldStatus}". Transição para "${status}" permitida por fallback.`,
-      )
+    } else {
+      // Unknown source state — block in all environments
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[Release] Estado de origem desconhecido "${oldStatus}". Transição para "${status}" bloqueada.`,
+        )
+      }
+      return
     }
 
     const change = {

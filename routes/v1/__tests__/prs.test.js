@@ -76,7 +76,7 @@ function mockPrRow(overrides = {}) {
     review_status: 'pending',
     reviewed_by: null,
     reviewed_at: null,
-    observation: null,
+    review_observation: null,
     created_at: '2026-04-06T00:00:00Z',
     updated_at: '2026-04-06T00:00:00Z',
     ...overrides,
@@ -510,7 +510,7 @@ describe('PATCH /releases/:releaseId/prs/:prId/review (review PR)', () => {
       review_status: 'rejected',
       reviewed_by: USER_UUID,
       reviewed_at: '2026-04-06T12:00:00Z',
-      observation: 'Missing tests for edge cases',
+      review_observation: 'Missing tests for edge cases',
     });
 
     const supabase = {
@@ -545,7 +545,7 @@ describe('PATCH /releases/:releaseId/prs/:prId/review (review PR)', () => {
 
     const req = mockReq({
       validatedParams: { releaseId: RELEASE_UUID, prId: PR_UUID },
-      validatedBody: { status: 'rejected', observation: 'Missing tests for edge cases' },
+      validatedBody: { status: 'rejected', review_observation: 'Missing tests for edge cases' },
       app: { locals: { supabase } },
     });
     const res = mockRes();
@@ -555,7 +555,7 @@ describe('PATCH /releases/:releaseId/prs/:prId/review (review PR)', () => {
     assert.equal(res._status, null); // 200 default
     assert.ok(res._json.data);
     assert.equal(res._json.data.review_status, 'rejected');
-    assert.equal(res._json.data.observation, 'Missing tests for edge cases');
+    assert.equal(res._json.data.review_observation, 'Missing tests for edge cases');
   });
 
   it('returns 404 for non-existent PR', async () => {
@@ -682,7 +682,7 @@ describe('GET /releases/:releaseId/squads-summary', () => {
   it('returns aggregated squad data', async () => {
     const prs = [
       { squad_id: SQUAD_UUID, review_status: 'approved', change_type: 'feature', squads: { name: 'Alpha' } },
-      { squad_id: SQUAD_UUID, review_status: 'pending', change_type: 'bugfix', squads: { name: 'Alpha' } },
+      { squad_id: SQUAD_UUID, review_status: 'pending', change_type: 'fix', squads: { name: 'Alpha' } },
       { squad_id: SQUAD_UUID, review_status: 'rejected', change_type: 'refactor', squads: { name: 'Alpha' } },
       { squad_id: '00000000-0000-0000-0000-000000000020', review_status: 'pending', change_type: 'docs', squads: { name: 'Beta' } },
     ];

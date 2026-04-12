@@ -20,15 +20,6 @@ const formatDateBR = fmtDateFull
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const btnIcon: React.CSSProperties = {
-  width: 30, height: 30, borderRadius: 6, border: 'none',
-  background: 'transparent', cursor: 'pointer',
-  color: 'var(--color-text-3)', fontSize: 13,
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'background 0.15s, color 0.15s',
-  flexShrink: 0,
-}
-
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '8px 10px', borderRadius: 7,
   border: '1px solid var(--color-border-md)', fontSize: 13,

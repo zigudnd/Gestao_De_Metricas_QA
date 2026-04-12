@@ -93,13 +93,13 @@ interface SprintStore {
   updateReportText: (date: string, value: string) => void
 
   // Suites
-  addSuite: () => void
+  addSuite: () => string
   updateSuite: (index: number, field: keyof Suite, value: string) => void
   removeSuite: (index: number) => void
   duplicateSuite: (index: number) => void
 
   // Features
-  addFeature: (suiteId: number | string) => void
+  addFeature: (suiteId: number | string) => string
   updateFeature: (index: number, field: keyof Feature, value: unknown) => void
   removeFeature: (index: number) => void
   updateFeatureExecution: (featureIndex: number, dayKey: string, value: number) => void
@@ -422,9 +422,16 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
 
   duplicateBug: (index) => {
     const { state, _commit } = get()
-    const copy = { ...structuredClone(state.bugs[index]), id: `BUG-${uid()}` }
+    const copy = {
+      ...structuredClone(state.bugs[index]),
+      id: `BUG-${uid()}`,
+      openedAt: new Date().toISOString().split('T')[0],
+      resolvedAt: undefined,
+      status: 'Aberto' as const,
+      retests: 0,
+    }
     const bugs = [...state.bugs]
-    bugs.splice(index + 1, 0, copy)
+    bugs.splice(index + 1, 0, copy as Bug)
     _commit({ ...state, bugs })
   },
 

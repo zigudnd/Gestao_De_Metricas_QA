@@ -100,6 +100,14 @@ function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
       return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
     case 'Uniu Escopo':
       return { ...base, background: '#8b5cf618', color: '#8b5cf6', border: '1px solid #8b5cf640' }
+    case 'Em QA':
+      return { ...base, background: '#ecfeff', color: '#06b6d4', border: '1px solid #06b6d440' }
+    case 'Aguardando Aprovação':
+      return { ...base, background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', border: '1px solid var(--color-yellow)' }
+    case 'Rollback':
+      return { ...base, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '1px solid var(--color-red)' }
+    case 'Cancelada':
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-3)', border: '1px solid var(--color-border-md)', textDecoration: 'line-through' }
     default:
       return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
   }
@@ -119,7 +127,7 @@ function overallStatus(statuses: ReleaseStatus[]): ReleaseStatus {
 }
 
 function formatDateShort(dateStr: string): string {
-  if (!dateStr) return '\u2014'
+  if (!dateStr) return '—'
   const [, m, d] = dateStr.split('-')
   return `${d}/${m}`
 }
@@ -158,7 +166,7 @@ function getPhaseDates(release: Release): string[] {
     formatDateShort(release.buildDate),
     release.homologacaoStart
       ? `${formatDateShort(release.homologacaoStart)} a ${formatDateShort(release.homologacaoEnd)}`
-      : '\u2014',
+      : '—',
     formatDateShort(release.betaDate),
     formatDateShort(release.productionDate),
   ]
@@ -556,7 +564,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                           border: '1px solid var(--color-amber-mid)',
                         }}
                       >
-                        {'\u26A0\uFE0F'} {alert.pending.length} de {alert.total} squads sem testes integrados
+                        {'⚠️'} {alert.pending.length} de {alert.total} squads sem testes integrados
                       </span>
                     )
                   }
@@ -576,7 +584,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                         border: '1px solid var(--color-green-mid)',
                       }}
                     >
-                      {'\u2705'} Todos os squads com testes
+                      {'✅'} Todos os squads com testes
                     </span>
                   )
                 })()}

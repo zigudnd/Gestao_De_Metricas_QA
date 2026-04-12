@@ -215,6 +215,7 @@ export function SprintDashboard() {
       {/* OverviewTab sempre montado para permitir exportação independente da aba ativa */}
       <div
         id="overview-tab-content"
+        aria-hidden={activeTab !== 'overview'}
         style={activeTab !== 'overview' ? { position: 'absolute', left: '-9999px', top: '-9999px', width: 1200 } : {}}
       >
         <OverviewTab />

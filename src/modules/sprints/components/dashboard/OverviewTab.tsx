@@ -811,19 +811,6 @@ const Card = memo(function Card({ title, icon, pill, children }: { title: string
   )
 })
 
-const Section = memo(function Section({ title, icon, count, children }: { title: string; icon: string; count: number; children: React.ReactNode }) {
-  return (
-    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span>{icon}</span>
-        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>{title}</span>
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', background: 'var(--color-border)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>{count}</span>
-      </div>
-      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
-    </div>
-  )
-})
-
 const EmptyOk = memo(function EmptyOk({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72, color: 'var(--color-green)', fontWeight: 600, background: 'var(--color-green-light)', borderRadius: 8, border: '1px dashed var(--color-green-mid)', fontSize: 13 }}>
@@ -832,12 +819,3 @@ const EmptyOk = memo(function EmptyOk({ label }: { label: string }) {
   )
 })
 
-const Badge = memo(function Badge({ label, color }: { label: string; color: string }) {
-  return (
-    <span style={{ fontSize: 10, background: color, color: '#fff', padding: '3px 8px', borderRadius: 12, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0 }}>{label}</span>
-  )
-})
-
-function alertCard(bg: string, border: string, accent: string): React.CSSProperties {
-  return { padding: '12px 14px', background: bg, border: `1px solid ${border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8 }
-}
