@@ -4,9 +4,10 @@ import { useReleaseStore } from '../store/releaseStore'
 import { supabase } from '@/lib/supabase'
 import { showToast } from '@/app/components/Toast'
 import { useAuthStore } from '@/modules/auth/store/authStore'
+import { createPR as svcCreatePR, updatePR as svcUpdatePR, deletePR as svcDeletePR, reviewPR as svcReviewPR } from '../services/prService'
 import { listMySquads, type Squad } from '@/modules/squads/services/squadsService'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import type { ReleasePR } from '../types/pr.types'
+import type { ReleasePR, ChangeType } from '../types/pr.types'
 import { getMasterIndex, loadFromStorage } from '@/modules/sprints/services/persistence'
 import { PRAnalysisPanel } from '../components/prs/PRAnalysisPanel'
 import { ConfirmModal } from '@/app/components/ConfirmModal'
@@ -193,42 +194,46 @@ export function PRsPage() {
 
   // ── PR actions ──
   async function handleApprovePR(prId: string) {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('release_prs').update({
-      review_status: 'approved',
-      reviewed_by: authUser?.id,
-      reviewed_at: new Date().toISOString(),
-      review_observation: null,
-    }).eq('id', prId)
-    if (error) { showToast(error.message || 'Erro ao aprovar', 'error'); return }
-    showToast('PR aprovado', 'success')
-    loadPRs()
+    // Find release_id for this PR
+    const pr = prs.find(p => p.id === prId)
+    if (!pr) { showToast('PR não encontrado', 'error'); return }
+    try {
+      await svcReviewPR(pr.release_id, prId, { status: 'approved' })
+      showToast('PR aprovado', 'success')
+      loadPRs()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Erro ao aprovar', 'error')
+    }
   }
 
   async function handleConfirmReject() {
     if (!rejectingPrId) return
     if (!rejectObs || rejectObs.trim().length < 3) { showToast('Informe o motivo da rejeição (mínimo 3 caracteres)', 'error'); return }
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('release_prs').update({
-      review_status: 'rejected',
-      reviewed_by: authUser?.id,
-      reviewed_at: new Date().toISOString(),
-      review_observation: rejectObs.trim(),
-    }).eq('id', rejectingPrId)
-    if (error) { showToast(error.message || 'Erro ao rejeitar', 'error'); return }
-    showToast('PR rejeitado', 'success')
-    setRejectingPrId(null)
-    setRejectObs('')
-    loadPRs()
+    const pr = prs.find(p => p.id === rejectingPrId)
+    if (!pr) { showToast('PR não encontrado', 'error'); return }
+    try {
+      await svcReviewPR(pr.release_id, rejectingPrId, { status: 'rejected', review_observation: rejectObs.trim() })
+      showToast('PR rejeitado', 'success')
+      setRejectingPrId(null)
+      setRejectObs('')
+      loadPRs()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Erro ao rejeitar', 'error')
+    }
   }
 
   async function handleConfirmDelete() {
     if (!deletingPrId) return
-    const { error } = await supabase.from('release_prs').delete().eq('id', deletingPrId)
-    if (error) { showToast(error.message || 'Erro ao excluir', 'error'); return }
-    showToast('PR excluído', 'success')
-    setDeletingPrId(null)
-    loadPRs()
+    const pr = prs.find(p => p.id === deletingPrId)
+    if (!pr) { showToast('PR não encontrado', 'error'); return }
+    try {
+      await svcDeletePR(pr.release_id, deletingPrId)
+      showToast('PR excluído', 'success')
+      setDeletingPrId(null)
+      loadPRs()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Erro ao excluir', 'error')
+    }
   }
 
   async function handleCreatePR(e: React.FormEvent) {
@@ -245,44 +250,26 @@ export function PRsPage() {
 
     setSaving(true)
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser) { setFormErrors({ submit: 'Sessao expirada. Faca login novamente.' }); setSaving(false); return }
-
       const payload = {
-        release_id: formReleaseId,
         pr_link: formPrLink.trim(),
         repository: repo,
         description: formDesc.trim() || '',
-        change_type: formType,
+        change_type: formType as ChangeType,
         squad_id: formSquadId || null,
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let queryError: any = null
-
       if (editPrId) {
-        const result = await supabase.from('release_prs').update({ ...payload, review_status: 'pending', reviewed_by: null, reviewed_at: null, review_observation: null }).eq('id', editPrId)
-        queryError = result.error
+        await svcUpdatePR(formReleaseId, editPrId, payload)
       } else {
-        const result = await supabase.from('release_prs').insert({ ...payload, user_id: authUser.id })
-        queryError = result.error
+        await svcCreatePR(formReleaseId, payload)
       }
 
-      if (queryError) {
-        if (queryError.code === '42P01') {
-          setFormErrors({ submit: 'Tabela release_prs nao encontrada. Execute a migration: supabase db push --local' })
-        } else {
-          setFormErrors({ submit: queryError.message || (editPrId ? 'Erro ao atualizar PR' : 'Erro ao cadastrar PR') })
-        }
-        setSaving(false)
-        return
-      }
       showToast(editPrId ? 'PR atualizado com sucesso' : 'PR cadastrado com sucesso', 'success')
       setShowForm(false)
       resetForm()
       loadPRs()
     } catch (err) {
-      setFormErrors({ submit: err instanceof Error ? err.message : 'Erro ao cadastrar PR' })
+      setFormErrors({ submit: err instanceof Error ? err.message : (editPrId ? 'Erro ao atualizar PR' : 'Erro ao cadastrar PR') })
     } finally {
       setSaving(false)
     }
@@ -1081,17 +1068,14 @@ export function PRsPage() {
           isOwner={selectedPR.user_id === user?.id}
           onApprove={async () => { await handleApprovePR(selectedPR.id); setSelectedPR(null) }}
           onReject={async (obs) => {
-            const { data: { user: authUser } } = await supabase.auth.getUser()
-            const { error } = await supabase.from('release_prs').update({
-              review_status: 'rejected',
-              reviewed_by: authUser?.id,
-              reviewed_at: new Date().toISOString(),
-              review_observation: obs,
-            }).eq('id', selectedPR.id)
-            if (error) { showToast(error.message || 'Erro ao rejeitar', 'error'); return }
-            showToast('PR rejeitado', 'success')
-            setSelectedPR(null)
-            loadPRs()
+            try {
+              await svcReviewPR(selectedPR.release_id, selectedPR.id, { status: 'rejected', review_observation: obs })
+              showToast('PR rejeitado', 'success')
+              setSelectedPR(null)
+              loadPRs()
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : 'Erro ao rejeitar', 'error')
+            }
           }}
           onEdit={() => {
             setEditPrId(selectedPR.id)

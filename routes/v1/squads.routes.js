@@ -123,6 +123,13 @@ router.get('/:id/members', requireApiKey('squads:read'), async (req, res) => {
 
   const { id } = req.params;
 
+  // Check if API key has access to this squad
+  if (req.apiKey && req.apiKey.squad_ids && req.apiKey.squad_ids.length > 0) {
+    if (!req.apiKey.squad_ids.includes(id)) {
+      return error(res, 403, 'FORBIDDEN', 'API key não tem acesso a este squad.');
+    }
+  }
+
   try {
     // Check squad exists
     const { data: squad, error: squadError } = await supabase

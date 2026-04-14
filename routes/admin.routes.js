@@ -45,6 +45,12 @@ const { adminLimiter } = require('../middleware/rateLimiter');
 router.post('/create-user', adminLimiter, requireAdminAuth, validateBody(createUserSchema), async (req, res) => {
   const supabaseAdmin = req.app.locals.supabase;
   const { email, display_name, global_role } = req.validatedBody;
+
+  // SEC-003: Prevent privilege escalation — only admins can create other admins
+  if (global_role === 'admin' && req.callerProfile.global_role !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores podem criar outros administradores.' });
+  }
+
   const password = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
 
   try {
@@ -121,15 +127,15 @@ router.post('/reset-password', adminLimiter, requireAdminAuth, validateBody(rese
       return res.status(403).json({ error: 'Gerentes não podem resetar senhas de administradores.' });
     }
 
-    const defaultPassword = 'Mudar@123';
+    const newPassword = crypto.randomBytes(12).toString('base64url').slice(0, 16) + '!1';
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      password: defaultPassword,
+      password: newPassword,
       user_metadata: { must_change_password: true },
     });
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    return res.json({ ok: true, temporaryPassword: defaultPassword });
+    return res.json({ ok: true, temporaryPassword: newPassword });
   } catch (err) {
     console.error('Erro ao resetar senha:', err);
     return res.status(500).json({ error: 'Erro interno ao resetar senha.' });

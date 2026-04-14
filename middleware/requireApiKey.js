@@ -53,7 +53,7 @@ function requireApiKey(requiredPermission) {
     }
 
     // Check permission
-    if (requiredPermission && !key.permissions[requiredPermission]) {
+    if (requiredPermission && (!key.permissions || !key.permissions[requiredPermission])) {
       return res.status(403).json({
         error: { code: 'INSUFFICIENT_PERMISSIONS', message: `Missing permission: ${requiredPermission}`, status: 403 },
         meta: { requestId: req.requestId },

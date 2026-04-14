@@ -20,6 +20,30 @@ async function validateBeaconToken(supabaseAdmin, token) {
   }
 }
 
+/**
+ * Checks if the user is a member of the given squad or has admin/gerente role.
+ * Returns true if authorized, false otherwise.
+ */
+async function isSquadMemberOrAdmin(supabaseAdmin, userId, squadId) {
+  // Check global_role first
+  const { data: profile } = await supabaseAdmin.from('profiles').select('global_role').eq('id', userId).single();
+  if (profile && (profile.global_role === 'admin' || profile.global_role === 'gerente')) {
+    return true;
+  }
+  // Check squad membership
+  if (!squadId) return false;
+  const { data: membership } = await supabaseAdmin.from('squad_members').select('id').eq('user_id', userId).eq('squad_id', squadId).single();
+  return !!membership;
+}
+
+/**
+ * Checks if the user has admin or gerente global_role.
+ */
+async function isAdminOrGerente(supabaseAdmin, userId) {
+  const { data: profile } = await supabaseAdmin.from('profiles').select('global_role').eq('id', userId).single();
+  return profile && (profile.global_role === 'admin' || profile.global_role === 'gerente');
+}
+
 // ── Status Report: flush pendente ao fechar aba (sendBeacon) ─────────────────
 /**
  * @openapi
@@ -63,6 +87,11 @@ router.post('/status-report-flush', flushLimiter, express.text({ type: '*/*', li
     }
     if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
       return res.status(400).json({ error: 'Data inválido.' });
+    }
+    // SEC-001: Verify squad membership before allowing upsert
+    const authorized = await isSquadMemberOrAdmin(supabaseAdmin, user.id, payload.squad_id);
+    if (!authorized) {
+      return res.status(403).json({ error: 'Sem permissão para este recurso.' });
     }
     const { error: dbError } = await supabaseAdmin.from('status_reports').upsert({
       id: payload.id,
@@ -126,6 +155,11 @@ router.post('/release-flush', flushLimiter, express.text({ type: '*/*', limit: '
     if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
       return res.status(400).json({ error: 'Data inválido.' });
     }
+    // SEC-001: Only admin/gerente can flush releases
+    const releaseAuthorized = await isAdminOrGerente(supabaseAdmin, user.id);
+    if (!releaseAuthorized) {
+      return res.status(403).json({ error: 'Sem permissão para este recurso.' });
+    }
     const { error: dbError } = await supabaseAdmin.from('releases').upsert({
       id: payload.id,
       data: payload.data,
@@ -188,6 +222,11 @@ router.post('/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '1
     }
     if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
       return res.status(400).json({ error: 'Data inválido.' });
+    }
+    // SEC-001: Verify squad membership before allowing upsert
+    const sprintAuthorized = await isSquadMemberOrAdmin(supabaseAdmin, user.id, payload.squad_id);
+    if (!sprintAuthorized) {
+      return res.status(403).json({ error: 'Sem permissão para este recurso.' });
     }
     const { error: dbError } = await supabaseAdmin.from('sprints').upsert({
       id: payload.id,
