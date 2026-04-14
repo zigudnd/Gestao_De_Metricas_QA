@@ -78,6 +78,9 @@ export function ItemDetailPanel({
       <div
         ref={panelRef}
         tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Detalhes do item"
         onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
         style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
@@ -268,7 +271,16 @@ export function ItemDetailPanel({
               <input
                 type="date" value={item.deadlineDate}
                 min={computed.start || item.startDate || undefined}
-                onChange={(e) => onUpdate(item.id, { deadlineDate: e.target.value })}
+                onChange={(e) => {
+                  const newDeadline = e.target.value
+                  onUpdate(item.id, { deadlineDate: newDeadline })
+                  if (item.startDate && newDeadline) {
+                    const start = new Date(item.startDate)
+                    const end = new Date(newDeadline)
+                    const diffDaysCalc = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000))
+                    onUpdate(item.id, { durationDays: diffDaysCalc })
+                  }
+                }}
                 style={inputStyle}
               />
             </div>

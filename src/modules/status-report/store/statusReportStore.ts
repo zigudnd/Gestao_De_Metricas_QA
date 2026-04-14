@@ -37,6 +37,7 @@ async function doPersistToServer(state: StatusReportState, squadId?: string | nu
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
   _remotePersistInFlight = true
   _remotePersistQueued = false
+  const savedSquadId = _lastPendingSquadId
   _lastPendingState = null
   _lastPendingSquadId = null
   try {
@@ -44,6 +45,7 @@ async function doPersistToServer(state: StatusReportState, squadId?: string | nu
   } catch (e) {
     if (import.meta.env.DEV) console.error('[StatusReport] Erro ao sincronizar:', e)
     _lastPendingState = state // guardar para flush no beforeunload
+    _lastPendingSquadId = savedSquadId // restaurar squadId para sendBeacon
   } finally {
     _remotePersistInFlight = false
     if (_remotePersistQueued && _lastPendingState) {
@@ -183,51 +185,64 @@ export const useStatusReportStore = create<StatusReportStore>((set, get) => ({
   initReport: async (reportId: string) => {
     set({ isLoading: true })
 
-    let state = await loadFromServer(reportId)
-    if (!state) state = loadFromLocalStorage(reportId)
-    const isNewReport = !state
+    try {
+      let state = await loadFromServer(reportId)
+      if (!state) state = loadFromLocalStorage(reportId)
+      const isNewReport = !state
 
-    if (!state) {
-      // New report — seed with demo data only if it's the very first one
-      const now = new Date().toISOString()
-      const isSeed = reportId.startsWith('sr_seed')
-      const seeded: StatusReportItem[] = isSeed
-        ? SEED_ITEMS.map((s) => ({ ...s, createdAt: now, updatedAt: now }))
-        : []
-      state = { ...createDefaultState(reportId), items: seeded, createdAt: now, updatedAt: now }
-    }
+      if (!state) {
+        // New report — seed with demo data only if it's the very first one
+        const now = new Date().toISOString()
+        const isSeed = reportId.startsWith('sr_seed')
+        const seeded: StatusReportItem[] = isSeed
+          ? SEED_ITEMS.map((s) => ({ ...s, createdAt: now, updatedAt: now }))
+          : []
+        state = { ...createDefaultState(reportId), items: seeded, createdAt: now, updatedAt: now }
+      }
 
-    const normalized = normalizeState(state)
-    saveToLocalStorage(normalized)
-    upsertMasterIndex(normalized)
-    queueRemotePersist(normalized, 2500, getActiveSquadId())
+      const normalized = normalizeState(state)
+      saveToLocalStorage(normalized)
+      upsertMasterIndex(normalized)
+      queueRemotePersist(normalized, 2500, getActiveSquadId())
 
-    set({
-      reportId: normalized.id,
-      config: normalized.config,
-      sections: normalized.sections,
-      items: normalized.items,
-      createdAt: normalized.createdAt,
-      isLoading: false,
-      lastSyncedAt: normalized.updatedAt,
-    })
-
-    if (isNewReport) {
-      logAudit('status_report', reportId, 'create', { title: { old: null, new: normalized.config.title } })
-    }
-
-    // Realtime
-    if (_cleanupRealtime) _cleanupRealtime()
-    _cleanupRealtime = initRealtimeSubscription(reportId, (incoming) => {
-      // Ignora echo da nossa própria persistência
-      if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
       set({
-        config: incoming.config,
-        sections: incoming.sections,
-        items: incoming.items,
-        lastSyncedAt: incoming.updatedAt,
+        reportId: normalized.id,
+        config: normalized.config,
+        sections: normalized.sections,
+        items: normalized.items,
+        createdAt: normalized.createdAt,
+        lastSyncedAt: normalized.updatedAt,
       })
-    })
+
+      if (isNewReport) {
+        logAudit('status_report', reportId, 'create', { title: { old: null, new: normalized.config.title } })
+      }
+
+      // Realtime
+      if (_cleanupRealtime) _cleanupRealtime()
+      _cleanupRealtime = initRealtimeSubscription(reportId, (incoming) => {
+        // Ignora echo da nossa própria persistência
+        if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
+        set({
+          config: incoming.config,
+          sections: incoming.sections,
+          items: incoming.items,
+          lastSyncedAt: incoming.updatedAt,
+        })
+      })
+    } catch (e) {
+      if (import.meta.env.DEV) console.error('[StatusReport] Erro ao inicializar report:', e)
+      set({
+        reportId,
+        config: { ...EMPTY_CONFIG },
+        sections: [...DEFAULT_SECTIONS],
+        items: [],
+        createdAt: '',
+        lastSyncedAt: null,
+      })
+    } finally {
+      set({ isLoading: false })
+    }
   },
 
   resetReport: () => {

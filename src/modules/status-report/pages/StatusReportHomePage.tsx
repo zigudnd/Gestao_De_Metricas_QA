@@ -118,6 +118,7 @@ export function StatusReportHomePage() {
     state.config.squad = selectedSquad?.name ?? ''
     state.config.date = new Date().toISOString().split('T')[0]
     saveToLocalStorage(state)
+    persistToServer(state)
     // Build index entry in a single pass (upsert + squadId together)
     const index = getMasterIndex()
     const now = new Date().toISOString()
@@ -149,7 +150,10 @@ export function StatusReportHomePage() {
   function handleDelete(id: string) {
     deleteFromLocalStorage(id)
     removeFromMasterIndex(id)
-    deleteFromServer(id)
+    deleteFromServer(id).catch((err) => {
+      console.warn('[StatusReport] Falha ao deletar do servidor:', err)
+      showToast('Erro ao sincronizar exclusão com o servidor', 'error')
+    })
     refreshList()
     setDeleteId(null)
   }
