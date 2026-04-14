@@ -543,14 +543,27 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
 
                 {/* PR integrated tests alert badge */}
                 {(() => {
-                  // Show badge for each release in the group that has PR data
-                  const releaseId = group.releases[0]?.id
-                  const alert = releaseId ? prAlerts[releaseId] : undefined
-                  if (!alert) return null
-                  if (alert.pending.length > 0) {
+                  // Aggregate alerts across ALL releases in the group
+                  const allPending: string[] = []
+                  let totalSquads = 0
+                  let hasAnyAlert = false
+
+                  for (const rel of group.releases) {
+                    const alert = prAlerts[rel.id]
+                    if (!alert) continue
+                    hasAnyAlert = true
+                    for (const squad of alert.pending) {
+                      if (!allPending.includes(squad)) allPending.push(squad)
+                    }
+                    totalSquads += alert.total
+                  }
+
+                  if (!hasAnyAlert) return null
+
+                  if (allPending.length > 0) {
                     return (
                       <span
-                        title={`Squads pendentes: ${alert.pending.join(', ')}`}
+                        title={`Squads pendentes: ${allPending.join(', ')}`}
                         style={{
                           display: 'inline-block',
                           fontSize: 10,
@@ -564,7 +577,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                           border: '1px solid var(--color-amber-mid)',
                         }}
                       >
-                        {'⚠️'} {alert.pending.length} de {alert.total} squads sem testes integrados
+                        {'⚠️'} {allPending.length} de {totalSquads} squads sem testes integrados
                       </span>
                     )
                   }

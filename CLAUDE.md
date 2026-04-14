@@ -163,5 +163,24 @@ Ordem de aplicação:
 14. `20260406000029` — api_keys table + RLS
 15. `20260411000001` — release_prs, pr_test_links, pr_audit_log tables + RLS
 
+## Comportamento Autônomo
+
+### 1. Loop de Autoaperfeiçoamento
+- Após QUALQUER correção do usuário: atualize ou crie o arquivo `tasks/lessons.md` registrando o padrão do erro e a regra para evitá-lo
+- Revise esse arquivo no início de cada sessão antes de começar qualquer tarefa
+- Itere sobre as lições até que erros recorrentes deixem de acontecer
+
+### 2. Gate de Verificação
+- Antes de considerar qualquer tarefa concluída, pergunte: "Um engenheiro sênior aprovaria essa solução?"
+- Execute os testes disponíveis, verifique o comportamento esperado e demonstre que funciona
+- Nunca marque como feito sem evidência de que funciona
+
+### 3. Correção Autônoma de Bugs
+- Ao receber um relatório de bug: investigue logs, erros e testes falhando por conta própria
+- Não peça informações que já estão disponíveis no contexto, nos logs ou no código
+- Resolva sem exigir troca de contexto desnecessária do usuário
+
+---
+
 ## Comando /regressivo
 Para executar um ciclo completo de regressão de QA use `/regressivo`.

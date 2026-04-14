@@ -306,6 +306,10 @@ export function PRsTab({ releaseId, releaseStatus, cutoffDate, squads }: PRsTabP
   }
 
   function openEdit(pr: ReleasePR) {
+    if (!canRegister) {
+      showToast('Prazo de cadastro encerrado — não é possível editar', 'error')
+      return
+    }
     setEditingPR(pr)
     setShowForm(true)
   }

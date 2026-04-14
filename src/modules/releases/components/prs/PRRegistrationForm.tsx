@@ -169,7 +169,7 @@ export function PRRegistrationForm({
       setCustomRepo(editingPR.repository)
       setRepository('Outro')
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editingPR?.id, isCustomRepo, editingPR?.repository])
 
   function validate(): Record<string, string> {
     const errs: Record<string, string> = {}

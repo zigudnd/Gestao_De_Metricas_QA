@@ -73,13 +73,19 @@ export function SprintDashboard() {
     let cancelled = false
 
     async function fetchSquadsWithApprovedPRs() {
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('release_prs')
         .select('squad_id, squads:squad_id(name)')
         .eq('release_id', sprintEntry!.releaseId!)
         .eq('review_status', 'approved')
 
       if (cancelled) return
+
+      if (fetchError) {
+        if (import.meta.env.DEV) console.warn('[SprintDashboard] Failed to fetch squads with approved PRs:', fetchError.message)
+        setAvailableSquads([])
+        return
+      }
 
       const rows = (data ?? []) as unknown as Array<{ squad_id: string; squads: { name: string } | null }>
       const squadMap = new Map<string, string>()

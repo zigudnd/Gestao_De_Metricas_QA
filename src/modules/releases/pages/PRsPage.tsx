@@ -260,7 +260,7 @@ export function PRsPage() {
       let queryError: any = null
 
       if (editPrId) {
-        const result = await supabase.from('release_prs').update(payload).eq('id', editPrId)
+        const result = await supabase.from('release_prs').update({ ...payload, review_status: 'pending', reviewed_by: null, reviewed_at: null, review_observation: null }).eq('id', editPrId)
         queryError = result.error
       } else {
         const result = await supabase.from('release_prs').insert({ ...payload, user_id: authUser.id })
@@ -321,6 +321,26 @@ export function PRsPage() {
         ;(profiles ?? []).forEach((p: Record<string, string>) => emailMap.set(p.id, p.email))
       }
 
+      const reviewerIds = [...new Set((data ?? []).map((r) => r.reviewed_by as string).filter(Boolean))]
+      const reviewerEmailMap = new Map<string, string>()
+      if (reviewerIds.length > 0) {
+        // Reuse already-fetched author emails where possible
+        const missingIds = reviewerIds.filter(id => !emailMap.has(id))
+        if (missingIds.length > 0) {
+          const { data: reviewerProfiles } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .in('id', missingIds)
+          ;(reviewerProfiles ?? []).forEach((p: Record<string, string>) => reviewerEmailMap.set(p.id, p.email))
+        }
+        // Merge author emails that are also reviewers
+        for (const rid of reviewerIds) {
+          if (!reviewerEmailMap.has(rid) && emailMap.has(rid)) {
+            reviewerEmailMap.set(rid, emailMap.get(rid)!)
+          }
+        }
+      }
+
       const squadIds = [...new Set((data ?? []).map((r) => r.squad_id as string).filter(Boolean))]
       const squadMap = new Map<string, string>()
       if (squadIds.length > 0) {
@@ -334,6 +354,7 @@ export function PRsPage() {
       setPrs((data ?? []).map((r) => ({
         ...r,
         user_email: emailMap.get(r.user_id as string) ?? '',
+        reviewed_by_email: r.reviewed_by ? (reviewerEmailMap.get(r.reviewed_by as string) ?? null) : null,
         squad_name: squadMap.get(r.squad_id as string) ?? '',
       })) as ReleasePR[])
     } catch (e) {
@@ -443,7 +464,7 @@ export function PRsPage() {
       for (const squadId of approvedSquads) {
         const hasTests = linkedSprints.some(s => {
           const data = loadFromStorage(s.id)
-          return data && data.features.length > 0
+          return data && data.features.some(f => f.squadId === squadId)
         })
         if (hasTests) squadsWithTests++
       }
@@ -1053,7 +1074,7 @@ export function PRsPage() {
         <PRAnalysisPanel
           pr={{
             ...selectedPR,
-            reviewed_by_email: selectedPR.user_email ?? null,
+            reviewed_by_email: selectedPR.reviewed_by_email ?? null,
           }}
           isFoundation={true}
           isOwner={selectedPR.user_id === user?.id}

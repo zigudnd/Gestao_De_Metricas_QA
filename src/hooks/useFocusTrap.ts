@@ -17,7 +17,7 @@ export function useFocusTrap(active: boolean, onEscape?: () => void) {
     first?.focus()
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && onEscape) { onEscape(); return }
+      if (e.key === 'Escape' && onEscape) { e.stopPropagation(); e.stopImmediatePropagation(); onEscape(); return }
       if (e.key !== 'Tab') return
       if (e.shiftKey) {
         if (document.activeElement === first) { e.preventDefault(); last?.focus() }
