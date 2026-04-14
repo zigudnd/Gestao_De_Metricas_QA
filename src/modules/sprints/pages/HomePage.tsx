@@ -117,7 +117,10 @@ export function HomePage() {
     const index = getMasterIndex().filter((s) => s.id !== deleteTarget.id)
     saveMasterIndex(index)
     localStorage.removeItem(STORAGE_KEY(deleteTarget.id))
-    deleteSprintFromSupabase(deleteTarget.id)
+    deleteSprintFromSupabase(deleteTarget.id).catch((e) => {
+      if (import.meta.env.DEV) console.warn('[Sprints] Failed to delete from server:', e)
+      showToast('Sprint removida localmente, mas não foi possível excluir do servidor', 'error')
+    })
     setDeleteTarget(null)
     reload()
   }
@@ -573,7 +576,7 @@ export function HomePage() {
                 >
                   <option value="">— Nenhuma release —</option>
                   {allReleases
-                    .filter((r) => r.status !== 'concluida' && r.status !== 'em_producao')
+                    .filter((r) => !['concluida', 'em_producao', 'cancelada', 'rollback', 'uniu_escopo'].includes(r.status))
                     .map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.version} — {r.title}

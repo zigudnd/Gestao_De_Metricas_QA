@@ -176,7 +176,7 @@ export function ComparePage() {
     const el = contentRef.current
     if (!el) return
     const html2canvas = (await import('html2canvas')).default
-    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#f7f6f2', logging: false })
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#f7f6f2', logging: false })
     canvas.toBlob((blob) => {
       if (!blob) return
       const url = URL.createObjectURL(blob)

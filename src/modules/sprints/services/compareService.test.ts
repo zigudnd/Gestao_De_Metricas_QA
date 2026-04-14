@@ -351,9 +351,9 @@ describe('computeSprintKPIs', () => {
       })
       const kpis = computeSprintKPIs(state)
 
-      // totalMs = 0 (skipped) + 12h in ms; divided by 2 resolved bugs
-      // 12h / 2 = 6h
-      expect(kpis.mttrGlobal).toBe(6)
+      // totalMs = 12h in ms; divided by 1 bug with valid dates (not 2)
+      // 12h / 1 = 12h
+      expect(kpis.mttrGlobal).toBe(12)
     })
 
     it('returns 0 when all resolved bugs lack dates', () => {

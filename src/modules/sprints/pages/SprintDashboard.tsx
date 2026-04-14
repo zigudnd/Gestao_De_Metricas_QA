@@ -37,6 +37,7 @@ export function SprintDashboard() {
 
   useEffect(() => {
     if (!sprintId) return
+    suitesCreatedRef.current = false
     let cancelled = false
 
     async function load() {
@@ -57,7 +58,7 @@ export function SprintDashboard() {
     () => getMasterIndex().find((s) => s.id === sprintId),
     // Re-derive when loading finishes (state is set) or sprintId changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sprintId, loading],
+    [sprintId, loading, state],
   )
 
   const isIntegrated = sprintEntry?.sprintType === 'integrado' && !!sprintEntry.releaseId

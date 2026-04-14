@@ -89,10 +89,12 @@ export function ConfigTab() {
       // Aplicar mudança
       const newSquad = squads.find((s) => s.id === pendingSquadId)
       if (newSquad) {
+        // First update the squad name in config (triggers _commit)
         updateConfig('squad', newSquad.name)
-        // Atualizar squadId no master index
+        // Then update the master index with the new squadId explicitly using the updated state
         if (sprintId) {
-          upsertSprintInMasterIndex(sprintId, state, pendingSquadId)
+          const updatedState = useSprintStore.getState().state
+          upsertSprintInMasterIndex(sprintId, updatedState, pendingSquadId)
         }
       }
       setShowSquadChangeModal(false)
@@ -197,7 +199,7 @@ export function ConfigTab() {
               >
                 <option value="">— Nenhuma release —</option>
                 {allReleases
-                  .filter((r) => r.status !== 'concluida')
+                  .filter((r) => r.status !== 'concluida' || r.id === currentReleaseId)
                   .map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.version} — {r.title}
