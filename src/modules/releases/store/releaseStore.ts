@@ -402,6 +402,8 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
       if (cancelled) return
       // Ignora echo da nossa própria persistência
       if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
+      saveToLocalStorage(incoming)
+      upsertMasterIndex(incoming)
       const updated = get().releases.map((r) => r.id === incoming.id ? incoming : r)
       const found = updated.some((r) => r.id === incoming.id)
       set({ release: incoming, releases: found ? updated : [...updated, incoming] })

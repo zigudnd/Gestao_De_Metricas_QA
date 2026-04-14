@@ -15,7 +15,8 @@ export function UserMenu() {
   const [showLogout, setShowLogout] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const initial = (profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()
+  const _nameForInitial = profile?.display_name || profile?.email || '?'
+  const initial = (_nameForInitial[0] || '?').toUpperCase()
 
   // Fechar ao clicar fora
   useEffect(() => {

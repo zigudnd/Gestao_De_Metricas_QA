@@ -118,7 +118,9 @@ export function StatusReportHomePage() {
     state.config.squad = selectedSquad?.name ?? ''
     state.config.date = new Date().toISOString().split('T')[0]
     saveToLocalStorage(state)
-    persistToServer(state)
+    persistToServer(state).catch(() => {
+      showToast('Report criado localmente, mas falhou ao sincronizar com o servidor', 'error')
+    })
     // Build index entry in a single pass (upsert + squadId together)
     const index = getMasterIndex()
     const now = new Date().toISOString()
@@ -184,7 +186,9 @@ export function StatusReportHomePage() {
     })
     saveToLocalStorage(cloned)
     upsertMasterIndex(cloned)
-    persistToServer(cloned)
+    persistToServer(cloned).catch(() => {
+      showToast('Report criado localmente, mas falhou ao sincronizar com o servidor', 'error')
+    })
     refreshList()
     showToast('Report duplicado', 'success')
   }
@@ -246,13 +250,17 @@ export function StatusReportHomePage() {
     }
     saveToLocalStorage(target)
     upsertMasterIndex(target)
-    persistToServer(target)
+    persistToServer(target).catch(() => {
+      showToast('Report criado localmente, mas falhou ao sincronizar com o servidor', 'error')
+    })
     if (migrateMode === 'move') {
       source.items = []
       source.updatedAt = now
       saveToLocalStorage(source)
       upsertMasterIndex(source)
-      persistToServer(source)
+      persistToServer(source).catch(() => {
+        showToast('Report criado localmente, mas falhou ao sincronizar com o servidor', 'error')
+      })
     }
     refreshList()
     setMigrateFromId(null)

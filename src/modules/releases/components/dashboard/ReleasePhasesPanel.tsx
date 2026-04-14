@@ -47,6 +47,12 @@ function getPhaseIndex(status: ReleaseStatus): number {
     case 'em_homologacao': return 2
     case 'em_desenvolvimento': return 1
     case 'corte': return 0
+    case 'em_qa': return 2
+    case 'aguardando_aprovacao': return 4
+    case 'rollback': return 5
+    case 'planejada':
+    case 'cancelada':
+    case 'uniu_escopo':
     default: return -1
   }
 }

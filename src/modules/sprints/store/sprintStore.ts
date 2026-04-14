@@ -291,7 +291,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
       execution: {}, manualExecData: {}, gherkinExecs: {},
       mockupImage: '', status: 'Ativa', blockReason: '', activeFilter: 'Todos', cases: [],
     }
-    _commit({ ...state, features: [newFeature, ...state.features] })
+    _commit({ ...state, features: [...state.features, newFeature] })
     return newId
   },
 
@@ -358,7 +358,7 @@ export const useSprintStore = create<SprintStore>((set, get) => ({
     const features = state.features.map((f, i) => {
       if (i !== fi) return f
       const cases = [...(f.cases ?? [])]
-      const copy = { ...cases[ci], id: uid(), name: `${cases[ci].name} (cópia)` }
+      const copy = { ...cases[ci], id: uid(), name: `${cases[ci].name} (cópia)`, status: 'Pendente' as const, executionDay: '', blockReason: '' }
       cases.splice(ci + 1, 0, copy)
       return { ...f, cases }
     })

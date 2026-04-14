@@ -222,13 +222,10 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
               const matchingSquad = availableSquads.find((sq) => sq.name.toLowerCase() === suite.name.toLowerCase())
               if (matchingSquad) {
                 const { state: s } = useSprintStore.getState()
-                const newFeatureIdx = s.features.filter((f) => String(f.suiteId) === String(suite.id)).length - 1
-                const globalIdx = s.features.findIndex((f, i) => {
-                  const sameFeatures = s.features.filter((ff) => String(ff.suiteId) === String(suite.id))
-                  return sameFeatures[newFeatureIdx] === f
-                })
-                if (globalIdx >= 0) {
-                  useSprintStore.getState().updateFeature(globalIdx, 'squadId', matchingSquad.id)
+                const suiteFeatures = s.features.filter(f => String(f.suiteId) === String(suite.id))
+                const lastIdx = s.features.lastIndexOf(suiteFeatures[suiteFeatures.length - 1])
+                if (lastIdx >= 0) {
+                  useSprintStore.getState().updateFeature(lastIdx, 'squadId', matchingSquad.id)
                 }
               }
             }

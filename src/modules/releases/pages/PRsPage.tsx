@@ -101,7 +101,8 @@ function releaseStatusBadge(status: string): React.CSSProperties {
 export function PRsPage() {
   const navigate = useNavigate()
   const { releases, load } = useReleaseStore()
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
+  const isFoundation = profile?.global_role === 'admin' || profile?.global_role === 'gerente'
   const [prs, setPrs] = useState<ReleasePR[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -1007,7 +1008,7 @@ export function PRsPage() {
                                     </span>
                                   )}
 
-                                  {pr.review_status === 'pending' && (
+                                  {pr.review_status === 'pending' && isFoundation && (
                                     <>
                                       <button
                                         onClick={() => handleApprovePR(pr.id)}
@@ -1076,7 +1077,7 @@ export function PRsPage() {
             ...selectedPR,
             reviewed_by_email: selectedPR.reviewed_by_email ?? null,
           }}
-          isFoundation={true}
+          isFoundation={isFoundation}
           isOwner={selectedPR.user_id === user?.id}
           onApprove={async () => { await handleApprovePR(selectedPR.id); setSelectedPR(null) }}
           onReject={async (obs) => {

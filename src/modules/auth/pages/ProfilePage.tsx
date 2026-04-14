@@ -27,7 +27,8 @@ export function ProfilePage() {
     }
   }, [])
 
-  const initial = (profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()
+  const _nameForInitial = profile?.display_name || profile?.email || '?'
+  const initial = (_nameForInitial[0] || '?').toUpperCase()
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault()

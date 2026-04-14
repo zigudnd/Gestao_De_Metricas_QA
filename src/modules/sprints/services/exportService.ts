@@ -1,6 +1,7 @@
 import type { SprintState } from '../types/sprint.types'
 import { normalizeState, saveToStorage, upsertSprintInMasterIndex } from './persistence'
 import { uid } from '@/lib/uid'
+import { showToast } from '@/app/components/Toast'
 
 export async function exportToImage(): Promise<void> {
   const el = document.getElementById('overview-tab-content')
@@ -29,7 +30,7 @@ export async function exportToImage(): Promise<void> {
     )
   } catch (e) {
     if (import.meta.env.DEV) console.error('Erro ao exportar imagem:', e)
-    if (import.meta.env.DEV) console.error('Erro ao exportar imagem. Verifique o console.')
+    showToast('Erro ao exportar imagem', 'error')
   }
 }
 
