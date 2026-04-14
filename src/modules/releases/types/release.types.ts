@@ -43,6 +43,7 @@ export interface Release {
   homologacaoStart: string        // ISO date string
   homologacaoEnd: string          // ISO date string
   betaDate: string                // ISO date string — Beta/Pré-Prod
+  approvalDate?: string           // ISO date string — Aprovação
   squads: ReleaseSquad[]
   checkpoints: Checkpoint[]
   statusHistory: StatusChange[]

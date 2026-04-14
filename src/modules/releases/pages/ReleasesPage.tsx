@@ -328,7 +328,7 @@ export function ReleasesPage() {
         <CheckpointTab
           releases={sorted.filter((r) => r.status !== 'concluida')}
           onReleaseClick={(id) => navigate(`/releases/${id}`)}
-          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluída', 'success') }}
+          onDeleteRelease={(id) => setDeleteId(id)}
           onConcludeRelease={(id) => {
             updateRelease(id, {
               status: 'concluida',
@@ -355,7 +355,7 @@ export function ReleasesPage() {
         <CheckpointTab
           releases={sorted.filter((r) => r.status === 'concluida')}
           onReleaseClick={(id) => navigate(`/releases/${id}`)}
-          onDeleteRelease={(id) => { deleteRelease(id); showToast('Release excluída', 'success') }}
+          onDeleteRelease={(id) => setDeleteId(id)}
           onConcludeRelease={() => {}}
         />
       )}

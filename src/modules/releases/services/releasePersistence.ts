@@ -55,6 +55,7 @@ export function normalizeRelease(raw: any): Release {
   if (!r.homologacaoStart) r.homologacaoStart = ''
   if (!r.homologacaoEnd) r.homologacaoEnd = ''
   if (!r.betaDate) r.betaDate = ''
+  if (!r.approvalDate) r.approvalDate = ''
   if (!Array.isArray(r.squads)) r.squads = []
   if (!Array.isArray(r.checkpoints)) r.checkpoints = []
   if (!Array.isArray(r.statusHistory)) r.statusHistory = []

@@ -114,13 +114,15 @@ function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
 }
 
 function overallStatus(statuses: ReleaseStatus[]): ReleaseStatus {
-  if (statuses.some((s) => s === 'em_regressivo' || s === 'em_homologacao' || s === 'em_qa')) return 'em_regressivo'
+  if (statuses.some((s) => s === 'em_qa')) return 'em_qa'
+  if (statuses.some((s) => s === 'em_regressivo' || s === 'em_homologacao')) return 'em_regressivo'
   if (statuses.some((s) => s === 'corte')) return 'corte'
   if (statuses.some((s) => s === 'uniu_escopo')) return 'uniu_escopo'
-  if (statuses.some((s) => s === 'aprovada' || s === 'aguardando_aprovacao')) return 'aprovada'
+  if (statuses.some((s) => s === 'aguardando_aprovacao')) return 'aguardando_aprovacao'
+  if (statuses.some((s) => s === 'aprovada')) return 'aprovada'
+  if (statuses.some((s) => s === 'rollback')) return 'rollback'
   if (statuses.some((s) => s === 'em_producao')) return 'em_producao'
   if (statuses.some((s) => s === 'planejada' || s === 'em_desenvolvimento')) return 'planejada'
-  if (statuses.some((s) => s === 'rollback')) return 'rollback'
   if (statuses.some((s) => s === 'cancelada')) return 'cancelada'
   if (statuses.every((s) => s === 'concluida')) return 'concluida'
   return statuses[0] ?? 'planejada'

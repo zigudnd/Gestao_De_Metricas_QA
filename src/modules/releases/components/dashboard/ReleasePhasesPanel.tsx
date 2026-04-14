@@ -24,7 +24,7 @@ const PHASES: PhaseDef[] = [
   { key: 'geracao',  label: 'Geração',      dateField: 'buildDate',        statusWhenActive: 'em_desenvolvimento', color: 'var(--color-blue)', icon: '⚙️' },
   { key: 'homolog',  label: 'Homologação',  dateField: 'homologacaoStart', dateEndField: 'homologacaoEnd', statusWhenActive: 'em_homologacao', color: '#06b6d4', icon: '🧪' },
   { key: 'beta',     label: 'Beta',         dateField: 'betaDate',         statusWhenActive: 'em_regressivo',      color: 'var(--color-amber-mid)', icon: '📱' },
-  { key: 'aprovada', label: 'Aprovação',    dateField: 'betaDate',         statusWhenActive: 'aprovada',           color: 'var(--color-green)', icon: '✅' },
+  { key: 'aprovada', label: 'Aprovação',    dateField: 'approvalDate',     statusWhenActive: 'aprovada',           color: 'var(--color-green)', icon: '✅' },
   { key: 'producao', label: 'Produção',     dateField: 'productionDate',   statusWhenActive: 'em_producao',        color: 'var(--color-green-mid)', icon: '🚀' },
 ]
 
