@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/modules/auth/store/authStore'
+import { useFeatureToggleStore } from '@/lib/featureToggleStore'
 import { getMasterIndex } from '@/modules/sprints/services/persistence'
 import { getMasterIndex as getReportIndex } from '@/modules/status-report/services/statusReportPersistence'
 import { listMySquads, listAllUsers } from '@/modules/squads/services/squadsService'
@@ -195,6 +196,7 @@ function NavCard({ icon, title, description, stats, color, onClick }: NavCardPro
 export function DashboardHome() {
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
+  const { isEnabled } = useFeatureToggleStore()
   const stats = useStats()
 
   const firstName = (profile?.display_name ?? '').split(' ')[0] || 'Usuário'
@@ -220,51 +222,59 @@ export function DashboardHome() {
         gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
         gap: 14,
       }}>
-        <NavCard
-          icon={<IconSprints />}
-          title="Cobertura QA"
-          description="Gerencie a cobertura de testes das sprints"
-          color="var(--color-blue)"
-          stats={[
-            { label: 'Ativas', value: stats.sprints.active },
-            { label: 'Concluídas', value: stats.sprints.concluded },
-          ]}
-          onClick={() => navigate('/sprints')}
-        />
+        {isEnabled('sprints') && (
+          <NavCard
+            icon={<IconSprints />}
+            title="Cobertura QA"
+            description="Gerencie a cobertura de testes das sprints"
+            color="var(--color-blue)"
+            stats={[
+              { label: 'Ativas', value: stats.sprints.active },
+              { label: 'Concluídas', value: stats.sprints.concluded },
+            ]}
+            onClick={() => navigate('/sprints')}
+          />
+        )}
 
-        <NavCard
-          icon={<IconStatusReport />}
-          title="Status Report"
-          description="Relatórios de status e visão geral dos projetos"
-          color="var(--color-amber-mid)"
-          stats={[
-            { label: 'Reports', value: stats.reports.count },
-            { label: 'Itens', value: stats.reports.totalItems },
-          ]}
-          onClick={() => navigate('/status-report')}
-        />
+        {isEnabled('status_report') && (
+          <NavCard
+            icon={<IconStatusReport />}
+            title="Status Report"
+            description="Relatórios de status e visão geral dos projetos"
+            color="var(--color-amber-mid)"
+            stats={[
+              { label: 'Reports', value: stats.reports.count },
+              { label: 'Itens', value: stats.reports.totalItems },
+            ]}
+            onClick={() => navigate('/status-report')}
+          />
+        )}
 
-        <NavCard
-          icon={<IconReleases />}
-          title="Releases"
-          description="Calendário, homologação e ciclo de releases"
-          color="var(--color-blue)"
-          stats={[
-            { label: 'Gerenciar', value: '\u2192' },
-          ]}
-          onClick={() => navigate('/releases')}
-        />
+        {isEnabled('releases') && (
+          <NavCard
+            icon={<IconReleases />}
+            title="Releases"
+            description="Calendário, homologação e ciclo de releases"
+            color="var(--color-blue)"
+            stats={[
+              { label: 'Gerenciar', value: '\u2192' },
+            ]}
+            onClick={() => navigate('/releases')}
+          />
+        )}
 
-        <NavCard
-          icon={<IconPRs />}
-          title="Gestão de PRs"
-          description="Cadastre e acompanhe PRs das releases em corte"
-          color="#8b5cf6"
-          stats={[
-            { label: 'Gerenciar', value: '→' },
-          ]}
-          onClick={() => navigate('/prs')}
-        />
+        {isEnabled('prs') && (
+          <NavCard
+            icon={<IconPRs />}
+            title="Gestão de PRs"
+            description="Cadastre e acompanhe PRs das releases em corte"
+            color="#8b5cf6"
+            stats={[
+              { label: 'Gerenciar', value: '→' },
+            ]}
+            onClick={() => navigate('/prs')}
+          />
+        )}
 
         <NavCard
           icon={<IconSquads />}
@@ -278,16 +288,18 @@ export function DashboardHome() {
           onClick={() => navigate('/squads')}
         />
 
-        <NavCard
-          icon={<IconDocs />}
-          title="Documentação"
-          description="Guia do sistema"
-          color="var(--color-blue)"
-          stats={[
-            { label: 'Consultar', value: '→' },
-          ]}
-          onClick={() => navigate('/docs')}
-        />
+        {isEnabled('docs') && (
+          <NavCard
+            icon={<IconDocs />}
+            title="Documentação"
+            description="Guia do sistema"
+            color="var(--color-blue)"
+            stats={[
+              { label: 'Consultar', value: '→' },
+            ]}
+            onClick={() => navigate('/docs')}
+          />
+        )}
       </div>
     </div>
   )

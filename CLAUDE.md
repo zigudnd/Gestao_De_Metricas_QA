@@ -2,7 +2,7 @@
 
 ## Stack
 - Frontend: React 19 + TypeScript + Vite + Tailwind CSS v4
-- State: Zustand (auth, sprints, releases)
+- State: Zustand (auth, sprints, releases, featureToggles)
 - Routing: React Router DOM v7 (HashRouter)
 - Backend: Node.js/Express (`server.js`) — serve SPA + endpoints admin e status-report
 - Database: Supabase (PostgreSQL) com RLS, Realtime, Auth (GoTrue)
@@ -106,9 +106,10 @@ src/modules/
 - Visibilidade: admin vê todas as sprints; demais veem apenas sprints dos seus squads
 
 ### squads
-- `pages/`: SquadsPage (5 abas: Squads, Perfis de Acesso, Usuários, API Keys, Audit Trail)
+- `pages/`: SquadsPage (6 abas: Squads, Perfis de Acesso, Usuários, API Keys, Audit Trail, Módulos)
 - `services/`: squadsService — CRUD squads, membros, permission_profiles, usuários
-- Funcionalidades: cores/descrição de squad, perfis de permissão, ativar/desativar usuários, CRUD de API Keys com scopes, visualização de audit logs
+- `components/`: ModulesPanel — toggle switches para ativar/desativar módulos do sistema
+- Funcionalidades: cores/descrição de squad, perfis de permissão, ativar/desativar usuários, CRUD de API Keys com scopes, visualização de audit logs, feature toggles (ativar/desativar módulos)
 
 ### status-report
 - `pages/`: StatusReportHomePage (listagem), StatusReportPage (editor)
@@ -162,6 +163,9 @@ Ordem de aplicação:
 13. `000011` — audit_logs table
 14. `20260406000029` — api_keys table + RLS
 15. `20260411000001` — release_prs, pr_test_links, pr_audit_log tables + RLS
+16. `20260414000001` — fix api_keys force RLS
+17. `20260414000002` — fix release_prs FK constraint
+18. `20260416000001` — app_settings table (feature toggles) + RLS
 
 ## Comportamento Autônomo
 

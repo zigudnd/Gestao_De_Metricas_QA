@@ -48,21 +48,23 @@ src/
 ├── index.css                          # Tailwind v4 @import + @theme (cores, fontes, tokens)
 ├── lib/
 │   ├── supabase.ts                    # Cliente Supabase singleton
-│   └── auditService.ts               # Servico de audit logs (logAudit)
+│   ├── auditService.ts               # Servico de audit logs (logAudit)
+│   └── featureToggleStore.ts         # Zustand store: feature toggles (localStorage + Supabase)
 ├── app/
 │   ├── components/
 │   │   ├── ConfirmModal.tsx           # Modal de confirmacao reutilizavel
 │   │   ├── Toast.tsx                  # Componente Toast/Snackbar global (showToast)
 │   │   ├── NewBugModal.tsx            # Modal de criacao de bug
 │   │   ├── ProtectedRoute.tsx         # Guard de auth + redirect must_change_password
+│   │   ├── FeatureGate.tsx            # Guard de modulo — redireciona se feature desabilitada
 │   │   └── TermoConclusaoModal.tsx    # Modal de conclusao de sprint
 │   ├── layout/
-│   │   ├── AppShell.tsx               # Layout raiz — syncAll no mount (sprints + status reports)
-│   │   ├── Sidebar.tsx                # Navegacao lateral (Sprints, Squads, Status Report, Docs)
+│   │   ├── AppShell.tsx               # Layout raiz — syncAll no mount (sprints + status reports + feature toggles)
+│   │   ├── Sidebar.tsx                # Navegacao lateral (filtra itens por feature toggles)
 │   │   ├── Topbar.tsx                 # Barra superior com acoes contextuais
 │   │   └── SaveToast.tsx              # Toast de "Salvo" (observa lastSaved)
 │   ├── pages/
-│   │   ├── DashboardHome.tsx          # Pagina inicial do app (rota /)
+│   │   ├── DashboardHome.tsx          # Pagina inicial — cards filtrados por feature toggles
 │   │   └── DocsPage.tsx               # Pagina de documentacao do sistema
 │   └── routes.tsx                     # Hash Router com todas as rotas
 ├── modules/
@@ -99,7 +101,9 @@ src/
 │   │       └── sprint.types.ts        # Todos os tipos TypeScript
 │   ├── squads/
 │   │   ├── pages/
-│   │   │   └── SquadsPage.tsx         # 3 abas: Squads, Perfis de Acesso, Usuarios
+│   │   │   └── SquadsPage.tsx         # 6 abas: Squads, Perfis de Acesso, Usuarios, API Keys, Audit Trail, Modulos
+│   │   ├── components/
+│   │   │   └── ModulesPanel.tsx       # Toggle switches para ativar/desativar modulos
 │   │   └── services/
 │   │       └── squadsService.ts       # CRUD squads, members, permissions, users, reset senha
 │   └── status-report/
@@ -126,7 +130,7 @@ src/
 │           └── statusReport.types.ts  # Tipos: Item, Section, Config, ComputedDates
 supabase/
 ├── config.toml                        # Config Supabase local
-└── migrations/                        # 13 migrations SQL sequenciais
+└── migrations/                        # 18 migrations SQL sequenciais
 server.js                              # Express: serve SPA + API admin + health + flush
 ```
 
@@ -139,16 +143,21 @@ server.js                              # Express: serve SPA + API admin + health
 | `/login` | AuthPage | Publica |
 | `/change-password` | ChangePasswordPage | Protegida (fora do AppShell) |
 | `/` | DashboardHome | Protegida |
-| `/sprints` | HomePage | Protegida |
-| `/sprints/compare` | ComparePage | Protegida |
-| `/sprints/:sprintId` | SprintDashboard | Protegida |
+| `/sprints` | HomePage | Protegida + FeatureGate(sprints) |
+| `/sprints/compare` | ComparePage | Protegida + FeatureGate(sprints) |
+| `/sprints/:sprintId` | SprintDashboard | Protegida + FeatureGate(sprints) |
 | `/squads` | SquadsPage | Protegida |
-| `/status-report` | StatusReportHomePage | Protegida |
-| `/status-report/:reportId` | StatusReportPage | Protegida |
+| `/status-report` | StatusReportHomePage | Protegida + FeatureGate(status_report) |
+| `/status-report/:reportId` | StatusReportPage | Protegida + FeatureGate(status_report) |
+| `/releases` | ReleasesPage | Protegida + FeatureGate(releases) |
+| `/releases/:releaseId` | ReleaseDashboard | Protegida + FeatureGate(releases) |
+| `/prs` | PRsPage | Protegida + FeatureGate(prs) |
 | `/profile` | ProfilePage | Protegida |
-| `/docs` | DocsPage | Protegida |
+| `/docs` | DocsPage | Protegida + FeatureGate(docs) |
 
 **ProtectedRoute:** redireciona para `/login` se nao autenticado. Se `must_change_password === true`, redireciona para `/change-password` (rota standalone, sem sidebar/topbar).
+
+**FeatureGate:** redireciona para `/` se o modulo estiver desabilitado pelo admin (tabela `app_settings.feature_toggles`).
 
 ---
 
@@ -179,7 +188,7 @@ Modulo principal. 8 abas no dashboard:
 
 ### 5.3 Squads (`src/modules/squads/`)
 
-3 abas: **👥 Squads**, **🔐 Perfis de Acesso**, **👤 Usuarios** (admin only)
+6 abas: **👥 Squads**, **🔐 Perfis de Acesso**, **👤 Usuarios**, **🔑 API Keys**, **📋 Audit Trail**, **⚙️ Modulos** (admin/gerente only)
 
 - **Squad** — Equipe com nome, descricao, cor (swatch picker). Criada via RPC `create_squad_with_lead`. Cards expansiveis com contagem de membros.
 - **Roles:** `qa_lead` (lider), `qa`, `stakeholder`
@@ -237,6 +246,18 @@ interface StatusReportConfig {
 
 interface SectionDef { id, label, color, side: 'left'|'right' }
 ```
+
+### 5.5 Feature Toggles (`src/lib/featureToggleStore.ts`)
+
+Sistema de ativar/desativar modulos do sistema via painel admin.
+
+- **Tabela:** `app_settings` (row unica `id='default'`, coluna `feature_toggles` JSONB)
+- **Store:** `useFeatureToggleStore` (Zustand) — cache em localStorage, sync com Supabase no mount
+- **Modulos controlaveis:** `status_report`, `sprints`, `releases`, `prs`, `docs`
+- **Sempre ativos:** Inicio (Home), Cadastros (admin), Perfil, Auth
+- **Efeito:** oculta item no Sidebar, oculta card na DashboardHome, redireciona rota via `FeatureGate`
+- **Permissao:** apenas admin/gerente podem alterar (RLS na tabela)
+- **UI:** aba **⚙️ Modulos** no SquadsPage (`ModulesPanel.tsx`) com toggle switches
 
 ---
 
@@ -378,8 +399,30 @@ supabase.channel('status-report:<id>').on('postgres_changes', UPDATE) → normal
 | 10 | `20260327000009_fk_squad_members_profiles.sql` | FK squad_members → profiles |
 | 11 | `20260327000010_status_reports.sql` | Tabela status_reports + RLS + indices |
 | 12 | `20260327000011_audit_logs.sql` | Tabela audit_logs |
+| 13 | `20260329000012_squad_config.sql` | Config adicional de squads |
+| 14 | `20260330000013_gerente_role_and_quality_beta.sql` | Role gerente |
+| 15 | `20260330000014_squad_archive_and_seed.sql` | squads.archived + sample data |
+| 16 | `20260330000015_allow_edit_system_profiles.sql` | Editar perfis de sistema |
+| 17 | `20260330000016_expand_permissions.sql` | Expandir matriz de permissoes (create/edit) |
+| 18 | `20260330000017_fix_backend_rls.sql` | Fix RLS backend |
+| 19 | `20260330000018_audit_rpc_and_trigger_fix.sql` | Audit RPC + trigger |
+| 20 | `20260330000019_releases.sql` | releases, release_features, release_test_cases |
+| 21 | `20260331000020_expand_permissions_releases.sql` | Permissoes de releases |
+| 22 | `20260403000021_dashboard_states.sql` | dashboard_states (fases/checkpoint) |
+| 23 | `20260403000022_fix_releases_rls.sql` | RLS releases |
+| 24 | `20260403000023_add_composite_indices.sql` | Indices de performance |
+| 25 | `20260403000024_updated_at_triggers.sql` | Triggers updated_at |
+| 26 | `20260403000025_fix_null_squad_id.sql` | Handle NULL squad_id |
+| 27 | `20260404000026_fix_dashboard_trigger_and_squad_not_null.sql` | Fix dashboard trigger |
+| 28 | `20260405000027_fix_rls_and_constraints.sql` | RLS hardening |
+| 29 | `20260405000028_dba_hardening.sql` | DBA security hardening |
+| 30 | `20260406000029_api_keys.sql` | api_keys table + RLS |
+| 31 | `20260411000001_release_prs.sql` | release_prs, pr_test_links, pr_audit_log |
+| 32 | `20260414000001_fix_api_keys_force_rls.sql` | Force RLS api_keys |
+| 33 | `20260414000002_fix_release_prs_fk.sql` | FK release_prs → releases |
+| 34 | `20260416000001_app_settings.sql` | app_settings (feature toggles) + RLS |
 
-**Total: 13 migrations**
+**Total: 35 migrations**
 
 ---
 
@@ -436,6 +479,7 @@ bash setup-admin.sh  # Cria usuario admin padrao
 | `ConfirmModal` | `src/app/components/ConfirmModal.tsx` | Modal de confirmacao com titulo, descricao, botao destrutivo |
 | `Toast` / `showToast` | `src/app/components/Toast.tsx` | Snackbar com auto-dismiss, tipos (success/info/error), acao opcional (undo) |
 | `ProtectedRoute` | `src/app/components/ProtectedRoute.tsx` | Guard de auth + redirect must_change_password |
+| `FeatureGate` | `src/app/components/FeatureGate.tsx` | Guard de modulo — redireciona para `/` se feature desabilitada |
 | `NewBugModal` | `src/app/components/NewBugModal.tsx` | Modal de criacao rapida de bug |
 
 ---

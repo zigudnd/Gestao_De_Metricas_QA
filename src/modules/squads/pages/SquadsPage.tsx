@@ -22,6 +22,7 @@ import { UsersPanel } from '../components/UsersPanel'
 import { SquadDetail } from '../components/SquadDetail'
 import { ApiKeysPanel } from '../components/ApiKeysPanel'
 import { AuditTrailPanel } from '../components/AuditTrailPanel'
+import { ModulesPanel } from '../components/ModulesPanel'
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -51,7 +52,7 @@ export function SquadsPage() {
   const [squads, setSquads] = useState<Squad[]>([])
   const [loading, setLoading] = useState(true)
   const [activeSquad, setActiveSquad] = useState<Squad | null>(null)
-  const [tab, setTab] = useState<'squads' | 'profiles' | 'users' | 'apikeys' | 'audit'>('squads')
+  const [tab, setTab] = useState<'squads' | 'profiles' | 'users' | 'apikeys' | 'audit' | 'modules'>('squads')
 
   const [members, setMembers] = useState<SquadMember[]>([])
   const [myRole, setMyRole] = useState<SquadRole | null>(null)
@@ -541,6 +542,7 @@ export function SquadsPage() {
           ...(isAdmin ? [['users', '👤 Usuários'] as const] : []),
           ...(isAdmin ? [['apikeys', '🔑 API Keys'] as const] : []),
           ...(isAdmin ? [['audit', '📋 Audit Trail'] as const] : []),
+          ...(isAdmin ? [['modules', '⚙️ Módulos'] as const] : []),
         ] as const).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} role="tab" aria-selected={tab === t} style={{
             padding: '8px 16px', background: 'none', border: 'none',
@@ -862,6 +864,11 @@ export function SquadsPage() {
         {/* ════ Tab: Audit Trail ════ */}
         {tab === 'audit' && isAdmin && (
           <AuditTrailPanel />
+        )}
+
+        {/* ════ Tab: Módulos ════ */}
+        {tab === 'modules' && isAdmin && (
+          <ModulesPanel />
         )}
       </div>
 

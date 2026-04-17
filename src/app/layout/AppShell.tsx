@@ -9,9 +9,11 @@ import { syncAllFromSupabase } from '@/modules/sprints/services/persistence'
 import { syncAllFromSupabase as syncStatusReports } from '@/modules/status-report/services/statusReportPersistence'
 import { syncAllReleases } from '@/modules/releases/services/releasePersistence'
 import { useActiveSquadStore } from '@/modules/squads/store/activeSquadStore'
+import { useFeatureToggleStore } from '@/lib/featureToggleStore'
 
 export function AppShell() {
   const loadSquads = useActiveSquadStore((s) => s.loadSquads)
+  const loadFeatureToggles = useFeatureToggleStore((s) => s.loadFromSupabase)
 
   useEffect(() => {
     // Ao iniciar o app, sincroniza dados do Supabase para o localStorage.
@@ -19,6 +21,7 @@ export function AppShell() {
     syncStatusReports()
     syncAllReleases()
     loadSquads()
+    loadFeatureToggles()
 
     // Re-sync when coming back online
     function handleOnline() {

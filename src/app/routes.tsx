@@ -10,6 +10,7 @@ import { ChangePasswordPage } from '@/modules/auth/pages/ChangePasswordPage'
 import { StatusReportHomePage } from '@/modules/status-report/pages/StatusReportHomePage'
 import { ReleasesPage } from '@/modules/releases/pages/ReleasesPage'
 import { ProfilePage } from '@/modules/auth/pages/ProfilePage'
+import { FeatureGate } from '@/app/components/FeatureGate'
 
 // Lazy loaded — heavy or rarely visited routes
 const ComparePage = lazy(() => import('@/modules/sprints/pages/ComparePage').then(m => ({ default: m.ComparePage })))
@@ -54,17 +55,17 @@ export const router = createHashRouter([
     ),
     children: [
       { index: true, element: <DashboardHome /> },
-      { path: 'sprints', element: <HomePage /> },
-      { path: 'sprints/compare', element: <SuspenseWrap><ComparePage /></SuspenseWrap> },
-      { path: 'sprints/:sprintId', element: <SprintDashboard /> },
+      { path: 'sprints', element: <FeatureGate feature="sprints"><HomePage /></FeatureGate> },
+      { path: 'sprints/compare', element: <FeatureGate feature="sprints"><SuspenseWrap><ComparePage /></SuspenseWrap></FeatureGate> },
+      { path: 'sprints/:sprintId', element: <FeatureGate feature="sprints"><SprintDashboard /></FeatureGate> },
       { path: 'squads', element: <SuspenseWrap><SquadsPage /></SuspenseWrap> },
-      { path: 'status-report', element: <StatusReportHomePage /> },
-      { path: 'status-report/:reportId', element: <SuspenseWrap><StatusReportPage /></SuspenseWrap> },
-      { path: 'releases', element: <ReleasesPage /> },
-      { path: 'releases/:releaseId', element: <SuspenseWrap><ReleaseDashboard /></SuspenseWrap> },
-      { path: 'prs', element: <SuspenseWrap><PRsPage /></SuspenseWrap> },
+      { path: 'status-report', element: <FeatureGate feature="status_report"><StatusReportHomePage /></FeatureGate> },
+      { path: 'status-report/:reportId', element: <FeatureGate feature="status_report"><SuspenseWrap><StatusReportPage /></SuspenseWrap></FeatureGate> },
+      { path: 'releases', element: <FeatureGate feature="releases"><ReleasesPage /></FeatureGate> },
+      { path: 'releases/:releaseId', element: <FeatureGate feature="releases"><SuspenseWrap><ReleaseDashboard /></SuspenseWrap></FeatureGate> },
+      { path: 'prs', element: <FeatureGate feature="prs"><SuspenseWrap><PRsPage /></SuspenseWrap></FeatureGate> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'docs', element: <SuspenseWrap><DocsPage /></SuspenseWrap> },
+      { path: 'docs', element: <FeatureGate feature="docs"><SuspenseWrap><DocsPage /></SuspenseWrap></FeatureGate> },
     ],
   },
 ])
