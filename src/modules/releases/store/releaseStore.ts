@@ -23,7 +23,7 @@ import { uid } from '@/lib/uid'
 
 // ─── Valid status transitions ────────────────────────────────────────────────
 
-export const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
+const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
   planejada: ['em_desenvolvimento', 'corte', 'cancelada'],
   em_desenvolvimento: ['em_homologacao', 'em_qa', 'corte', 'cancelada'],
   corte: ['em_desenvolvimento', 'em_homologacao', 'em_qa', 'cancelada'],

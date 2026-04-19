@@ -7,7 +7,7 @@ import { uid } from '@/lib/uid'
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
 export const STORAGE_KEY = (id: string) => `qaDashboardData_${id}`
-export const MASTER_KEY = 'qaDashboardMasterIndex'
+const MASTER_KEY = 'qaDashboardMasterIndex'
 
 // ─── Default State ────────────────────────────────────────────────────────────
 

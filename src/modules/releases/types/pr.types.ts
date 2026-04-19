@@ -26,14 +26,6 @@ export interface ReleasePR {
   updated_at: string
 }
 
-export interface PRTestLink {
-  id: string
-  release_pr_id: string
-  test_id: string
-  linked_by: string
-  linked_at: string
-}
-
 // ─── Filters & Summaries ──────────────────────────────────────────────────
 
 export interface PRFilters {

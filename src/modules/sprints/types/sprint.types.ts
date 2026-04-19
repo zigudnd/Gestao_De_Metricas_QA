@@ -15,7 +15,7 @@ export interface TestCase {
 
 // ─── Feature ──────────────────────────────────────────────────────────────────
 
-export type FeatureStatus = 'Ativa' | 'Bloqueada' | 'Cancelada'
+type FeatureStatus = 'Ativa' | 'Bloqueada' | 'Cancelada'
 
 export interface Feature {
   id: number | string

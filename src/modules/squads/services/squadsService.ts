@@ -67,7 +67,7 @@ export const PERMISSION_RESOURCES = [
   'releases', 'status_reports', 'checkpoints',
 ] as const
 
-export type PermissionResource = typeof PERMISSION_RESOURCES[number]
+type PermissionResource = typeof PERMISSION_RESOURCES[number]
 
 export const RESOURCE_LABELS: Record<PermissionResource, string> = {
   sprints:        'Sprints',
@@ -223,7 +223,7 @@ function saveArchivedLocal(squadId: string, archived: boolean): void {
   localStorage.setItem(ARCHIVED_LS_KEY, JSON.stringify([...set]))
 }
 
-export function isArchivedLocal(squadId: string): boolean {
+function isArchivedLocal(squadId: string): boolean {
   return getArchivedLocal().has(squadId)
 }
 

@@ -17,7 +17,7 @@ export interface SprintKPIs {
   atrasoCasos: number
 }
 
-export interface SprintComparisonItem {
+interface SprintComparisonItem {
   entry: SprintIndexEntry
   kpis: SprintKPIs
 }

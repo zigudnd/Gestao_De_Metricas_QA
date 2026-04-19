@@ -75,7 +75,7 @@ export interface Checkpoint {
   createdAt: string
 }
 
-export interface CheckpointSnapshot {
+interface CheckpointSnapshot {
   squadId: string
   squadName: string
   status: ReleaseSquadStatus

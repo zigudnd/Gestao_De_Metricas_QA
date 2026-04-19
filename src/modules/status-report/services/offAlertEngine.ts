@@ -1,12 +1,7 @@
 import type {
   PeriodoOff, PeriodoOffComAlerta, MembroTime, AlertaProximidade,
 } from '../types/squadConfig.types'
-
-function diffDays(a: string, b: string): number {
-  const da = new Date(a + 'T00:00:00')
-  const db = new Date(b + 'T00:00:00')
-  return Math.round((db.getTime() - da.getTime()) / 86400000)
-}
+import { diffDays } from './dateEngine'
 
 export function calcularAlerta(
   inicio: string,
