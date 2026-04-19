@@ -159,7 +159,7 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
 
           {/* Today line */}
           {(() => {
-            const d = new Date(); const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0')
+            const d = new Date(); const today = d.toISOString().split('T')[0]
             const offset = diffDays(minDate, today)
             if (offset < 0 || offset > totalDays) return null
             const x = offset * DAY_W
@@ -230,7 +230,7 @@ export function GanttView({ sections, items, computedDates, onItemClick }: Gantt
             const c = computedDates[item.id]
             const itemIdx = visibleItems.indexOf(item)
 
-            return item.dependsOn.map((depId) => {
+            return (item.dependsOn ?? []).map((depId) => {
               const depItem = visibleItems.find((i) => i.id === depId)
               if (!depItem) return null
               const depC = computedDates[depId]

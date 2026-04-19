@@ -67,7 +67,7 @@ export const PERMISSION_RESOURCES = [
   'releases', 'status_reports', 'checkpoints',
 ] as const
 
-export type PermissionResource = typeof PERMISSION_RESOURCES[number]
+type PermissionResource = typeof PERMISSION_RESOURCES[number]
 
 export const RESOURCE_LABELS: Record<PermissionResource, string> = {
   sprints:        'Sprints',
@@ -223,7 +223,7 @@ function saveArchivedLocal(squadId: string, archived: boolean): void {
   localStorage.setItem(ARCHIVED_LS_KEY, JSON.stringify([...set]))
 }
 
-export function isArchivedLocal(squadId: string): boolean {
+function isArchivedLocal(squadId: string): boolean {
   return getArchivedLocal().has(squadId)
 }
 
@@ -244,12 +244,16 @@ export async function createSquad(name: string, description = '', color = '#185F
 }
 
 export async function updateSquad(squadId: string, fields: { name?: string; description?: string; color?: string }): Promise<void> {
+  // Fetch current values for audit diff
+  const { data: current } = await supabase.from('squads').select('name, description, color').eq('id', squadId).single()
+
   const { error } = await supabase.from('squads').update(fields).eq('id', squadId)
   if (error) throw error
+
   logAudit('squad', squadId, 'update', {
-    ...(fields.name !== undefined ? { name: { old: null, new: fields.name } } : {}),
-    ...(fields.description !== undefined ? { description: { old: null, new: fields.description } } : {}),
-    ...(fields.color !== undefined ? { color: { old: null, new: fields.color } } : {}),
+    ...(fields.name !== undefined ? { name: { old: current?.name ?? null, new: fields.name } } : {}),
+    ...(fields.description !== undefined ? { description: { old: current?.description ?? null, new: fields.description } } : {}),
+    ...(fields.color !== undefined ? { color: { old: current?.color ?? null, new: fields.color } } : {}),
   })
 }
 
@@ -291,17 +295,17 @@ export async function addMember(
 }
 
 export async function updateMemberRole(memberId: string, role: SquadRole): Promise<void> {
-  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id').eq('id', memberId).single()
+  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id, role').eq('id', memberId).single()
   const { error } = await supabase.from('squad_members').update({ role }).eq('id', memberId)
   if (error) throw error
-  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_role_updated: { old: null, new: role }, user_id: { old: null, new: member?.user_id ?? memberId } })
+  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_role_updated: { old: member?.role ?? null, new: role }, user_id: member?.user_id ?? memberId })
 }
 
 export async function updateMemberPermissions(memberId: string, permissions: MemberPermissions): Promise<void> {
-  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id').eq('id', memberId).single()
+  const { data: member } = await supabase.from('squad_members').select('squad_id, user_id, permissions').eq('id', memberId).single()
   const { error } = await supabase.from('squad_members').update({ permissions }).eq('id', memberId)
   if (error) throw new Error(error.message)
-  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_permissions_updated: { old: null, new: true }, user_id: { old: null, new: member?.user_id ?? memberId } })
+  logAudit('squad', member?.squad_id ?? memberId, 'update', { member_permissions_updated: { old: member?.permissions ?? null, new: permissions }, user_id: member?.user_id ?? memberId })
 }
 
 export async function removeMember(memberId: string): Promise<void> {

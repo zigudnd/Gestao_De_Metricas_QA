@@ -4,6 +4,13 @@ import { SectionList } from './SectionList'
 import { CeremoniaCard } from './CeremoniaCard'
 import { StoryPointsSelector } from './StoryPointsSelector'
 
+const inputSm: React.CSSProperties = {
+  padding: '6px 10px', fontSize: 12,
+  border: '1px solid var(--color-border-md)', borderRadius: 6,
+  background: 'var(--color-bg)', color: 'var(--color-text)',
+  outline: 'none', fontFamily: 'var(--font-family-sans)',
+}
+
 export function CombinadosTab() {
   const {
     dor, dod, acordos, cerimonias, storyPointsMethod, storyPointsNotas,
@@ -173,11 +180,4 @@ export function CombinadosTab() {
       />
     </div>
   )
-}
-
-const inputSm: React.CSSProperties = {
-  padding: '6px 10px', fontSize: 12,
-  border: '1px solid var(--color-border-md)', borderRadius: 6,
-  background: 'var(--color-bg)', color: 'var(--color-text)',
-  outline: 'none', fontFamily: 'var(--font-family-sans)',
 }

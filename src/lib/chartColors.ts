@@ -6,7 +6,7 @@
 
 // ─── Semantic colors ────────────────────────────────────────────────────────
 
-export const CHART_COLORS = {
+const CHART_COLORS = {
   // Status
   green: '#639922',
   greenLight: '#eaf3de',
@@ -43,7 +43,6 @@ export const PALETTE = [
 ] as const
 
 export const PALETTE_BG = PALETTE.map((c) => c + '33')
-export const PALETTE_SEMI = PALETTE.map((c) => c + 'cc')
 
 // ─── Semantic helpers ───────────────────────────────────────────────────────
 

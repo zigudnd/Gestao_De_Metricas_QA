@@ -3,6 +3,7 @@
 const { Router } = require('express');
 const { z } = require('zod');
 const { requireApiKey } = require('../../middleware/requireApiKey');
+const { enforceSquadScope } = require('../../middleware/enforceSquadScope');
 const { success, paginated, error, RELEASE_STATUSES } = require('./helpers');
 
 const router = Router();
@@ -234,7 +235,7 @@ router.get('/', requireApiKey('releases:read'), async (req, res, next) => {
  *       404: { description: Release not found }
  *       503: { description: Database not configured }
  */
-router.get('/:id', requireApiKey('releases:read'), async (req, res, next) => {
+router.get('/:id', requireApiKey('releases:read'), enforceSquadScope('releases'), async (req, res, next) => {
   try {
     const idResult = uuidParamSchema.safeParse(req.params.id);
     if (!idResult.success) {
@@ -310,7 +311,7 @@ router.get('/:id', requireApiKey('releases:read'), async (req, res, next) => {
  *       404: { description: Release not found }
  *       503: { description: Database not configured }
  */
-router.get('/:id/metrics', requireApiKey('releases:read'), async (req, res, next) => {
+router.get('/:id/metrics', requireApiKey('releases:read'), enforceSquadScope('releases'), async (req, res, next) => {
   try {
     const idResult = uuidParamSchema.safeParse(req.params.id);
     if (!idResult.success) {

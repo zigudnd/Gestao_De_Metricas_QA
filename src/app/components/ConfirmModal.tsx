@@ -20,7 +20,7 @@ export function ConfirmModal({ title, description, confirmLabel = 'Excluir', onC
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onCancel()}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
       <div role="dialog" aria-modal="true" aria-label={title} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-red)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 400, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>🗑️ {title}</div>

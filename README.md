@@ -1,6 +1,6 @@
 # ToStatos — Hub de Qualidade | Plataforma de Inteligência de Qualidade de Software
 
-Hub de Qualidade completo para times de QA e engenharia de software. Centraliza KPIs de sprints, gestao de bugs, impedimentos, alinhamentos, status reports semanais com Gantt, pipeline de releases multi-fase e cadastro de squads com permissoes granulares. Suporta uso individual (offline), colaborativo local (Docker) e cloud (Supabase Cloud) com sincronizacao em tempo real. Tambem referenciado como QA Metrics Dashboard.
+Hub de Qualidade completo para times de QA e engenharia de software. Centraliza KPIs de sprints, gestao de bugs, impedimentos, alinhamentos, status reports semanais com Gantt, pipeline de releases multi-fase, gestao de PRs, API publica REST, audit trail e cadastro de squads com permissoes granulares. Suporta uso individual (offline), colaborativo local (Docker) e cloud (Supabase Cloud) com sincronizacao em tempo real. Tambem referenciado como QA Metrics Dashboard.
 
 **Stack:** React 19 + TypeScript 5.9 + Vite 6 + Tailwind CSS v4 + Zustand 5 + Chart.js 4 + Supabase (PostgreSQL + Auth + Realtime) + Express 4 + Playwright 1.58
 
@@ -368,7 +368,7 @@ src/
 │   ├── components/                     # Modais compartilhados + ProtectedRoute
 │   ├── layout/                         # AppShell, Sidebar, Topbar, SaveToast
 │   ├── pages/                          # DocsPage
-│   └── routes.tsx                      # Definicao das 13 rotas
+│   └── routes.tsx                      # Definicao das 14 rotas
 ├── shared/
 │   ├── components/                     # Componentes reutilizaveis
 │   └── hooks/                          # Hooks compartilhados
@@ -394,23 +394,48 @@ src/
 │   ├── releases/
 │   │   ├── components/
 │   │   │   ├── dashboard/              # Checkpoint, Regressivos, Historico,
-│   │   │   │                           #   Cronograma, Eventos
+│   │   │   │                           #   Cronograma, Eventos, Timeline,
+│   │   │   │                           #   ReleasePhasesPanel, ReleaseSquadCard
+│   │   │   ├── prs/                    # PRsTab, PRsTabHome, PRListTable,
+│   │   │   │                           #   PRRegistrationForm, PRAnalysisPanel,
+│   │   │   │                           #   SquadParticipationView
+│   │   │   ├── shared/                 # ActionBtn
 │   │   │   └── tests/                  # Areas de teste por squad
-│   │   ├── pages/                      # ReleasesPage, ReleaseDashboard
-│   │   ├── services/                   # persistence, export
+│   │   ├── constants/                  # platforms, pr-constants, status
+│   │   ├── pages/                      # ReleasesPage, ReleaseDashboard, PRsPage
+│   │   ├── services/                   # persistence, export, prService, metrics
 │   │   ├── store/                      # releaseStore
-│   │   └── types/                      # release.types.ts
+│   │   ├── types/                      # release.types.ts, pr.types.ts
+│   │   └── utils/                      # dateFormat, prExport
 │   └── squads/
-│       ├── pages/                      # SquadsPage (Squads, Perfis, Usuarios)
-│       └── services/                   # squadsService
+│       ├── components/                 # AuditTrailPanel
+│       ├── pages/                      # SquadsPage (Squads, Perfis, Usuarios,
+│       │                               #   API Keys, Audit Trail)
+│       └── services/                   # squadsService, apiKeysService
+├── hooks/
+│   └── useFocusTrap.ts                  # Focus trap reutilizavel para modais
+routes/
+├── admin.routes.js                      # create-user, reset-password
+├── dashboard.routes.js                  # GET/PUT dashboard por projectKey
+├── flush.routes.js                      # sendBeacon flush (status-report, release, sprint)
+└── v1/                                  # API publica v1
+    ├── apikeys.routes.js                # CRUD de API Keys (admin)
+    ├── audit.routes.js                  # Consulta de audit logs
+    ├── prs.routes.js                    # CRUD de PRs por release
+    ├── releases.routes.js               # Leitura de releases
+    ├── releases.write.routes.js         # Escrita (fase, rollout)
+    ├── sprints.routes.js                # Leitura de sprints
+    ├── sprints.write.routes.js          # Criacao de sprints
+    ├── squads.routes.js                 # Leitura de squads/membros
+    └── __tests__/                       # Testes unitarios dos endpoints
 supabase/
 ├── config.toml                         # Configuracao do Supabase local
 └── migrations/                         # 22 migrations SQL sequenciais
-server.js                               # Express: SPA + API admin + flush endpoints
+server.js                               # Express: SPA + API admin + flush + API v1 + Swagger
 setup-admin.sh                          # Script de criacao do admin
 ```
 
-### Rotas (13)
+### Rotas (14)
 
 | Rota | Descricao |
 |------|-----------|
@@ -424,22 +449,54 @@ setup-admin.sh                          # Script de criacao do admin
 | `/status-report/:reportId` | Editor de status report |
 | `/releases` | Lista de releases |
 | `/releases/:releaseId` | Dashboard da release |
-| `/squads` | Cadastro de squads, perfis e usuarios |
+| `/prs` | Gestao de PRs (agrupados por release) |
+| `/squads` | Cadastro de squads, perfis, usuarios, API keys e audit trail |
 | `/profile` | Perfil do usuario |
 | `/docs` | Documentacao |
 
-### API Endpoints (8)
+### API Endpoints — Internos (10)
 
 | Metodo | Rota | Auth | Rate Limit | Descricao |
 |---|---|---|---|---|
 | GET | `/config.js` | Nao | — | Configuracao dinamica do frontend |
 | GET | `/api/health` | Nao | — | Health check |
-| GET | `/api/dashboard/:projectKey` | Nao | — | Dados do dashboard |
-| PUT | `/api/dashboard/:projectKey` | Nao | — | Atualizar dashboard |
+| GET | `/api/docs` | Nao | — | Swagger UI (apenas dev/staging) |
+| GET | `/api/dashboard/:projectKey` | Bearer + admin | — | Dados do dashboard |
+| PUT | `/api/dashboard/:projectKey` | Bearer + admin | — | Atualizar dashboard |
 | POST | `/api/admin/create-user` | Bearer + admin | 10/min | Criar usuario |
 | POST | `/api/admin/reset-password` | Bearer + admin | 10/min | Resetar senha de usuario |
 | POST | `/api/status-report-flush` | Nao | 30/min | Flush de status report (sendBeacon) |
 | POST | `/api/release-flush` | Nao | 30/min | Flush de release (sendBeacon) |
+| POST | `/api/sprint-flush` | Nao | 30/min | Flush de sprint (sendBeacon) |
+
+### API Endpoints — Publica v1 (14+)
+
+Autenticacao via header `X-API-Key`. Chaves gerenciadas em Cadastros > API Keys.
+
+| Metodo | Rota | Scope | Descricao |
+|---|---|---|---|
+| GET | `/api/v1/sprints` | sprints:read | Listar sprints (paginacao, filtros) |
+| GET | `/api/v1/sprints/:id` | sprints:read | Detalhes de uma sprint |
+| GET | `/api/v1/sprints/:id/metrics` | sprints:read | Metricas calculadas da sprint |
+| GET | `/api/v1/sprints/:id/bugs` | sprints:read | Bugs da sprint |
+| POST | `/api/v1/sprints` | sprints:write | Criar sprint |
+| GET | `/api/v1/releases` | releases:read | Listar releases |
+| GET | `/api/v1/releases/:id` | releases:read | Detalhes de uma release |
+| GET | `/api/v1/releases/:id/metrics` | releases:read | Metricas da release |
+| PATCH | `/api/v1/releases/:id/phase` | releases:write | Atualizar fase da release |
+| PATCH | `/api/v1/releases/:id/rollout` | releases:write | Atualizar rollout % |
+| POST | `/api/v1/releases/:id/prs` | releases:write | Criar PR vinculado a release |
+| GET | `/api/v1/releases/:id/prs` | releases:read | Listar PRs da release |
+| PUT | `/api/v1/releases/:id/prs/:prId` | releases:write | Atualizar PR |
+| DELETE | `/api/v1/releases/:id/prs/:prId` | releases:write | Remover PR |
+| PATCH | `/api/v1/releases/:id/prs/:prId/review` | releases:write | Aprovar/rejeitar PR |
+| GET | `/api/v1/releases/:id/prs/summary` | releases:read | Resumo de PRs por release |
+| GET | `/api/v1/squads` | squads:read | Listar squads |
+| GET | `/api/v1/squads/:id/members` | squads:read | Membros de um squad |
+| POST | `/api/v1/api-keys` | admin | Criar API Key |
+| GET | `/api/v1/api-keys` | admin | Listar API Keys |
+| DELETE | `/api/v1/api-keys/:id` | admin | Revogar API Key |
+| GET | `/api/v1/audit-logs` | admin/audit | Consultar logs de auditoria |
 
 ### Seguranca
 
@@ -447,7 +504,9 @@ setup-admin.sh                          # Script de criacao do admin
 - **CORS** — Origens configuradas via env (`CORS_ORIGINS`)
 - **Rate limiting** — Endpoints admin e flush com limites por minuto
 - **RLS** — Row Level Security em todas as tabelas do Supabase
-- **Audit logging** — Registro de acoes via RPC no banco
+- **API Key auth** — Autenticacao via `X-API-Key` com scopes granulares para API v1
+- **Audit logging** — logAudit em todas as operacoes CRUD, timeline com diff viewer
+- **Validacao de entrada** — Zod schemas em todos os endpoints da API v1
 - **Senhas** — Geradas com `crypto.randomBytes` para novos usuarios
 
 ---
@@ -484,19 +543,70 @@ setup-admin.sh                          # Script de criacao do admin
 
 ### Modulo 4 — Releases
 
-- **Pipeline de 5 fases:** Corte → Geracao → Homologacao → Beta → Producao
-- **5 abas:** Checkpoint, Regressivos, Historico, Cronograma, Eventos
+- **Pipeline multi-fase com confirmacao de transicao:** Corte → Geracao → Homologacao → Beta → Aprovacao → Producao
+- **Maquina de estados** com VALID_TRANSITIONS — transicoes validadas entre fases
+- **6 abas:** Checkpoint, Regressivos, Historico, Cronograma, Eventos, PRs
+- **Cronograma de releases** com tabela, importacao CSV e formulario de criacao
+- **Checkpoint** para acompanhamento de releases vinculadas
+- **Timeline visual** com collision avoidance de labels
+- **Eventos e feriados** com badges de proximidade
+- **Regressivos** com KPIs por squad, tabela responsiva
 - **Rollout %** — Acompanhamento percentual de implantacao
 - **Areas de teste por squad** — Divisao de responsabilidades por squad
+- **Indicador de sync** (Salvando/Salvo/Erro) em tempo real
 - **Flush via sendBeacon** — Persistencia garantida ao fechar aba
 
-### Modulo 5 — Cadastros (Squads)
+### Modulo 5 — Gestao de PRs
+
+- **Pagina dedicada** (`/prs`) com icone na sidebar
+- **PRs agrupados por versao alvo** (release) com KPIs por grupo
+- **Cadastro de PR** com formulario validado (link, repositorio, squad, tipo, descricao)
+- **Revisao de PRs:** aprovar/rejeitar com observacao obrigatoria
+- **Painel de detalhes** com slide-in lateral (PRAnalysisPanel)
+- **Busca textual** e ordenacao por colunas
+- **Exportacao CSV** dos PRs cadastrados
+- **Tabela semantica HTML** com acessibilidade (role, aria-*)
+- **Botao Link** com tonalidade diferenciada (com/sem URL)
+
+### Modulo 6 — API Publica (v1)
+
+- **14+ endpoints REST** com autenticacao via API Key
+- **Swagger UI** em `/api/docs` (disponivel apenas em dev/staging)
+- **Endpoints organizados por recurso:**
+  - `/api/v1/sprints` — listagem, detalhes, metricas, bugs, criacao
+  - `/api/v1/releases` — listagem, detalhes, metricas, atualizacao de fase/rollout
+  - `/api/v1/releases/:id/prs` — CRUD completo de PRs por release
+  - `/api/v1/squads` — listagem de squads e membros
+  - `/api/v1/api-keys` — gerenciamento de chaves (admin)
+  - `/api/v1/audit-logs` — consulta de logs de auditoria
+- **Validacao de entrada** com Zod em todos os endpoints
+- **Paginacao, filtros e ordenacao** padronizados
+
+### Modulo 7 — Audit Trail
+
+- **Timeline de acoes** com filtros por resource type e action
+- **Diff viewer expandivel** por entrada de log
+- **logAudit** em todas as operacoes CRUD
+- **Painel integrado** na pagina de Cadastros (SquadsPage)
+
+### Acessibilidade
+
+- **Focus ring global** via `:focus-visible`
+- **Focus trap em modais** (hook reutilizavel `useFocusTrap`)
+- **role="dialog" + aria-modal** em todos os modais
+- **Clickable divs** com `role="button"` + navegacao por teclado
+- **Labels htmlFor/id** em formularios
+- **Validacao inline** por campo com `aria-invalid`
+
+### Modulo 8 — Cadastros (Squads)
 
 - **Squads:** Nome, descricao, cor, arquivamento
 - **Membros:** Roles de squad (qa_lead, qa, stakeholder)
 - **Permissoes granulares:** Por recurso, por membro, com perfis reutilizaveis
 - **Gestao de usuarios (admin):** Criar, ativar/desativar, resetar senha
 - **Perfis de permissao:** Templates aplicaveis a varios membros
+- **API Keys:** Gerenciamento de chaves para acesso a API publica
+- **Audit Trail:** Painel de auditoria integrado
 
 ### Colaboracao em tempo real
 

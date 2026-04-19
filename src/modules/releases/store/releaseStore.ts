@@ -23,20 +23,20 @@ import { uid } from '@/lib/uid'
 
 // ─── Valid status transitions ────────────────────────────────────────────────
 
-export const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
-  planejada: ['em_desenvolvimento', 'cancelada'],
-  em_desenvolvimento: ['corte', 'cancelada'],
-  corte: ['em_homologacao', 'em_qa', 'cancelada'],
+const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
+  planejada: ['em_desenvolvimento', 'corte', 'cancelada'],
+  em_desenvolvimento: ['em_homologacao', 'em_qa', 'corte', 'cancelada'],
+  corte: ['em_desenvolvimento', 'em_homologacao', 'em_qa', 'cancelada'],
   em_homologacao: ['em_regressivo', 'cancelada'],
   em_qa: ['em_regressivo', 'aguardando_aprovacao', 'cancelada'],
   em_regressivo: ['aprovada', 'aguardando_aprovacao', 'cancelada'],
-  aguardando_aprovacao: ['aprovada', 'em_regressivo', 'cancelada'],
+  aguardando_aprovacao: ['aprovada', 'em_regressivo', 'em_qa', 'cancelada'],
   aprovada: ['em_producao', 'cancelada'],
   em_producao: ['concluida', 'rollback'],
-  concluida: [],
+  concluida: ['rollback'],
   rollback: ['em_desenvolvimento', 'cancelada'],
   cancelada: ['planejada'],
-  uniu_escopo: ['em_desenvolvimento'],
+  uniu_escopo: ['em_desenvolvimento', 'cancelada'],
 }
 
 // ─── Remote persist queue (Supabase) ─────────────────────────────────────────
@@ -48,6 +48,7 @@ let _cleanupRealtime: (() => void) | null = null
 let _lastPendingState: Release | null = null
 let _lastPersistedAt: string | null = null
 let _syncResetTimeout: ReturnType<typeof setTimeout> | null = null
+let _initCancelFn: (() => void) | null = null
 
 async function doPersistToServer(release: Release, updatedAt?: string) {
   if (_remotePersistInFlight) { _remotePersistQueued = true; return }
@@ -123,7 +124,7 @@ function mapSquad(release: Release, squadId: string, fn: (sq: ReleaseSquad) => R
 
 // ─── Store Interface ─────────────────────────────────────────────────────────
 
-type ReleaseConfigField = keyof Pick<Release, 'version' | 'title' | 'description' | 'productionDate' | 'cutoffDate' | 'buildDate' | 'homologacaoStart' | 'homologacaoEnd' | 'betaDate'>
+type ReleaseConfigField = keyof Pick<Release, 'version' | 'title' | 'description' | 'productionDate' | 'cutoffDate' | 'buildDate' | 'homologacaoStart' | 'homologacaoEnd' | 'betaDate' | 'approvalDate'>
 type SquadUpdatableField = keyof Pick<ReleaseSquad, 'squadName' | 'notes' | 'hasNewFeatures'>
 
 interface ReleaseStore {
@@ -362,9 +363,15 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   initRelease: async (id: string) => {
+    // Cancel any in-flight initRelease to prevent stale set() from overwriting a reset
+    _initCancelFn?.()
+    let cancelled = false
+    _initCancelFn = () => { cancelled = true }
+
     set({ isLoading: true })
 
     let state = await loadFromServer(id)
+    if (cancelled) return
     if (!state) state = loadFromLocalStorage(id)
     if (!state) state = createDefaultRelease(id)
 
@@ -372,6 +379,8 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     saveToLocalStorage(normalized)
     upsertMasterIndex(normalized)
     queueRemotePersist(normalized)
+
+    if (cancelled) return
 
     // Update the releases array so list views stay in sync with single-release state
     const currentReleases = get().releases
@@ -390,14 +399,21 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
     // Realtime subscription
     if (_cleanupRealtime) _cleanupRealtime()
     _cleanupRealtime = initRealtimeSubscription(id, (incoming) => {
+      if (cancelled) return
       // Ignora echo da nossa própria persistência
       if (incoming.updatedAt && incoming.updatedAt === _lastPersistedAt) return
-      const realtimeReleases = get().releases.map((r) => r.id === incoming.id ? incoming : r)
-      set({ release: incoming, releases: realtimeReleases })
+      saveToLocalStorage(incoming)
+      upsertMasterIndex(incoming)
+      const updated = get().releases.map((r) => r.id === incoming.id ? incoming : r)
+      const found = updated.some((r) => r.id === incoming.id)
+      set({ release: incoming, releases: found ? updated : [...updated, incoming] })
     })
   },
 
   resetRelease: () => {
+    // Cancel any in-flight initRelease so its stale set() won't overwrite the clean state
+    _initCancelFn?.()
+    _initCancelFn = null
     if (_cleanupRealtime) {
       _cleanupRealtime()
       _cleanupRealtime = null
@@ -445,11 +461,14 @@ export const useReleaseStore = create<ReleaseStore>((set, get) => ({
         }
         return
       }
-    } else if (import.meta.env.DEV) {
-      // Unknown source state — allow but warn
-      console.warn(
-        `[Release] Estado de origem desconhecido "${oldStatus}". Transição para "${status}" permitida por fallback.`,
-      )
+    } else {
+      // Unknown source state — block in all environments
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[Release] Estado de origem desconhecido "${oldStatus}". Transição para "${status}" bloqueada.`,
+        )
+      }
+      return
     }
 
     const change = {

@@ -3,6 +3,7 @@
 const { Router } = require('express');
 const { z } = require('zod');
 const { requireApiKey } = require('../../middleware/requireApiKey');
+const { enforceSquadScope } = require('../../middleware/enforceSquadScope');
 const { success, paginated, error } = require('./helpers');
 
 const router = Router();
@@ -107,7 +108,7 @@ function validateParams(schema) {
  *       401: { description: Missing or invalid API key }
  *       403: { description: Insufficient permissions }
  */
-router.get('/', requireApiKey('sprints:read'), validateQuery(listSprintsQuery), async (req, res) => {
+router.get('/', requireApiKey('sprints:read'), enforceSquadScope('sprints'), validateQuery(listSprintsQuery), async (req, res) => {
   const supabase = req.app.locals.supabase;
   if (!supabase) {
     return error(res, 503, 'SERVICE_UNAVAILABLE', 'Database not configured');
@@ -129,6 +130,12 @@ router.get('/', requireApiKey('sprints:read'), validateQuery(listSprintsQuery), 
     if (squadId) {
       countQuery = countQuery.eq('squad_id', squadId);
       dataQuery = dataQuery.eq('squad_id', squadId);
+    }
+
+    // SEC: H-04 — Enforce API key squad scope
+    if (req.squadScope && req.squadScope.hasScope) {
+      countQuery = countQuery.in('squad_id', req.squadScope.squadIds);
+      dataQuery = dataQuery.in('squad_id', req.squadScope.squadIds);
     }
 
     dataQuery = dataQuery
@@ -202,7 +209,7 @@ router.get('/', requireApiKey('sprints:read'), validateQuery(listSprintsQuery), 
  *       401: { description: Missing or invalid API key }
  *       404: { description: Sprint not found }
  */
-router.get('/:id', requireApiKey('sprints:read'), validateParams(sprintIdParam), async (req, res) => {
+router.get('/:id', requireApiKey('sprints:read'), enforceSquadScope('sprints'), validateParams(sprintIdParam), async (req, res) => {
   const supabase = req.app.locals.supabase;
   if (!supabase) {
     return error(res, 503, 'SERVICE_UNAVAILABLE', 'Database not configured');
@@ -273,7 +280,7 @@ router.get('/:id', requireApiKey('sprints:read'), validateParams(sprintIdParam),
  *       401: { description: Missing or invalid API key }
  *       404: { description: Sprint not found }
  */
-router.get('/:id/metrics', requireApiKey('sprints:read'), validateParams(sprintIdParam), async (req, res) => {
+router.get('/:id/metrics', requireApiKey('sprints:read'), enforceSquadScope('sprints'), validateParams(sprintIdParam), async (req, res) => {
   const supabase = req.app.locals.supabase;
   if (!supabase) {
     return error(res, 503, 'SERVICE_UNAVAILABLE', 'Database not configured');
@@ -348,7 +355,7 @@ router.get('/:id/metrics', requireApiKey('sprints:read'), validateParams(sprintI
  *       401: { description: Missing or invalid API key }
  *       404: { description: Sprint not found }
  */
-router.get('/:id/bugs', requireApiKey('sprints:read'), validateParams(sprintIdParam), async (req, res) => {
+router.get('/:id/bugs', requireApiKey('sprints:read'), enforceSquadScope('sprints'), validateParams(sprintIdParam), async (req, res) => {
   const supabase = req.app.locals.supabase;
   if (!supabase) {
     return error(res, 503, 'SERVICE_UNAVAILABLE', 'Database not configured');

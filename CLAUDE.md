@@ -2,7 +2,7 @@
 
 ## Stack
 - Frontend: React 19 + TypeScript + Vite + Tailwind CSS v4
-- State: Zustand (auth, sprints)
+- State: Zustand (auth, sprints, releases, featureToggles)
 - Routing: React Router DOM v7 (HashRouter)
 - Backend: Node.js/Express (`server.js`) — serve SPA + endpoints admin e status-report
 - Database: Supabase (PostgreSQL) com RLS, Realtime, Auth (GoTrue)
@@ -90,8 +90,9 @@ Execute o código de forma real:
 src/modules/
 ├── auth/            # Login, registro, perfil, troca de senha obrigatória
 ├── sprints/         # Dashboard, home, comparação, persistência
-├── squads/          # Squads, membros, perfis de acesso, gestão de usuários
-└── status-report/   # Status Report semanal (seções, itens, Gantt, export)
+├── squads/          # Squads, membros, perfis de acesso, gestão de usuários, API Keys, Audit Trail
+├── status-report/   # Status Report semanal (seções, itens, Gantt, export)
+└── releases/        # Pipeline de releases, checkpoint, cronograma, gestão de PRs
 ```
 
 ### auth
@@ -105,9 +106,10 @@ src/modules/
 - Visibilidade: admin vê todas as sprints; demais veem apenas sprints dos seus squads
 
 ### squads
-- `pages/`: SquadsPage (3 abas: Squads, Perfis de Acesso, Usuários)
+- `pages/`: SquadsPage (6 abas: Squads, Perfis de Acesso, Usuários, API Keys, Audit Trail, Módulos)
 - `services/`: squadsService — CRUD squads, membros, permission_profiles, usuários
-- Funcionalidades: cores/descrição de squad, perfis de permissão, ativar/desativar usuários
+- `components/`: ModulesPanel — toggle switches para ativar/desativar módulos do sistema
+- Funcionalidades: cores/descrição de squad, perfis de permissão, ativar/desativar usuários, CRUD de API Keys com scopes, visualização de audit logs, feature toggles (ativar/desativar módulos)
 
 ### status-report
 - `pages/`: StatusReportHomePage (listagem), StatusReportPage (editor)
@@ -116,12 +118,33 @@ src/modules/
 - `store/`: statusReportStore (Zustand) + seedData
 - `types/`: statusReport.types.ts
 
+### releases
+- `pages/`: ReleasesPage (checkpoint, cronograma, eventos, regressivos), ReleaseDashboard, PRsPage
+- `components/dashboard/`: CheckpointTab, CronogramaTab, EventsTab, ReleasePhasesPanel, ReleaseTimeline, RegressivosTab
+- `components/prs/`: PRsTab, PRListTable, PRRegistrationForm, PRAnalysisPanel, SquadParticipationView
+- `components/tests/`: SquadTestArea, ReleaseSuiteCard, ReleaseFeatureRow, ReleaseTestCaseRow
+- `store/`: releaseStore (Zustand) — CRUD releases, squads, features, test cases, status machine with VALID_TRANSITIONS
+- `constants/`: status.ts, platforms.ts, pr-constants.ts
+- `services/`: releasePersistence, releaseMetrics, prService
+- `types/`: release.types.ts, pr.types.ts
+- `utils/`: dateFormat.ts, prExport.ts
+
 ## API Endpoints (server.js)
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | GET | `/api/health` | Não | Health check |
 | POST | `/api/admin/create-user` | Bearer + admin | Criar usuário via Supabase Auth Admin |
-| POST | `/api/status-report-flush` | Não | Flush de status report via sendBeacon |
+| POST | `/api/admin/reset-password` | Bearer + admin | Resetar senha de usuário |
+| POST | `/api/status-report-flush` | Bearer (token in body) | Flush de status report via sendBeacon |
+| POST | `/api/release-flush` | Bearer (token in body) | Flush de release via sendBeacon |
+| POST | `/api/sprint-flush` | Bearer (token in body) | Flush de sprint via sendBeacon |
+| GET/POST/DELETE | `/api/v1/api-keys` | Bearer + admin | CRUD de API Keys |
+| GET | `/api/v1/audit-logs` | Bearer + admin/API Key | Logs de auditoria |
+| GET | `/api/v1/sprints` | API Key (read:metrics) | Listar sprints |
+| GET | `/api/v1/releases` | API Key (read:metrics) | Listar releases |
+| GET | `/api/v1/squads` | API Key (read:metrics) | Listar squads |
+| POST/GET/PUT/DELETE/PATCH | `/api/v1/releases/:id/prs` | Bearer + admin / API Key | Gestão de PRs |
+| GET | `/api/v1/releases/:id/squads-summary` | Bearer + admin | Resumo de squads por release |
 
 ## Migrations (supabase/migrations/)
 Ordem de aplicação:
@@ -138,6 +161,30 @@ Ordem de aplicação:
 11. `000009` — FK squad_members → profiles
 12. `000010` — status_reports table + RLS + índices
 13. `000011` — audit_logs table
+14. `20260406000029` — api_keys table + RLS
+15. `20260411000001` — release_prs, pr_test_links, pr_audit_log tables + RLS
+16. `20260414000001` — fix api_keys force RLS
+17. `20260414000002` — fix release_prs FK constraint
+18. `20260416000001` — app_settings table (feature toggles) + RLS
+
+## Comportamento Autônomo
+
+### 1. Loop de Autoaperfeiçoamento
+- Após QUALQUER correção do usuário: atualize ou crie o arquivo `tasks/lessons.md` registrando o padrão do erro e a regra para evitá-lo
+- Revise esse arquivo no início de cada sessão antes de começar qualquer tarefa
+- Itere sobre as lições até que erros recorrentes deixem de acontecer
+
+### 2. Gate de Verificação
+- Antes de considerar qualquer tarefa concluída, pergunte: "Um engenheiro sênior aprovaria essa solução?"
+- Execute os testes disponíveis, verifique o comportamento esperado e demonstre que funciona
+- Nunca marque como feito sem evidência de que funciona
+
+### 3. Correção Autônoma de Bugs
+- Ao receber um relatório de bug: investigue logs, erros e testes falhando por conta própria
+- Não peça informações que já estão disponíveis no contexto, nos logs ou no código
+- Resolva sem exigir troca de contexto desnecessária do usuário
+
+---
 
 ## Comando /regressivo
 Para executar um ciclo completo de regressão de QA use `/regressivo`.

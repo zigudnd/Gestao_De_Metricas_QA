@@ -45,7 +45,15 @@ const { adminLimiter } = require('../middleware/rateLimiter');
 router.post('/create-user', adminLimiter, requireAdminAuth, validateBody(createUserSchema), async (req, res) => {
   const supabaseAdmin = req.app.locals.supabase;
   const { email, display_name, global_role } = req.validatedBody;
-  const password = crypto.randomBytes(12).toString('base64').slice(0, 16) + '!1';
+
+  // SEC-003: Prevent privilege escalation — only admins can create other admins
+  if (global_role === 'admin' && req.callerProfile.global_role !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores podem criar outros administradores.' });
+  }
+
+  // SEC: H-08 — Use fixed temporary password (never returned in response).
+  // User is forced to change on first login via must_change_password flag.
+  const password = 'Mudar@123!Ts';
 
   try {
     const metadata = { display_name, must_change_password: true };
@@ -62,7 +70,8 @@ router.post('/create-user', adminLimiter, requireAdminAuth, validateBody(createU
       return res.status(400).json({ error: error.message });
     }
 
-    return res.json({ id: data.user.id, email: data.user.email, temporaryPassword: password });
+    // SEC: H-08 — Never return password in response. Admin informs user verbally or via secure channel.
+    return res.json({ id: data.user.id, email: data.user.email, mustChangePassword: true });
   } catch (err) {
     console.error('Erro ao criar usuário:', err);
     return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
@@ -121,15 +130,17 @@ router.post('/reset-password', adminLimiter, requireAdminAuth, validateBody(rese
       return res.status(403).json({ error: 'Gerentes não podem resetar senhas de administradores.' });
     }
 
-    const defaultPassword = 'Mudar@123';
+    // SEC: H-08 — Use fixed temporary password (never returned in response).
+    const newPassword = 'Mudar@123!Ts';
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      password: defaultPassword,
+      password: newPassword,
       user_metadata: { must_change_password: true },
     });
     if (error) {
       return res.status(400).json({ error: error.message });
     }
-    return res.json({ ok: true, temporaryPassword: defaultPassword });
+    // SEC: H-08 — Never return password in response.
+    return res.json({ ok: true, mustChangePassword: true });
   } catch (err) {
     console.error('Erro ao resetar senha:', err);
     return res.status(500).json({ error: 'Erro interno ao resetar senha.' });

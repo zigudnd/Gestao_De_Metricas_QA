@@ -4,7 +4,7 @@
 #
 # Credenciais padrão:
 #   E-mail : admin@tostatos.com
-#   Senha  : Admin@123
+#   Senha  : Admin@123!Ts
 #
 # EM PRODUÇÃO: troque a senha imediatamente após o primeiro login.
 
@@ -30,7 +30,7 @@ RESULT=$(curl -s -X POST "$SUPABASE_URL/auth/v1/admin/users" \
   -H "Authorization: Bearer $SERVICE_KEY" \
   -d '{
     "email": "admin@tostatos.com",
-    "password": "Admin@123",
+    "password": "Admin@123!Ts",
     "email_confirm": true,
     "user_metadata": {"display_name": "Admin"}
   }')
@@ -55,6 +55,6 @@ echo ""
 echo "─────────────────────────────────────────────"
 echo "  Admin criado com sucesso!"
 echo "  E-mail : admin@tostatos.com"
-echo "  Senha  : Admin@123"
+echo "  Senha  : Admin@123!Ts"
 echo "  ⚠️  Troque a senha após o primeiro login."
 echo "─────────────────────────────────────────────"

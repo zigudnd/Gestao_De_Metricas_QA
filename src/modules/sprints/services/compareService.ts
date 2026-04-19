@@ -17,7 +17,7 @@ export interface SprintKPIs {
   atrasoCasos: number
 }
 
-export interface SprintComparisonItem {
+interface SprintComparisonItem {
   entry: SprintIndexEntry
   kpis: SprintKPIs
 }
@@ -43,11 +43,11 @@ export function computeSprintKPIs(state: SprintState): SprintKPIs {
 
   let mttrGlobal = 0
   if (resolvedBugsList.length > 0) {
-    const totalMs = resolvedBugsList.reduce((a, b) => {
-      if (!b.openedAt || !b.resolvedAt) return a
-      return a + (new Date(b.resolvedAt).getTime() - new Date(b.openedAt).getTime())
+    const bugsWithDates = resolvedBugsList.filter(b => b.openedAt && b.resolvedAt)
+    const totalMs = bugsWithDates.reduce((a, b) => {
+      return a + (new Date(b.resolvedAt!).getTime() - new Date(b.openedAt!).getTime())
     }, 0)
-    mttrGlobal = Math.round(totalMs / resolvedBugsList.length / 3600000)
+    mttrGlobal = bugsWithDates.length > 0 ? Math.round(totalMs / bugsWithDates.length / 3600000) : 0
   }
 
   let totalRetests = 0

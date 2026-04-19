@@ -100,11 +100,6 @@ function NoteArea({
             boxSizing: 'border-box',
           }}
         />
-        {value && (
-          <div style={{ marginTop: 10, padding: '10px 12px', background: color, border: `1px solid ${borderColor}`, borderRadius: 8, fontSize: 13, color: textColor, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-            {value}
-          </div>
-        )}
       </div>
     </div>
   )

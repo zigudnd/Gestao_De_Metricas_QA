@@ -7,7 +7,7 @@ import { uid } from '@/lib/uid'
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
 export const STORAGE_KEY = (id: string) => `qaDashboardData_${id}`
-export const MASTER_KEY = 'qaDashboardMasterIndex'
+const MASTER_KEY = 'qaDashboardMasterIndex'
 
 // ─── Default State ────────────────────────────────────────────────────────────
 
@@ -488,7 +488,6 @@ export async function concludeSprint(sprintId: string): Promise<void> {
   const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'concluida' }
   saveMasterIndex(index)
-  logAudit('sprint', sprintId, 'update', { status: { old: 'ativa', new: 'concluida' } })
   const { error } = await supabase.from('sprints').update({ status: 'concluida' }).eq('id', sprintId)
   if (error) {
     // Revert local state on server failure
@@ -501,6 +500,7 @@ export async function concludeSprint(sprintId: string): Promise<void> {
     if (import.meta.env.DEV) console.error('[Sprints] concludeSprint server update failed:', error.message)
     throw error
   }
+  logAudit('sprint', sprintId, 'update', { status: { old: 'ativa', new: 'concluida' } })
 }
 
 export async function reactivateSprint(sprintId: string): Promise<void> {
@@ -510,7 +510,6 @@ export async function reactivateSprint(sprintId: string): Promise<void> {
   const previousEntry = { ...index[idx] }
   index[idx] = { ...index[idx], status: 'ativa' }
   saveMasterIndex(index)
-  logAudit('sprint', sprintId, 'update', { status: { old: 'concluida', new: 'ativa' } })
   const { error } = await supabase.from('sprints').update({ status: 'ativa' }).eq('id', sprintId)
   if (error) {
     // Revert local state on server failure
@@ -523,4 +522,5 @@ export async function reactivateSprint(sprintId: string): Promise<void> {
     if (import.meta.env.DEV) console.error('[Sprints] reactivateSprint server update failed:', error.message)
     throw error
   }
+  logAudit('sprint', sprintId, 'update', { status: { old: 'concluida', new: 'ativa' } })
 }

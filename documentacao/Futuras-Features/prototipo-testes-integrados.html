@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protótipo UX — Testes Integrados por Squad</title>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface-2: #f2f1ed;
+    --border: rgba(0,0,0,0.08);
+    --border-md: rgba(0,0,0,0.14);
+    --text: #1a1a18;
+    --text-2: #6b6a65;
+    --text-3: #a09f99;
+    --blue: #185fa5;
+    --blue-light: #e6f1fb;
+    --blue-text: #0c447c;
+    --green: #3b6d11;
+    --green-light: #eaf3de;
+    --green-mid: #639922;
+    --amber: #854f0b;
+    --amber-light: #faeeda;
+    --amber-mid: #ba7517;
+    --red: #a32d2d;
+    --red-light: #fcebeb;
+    --font: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; padding: 24px; }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header .subtitle { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .badge-release { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: var(--blue-light); color: var(--blue-text); }
+
+  /* ── Painel Squads ── */
+  .squads-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+  .squads-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .squads-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .squads-count { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--surface-2); color: var(--text-2); }
+  .squads-status { font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px; white-space: nowrap; }
+  .squads-status.ok { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+  .squads-status.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-mid); }
+
+  /* Progress bar */
+  .progress-wrap { margin-bottom: 14px; }
+  .progress-labels { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
+  .progress-labels .label { color: var(--text-3); }
+  .progress-labels .value { font-weight: 700; color: var(--text); }
+  .progress-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .progress-fill.ok { background: var(--green); }
+  .progress-fill.warn { background: var(--amber-mid); }
+
+  /* Squad grid */
+  .squads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .squad-card { padding: 10px 12px; border-radius: 8px; transition: all 0.2s; }
+  .squad-card.conforme { background: var(--bg); border: 1px solid var(--green-mid); border-left: 3px solid var(--green); }
+  .squad-card.pendente { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--amber); }
+  .squad-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .squad-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .squad-name { font-size: 12px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .squad-icon { font-size: 12px; }
+  .squad-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge-sm { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; }
+  .badge-pr { background: var(--blue-light); color: var(--blue-text); }
+  .badge-test-ok { background: var(--green-light); color: var(--green); }
+  .badge-test-warn { background: var(--amber-light); color: var(--amber); }
+
+  /* ── Suite/Squad Section ── */
+  .suite-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .suite-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; transition: background 0.12s; }
+  .suite-header:hover { background: var(--surface-2); }
+  .suite-chevron { font-size: 12px; color: var(--text-3); transition: transform 0.2s; flex-shrink: 0; }
+  .suite-chevron.open { transform: rotate(90deg); }
+  .suite-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .suite-name { font-size: 14px; font-weight: 700; flex: 1; }
+  .suite-stats { font-size: 11px; color: var(--text-2); display: flex; gap: 12px; }
+  .suite-status-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+
+  /* ── Feature Row ── */
+  .suite-body { padding: 0 16px 16px; }
+  .feature { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+  .feature-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .feature-name { flex: 1; font-size: 13px; font-weight: 600; padding: 6px 10px; border: 1px solid var(--border-md); border-radius: 6px; background: var(--surface); }
+  .feature-status { font-size: 12px; padding: 5px 10px; border: 1px solid var(--border-md); border-radius: 6px; background: var(--surface); }
+
+  /* ── Test Case Row ── */
+  .test-case { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .test-case:last-child { border-bottom: none; }
+  .tc-name { flex: 1; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border-md); border-radius: 6px; background: var(--surface); }
+  .tc-select { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border-md); border-radius: 6px; background: var(--surface); }
+  .tc-actions { display: flex; gap: 4px; }
+  .tc-btn { width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; cursor: pointer; color: var(--text-3); font-size: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
+  .tc-btn:hover { background: var(--surface-2); }
+
+  .btn-add { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px; border: 1.5px dashed var(--border-md); border-radius: 8px; background: transparent; cursor: pointer; color: var(--text-3); font-size: 12px; font-weight: 600; width: 100%; transition: all 0.15s; font-family: var(--font); }
+  .btn-add:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+  /* ── Comparison ── */
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+  .comparison-col { }
+  .comparison-col h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+  .comparison-col h2.before { color: var(--red); border-color: var(--red); }
+  .comparison-col h2.after { color: var(--green); border-color: var(--green); }
+
+  .issue { padding: 10px 12px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 6px; margin-bottom: 8px; font-size: 12px; color: var(--text); }
+  .improvement { padding: 10px 12px; background: var(--green-light); border-left: 3px solid var(--green); border-radius: 6px; margin-bottom: 8px; font-size: 12px; color: var(--text); }
+  .issue strong, .improvement strong { display: block; margin-bottom: 2px; }
+
+  .section-divider { margin: 32px 0 20px; padding: 10px 0; border-top: 2px solid var(--border-md); }
+  .section-divider h2 { font-size: 16px; font-weight: 700; color: var(--text); }
+  .section-divider p { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- PROPOSTA: NOVO LAYOUT -->
+  <!-- ════════════════════════════════════════════════════════ -->
+
+  <div class="header">
+    <div>
+      <h1>Sprint Integrada — Release v4.2.0</h1>
+      <div class="subtitle">Testes integrados vinculados à release em corte</div>
+    </div>
+    <span class="badge-release">🔗 Release v4.2.0 — Em Corte</span>
+  </div>
+
+  <!-- ── Painel de Conformidade ── -->
+  <div class="squads-panel">
+    <div class="squads-header">
+      <div class="squads-title">
+        Testes Integrados por Squad
+        <span class="squads-count">4 squads</span>
+      </div>
+      <span class="squads-status warn">⚠️ 2 de 4 squads sem testes</span>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span class="label">Progresso de cobertura</span>
+        <span class="value">50%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill warn" style="width: 50%"></div>
+      </div>
+    </div>
+
+    <div class="squads-grid">
+      <div class="squad-card conforme">
+        <div class="squad-top">
+          <div class="squad-dot" style="background: #185FA5"></div>
+          <span class="squad-name">Squad Alpha</span>
+          <span class="squad-icon">✅</span>
+        </div>
+        <div class="squad-badges">
+          <span class="badge-sm badge-pr">3 PRs</span>
+          <span class="badge-sm badge-test-ok">8 testes</span>
+        </div>
+      </div>
+
+      <div class="squad-card conforme">
+        <div class="squad-top">
+          <div class="squad-dot" style="background: #059669"></div>
+          <span class="squad-name">Squad Delta</span>
+          <span class="squad-icon">✅</span>
+        </div>
+        <div class="squad-badges">
+          <span class="badge-sm badge-pr">4 PRs</span>
+          <span class="badge-sm badge-test-ok">12 testes</span>
+        </div>
+      </div>
+
+      <div class="squad-card pendente">
+        <div class="squad-top">
+          <div class="squad-dot" style="background: #7C3AED"></div>
+          <span class="squad-name">Squad Beta</span>
+          <span class="squad-icon">⏳</span>
+        </div>
+        <div class="squad-badges">
+          <span class="badge-sm badge-pr">2 PRs</span>
+          <span class="badge-sm badge-test-warn">Sem testes</span>
+        </div>
+      </div>
+
+      <div class="squad-card pendente">
+        <div class="squad-top">
+          <div class="squad-dot" style="background: #DC2626"></div>
+          <span class="squad-name">Squad Gamma</span>
+          <span class="squad-icon">⏳</span>
+        </div>
+        <div class="squad-badges">
+          <span class="badge-sm badge-pr">1 PR</span>
+          <span class="badge-sm badge-test-warn">Sem testes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Suites = Squads (auto-criadas) ── -->
+
+  <!-- Squad Alpha (conforme) -->
+  <div class="suite-section">
+    <div class="suite-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.suite-chevron').classList.toggle('open')">
+      <span class="suite-chevron open">▶</span>
+      <div class="suite-dot" style="background: #185FA5"></div>
+      <span class="suite-name">Squad Alpha</span>
+      <div class="suite-stats">
+        <span>2 func.</span>
+        <span>8 testes</span>
+        <span>0 executados</span>
+      </div>
+      <span class="suite-status-badge" style="background: var(--green-light); color: var(--green);">✅ Conforme</span>
+    </div>
+    <div class="suite-body">
+      <!-- Feature 1 -->
+      <div class="feature">
+        <div class="feature-header">
+          <input class="feature-name" value="Validação de login biométrico" />
+          <select class="feature-status"><option>Ativa</option></select>
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px;">Casos de Teste (5)</div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar login com Face ID" />
+          <select class="tc-select"><option>Baixa</option><option>Moderada</option><option>Alta</option></select>
+          <select class="tc-select"><option>Pendente</option><option selected>Concluído</option></select>
+          <div class="tc-actions">
+            <button class="tc-btn" title="Duplicar">⧉</button>
+            <button class="tc-btn" title="Excluir">🗑</button>
+          </div>
+        </div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar fallback para PIN" />
+          <select class="tc-select"><option selected>Baixa</option></select>
+          <select class="tc-select"><option selected>Pendente</option></select>
+          <div class="tc-actions">
+            <button class="tc-btn">⧉</button>
+            <button class="tc-btn">🗑</button>
+          </div>
+        </div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar timeout de sessão" />
+          <select class="tc-select"><option selected>Moderada</option></select>
+          <select class="tc-select"><option selected>Pendente</option></select>
+          <div class="tc-actions">
+            <button class="tc-btn">⧉</button>
+            <button class="tc-btn">🗑</button>
+          </div>
+        </div>
+        <button class="btn-add" style="margin-top: 8px;">+ Adicionar Caso de Teste</button>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature">
+        <div class="feature-header">
+          <input class="feature-name" value="Integração com módulo de pagamentos" />
+          <select class="feature-status"><option>Ativa</option></select>
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px;">Casos de Teste (3)</div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar fluxo de pagamento PIX" />
+          <select class="tc-select"><option selected>Alta</option></select>
+          <select class="tc-select"><option selected>Pendente</option></select>
+          <div class="tc-actions">
+            <button class="tc-btn">⧉</button>
+            <button class="tc-btn">🗑</button>
+          </div>
+        </div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar estorno de pagamento" />
+          <select class="tc-select"><option selected>Moderada</option></select>
+          <select class="tc-select"><option selected>Pendente</option></select>
+          <div class="tc-actions">
+            <button class="tc-btn">⧉</button>
+            <button class="tc-btn">🗑</button>
+          </div>
+        </div>
+        <button class="btn-add" style="margin-top: 8px;">+ Adicionar Caso de Teste</button>
+      </div>
+
+      <button class="btn-add">+ Adicionar Funcionalidade</button>
+    </div>
+  </div>
+
+  <!-- Squad Beta (pendente — colapsado) -->
+  <div class="suite-section">
+    <div class="suite-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.suite-chevron').classList.toggle('open')">
+      <span class="suite-chevron">▶</span>
+      <div class="suite-dot" style="background: #7C3AED"></div>
+      <span class="suite-name">Squad Beta</span>
+      <div class="suite-stats">
+        <span>0 func.</span>
+        <span>0 testes</span>
+      </div>
+      <span class="suite-status-badge" style="background: var(--amber-light); color: var(--amber);">⏳ Pendente</span>
+    </div>
+    <div class="suite-body" style="display: none;">
+      <div style="text-align: center; padding: 24px; color: var(--text-3); font-size: 13px;">
+        Nenhum teste cadastrado. Este squad tem <strong style="color: var(--amber);">2 PRs aprovados</strong> na release e precisa registrar testes integrados.
+      </div>
+      <button class="btn-add">+ Adicionar Funcionalidade</button>
+    </div>
+  </div>
+
+  <!-- Squad Gamma (pendente — colapsado) -->
+  <div class="suite-section">
+    <div class="suite-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.suite-chevron').classList.toggle('open')">
+      <span class="suite-chevron">▶</span>
+      <div class="suite-dot" style="background: #DC2626"></div>
+      <span class="suite-name">Squad Gamma</span>
+      <div class="suite-stats">
+        <span>0 func.</span>
+        <span>0 testes</span>
+      </div>
+      <span class="suite-status-badge" style="background: var(--amber-light); color: var(--amber);">⏳ Pendente</span>
+    </div>
+    <div class="suite-body" style="display: none;">
+      <div style="text-align: center; padding: 24px; color: var(--text-3); font-size: 13px;">
+        Nenhum teste cadastrado. Este squad tem <strong style="color: var(--amber);">1 PR aprovado</strong> na release e precisa registrar testes integrados.
+      </div>
+      <button class="btn-add">+ Adicionar Funcionalidade</button>
+    </div>
+  </div>
+
+  <!-- Squad Delta (conforme — colapsado) -->
+  <div class="suite-section">
+    <div class="suite-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.suite-chevron').classList.toggle('open')">
+      <span class="suite-chevron">▶</span>
+      <div class="suite-dot" style="background: #059669"></div>
+      <span class="suite-name">Squad Delta</span>
+      <div class="suite-stats">
+        <span>3 func.</span>
+        <span>12 testes</span>
+        <span>4 executados</span>
+      </div>
+      <span class="suite-status-badge" style="background: var(--green-light); color: var(--green);">✅ Conforme</span>
+    </div>
+    <div class="suite-body" style="display: none;">
+      <div class="feature">
+        <div class="feature-header">
+          <input class="feature-name" value="Dashboard de métricas v2" />
+          <select class="feature-status"><option>Ativa</option></select>
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px;">Casos de Teste (4)</div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar filtros de período" />
+          <select class="tc-select"><option selected>Moderada</option></select>
+          <select class="tc-select"><option>Pendente</option><option selected>Concluído</option></select>
+          <div class="tc-actions"><button class="tc-btn">⧉</button><button class="tc-btn">🗑</button></div>
+        </div>
+        <div class="test-case">
+          <input class="tc-name" value="Validar export CSV" />
+          <select class="tc-select"><option selected>Baixa</option></select>
+          <select class="tc-select"><option selected>Pendente</option></select>
+          <div class="tc-actions"><button class="tc-btn">⧉</button><button class="tc-btn">🗑</button></div>
+        </div>
+        <button class="btn-add" style="margin-top: 8px;">+ Adicionar Caso de Teste</button>
+      </div>
+      <button class="btn-add">+ Adicionar Funcionalidade</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- ANÁLISE UX: ANTES vs DEPOIS -->
+  <!-- ════════════════════════════════════════════════════════ -->
+
+  <div class="section-divider">
+    <h2>Análise UX — Antes vs Proposta</h2>
+    <p>Comparação da experiência atual com a proposta de melhoria</p>
+  </div>
+
+  <div class="comparison">
+    <div class="comparison-col">
+      <h2 class="before">❌ Problemas Atuais</h2>
+
+      <div class="issue">
+        <strong>1. Suite genérica "iOS"</strong>
+        O nome da suite não indica qual squad é responsável. O usuário precisa renomear manualmente.
+      </div>
+
+      <div class="issue">
+        <strong>2. Sem indicação de conformidade</strong>
+        Não há como saber se o squad já cadastrou testes suficientes. A suite mostra "1 func. · 1 testes" sem contexto de PRs.
+      </div>
+
+      <div class="issue">
+        <strong>3. Campo "Nome da Funcionalidade" ocupa muita área</strong>
+        O label "NOME DA FUNCIONALIDADE" + input grande desperdiça espaço vertical. O nome pode ser inline no header.
+      </div>
+
+      <div class="issue">
+        <strong>4. Cenários Gherkin expostos por padrão</strong>
+        O textarea de Gherkin ocupa 50% do espaço da feature. A maioria dos testes integrados não usa Gherkin — são testes manuais.
+      </div>
+
+      <div class="issue">
+        <strong>5. Sem contexto de PRs aprovados</strong>
+        O QA não vê quantos PRs cada squad subiu. Precisa sair da sprint e ir para Gestão de PRs para verificar.
+      </div>
+
+      <div class="issue">
+        <strong>6. Suites criadas manualmente</strong>
+        O usuário precisa criar suites, renomear para o nome do squad, e depois associar features. 3+ cliques antes de começar a cadastrar testes.
+      </div>
+
+      <div class="issue">
+        <strong>7. Select de squad na feature</strong>
+        Para sprints integradas, ter um select de squad em cada feature é redundante quando a suite já representa o squad.
+      </div>
+    </div>
+
+    <div class="comparison-col">
+      <h2 class="after">✅ Melhorias Propostas</h2>
+
+      <div class="improvement">
+        <strong>1. Suites = Squads (auto-criadas)</strong>
+        Ao abrir a sprint integrada, suites são criadas automaticamente com o nome dos squads que têm PRs aprovados. Zero configuração.
+      </div>
+
+      <div class="improvement">
+        <strong>2. Badge de conformidade por suite</strong>
+        Cada suite/squad mostra "✅ Conforme" ou "⏳ Pendente" no header. Visível sem expandir.
+      </div>
+
+      <div class="improvement">
+        <strong>3. Feature name inline no header</strong>
+        O nome da funcionalidade é um input inline no header da feature, sem label separado. Economiza ~40px de altura.
+      </div>
+
+      <div class="improvement">
+        <strong>4. Gherkin colapsado por padrão</strong>
+        O textarea de Gherkin fica oculto e aparece ao clicar em "Expandir Gherkin". Para testes manuais, economiza espaço.
+      </div>
+
+      <div class="improvement">
+        <strong>5. Painel "Testes Integrados por Squad"</strong>
+        Acima das suites, um painel mostra PRs aprovados × testes cadastrados por squad, com barra de progresso e badges.
+      </div>
+
+      <div class="improvement">
+        <strong>6. Empty state orientativo</strong>
+        Squads sem testes mostram mensagem clara: "Este squad tem X PRs aprovados e precisa registrar testes integrados."
+      </div>
+
+      <div class="improvement">
+        <strong>7. squadId automático</strong>
+        Features herdam o squadId da suite automaticamente. Sem select redundante. O QA só precisa: expandir squad → criar feature → adicionar test cases.
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px; padding: 16px; background: var(--blue-light); border-radius: 10px; border: 1px solid var(--blue);">
+    <div style="font-size: 13px; font-weight: 700; color: var(--blue-text); margin-bottom: 4px;">📋 Fluxo simplificado (3 passos)</div>
+    <div style="font-size: 12px; color: var(--blue-text); line-height: 1.8;">
+      <strong>1.</strong> Criar sprint integrada vinculada à release → suites auto-criadas por squad<br>
+      <strong>2.</strong> Expandir squad → Adicionar Funcionalidade → nomear<br>
+      <strong>3.</strong> Adicionar Caso de Teste → preencher nome e complexidade → pronto
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -19,6 +19,7 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
   const [tipo, setTipo] = useState<TipoOff>('ferias')
   const [inicio, setInicio] = useState('')
   const [fim, setFim] = useState('')
+  const [observacao, setObservacao] = useState('')
   const [error, setError] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
@@ -27,10 +28,11 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
     if (!membroId) { setError('Selecione um membro.'); return }
     if (!inicio || !fim) { setError('Preencha as datas.'); return }
     if (fim < inicio) { setError('Data fim deve ser >= data inicio.'); return }
-    onAdd({ membroId, tipo, inicio, fim })
+    onAdd({ membroId, tipo, inicio, fim, observacao: observacao || undefined })
     setMembroId('')
     setInicio('')
     setFim('')
+    setObservacao('')
   }
 
   return (
@@ -63,6 +65,16 @@ export function AddOffForm({ membros, onAdd, onCancel }: AddOffFormProps) {
         <div style={{ flex: 1, minWidth: 120 }}>
           <label style={labelSm}>Fim</label>
           <input type="date" value={fim} min={inicio || undefined} onChange={(e) => setFim(e.target.value)} style={inputSm} />
+        </div>
+        <div style={{ flex: 2, minWidth: 140 }}>
+          <label style={labelSm}>Observacao</label>
+          <input
+            type="text"
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+            placeholder="Ex: viagem, consulta..."
+            style={inputSm}
+          />
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
           <button type="submit" style={{

@@ -16,7 +16,7 @@ import type { SprintType } from '../types/sprint.types'
 import { useAuthStore } from '@/modules/auth/store/authStore'
 import { SprintCard } from '../components/home/SprintCard'
 import { Modal } from '../components/home/Modal'
-import { FilterBar, type Filters } from '../components/home/FilterBar'
+import { FilterBar, DEFAULT_FILTERS, type Filters } from '../components/home/FilterBar'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,45 @@ function sprintYear(s: SprintIndexEntry): string | null {
   return null
 }
 
+// ─── Icons ───────────────────────────────────────────────────────────────────
+
+function Svg({ size = 14, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {children}
+    </svg>
+  )
+}
+function IconPlus() { return <Svg><path d="M12 5v14M5 12h14" /></Svg> }
+function IconCompare() {
+  return <Svg><path d="M9 3h6v18H9z" /><path d="M3 12h6" /><path d="M15 12h6" /></Svg>
+}
+function IconAlertCircle({ size = 18 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></Svg>
+}
+function IconRocket({ size = 26 }: { size?: number }) {
+  return <Svg size={size}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></Svg>
+}
+function IconUpload() {
+  return <Svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></Svg>
+}
+function IconTarget({ size = 13 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></Svg>
+}
+function IconRefreshCw({ size = 13 }: { size?: number }) {
+  return <Svg size={size}><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></Svg>
+}
+function IconLink({ size = 13 }: { size?: number }) {
+  return <Svg size={size}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></Svg>
+}
+function IconChevron({ open }: { open: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 
 export function HomePage() {
@@ -38,9 +77,15 @@ export function HomePage() {
   const { profile } = useAuthStore()
   const isAdmin = profile?.global_role === 'admin' || profile?.global_role === 'gerente'
   const activeSquadId = useActiveSquadStore((s) => s.activeSquadId)
+  const allActiveSquads = useActiveSquadStore((s) => s.squads)
+  const activeSquadName =
+    activeSquadId && activeSquadId !== 'all'
+      ? allActiveSquads.find((s) => s.id === activeSquadId)?.name
+      : null
+
   const [sprints, setSprints] = useState<SprintIndexEntry[]>([])
   const [mySquadIds, setMySquadIds] = useState<string[] | null>(null)
-  const [filters, setFilters] = useState<Filters>({ squad: 'all', status: 'all', year: 'all', search: '', tipo: 'all' })
+  const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS })
   const [showCreate, setShowCreate] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<SprintIndexEntry | null>(null)
   const [newTitle, setNewTitle] = useState('')
@@ -55,6 +100,7 @@ export function HomePage() {
   const [newReleaseId, setNewReleaseId] = useState('')
   const { releases: allReleases, load: loadReleases } = useReleaseStore()
   const [loading, setLoading] = useState(true)
+  const [collapseCompleted, setCollapseCompleted] = useState(false)
 
   // Trigger criado pela Topbar via DOM (manter compatibilidade)
   useEffect(() => {
@@ -92,7 +138,6 @@ export function HomePage() {
     const sprintId = 'sprint_' + uid()
     const newState = structuredClone(DEFAULT_STATE)
     newState.config.title = title
-    // Se selecionou um squad, usa o nome dele como texto; senão usa campo livre
     const selectedSquad = availableSquads.find((s) => s.id === newSquadId)
     newState.config.squad = selectedSquad ? selectedSquad.name : newSquad.trim()
     const normalized = normalizeState(newState)
@@ -117,7 +162,10 @@ export function HomePage() {
     const index = getMasterIndex().filter((s) => s.id !== deleteTarget.id)
     saveMasterIndex(index)
     localStorage.removeItem(STORAGE_KEY(deleteTarget.id))
-    deleteSprintFromSupabase(deleteTarget.id)
+    deleteSprintFromSupabase(deleteTarget.id).catch((e) => {
+      if (import.meta.env.DEV) console.warn('[Sprints] Failed to delete from server:', e)
+      showToast('Sprint removida localmente, mas não foi possível excluir do servidor', 'error')
+    })
     setDeleteTarget(null)
     reload()
   }
@@ -131,7 +179,6 @@ export function HomePage() {
     const newId = 'sprint_' + uid()
     const cloned = structuredClone(source)
     cloned.config.title = (source.config.title || 'Sprint') + ' (copia)'
-    // Reset execution data
     for (const f of cloned.features) {
       f.exec = 0
       f.execution = {}
@@ -175,6 +222,19 @@ export function HomePage() {
     index.splice(dst, 0, moved)
     saveMasterIndex(index)
     dragSrcId.current = null
+    reload()
+  }
+
+  // Keyboard reorder (A11Y alternative to drag)
+  function handleReorder(id: string, direction: -1 | 1) {
+    const index = getMasterIndex()
+    const src = index.findIndex((s) => s.id === id)
+    if (src === -1) return
+    const dst = src + direction
+    if (dst < 0 || dst >= index.length) return
+    const [moved] = index.splice(src, 1)
+    index.splice(dst, 0, moved)
+    saveMasterIndex(index)
     reload()
   }
 
@@ -228,19 +288,24 @@ export function HomePage() {
     navigate('/sprints/compare?ids=' + [...selectedIds].join(','))
   }
 
+  function handleClearAllFilters() {
+    setFilters({ ...DEFAULT_FILTERS })
+    if (activeSquadId && activeSquadId !== 'all') {
+      useActiveSquadStore.getState().setActiveSquad('all').catch(() => { /* noop */ })
+    }
+  }
+
   // Sprints visíveis: admin vê tudo; demais veem sprints dos seus squads ou sem squad
   const visibleSprints = (() => {
     let visible = isAdmin || !mySquadIds
       ? sprints
       : sprints.filter((s) => !s.squadId || mySquadIds.includes(s.squadId))
-    // Filtrar pelo squad ativo no seletor (se não for "all")
     if (activeSquadId && activeSquadId !== 'all') {
       visible = visible.filter((s) => s.squadId === activeSquadId)
     }
     return visible
   })()
 
-  // Filter options
   const squads = [...new Set(visibleSprints.map((s) => s.squad || '').filter(Boolean))].sort()
   const years = [...new Set(visibleSprints.map(sprintYear).filter(Boolean) as string[])].sort().reverse()
 
@@ -272,17 +337,27 @@ export function HomePage() {
     </div>
   )
 
+  const TIPO_OPTIONS: { value: SprintType; label: string; desc: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+    { value: 'squad', label: 'Sprint Squad', desc: 'Trabalho do time', Icon: IconTarget },
+    { value: 'regressivo', label: 'Regressivo', desc: 'Ligado a release', Icon: IconRefreshCw },
+    { value: 'integrado', label: 'Integrado', desc: 'Features novas', Icon: IconLink },
+  ]
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <style>{`
-        .hp-new-sprint-hover:not([data-disabled="true"]):hover { border-color: var(--color-blue) !important; background: var(--color-blue-light) !important; }
-        .hp-fav-hover:not([data-active="true"]):hover { background: var(--color-amber-light); border-color: var(--color-amber-mid); color: var(--color-amber-mid); }
-        .hp-btn-blue:hover { background: var(--color-blue-light); border-color: var(--color-blue); color: var(--color-blue-text); }
-        .hp-btn-red:hover { background: var(--color-red-light); border-color: var(--color-red-mid); color: var(--color-red); }
-        .hp-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
-        .hp-card-hover:hover .hp-drag-handle { opacity: 0.7 !important; }
-        .hp-card-hover:hover .hp-actions { opacity: 1 !important; }
+        .hp-btn-primary:hover { background: var(--color-blue-text) !important; }
+        .hp-btn-outline:hover { background: var(--color-bg); }
+        .hp-btn-outline-pressed {
+          background: var(--color-blue-light);
+          border-color: var(--color-blue);
+          color: var(--color-blue-text);
+        }
+        .hp-btn-outline-pressed:hover { background: var(--color-blue-light); }
+        .hp-btn-danger:hover { background: #b91c1c; }
+        .hp-section-collapse:hover { background: var(--color-bg); color: var(--color-text); }
       `}</style>
+
       {/* Trigger oculto para o botão do Topbar */}
       <button id="create-sprint-trigger" onClick={() => setShowCreate(true)} style={{ display: 'none' }} aria-hidden />
 
@@ -298,40 +373,50 @@ export function HomePage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={toggleCompareMode}
+            aria-pressed={compareMode}
+            className={compareMode ? 'hp-btn-outline-pressed' : 'hp-btn-outline'}
+            style={{
+              ...btnOutline,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              ...(compareMode
+                ? {
+                    background: 'var(--color-blue-light)',
+                    borderColor: 'var(--color-blue)',
+                    color: 'var(--color-blue-text)',
+                  }
+                : {}),
+            }}
+          >
+            <IconCompare /> Comparar Sprints
+            {compareMode && selectedIds.size > 0 && ` (${selectedIds.size})`}
+          </button>
+
           {compareMode ? (
             <>
-              <button
-                disabled
-                style={{
-                  ...btnOutline,
-                  opacity: 0.5,
-                  cursor: 'default',
-                  color: 'var(--color-text-2)',
-                }}
-              >
-                Selecione 2 ou mais sprints
-              </button>
-              {selectedIds.size >= 2 && (
-                <button data-testid="sprint-btn-compare" onClick={handleCompare} style={btnPrimary}>
+              {selectedIds.size < 2 ? (
+                <span style={{ fontSize: 12, color: 'var(--color-text-3)', fontWeight: 500 }}>
+                  Selecione 2 ou mais sprints
+                </span>
+              ) : (
+                <button data-testid="sprint-btn-compare" onClick={handleCompare} style={btnPrimary} className="hp-btn-primary">
                   Comparar ({selectedIds.size})
                 </button>
               )}
-              <button onClick={toggleCompareMode} style={btnOutline}>
+              <button onClick={toggleCompareMode} style={btnOutline} className="hp-btn-outline">
                 Cancelar
               </button>
             </>
           ) : (
-            <>
-              <button onClick={toggleCompareMode} style={btnOutline}>
-                ⚖️ Comparar Sprints
-              </button>
-              <button onClick={() => setShowCreate(true)} style={btnPrimary}>+ Nova Sprint</button>
-            </>
+            <button onClick={() => setShowCreate(true)} style={btnPrimary} className="hp-btn-primary" aria-label="Criar nova sprint">
+              <IconPlus /> Nova Sprint
+            </button>
           )}
         </div>
       </div>
 
-      {/* Filter bar */}
+      {/* Filter bar — só aparece se há sprints */}
       {sprints.length > 0 && (
         <FilterBar
           filters={filters}
@@ -344,30 +429,84 @@ export function HomePage() {
         />
       )}
 
-      {/* Empty state */}
+      {/* Empty state: zero sprints cadastradas */}
       {sprints.length === 0 && (
         <div
           style={{
             textAlign: 'center',
-            padding: '48px 20px',
-            color: 'var(--color-text-2)',
+            padding: '56px 20px',
+            background: 'var(--color-surface)',
+            border: '1px dashed var(--color-border-md)',
+            borderRadius: 14,
           }}
         >
-          <p style={{ fontWeight: 600, fontSize: 14 }}>Nenhuma sprint criada ainda</p>
-          <p style={{ fontSize: 13, marginTop: 4 }}>Clique em "Nova Sprint" para começar.</p>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 56, height: 56, margin: '0 auto 14px',
+              borderRadius: 14,
+              background: 'var(--color-blue-light)',
+              color: 'var(--color-blue)',
+              display: 'grid', placeItems: 'center',
+            }}
+          >
+            <IconRocket />
+          </div>
+          <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
+            Comece criando sua primeira sprint
+          </h3>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+            Acompanhe cobertura de testes, bugs, blockers e alinhamentos em um só lugar.
+          </p>
+          <div style={{ display: 'inline-flex', gap: 8 }}>
+            <button onClick={() => setShowCreate(true)} style={btnPrimary} className="hp-btn-primary">
+              <IconPlus /> Nova Sprint
+            </button>
+            <button onClick={() => importInputRef.current?.click()} style={btnOutline} className="hp-btn-outline">
+              <IconUpload /> Importar JSON
+            </button>
+          </div>
         </div>
       )}
 
+      {/* Smart empty state: há sprints mas filtros escondem tudo */}
       {sprints.length > 0 && filtered.length === 0 && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
-            textAlign: 'center',
-            padding: '48px 20px',
-            color: 'var(--color-text-2)',
+            background: 'var(--color-amber-light)',
+            border: '1px solid var(--color-amber)',
+            borderRadius: 10,
+            padding: '16px 20px',
+            display: 'flex', alignItems: 'center', gap: 14,
+            marginBottom: 18,
           }}
         >
-          <p style={{ fontWeight: 600, fontSize: 14 }}>Nenhuma sprint encontrada</p>
-          <p style={{ fontSize: 13, marginTop: 4 }}>Nenhuma sprint corresponde aos filtros.</p>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: 'var(--color-amber-mid)',
+              color: '#fff',
+              display: 'grid', placeItems: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <IconAlertCircle />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginBottom: 2 }}>
+              Você tem {sprints.length} sprint{sprints.length !== 1 ? 's' : ''}, mas nenhuma corresponde aos filtros
+              {activeSquadName ? ` no squad ${activeSquadName}` : ''}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-2)' }}>
+              Limpe os filtros ou mude o squad ativo para ver mais sprints.
+            </div>
+          </div>
+          <button onClick={handleClearAllFilters} style={btnOutline} className="hp-btn-outline">
+            Ver todas
+          </button>
         </div>
       )}
 
@@ -375,38 +514,9 @@ export function HomePage() {
       {filteredActive.length > 0 && (
         <>
           {filteredCompleted.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Em Andamento
-              </span>
-            </div>
+            <SectionHeader title="Em andamento" count={filteredActive.length} />
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 0 }}>
-            {/* Nova sprint — compact */}
-            <div
-              onClick={() => { if (!compareMode) setShowCreate(true) }}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!compareMode) setShowCreate(true) } }}
-              role="button"
-              tabIndex={0}
-              className="hp-new-sprint-hover"
-              data-disabled={compareMode ? 'true' : undefined}
-              style={{
-                background: 'var(--color-surface)',
-                border: '1.5px dashed var(--color-border-md)',
-                borderRadius: 10,
-                padding: '10px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                cursor: compareMode ? 'default' : 'pointer',
-                opacity: compareMode ? 0.4 : 1,
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-            >
-              <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
-            </div>
-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 18 : 0 }}>
             {filteredActive.map((sprint) => (
               <SprintCard
                 key={sprint.id}
@@ -419,104 +529,43 @@ export function HomePage() {
                 onToggleFavorite={handleToggleFavorite}
                 onDuplicate={(e) => { e.stopPropagation(); handleDuplicate(sprint) }}
                 onDelete={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
+                onReorder={handleReorder}
               />
             ))}
           </div>
         </>
-      )}
-
-      {/* Nova sprint card quando não há sprints ativas */}
-      {filteredActive.length === 0 && sprints.length > 0 && filtered.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: filteredCompleted.length > 0 ? 28 : 16 }}>
-          <div
-            onClick={() => { if (!compareMode) setShowCreate(true) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!compareMode) setShowCreate(true) } }}
-            role="button"
-            tabIndex={0}
-            className="hp-new-sprint-hover"
-            data-disabled={compareMode ? 'true' : undefined}
-            style={{
-              background: 'var(--color-surface)',
-              border: '1.5px dashed var(--color-border-md)',
-              borderRadius: 10,
-              padding: '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: compareMode ? 'default' : 'pointer',
-              opacity: compareMode ? 0.4 : 1,
-              transition: 'border-color 0.15s, background 0.15s',
-            }}
-          >
-            <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
-          </div>
-        </div>
       )}
 
       {/* Seção: Concluídas */}
       {filteredCompleted.length > 0 && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginBottom: 12,
-            }}
-          >
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Concluídas
-            </span>
-            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-3)' }}>
-              {filteredCompleted.length} sprint{filteredCompleted.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {filteredCompleted.map((sprint) => (
-              <SprintCard
-                key={sprint.id}
-                sprint={sprint}
-                compareMode={compareMode}
-                isSelected={selectedIds.has(sprint.id)}
-                onClick={() => handleCardClick(sprint)}
-                onDragStart={onDragStart}
-                onDrop={onDrop}
-                onToggleFavorite={handleToggleFavorite}
-                onDuplicate={(e) => { e.stopPropagation(); handleDuplicate(sprint) }}
-                onDelete={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
-              />
-            ))}
-          </div>
+          <SectionHeader
+            title="Concluídas"
+            count={filteredCompleted.length}
+            collapsible
+            collapsed={collapseCompleted}
+            onToggleCollapse={() => setCollapseCompleted((v) => !v)}
+          />
+          {!collapseCompleted && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {filteredCompleted.map((sprint) => (
+                <SprintCard
+                  key={sprint.id}
+                  sprint={sprint}
+                  compareMode={compareMode}
+                  isSelected={selectedIds.has(sprint.id)}
+                  onClick={() => handleCardClick(sprint)}
+                  onDragStart={onDragStart}
+                  onDrop={onDrop}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDuplicate={(e) => { e.stopPropagation(); handleDuplicate(sprint) }}
+                  onDelete={(e) => { e.stopPropagation(); setDeleteTarget(sprint) }}
+                  onReorder={handleReorder}
+                />
+              ))}
+            </div>
+          )}
         </>
-      )}
-
-      {/* When no filters active and sprints.length === 0, show new sprint card */}
-      {sprints.length === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div
-            onClick={() => setShowCreate(true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowCreate(true) } }}
-            role="button"
-            tabIndex={0}
-            className="hp-new-sprint-hover"
-            style={{
-              background: 'var(--color-surface)',
-              border: '1.5px dashed var(--color-border-md)',
-              borderRadius: 10,
-              padding: '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: 'pointer',
-              transition: 'border-color 0.15s, background 0.15s',
-            }}
-          >
-            <span style={{ fontSize: 16, color: 'var(--color-text-3)', fontWeight: 700, lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-2)' }}>Nova Sprint</span>
-          </div>
-        </div>
       )}
 
       {/* Modal: Nova Sprint */}
@@ -524,8 +573,9 @@ export function HomePage() {
         <Modal onClose={() => setShowCreate(false)} title="Nova Sprint">
           <form onSubmit={handleCreate}>
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Título da Sprint *</label>
+              <label style={labelStyle} htmlFor="new-sprint-title">Título da Sprint *</label>
               <input
+                id="new-sprint-title"
                 ref={titleInputRef}
                 type="text"
                 value={newTitle}
@@ -535,45 +585,66 @@ export function HomePage() {
                 style={inputStyle}
               />
             </div>
+
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Tipo</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {([
-                  { value: 'squad' as SprintType, label: 'Sprint do Squad', icon: '🎯' },
-                  { value: 'regressivo' as SprintType, label: 'Regressivo', icon: '🔄' },
-                  { value: 'integrado' as SprintType, label: 'Integrado', icon: '🔗' },
-                ]).map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => { setNewSprintType(opt.value); if (opt.value === 'squad') setNewReleaseId('') }}
-                    style={{
-                      flex: 1, padding: '8px 0', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
-                      border: newSprintType === opt.value ? '2px solid var(--color-blue)' : '1px solid var(--color-border-md)',
-                      background: newSprintType === opt.value ? 'var(--color-blue-light)' : 'transparent',
-                      color: newSprintType === opt.value ? 'var(--color-blue-text)' : 'var(--color-text-2)',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {opt.icon} {opt.label}
-                  </button>
-                ))}
+              <label style={labelStyle} id="new-sprint-tipo-label">Tipo</label>
+              <div role="radiogroup" aria-label="Tipo de sprint" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                {TIPO_OPTIONS.map((opt) => {
+                  const selected = newSprintType === opt.value
+                  const Ico = opt.Icon
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => { setNewSprintType(opt.value); if (opt.value === 'squad') setNewReleaseId('') }}
+                      className="hp-radio-card"
+                      data-selected={selected ? 'true' : undefined}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+                        padding: '10px 12px',
+                        border: `1px solid ${selected ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
+                        background: selected ? 'var(--color-blue-light)' : 'var(--color-surface)',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background 0.12s, border-color 0.12s',
+                        fontFamily: 'var(--font-family-sans)',
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 24, height: 24, borderRadius: 6,
+                          display: 'grid', placeItems: 'center',
+                          background: selected ? 'var(--color-blue)' : 'var(--color-surface-2)',
+                          color: selected ? '#fff' : 'var(--color-text-2)',
+                          transition: 'background 0.12s, color 0.12s',
+                        }}
+                      >
+                        <Ico size={13} />
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>{opt.label}</span>
+                      <span style={{ fontSize: 10, color: 'var(--color-text-3)', lineHeight: 1.35 }}>{opt.desc}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Release vinculada — só para regressivo/integrado */}
             {(newSprintType === 'regressivo' || newSprintType === 'integrado') && (
               <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Release vinculada</label>
+                <label style={labelStyle} htmlFor="new-sprint-release">Release vinculada</label>
                 <select
+                  id="new-sprint-release"
                   value={newReleaseId}
                   onChange={(e) => setNewReleaseId(e.target.value)}
                   style={selectStyle}
                 >
                   <option value="">— Nenhuma release —</option>
                   {allReleases
-                    .filter((r) => r.status !== 'concluida' && r.status !== 'em_producao')
+                    .filter((r) => !['concluida', 'em_producao', 'cancelada', 'rollback', 'uniu_escopo'].includes(r.status))
                     .map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.version} — {r.title}
@@ -589,9 +660,10 @@ export function HomePage() {
             )}
 
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Squad</label>
+              <label style={labelStyle} htmlFor="new-sprint-squad">Squad</label>
               {availableSquads.length > 0 ? (
                 <select
+                  id="new-sprint-squad"
                   value={newSquadId}
                   onChange={(e) => setNewSquadId(e.target.value)}
                   style={selectStyle}
@@ -603,6 +675,7 @@ export function HomePage() {
                 </select>
               ) : (
                 <input
+                  id="new-sprint-squad"
                   type="text"
                   value={newSquad}
                   onChange={(e) => setNewSquad(e.target.value)}
@@ -616,12 +689,13 @@ export function HomePage() {
                 </p>
               )}
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button type="button" onClick={() => setShowCreate(false)} style={btnOutline}>
+              <button type="button" onClick={() => setShowCreate(false)} style={btnOutline} className="hp-btn-outline">
                 Cancelar
               </button>
-              <button type="submit" style={btnPrimary}>
-                Criar
+              <button type="submit" style={btnPrimary} className="hp-btn-primary">
+                <IconPlus /> Criar Sprint
               </button>
             </div>
           </form>
@@ -637,10 +711,10 @@ export function HomePage() {
             Todos os dados serão perdidos permanentemente.
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button onClick={() => setDeleteTarget(null)} style={btnOutline}>
+            <button onClick={() => setDeleteTarget(null)} style={btnOutline} className="hp-btn-outline">
               Cancelar
             </button>
-            <button onClick={handleDelete} style={btnDanger}>
+            <button onClick={handleDelete} style={btnDanger} className="hp-btn-danger">
               Excluir
             </button>
           </div>
@@ -650,33 +724,92 @@ export function HomePage() {
   )
 }
 
+// ─── SectionHeader ───────────────────────────────────────────────────────────
+
+function SectionHeader({
+  title,
+  count,
+  collapsible = false,
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  title: string
+  count: number
+  collapsible?: boolean
+  collapsed?: boolean
+  onToggleCollapse?: () => void
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '28px 0 14px' }}>
+      <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>{title}</h2>
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)',
+          background: 'var(--color-bg)',
+          padding: '2px 8px', borderRadius: 999,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {count}
+      </span>
+      <span aria-hidden="true" style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+      {collapsible && (
+        <button
+          onClick={onToggleCollapse}
+          aria-expanded={!collapsed}
+          className="hp-section-collapse"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontSize: 12, color: 'var(--color-text-2)', fontWeight: 500,
+            background: 'transparent', border: 'none',
+            cursor: 'pointer',
+            padding: '4px 8px', borderRadius: 6,
+            fontFamily: 'var(--font-family-sans)',
+            transition: 'background 0.12s, color 0.12s',
+          }}
+        >
+          <IconChevron open={!collapsed} />
+          {collapsed ? 'Expandir' : 'Recolher'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const btnPrimary: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
   padding: '7px 16px',
   background: 'var(--color-blue)',
   color: '#fff',
-  border: 'none',
+  border: '1px solid var(--color-blue)',
   borderRadius: 8,
   fontWeight: 600,
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
   flexShrink: 0,
-  transition: 'all 0.15s',
+  transition: 'background 0.12s',
 }
 
 const btnOutline: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
   padding: '7px 16px',
-  background: 'transparent',
+  background: 'var(--color-surface)',
   color: 'var(--color-text)',
   border: '1px solid var(--color-border-md)',
   borderRadius: 8,
-  fontWeight: 500,
+  fontWeight: 600,
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
-  transition: 'all 0.15s',
+  transition: 'background 0.12s, border-color 0.12s, color 0.12s',
 }
 
 const btnDanger: React.CSSProperties = {
@@ -689,7 +822,7 @@ const btnDanger: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
-  transition: 'all 0.15s',
+  transition: 'background 0.12s',
 }
 
 const labelStyle: React.CSSProperties = {

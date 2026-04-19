@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test'
 
 const AUTH_EMAIL = 'admin@tostatos.com'
-const AUTH_PASSWORD = 'Admin@123'
+const AUTH_PASSWORD = 'Admin@123!Ts'
 
 /**
  * Faz login via formulário da AuthPage.

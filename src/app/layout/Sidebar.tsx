@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useFeatureToggleStore } from '@/lib/featureToggleStore'
 
 // ─── SVG Icons (20×20, stroke-based, currentColor) ──────────────────────────
 
@@ -43,6 +44,17 @@ const IconReleases = () => (
     <path d="M7 17l3-4.5 3 4.5" />
     <path d="M10 2.5c-2 2-3.5 5-3.5 8.5h7c0-3.5-1.5-6.5-3.5-8.5z" />
     <circle cx="10" cy="8" r="1.2" />
+  </svg>
+)
+
+const IconPRs = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {/* Git pull request icon */}
+    <circle cx="6" cy="5.5" r="2" />
+    <circle cx="14" cy="14.5" r="2" />
+    <path d="M6 7.5v9" />
+    <path d="M14 12.5V8c0-1.5-1-2.5-2.5-2.5H9" />
+    <path d="M11 3.5L9 5.5l2 2" />
   </svg>
 )
 
@@ -137,10 +149,12 @@ export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
+  const { isEnabled } = useFeatureToggleStore()
   const isSprints = location.pathname.startsWith('/sprints')
   const isSquads  = location.pathname.startsWith('/squads')
   const isStatusReport = location.pathname.startsWith('/status-report')
   const isReleases = location.pathname.startsWith('/releases')
+  const isPRs = location.pathname.startsWith('/prs')
 
   return (
     <aside
@@ -199,9 +213,10 @@ export function Sidebar() {
 
       {/* Nav items */}
       <NavItem icon={<IconHome />} label="Início" active={location.pathname === '/'} expanded={expanded} onClick={() => navigate('/')} />
-      <NavItem icon={<IconStatusReport />} label="Status Report" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />
-      <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />
-      <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />
+      {isEnabled('status_report') && <NavItem icon={<IconStatusReport />} label="Status Report" active={isStatusReport} expanded={expanded} onClick={() => navigate('/status-report')} />}
+      {isEnabled('sprints') && <NavItem icon={<IconSprints />} label="Cobertura QA" active={isSprints} expanded={expanded} onClick={() => navigate('/sprints')} />}
+      {isEnabled('releases') && <NavItem icon={<IconReleases />} label="Releases" active={isReleases} expanded={expanded} onClick={() => navigate('/releases')} />}
+      {isEnabled('prs') && <NavItem icon={<IconPRs />} label="Gestão de PRs" active={isPRs} expanded={expanded} onClick={() => navigate('/prs')} />}
 
       <div style={{ flex: 1 }} />
 
@@ -214,7 +229,7 @@ export function Sidebar() {
 
       {/* Nav items — administrativo */}
       <NavItem icon={<IconSquads />} label="Cadastros"  active={isSquads}  expanded={expanded} onClick={() => navigate('/squads')} />
-      <NavItem icon={<IconDocs />} label="Documentação" active={location.pathname === '/docs'} expanded={expanded} onClick={() => navigate('/docs')} />
+      {isEnabled('docs') && <NavItem icon={<IconDocs />} label="Documentação" active={location.pathname === '/docs'} expanded={expanded} onClick={() => navigate('/docs')} />}
 
       {/* Toggle button */}
       <div style={{

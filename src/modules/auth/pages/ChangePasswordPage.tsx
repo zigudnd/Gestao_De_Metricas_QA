@@ -21,7 +21,7 @@ export function ChangePasswordPage() {
     if (!/[0-9]/.test(password)) { setError('A senha deve conter pelo menos um número.'); return }
     if (!/[^a-zA-Z0-9]/.test(password)) { setError('A senha deve conter pelo menos um caractere especial.'); return }
     if (password !== confirm) { setError('As senhas não coincidem.'); return }
-    if (password === 'Mudar@123') { setError('A nova senha não pode ser igual à senha temporária.'); return }
+    if (password === 'Mudar@123!Ts') { setError('A nova senha não pode ser igual à senha temporária.'); return }
 
     setLoading(true)
     try {
