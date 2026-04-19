@@ -24,8 +24,15 @@ const prIdParam = z.object({
   prId: z.string().uuid('prId deve ser UUID válido'),
 });
 
+// SEC: R2-H-01 — Only allow http/https protocols to prevent javascript: XSS
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+const safeUrl = z.string().url('pr_link deve ser uma URL válida').refine(
+  (u) => { try { return ALLOWED_PROTOCOLS.has(new URL(u).protocol); } catch { return false; } },
+  { message: 'pr_link deve usar http:// ou https://' },
+);
+
 const createPrBody = z.object({
-  pr_link: z.string().url('pr_link deve ser uma URL válida'),
+  pr_link: safeUrl,
   repository: z.string().min(1, 'repository é obrigatório'),
   description: z.string().optional(),
   change_type: z.enum(CHANGE_TYPES, { errorMap: () => ({ message: `change_type deve ser: ${CHANGE_TYPES.join(', ')}` }) }),
@@ -33,7 +40,7 @@ const createPrBody = z.object({
 });
 
 const updatePrBody = z.object({
-  pr_link: z.string().url('pr_link deve ser uma URL válida').optional(),
+  pr_link: safeUrl.optional(),
   repository: z.string().min(1, 'repository é obrigatório').optional(),
   description: z.string().optional(),
   change_type: z.enum(CHANGE_TYPES, { errorMap: () => ({ message: `change_type deve ser: ${CHANGE_TYPES.join(', ')}` }) }).optional(),
@@ -602,13 +609,18 @@ router.patch(
       // Verify PR exists
       const { data: existingPr, error: fetchErr } = await supabase
         .from('release_prs')
-        .select('id')
+        .select('id, user_id')
         .eq('id', prId)
         .eq('release_id', releaseId)
         .single();
 
       if (fetchErr || !existingPr) {
         return error(res, 404, 'NOT_FOUND', `PR ${prId} não encontrada na release ${releaseId}`);
+      }
+
+      // SEC: M-05 — Prevent self-review
+      if (existingPr.user_id === req.caller.id) {
+        return error(res, 403, 'SELF_REVIEW', 'Não é permitido revisar o próprio PR');
       }
 
       const reviewerId = req.caller.id;

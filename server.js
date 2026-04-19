@@ -63,7 +63,19 @@ app.locals.supabase = supabaseAdmin;
 // ── Global Middleware ───────────────────────────────────────────────────────
 
 app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : false);
-app.use(helmet());
+// SEC: M-04 — Explicit CSP directives (not relying on helmet defaults)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", process.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321'].filter(Boolean),
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
+    },
+  },
+}));
 
 const allowedOrigins = (process.env.CORS_ORIGINS || `http://localhost:5173,http://localhost:${PORT}`)
   .split(',')
@@ -97,8 +109,10 @@ const swaggerSpec = swaggerJsdoc({
   apis: ['./routes/*.routes.js', './routes/v1/*.routes.js', './server.js'],
 });
 
+// SEC: M-01 — Swagger protected by admin auth even in dev
 if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  const { requireAdminAuth } = require('./middleware/requireAuth');
+  app.use('/api/docs', requireAdminAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'ToStatos API Docs',
   }));
@@ -182,9 +196,13 @@ app.get('*', (req, res) => {
 
 // ── Global Error Handler ────────────────────────────────────────────────────
 
-app.use((err, req, res, next) => {
-  console.error('[unhandled]', err);
-  res.status(500).json({ error: 'Erro interno do servidor.' });
+// SEC: R2-M-04 — Proper status codes instead of masking everything as 500
+app.use((err, req, res, _next) => {
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Payload muito grande (max 2MB).', requestId: req.requestId });
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON inválido.', requestId: req.requestId });
+  if (err.name === 'UnauthorizedError') return res.status(401).json({ error: 'Não autorizado.', requestId: req.requestId });
+  console.error(`[unhandled] ${req.requestId || ''}`, err);
+  res.status(500).json({ error: 'Erro interno do servidor.', requestId: req.requestId });
 });
 
 // ── Start ───────────────────────────────────────────────────────────────────

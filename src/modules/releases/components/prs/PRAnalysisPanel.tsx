@@ -148,7 +148,7 @@ export function PRAnalysisPanel({
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <a
-              href={pr.pr_link}
+              href={/^https?:\/\//.test(pr.pr_link) ? pr.pr_link : '#'}
               target="_blank"
               rel="noopener noreferrer"
               title={pr.pr_link}

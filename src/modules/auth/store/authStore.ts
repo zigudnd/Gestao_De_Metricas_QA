@@ -49,6 +49,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut()
     set({ user: null, session: null, profile: null })
+    // SEC: L-03 — Clear app state from localStorage on logout
+    const keysToRemove = Object.keys(localStorage).filter((k) =>
+      k.startsWith('qaDashboard') || k.startsWith('statusReport') || k.startsWith('release_') || k === 'appFeatureToggles'
+    )
+    keysToRemove.forEach((k) => localStorage.removeItem(k))
   },
 }))
 

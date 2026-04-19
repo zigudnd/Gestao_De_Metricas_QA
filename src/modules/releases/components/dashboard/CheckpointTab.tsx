@@ -5,8 +5,58 @@ import { supabase } from '@/lib/supabase'
 import { getMasterIndex } from '@/modules/sprints/services/persistence'
 import { loadFromStorage } from '@/modules/sprints/services/persistence'
 import type { Release, ReleaseStatus } from '../../types/release.types'
-import { PLATFORM_ICON, PLATFORM_COLOR, type Platform } from '../../constants/platforms'
+import { type Platform } from '../../constants/platforms'
 import { STATUS_LABELS } from '../../constants/status'
+
+// ─── Icons (SVG inline, Lucide paths) ────────────────────────────────────────
+
+function Svg({ size = 14, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >{children}</svg>
+  )
+}
+function IconApple({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" /><path d="M10 2c1 .5 2 2 2 5" /></Svg>
+}
+function IconAndroid({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></Svg>
+}
+function IconGlobe({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></Svg>
+}
+function IconLink2({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3" /><line x1="8" y1="12" x2="16" y2="12" /></Svg>
+}
+function IconServer({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></Svg>
+}
+function IconCloud({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" /></Svg>
+}
+function IconTarget({ size = 26 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></Svg>
+}
+function IconLink3({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3" /><line x1="8" y1="12" x2="16" y2="12" /></Svg>
+}
+function IconAlertTriangle({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></Svg>
+}
+function IconCheck({ size = 12 }: { size?: number }) {
+  return <Svg size={size}><polyline points="20 6 9 17 4 12" /></Svg>
+}
+function IconChevronDown({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><polyline points="6 9 12 15 18 9" /></Svg>
+}
+
+const PLATFORM_ICON_COMP: Record<Platform, React.ComponentType<{ size?: number }>> = {
+  iOS: IconApple, Android: IconAndroid, Front: IconGlobe,
+  BFF: IconLink2, Back: IconServer, Infra: IconCloud,
+}
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -21,18 +71,23 @@ interface CheckpointTabProps {
 
 type FilterValue = 'todos' | 'Publicado' | 'Em Corte' | 'Em Regressivo' | 'Previsto' | Platform
 
-const FILTERS: { value: FilterValue; label: string }[] = [
+type StatusFilterValue = 'todos' | 'Publicado' | 'Em Corte' | 'Em Regressivo' | 'Previsto'
+
+const STATUS_FILTERS: { value: StatusFilterValue; label: string }[] = [
   { value: 'todos', label: 'Todos' },
-  { value: 'Publicado', label: '✔ Publicado' },
-  { value: 'Em Corte', label: '✂ Em Corte' },
-  { value: 'Em Regressivo', label: '◉ Em Regressivo' },
-  { value: 'Previsto', label: '○ Previsto' },
-  { value: 'iOS', label: '🍎 iOS' },
-  { value: 'Android', label: '🤖 Android' },
-  { value: 'Front', label: '🌐 Front' },
-  { value: 'BFF', label: '🔗 BFF' },
-  { value: 'Back', label: '🖥 Back' },
-  { value: 'Infra', label: '☁️ Infra' },
+  { value: 'Publicado', label: 'Publicado' },
+  { value: 'Em Corte', label: 'Em Corte' },
+  { value: 'Em Regressivo', label: 'Em Regressivo' },
+  { value: 'Previsto', label: 'Previsto' },
+]
+
+const PLATFORM_FILTERS: { value: Platform; label: string }[] = [
+  { value: 'iOS', label: 'iOS' },
+  { value: 'Android', label: 'Android' },
+  { value: 'Front', label: 'Front' },
+  { value: 'BFF', label: 'BFF' },
+  { value: 'Back', label: 'Back' },
+  { value: 'Infra', label: 'Infra' },
 ]
 
 const PHASE_LABELS = ['CORTE', 'GERACAO', 'HOMOLOG.', 'BETA', 'PRODUCAO'] as const
@@ -82,34 +137,34 @@ function statusBadgeStyle(status: ReleaseStatus): React.CSSProperties {
     display: 'inline-block',
     fontSize: 10,
     fontWeight: 700,
-    padding: '3px 10px',
-    borderRadius: 20,
+    padding: '2px 8px',
+    borderRadius: 999,
     whiteSpace: 'nowrap',
     letterSpacing: 0.3,
   }
   switch (label) {
     case 'Publicado':
-      return { ...base, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '1px solid var(--color-green-mid)' }
+      return { ...base, background: 'var(--color-green-light)', color: 'var(--color-green)' }
     case 'Em Corte':
-      return { ...base, background: '#ede9fe', color: '#8b5cf6', border: '1px solid #8b5cf640' }
+      return { ...base, background: 'color-mix(in srgb, var(--color-blue) 12%, transparent)', color: 'var(--color-blue-text)' }
     case 'Aprovada':
-      return { ...base, background: 'var(--color-blue-light)', color: 'var(--color-blue)', border: '1px solid var(--color-blue)' }
+      return { ...base, background: 'var(--color-blue-light)', color: 'var(--color-blue-text)' }
     case 'Em Regressivo':
-      return { ...base, background: 'var(--color-amber-light)', color: 'var(--color-amber)', border: '1px solid var(--color-amber-mid)' }
+      return { ...base, background: 'var(--color-amber-light)', color: 'var(--color-amber-mid)' }
     case 'Previsto':
-      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)' }
     case 'Uniu Escopo':
-      return { ...base, background: '#8b5cf618', color: '#8b5cf6', border: '1px solid #8b5cf640' }
+      return { ...base, background: 'color-mix(in srgb, var(--color-blue) 8%, transparent)', color: 'var(--color-blue-text)' }
     case 'Em QA':
-      return { ...base, background: '#ecfeff', color: '#06b6d4', border: '1px solid #06b6d440' }
+      return { ...base, background: 'color-mix(in srgb, var(--color-green) 12%, transparent)', color: 'var(--color-green)' }
     case 'Aguardando Aprovação':
-      return { ...base, background: 'var(--color-yellow-light)', color: 'var(--color-yellow)', border: '1px solid var(--color-yellow)' }
+      return { ...base, background: 'var(--color-amber-light)', color: 'var(--color-amber-mid)' }
     case 'Rollback':
-      return { ...base, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '1px solid var(--color-red)' }
+      return { ...base, background: 'var(--color-red-light)', color: 'var(--color-red)' }
     case 'Cancelada':
-      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-3)', border: '1px solid var(--color-border-md)', textDecoration: 'line-through' }
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-3)', textDecoration: 'line-through' }
     default:
-      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '1px solid var(--color-border-md)' }
+      return { ...base, background: 'var(--color-surface-2)', color: 'var(--color-text-2)' }
   }
 }
 
@@ -399,74 +454,176 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
         }
         .cp-card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
         .cp-release-hover:hover { background: var(--color-blue-light) !important; }
+        .cp-link-btn:hover { background: var(--color-bg) !important; }
+        .cp-link-btn-primary:hover { background: var(--color-blue-text) !important; }
       `}</style>
 
-      {/* Filter bar + Vincular */}
+      {/* Filter bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 20, gap: 10,
+        marginBottom: 16, gap: 12, flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{
-            fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)',
-            marginRight: 4,
-          }}>
-            Filtrar:
-          </span>
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setActiveFilter(f.value)}
-              aria-pressed={activeFilter === f.value}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)' }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-              style={{
-                padding: '5px 14px',
-                borderRadius: 20,
-                border: activeFilter === f.value
-                  ? '1px solid var(--color-blue)'
-                  : '1px solid var(--color-border-md)',
-                background: activeFilter === f.value ? 'var(--color-blue)' : 'var(--color-surface)',
-                color: activeFilter === f.value ? '#fff' : 'var(--color-text-2)',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'var(--font-family-sans)',
-                transition: 'all 0.15s',
-                whiteSpace: 'nowrap',
-                outline: 'none',
-                minHeight: 36,
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flex: 1 }}>
+          {/* Status pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginRight: 2 }}>
+              Status:
+            </span>
+            {STATUS_FILTERS.map((f) => {
+              const active = activeFilter === f.value
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => setActiveFilter(f.value)}
+                  aria-pressed={active}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: 999,
+                    border: `1px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
+                    background: active ? 'var(--color-blue-light)' : 'var(--color-surface)',
+                    color: active ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                    fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                    transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {f.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Divider vertical */}
+          <span aria-hidden="true" style={{ width: 1, height: 20, background: 'var(--color-border-md)' }} />
+
+          {/* Platform chips */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', marginRight: 2 }}>
+              Plataforma:
+            </span>
+            {PLATFORM_FILTERS.map((f) => {
+              const active = activeFilter === f.value
+              const PIcon = PLATFORM_ICON_COMP[f.value]
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => setActiveFilter(f.value)}
+                  aria-pressed={active}
+                  aria-label={`Filtrar por ${f.label}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    border: `1px solid ${active ? 'var(--color-blue)' : 'var(--color-border-md)'}`,
+                    background: active ? 'var(--color-blue-light)' : 'var(--color-surface)',
+                    color: active ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                    fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                    transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <PIcon size={12} /> {f.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Vincular release ao checkpoint */}
         {availableToAdd.length > 0 && (
           <button
             onClick={() => { setShowLinkModal(true); setLinkSearch('') }}
+            aria-label="Vincular release ao checkpoint"
+            className="cp-link-btn"
             style={{
-              padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              border: 'none', background: 'var(--color-blue)',
-              color: '#fff', fontFamily: 'var(--font-family-sans)',
-              cursor: 'pointer', minHeight: 36, whiteSpace: 'nowrap',
-              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 8,
+              border: '1px solid var(--color-border-md)',
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              fontSize: 13, fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'background 0.12s',
             }}
           >
-            🔗 Vincular Release
+            <IconLink3 /> Vincular Release
           </button>
         )}
       </div>
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: '48px 20px',
-          color: 'var(--color-text-3)', fontSize: 13,
-        }}>
-          Nenhuma release encontrada para este filtro.
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '44px 20px',
+            background: 'var(--color-surface)',
+            border: '1px dashed var(--color-border-md)',
+            borderRadius: 14,
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              width: 56, height: 56, margin: '0 auto 14px',
+              borderRadius: 14,
+              background: 'var(--color-blue-light)',
+              color: 'var(--color-blue)',
+              display: 'grid', placeItems: 'center',
+            }}
+          >
+            <IconTarget />
+          </div>
+          <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
+            {activeFilter === 'todos' ? 'Nenhuma release no checkpoint' : 'Nenhuma release neste filtro'}
+          </h3>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+            {activeFilter === 'todos'
+              ? 'Vincule releases do Cronograma para acompanhá-las aqui.'
+              : 'Ajuste os filtros ou vincule novas releases ao checkpoint.'}
+          </p>
+          <div style={{ display: 'inline-flex', gap: 8 }}>
+            {activeFilter !== 'todos' && (
+              <button
+                onClick={() => setActiveFilter('todos')}
+                className="cp-link-btn"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 8,
+                  border: '1px solid var(--color-border-md)',
+                  background: 'var(--color-surface)', color: 'var(--color-text)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'background 0.12s',
+                }}
+              >
+                Limpar filtros
+              </button>
+            )}
+            {availableToAdd.length > 0 && (
+              <button
+                onClick={() => { setShowLinkModal(true); setLinkSearch('') }}
+                className="cp-link-btn-primary"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 8,
+                  border: '1px solid var(--color-blue)',
+                  background: 'var(--color-blue)', color: '#fff',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'background 0.12s',
+                }}
+              >
+                <IconLink3 /> Vincular Release
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -476,10 +633,7 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
           const isOpen = openCards.has(group.releaseNumber)
           const allStatuses = group.releases.map((r) => r.status)
           const overall = overallStatus(allStatuses)
-          const platforms = group.releases.map((r) => {
-            const plats = getReleasePlatforms(r)
-            return plats.map((pl) => PLATFORM_ICON[pl] ?? '📦').join('')
-          })
+          const platforms = group.releases.map((r) => getReleasePlatforms(r))
           const versions = [...new Set(group.releases.map((r) => r.version))]
 
           return (
@@ -509,14 +663,21 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 }}
               >
                 {/* Platform icons badge */}
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: 'var(--color-blue-light)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, fontSize: 18, gap: 2,
-                  border: '1px solid var(--color-blue)',
-                }}>
-                  {platforms.join('')}
+                <div
+                  aria-label={`Plataformas: ${platforms.flat().join(', ')}`}
+                  style={{
+                    minWidth: 38, height: 38, padding: '0 10px', borderRadius: 20,
+                    background: 'var(--color-blue-light)',
+                    color: 'var(--color-blue-text)',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, gap: 4,
+                    border: '1px solid var(--color-blue)',
+                  }}
+                >
+                  {platforms.flat().map((p, idx) => {
+                    const PIcon = PLATFORM_ICON_COMP[p]
+                    return <PIcon key={`${p}-${idx}`} size={14} />
+                  })}
                 </div>
 
                 {/* Title block */}
@@ -567,19 +728,15 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                       <span
                         title={`Squads pendentes: ${allPending.join(', ')}`}
                         style={{
-                          display: 'inline-block',
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: '3px 10px',
-                          borderRadius: 20,
-                          whiteSpace: 'nowrap',
-                          letterSpacing: 0.3,
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 10, fontWeight: 700,
+                          padding: '3px 10px', borderRadius: 999,
+                          whiteSpace: 'nowrap', letterSpacing: 0.3,
                           background: 'var(--color-amber-light)',
-                          color: 'var(--color-amber)',
-                          border: '1px solid var(--color-amber-mid)',
+                          color: 'var(--color-amber-mid)',
                         }}
                       >
-                        {'⚠️'} {allPending.length} de {totalSquads} squads sem testes integrados
+                        <IconAlertTriangle size={11} /> {allPending.length} de {totalSquads} squads sem testes
                       </span>
                     )
                   }
@@ -587,31 +744,32 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                     <span
                       title="Todos os squads com PRs aprovados possuem testes integrados registrados"
                       style={{
-                        display: 'inline-block',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: '3px 10px',
-                        borderRadius: 20,
-                        whiteSpace: 'nowrap',
-                        letterSpacing: 0.3,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        fontSize: 10, fontWeight: 700,
+                        padding: '3px 10px', borderRadius: 999,
+                        whiteSpace: 'nowrap', letterSpacing: 0.3,
                         background: 'var(--color-green-light)',
                         color: 'var(--color-green)',
-                        border: '1px solid var(--color-green-mid)',
                       }}
                     >
-                      {'✅'} Todos os squads com testes
+                      <IconCheck size={11} /> Todos com testes
                     </span>
                   )
                 })()}
 
                 {/* Chevron */}
-                <span aria-hidden="true" style={{
-                  fontSize: 14, color: 'var(--color-text-3)',
-                  transition: 'transform 0.2s',
-                  transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  flexShrink: 0,
-                }}>
-                  ▾
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 22, height: 22,
+                    color: 'var(--color-text-3)',
+                    transition: 'transform 0.2s',
+                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconChevronDown />
                 </span>
               </div>
 
@@ -624,9 +782,8 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                 }}>
                   {group.releases.map((release) => {
                     const relPlatforms = getReleasePlatforms(release)
-                    const platIcons = relPlatforms.map((p) => PLATFORM_ICON[p] ?? '📦').join(' ')
                     const platNames = relPlatforms.join(' / ')
-                    const platColor = relPlatforms[0] ? (PLATFORM_COLOR[relPlatforms[0]] ?? 'var(--color-text-2)') : 'var(--color-text-2)'
+                    const platColor = 'var(--color-text)'
                     const phaseStates = getPhaseStates(release.status)
                     const phaseDates = getPhaseDates(release)
 
@@ -648,7 +805,12 @@ export function CheckpointTab({ releases, onReleaseClick, onDeleteRelease, onCon
                           display: 'flex', alignItems: 'center', gap: 8,
                           marginBottom: 12,
                         }}>
-                          <span style={{ fontSize: 16 }}>{platIcons}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--color-text-2)' }}>
+                            {relPlatforms.map((p, idx) => {
+                              const PIcon = PLATFORM_ICON_COMP[p]
+                              return <PIcon key={`${p}-${idx}`} size={14} />
+                            })}
+                          </span>
                           <span style={{
                             fontSize: 13, fontWeight: 700, color: platColor,
                           }}>

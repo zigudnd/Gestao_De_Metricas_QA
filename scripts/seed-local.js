@@ -24,11 +24,11 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 })
 
 const USERS = [
-  { email: 'admin@tostatos.com', display_name: 'Admin', password: 'Admin@123', global_role: 'admin' },
-  { email: 'gerente@tostatos.com', display_name: 'Gerente QA', password: 'Mudar@123', global_role: 'gerente' },
-  { email: 'qa.lead@tostatos.com', display_name: 'QA Lead', password: 'Mudar@123', global_role: 'user' },
-  { email: 'qa@tostatos.com', display_name: 'QA Analista', password: 'Mudar@123', global_role: 'user' },
-  { email: 'stakeholder@tostatos.com', display_name: 'Stakeholder', password: 'Mudar@123', global_role: 'user' },
+  { email: 'admin@tostatos.com', display_name: 'Admin', password: 'Admin@123!Ts', global_role: 'admin' },
+  { email: 'gerente@tostatos.com', display_name: 'Gerente QA', password: 'Mudar@123!Ts', global_role: 'gerente' },
+  { email: 'qa.lead@tostatos.com', display_name: 'QA Lead', password: 'Mudar@123!Ts', global_role: 'user' },
+  { email: 'qa@tostatos.com', display_name: 'QA Analista', password: 'Mudar@123!Ts', global_role: 'user' },
+  { email: 'stakeholder@tostatos.com', display_name: 'Stakeholder', password: 'Mudar@123!Ts', global_role: 'user' },
 ]
 
 async function createUser(user) {
@@ -147,7 +147,7 @@ async function main() {
     console.log(`    ${user.email} / ${user.password} (${user.global_role})`)
   }
   console.log('')
-  console.log('  ⚠  Usuarios com senha Mudar@123 serao')
+  console.log('  ⚠  Usuarios com senha Mudar@123!Ts serao')
   console.log('     obrigados a trocar no primeiro login.')
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('')

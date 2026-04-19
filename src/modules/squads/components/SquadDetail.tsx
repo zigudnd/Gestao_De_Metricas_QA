@@ -268,7 +268,7 @@ export function SquadDetail({
                   >
                     <option value="">Perfil: Sem perfil</option>
                     {profiles.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}{p.is_system ? ' ★' : ''}</option>
+                      <option key={p.id} value={p.id}>{p.name}{p.is_system ? ' (sistema)' : ''}</option>
                     ))}
                   </select>
                   <button

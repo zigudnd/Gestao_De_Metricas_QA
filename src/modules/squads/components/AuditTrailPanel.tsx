@@ -2,23 +2,53 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { AuditEntry } from '@/lib/auditService'
 
+// ─── Icons (SVG inline, Lucide paths) ────────────────────────────────────────
+
+function Svg({ size = 14, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >{children}</svg>
+  )
+}
+function IconTarget({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></Svg>
+}
+function IconFileText({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></Svg>
+}
+function IconRocket({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /></Svg>
+}
+function IconUsers({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></Svg>
+}
+function IconPackage({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21" /><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></Svg>
+}
+function IconClipboardList({ size = 26 }: { size?: number }) {
+  return <Svg size={size}><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></Svg>
+}
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 30
 
 const RESOURCE_TYPES = [
   { value: 'all', label: 'Todos' },
-  { value: 'sprint', label: '🎯 Sprint' },
-  { value: 'status_report', label: '📄 Status Report' },
-  { value: 'release', label: '🚀 Release' },
-  { value: 'squad', label: '👥 Squad' },
+  { value: 'sprint', label: 'Sprint' },
+  { value: 'status_report', label: 'Status Report' },
+  { value: 'release', label: 'Release' },
+  { value: 'squad', label: 'Squad' },
 ] as const
 
 const ACTIONS = [
   { value: 'all', label: 'Todos' },
-  { value: 'create', label: '✅ Criar' },
-  { value: 'update', label: '✏️ Atualizar' },
-  { value: 'delete', label: '🗑 Excluir' },
+  { value: 'create', label: 'Criar' },
+  { value: 'update', label: 'Atualizar' },
+  { value: 'delete', label: 'Excluir' },
 ] as const
 
 type ResourceFilter = typeof RESOURCE_TYPES[number]['value']
@@ -38,11 +68,11 @@ const ACTION_BADGE: Record<string, { bg: string; color: string; label: string }>
   delete: { bg: 'var(--color-red-light)', color: 'var(--color-red)', label: 'Excluir' },
 }
 
-const RESOURCE_ICON: Record<string, string> = {
-  sprint: '🎯',
-  status_report: '📄',
-  release: '🚀',
-  squad: '👥',
+const RESOURCE_ICON_COMP: Record<string, React.ComponentType<{ size?: number }>> = {
+  sprint: IconTarget,
+  status_report: IconFileText,
+  release: IconRocket,
+  squad: IconUsers,
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -302,14 +332,30 @@ export function AuditTrailPanel() {
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {!loading && entries.length === 0 && (
         <div
-          className="text-center py-12 rounded-xl"
-          style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-border-md)' }}
+          style={{
+            textAlign: 'center',
+            padding: '44px 20px',
+            background: 'var(--color-surface)',
+            border: '1px dashed var(--color-border-md)',
+            borderRadius: 14,
+          }}
         >
-          <p className="text-4xl mb-2">📋</p>
-          <p className="text-[14px] font-medium mb-1" style={{ color: 'var(--color-text-2)' }}>
-            Nenhum log de auditoria encontrado
-          </p>
-          <p className="text-[12px]" style={{ color: 'var(--color-text-3)' }}>
+          <div
+            aria-hidden="true"
+            style={{
+              width: 56, height: 56, margin: '0 auto 14px',
+              borderRadius: 14,
+              background: 'var(--color-blue-light)',
+              color: 'var(--color-blue)',
+              display: 'grid', placeItems: 'center',
+            }}
+          >
+            <IconClipboardList size={26} />
+          </div>
+          <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
+            Nenhum log de auditoria
+          </h3>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
             Ações realizadas na plataforma aparecerão aqui.
           </p>
         </div>
@@ -327,7 +373,7 @@ export function AuditTrailPanel() {
 
           {entries.map((entry) => {
             const badge = ACTION_BADGE[entry.action] ?? ACTION_BADGE.update
-            const icon = RESOURCE_ICON[entry.resource_type] ?? '📦'
+            const RIcon = RESOURCE_ICON_COMP[entry.resource_type] ?? IconPackage
             const hasChanges = entry.changes && Object.keys(entry.changes).length > 0
             const isExpanded = expandedIds.has(entry.id)
 
@@ -363,7 +409,9 @@ export function AuditTrailPanel() {
                       >
                         {badge.label}
                       </span>
-                      <span style={{ color: 'var(--color-text-3)' }}>{icon} {entry.resource_type}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--color-text-3)' }}>
+                        <RIcon size={12} /> {entry.resource_type}
+                      </span>
                       <span className="font-mono text-[10px]" style={{ color: 'var(--color-text-3)' }}>
                         {truncateId(entry.resource_id)}
                       </span>

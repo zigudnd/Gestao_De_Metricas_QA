@@ -401,7 +401,7 @@ export function PRListTable({
 
                 {/* Link do PR */}
                 <a
-                  href={pr.pr_link}
+                  href={/^https?:\/\//.test(pr.pr_link) ? pr.pr_link : '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}

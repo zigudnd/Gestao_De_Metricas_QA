@@ -45,7 +45,7 @@ test.describe('Regressao Visual — App (requer Supabase)', () => {
     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first()
     if (await emailInput.count() === 0) return false
     await emailInput.fill('admin@tostatos.com')
-    await page.locator('input[type="password"]').first().fill('Admin@123')
+    await page.locator('input[type="password"]').first().fill('Admin@123!Ts')
     await page.locator('button').filter({ hasText: /entrar/i }).click()
     try {
       await page.waitForURL(/\/#\/(sprints|$|squads|status-report)/, { timeout: 8_000 })

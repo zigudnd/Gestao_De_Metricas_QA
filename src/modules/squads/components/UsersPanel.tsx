@@ -1,6 +1,20 @@
 import type { UserWithSquads } from '../services/squadsService'
 import { inputStyle, selectStyle, btnPrimary, btnGhost, labelSm, avatarBase } from '@/styles/shared'
 
+// ─── Inline SVG icon ────────────────────────────────────────────────────────
+
+function IconKey({ size = 13 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+    </svg>
+  )
+}
+
 const btnDestructive: React.CSSProperties = { padding: '5px 10px', background: 'none', color: 'var(--color-red)', border: '1px solid var(--color-red-light)', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' }
 const badgeNeutral: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-2)', border: '0.5px solid var(--color-border)' }
 const badgeActive: React.CSSProperties = { fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 8, background: 'var(--color-green-light)', color: 'var(--color-green)', border: '0.5px solid var(--color-green-mid)' }
@@ -82,7 +96,7 @@ export function UsersPanel({
               <button type="button" onClick={() => setShowCreateUser(false)} style={btnGhost}>Cancelar</button>
             </form>
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-3)' }}>
-              * Senha padrão: <strong style={{ color: 'var(--color-text-2)' }}>Mudar@123</strong> — o usuário será solicitado a trocar no primeiro login.
+              * Senha padrão: <strong style={{ color: 'var(--color-text-2)' }}>Mudar@123!Ts</strong> — o usuário será solicitado a trocar no primeiro login.
             </p>
           </div>
         )}
@@ -144,7 +158,9 @@ export function UsersPanel({
                 fontFamily: 'var(--font-family-sans)',
               }}
             >
-              🔑 Resetar senha ({selectedUserIds.size})
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <IconKey size={13} /> Resetar senha ({selectedUserIds.size})
+              </span>
             </button>
             <button
               onClick={() => setSelectedUserIds(new Set())}
@@ -217,7 +233,9 @@ export function UsersPanel({
                 <button onClick={() => openEditUser(u)} style={btnGhost}>Editar</button>
                 {u.id !== currentUserId && (
                   <>
-                    <button onClick={() => setResetPasswordTarget(u)} style={btnGhost} title="Resetar senha para Mudar@123">🔑 Resetar</button>
+                    <button onClick={() => setResetPasswordTarget(u)} style={{ ...btnGhost, display: 'inline-flex', alignItems: 'center', gap: 4 }} title="Resetar senha para Mudar@123!Ts" aria-label={`Resetar senha de ${u.display_name}`}>
+                      <IconKey size={12} /> Resetar
+                    </button>
                     <button onClick={() => handleToggleActive(u)} style={u.active ? btnDestructive : { ...btnGhost, color: 'var(--color-green)' }}>
                       {u.active ? 'Desativar' : 'Ativar'}
                     </button>

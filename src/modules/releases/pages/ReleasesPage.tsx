@@ -18,6 +18,49 @@ type HomeTab = 'checkpoint' | 'regressivos' | 'historico' | 'cronograma' | 'even
 
 const formatDateBR = fmtDateFull
 
+// ─── Icons (SVG inline, Lucide paths) ────────────────────────────────────────
+
+function Svg({ size = 14, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >{children}</svg>
+  )
+}
+function IconPlus({ size = 14 }: { size?: number }) { return <Svg size={size}><path d="M12 5v14M5 12h14" /></Svg> }
+function IconTarget({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></Svg>
+}
+function IconRefreshCw({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></Svg>
+}
+function IconArchive({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></Svg>
+}
+function IconCalendar({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></Svg>
+}
+function IconCalendarDays({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="8" y1="14" x2="8.01" y2="14" /><line x1="12" y1="14" x2="12.01" y2="14" /><line x1="16" y1="14" x2="16.01" y2="14" /></Svg>
+}
+function IconGitPullRequest({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" /></Svg>
+}
+function IconAlertCircle({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></Svg>
+}
+
+const HOME_TABS: { id: HomeTab; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: 'checkpoint',  label: 'Checkpoint',  Icon: IconTarget },
+  { id: 'regressivos', label: 'Regressivos', Icon: IconRefreshCw },
+  { id: 'historico',   label: 'Histórico',   Icon: IconArchive },
+  { id: 'cronograma',  label: 'Cronograma',  Icon: IconCalendar },
+  { id: 'eventos',     label: 'Eventos',     Icon: IconCalendarDays },
+  { id: 'prs',         label: 'PRs',         Icon: IconGitPullRequest },
+]
+
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const inputStyle: React.CSSProperties = {
@@ -29,6 +72,47 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: 12, fontWeight: 600,
   color: 'var(--color-text-2)', marginBottom: 4,
+}
+
+// ─── Small components ────────────────────────────────────────────────────────
+
+function SyncChip({ tone, label }: { tone: 'ok' | 'warn' | 'danger'; label: string }) {
+  const styles: Record<typeof tone, { bg: string; color: string }> = {
+    ok: { bg: 'var(--color-green-light)', color: 'var(--color-green)' },
+    warn: { bg: 'var(--color-amber-light)', color: 'var(--color-amber-mid)' },
+    danger: { bg: 'var(--color-red-light)', color: 'var(--color-red)' },
+  }
+  const s = styles[tone]
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        padding: '4px 10px', borderRadius: 999,
+        fontSize: 11, fontWeight: 600,
+        background: s.bg, color: s.color,
+        fontFamily: 'var(--font-family-sans)',
+      }}
+    >
+      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: 'currentColor' }} />
+      {label}
+    </span>
+  )
+}
+
+function FieldError({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-red)', fontWeight: 500 }}>
+      {children}
+    </p>
+  )
+}
+
+function FieldHint({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-3)' }}>
+      {children}
+    </p>
+  )
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -70,7 +154,7 @@ export function ReleasesPage() {
   const [formHomoStart, setFormHomoStart] = useState('')
   const [formHomoEnd, setFormHomoEnd] = useState('')
   const [formProdDate, setFormProdDate] = useState('')
-  const [formErrors, setFormErrors] = useState<string[]>([])
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     load()
@@ -129,7 +213,7 @@ export function ReleasesPage() {
         setFormHomoStart(slot.homologacaoStart)
         setFormHomoEnd(slot.homologacaoEnd)
         setFormProdDate(slot.productionDate)
-        setFormErrors([])
+        setFormErrors({})
         setShowModal(true)
         return
       }
@@ -140,7 +224,7 @@ export function ReleasesPage() {
     setFormHomoStart('')
     setFormHomoEnd('')
     setFormProdDate('')
-    setFormErrors([])
+    setFormErrors({})
     setShowModal(true)
   }
 
@@ -156,35 +240,35 @@ export function ReleasesPage() {
     setFormHomoStart(release.homologacaoStart)
     setFormHomoEnd(release.homologacaoEnd)
     setFormProdDate(release.productionDate)
-    setFormErrors([])
+    setFormErrors({})
     setShowModal(true)
   }
 
-  function validateForm(): string[] {
-    const errors: string[] = []
-    if (!formName.trim()) errors.push('Nome é obrigatório')
-    if (!formVersion.trim()) errors.push('Versão é obrigatória')
-    if (!formCutoff) errors.push('Data de corte é obrigatória')
-    if (!formHomoStart) errors.push('Início da homologação é obrigatório')
-    if (!formHomoEnd) errors.push('Fim da homologação é obrigatório')
-    if (!formProdDate) errors.push('Data de produção é obrigatória')
+  function validateForm(): Record<string, string> {
+    const errors: Record<string, string> = {}
+    if (!formName.trim()) errors.name = 'Nome é obrigatório'
+    if (!formVersion.trim()) errors.version = 'Versão é obrigatória'
+    if (!formCutoff) errors.cutoff = 'Obrigatória'
+    if (!formHomoStart) errors.homoStart = 'Obrigatório'
+    if (!formHomoEnd) errors.homoEnd = 'Obrigatório'
+    if (!formProdDate) errors.prodDate = 'Obrigatória'
 
     // Chronological order
     if (formCutoff && formHomoStart && formCutoff > formHomoStart) {
-      errors.push('Data de corte deve ser anterior ao início da homologação')
+      errors.homoStart = 'Deve ser após a data de corte'
     }
     if (formHomoStart && formHomoEnd && formHomoStart > formHomoEnd) {
-      errors.push('Início deve ser anterior ao fim da homologação')
+      errors.homoEnd = 'Deve ser após o início'
     }
     if (formHomoEnd && formProdDate && formHomoEnd > formProdDate) {
-      errors.push('Fim da homologação deve ser anterior à data de produção')
+      errors.prodDate = 'Deve ser após fim da homologação'
     }
     return errors
   }
 
   function handleSave() {
     const errors = validateForm()
-    if (errors.length > 0) {
+    if (Object.keys(errors).length > 0) {
       setFormErrors(errors)
       return
     }
@@ -248,6 +332,9 @@ export function ReleasesPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <style>{`
+        .rel-btn-primary:hover { background: var(--color-blue-text) !important; }
+      `}</style>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -261,26 +348,56 @@ export function ReleasesPage() {
             Acompanhe o ciclo de homologação e produção das suas releases
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {syncStatus === 'saving' && (
-            <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>Salvando...</span>
-          )}
-          {syncStatus === 'saved' && (
-            <span style={{ fontSize: 12, color: 'var(--color-green)' }}>Salvo</span>
-          )}
-          {syncStatus === 'error' && (
-            <span style={{ fontSize: 12, color: 'var(--color-red)' }}>Erro ao salvar</span>
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {syncStatus === 'saving' && <SyncChip tone="warn" label="Salvando..." />}
+          {syncStatus === 'saved' && <SyncChip tone="ok" label="Salvo" />}
+          {syncStatus === 'error' && <SyncChip tone="danger" label="Erro ao salvar" />}
+          <button
+            onClick={() => openCreate()}
+            aria-label="Criar nova release"
+            className="rel-btn-primary"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 8,
+              border: '1px solid var(--color-blue)',
+              background: 'var(--color-blue)', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-family-sans)',
+              transition: 'background 0.12s',
+            }}
+          >
+            <IconPlus /> Nova Release
+          </button>
         </div>
       </div>
 
       {/* Error banner */}
       {syncError && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/40 dark:text-red-300 mb-4">
-          <span>{syncError}</span>
+        <div
+          role="alert"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, padding: '12px 16px', marginBottom: 14,
+            background: 'var(--color-red-light)',
+            border: '1px solid var(--color-red-mid)',
+            borderRadius: 8,
+            color: 'var(--color-red)',
+            fontSize: 13,
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <IconAlertCircle /> {syncError}
+          </span>
           <button
             onClick={handleRetrySync}
-            className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 6,
+              background: 'var(--color-red)', color: '#fff',
+              border: 'none', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'var(--font-family-sans)',
+              flexShrink: 0,
+            }}
           >
             Tentar novamente
           </button>
@@ -294,33 +411,30 @@ export function ReleasesPage() {
         marginBottom: 20,
         overflowX: 'auto',
       }}>
-        {([
-          { id: 'checkpoint' as HomeTab, label: 'Checkpoint' },
-          { id: 'regressivos' as HomeTab, label: 'Regressivos' },
-          { id: 'historico' as HomeTab, label: 'Histórico' },
-          { id: 'cronograma' as HomeTab, label: 'Cronograma' },
-          { id: 'eventos' as HomeTab, label: 'Eventos' },
-          { id: 'prs' as HomeTab, label: 'PRs' },
-        ]).map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            aria-selected={homeTab === tab.id}
-            onClick={() => setHomeTab(tab.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '9px 18px', background: 'none', border: 'none',
-              borderBottom: homeTab === tab.id ? '2px solid var(--color-blue)' : '2px solid transparent',
-              color: homeTab === tab.id ? 'var(--color-blue-text)' : 'var(--color-text-2)',
-              fontWeight: homeTab === tab.id ? 700 : 500,
-              fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-family-sans)', marginBottom: -1,
-              flexShrink: 0,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {HOME_TABS.map((tab) => {
+          const Icon = tab.Icon
+          const active = homeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setHomeTab(tab.id)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '9px 14px', background: 'none', border: 'none',
+                borderBottom: active ? '2px solid var(--color-blue)' : '2px solid transparent',
+                color: active ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                fontWeight: active ? 600 : 500,
+                fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontFamily: 'var(--font-family-sans)', marginBottom: -1,
+                flexShrink: 0, transition: 'color 0.15s',
+              }}
+            >
+              <Icon size={15} /> {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Tab: Checkpoint — só releases ativas (não concluídas) */}
@@ -456,89 +570,111 @@ export function ReleasesPage() {
               {editId ? 'Editar Release' : 'Nova Release'}
             </div>
 
-            {/* Errors */}
-            {formErrors.length > 0 && (
-              <div style={{
-                padding: '10px 14px', borderRadius: 8, marginBottom: 14,
-                background: 'var(--color-red-light)', border: '1px solid var(--color-red-mid)',
-                fontSize: 12, color: 'var(--color-red)',
-              }}>
-                {formErrors.map((err, i) => (
-                  <div key={i}>{err}</div>
-                ))}
-              </div>
-            )}
-
             {/* Name */}
             <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Nome *</label>
+              <label htmlFor="rel-form-name" style={labelStyle}>Nome *</label>
               <input
+                id="rel-form-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="Ex: Release Sprint 42"
                 autoFocus
                 disabled={!!editId}
+                aria-invalid={!!formErrors.name}
                 style={{
                   ...inputStyle,
+                  borderColor: formErrors.name ? 'var(--color-red-mid)' : 'var(--color-border-md)',
                   opacity: editId ? 0.6 : 1,
                   cursor: editId ? 'not-allowed' : undefined,
                 }}
               />
+              {formErrors.name && <FieldError>{formErrors.name}</FieldError>}
+              {editId && <FieldHint>Para alterar, crie uma nova release.</FieldHint>}
             </div>
 
             {/* Version */}
             <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Versão *</label>
+              <label htmlFor="rel-form-version" style={labelStyle}>Versão *</label>
               <input
+                id="rel-form-version"
                 value={formVersion}
                 onChange={(e) => setFormVersion(e.target.value)}
                 placeholder="Ex: v4.2.0"
                 disabled={!!editId}
+                aria-invalid={!!formErrors.version}
                 style={{
                   ...inputStyle,
+                  borderColor: formErrors.version ? 'var(--color-red-mid)' : 'var(--color-border-md)',
                   opacity: editId ? 0.6 : 1,
                   cursor: editId ? 'not-allowed' : undefined,
                 }}
               />
+              {formErrors.version && <FieldError>{formErrors.version}</FieldError>}
+              {editId && <FieldHint>Para alterar, crie uma nova release.</FieldHint>}
             </div>
 
-            {/* Dates in grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>Data Corte *</label>
-                <input
-                  type="date" value={formCutoff}
-                  onChange={(e) => setFormCutoff(e.target.value)}
-                  style={inputStyle}
-                />
+            {/* Data de corte */}
+            <div style={{ marginBottom: 14 }}>
+              <label htmlFor="rel-form-cutoff" style={labelStyle}>Data de corte *</label>
+              <input
+                id="rel-form-cutoff"
+                type="date" value={formCutoff}
+                onChange={(e) => setFormCutoff(e.target.value)}
+                aria-label="Data de corte"
+                aria-invalid={!!formErrors.cutoff}
+                style={{ ...inputStyle, borderColor: formErrors.cutoff ? 'var(--color-red-mid)' : 'var(--color-border-md)' }}
+              />
+              {formErrors.cutoff && <FieldError>{formErrors.cutoff}</FieldError>}
+            </div>
+
+            {/* Homologação — grupo */}
+            <div style={{ marginBottom: 14, padding: '12px 14px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
+              <div style={{ ...labelStyle, marginBottom: 8, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, color: 'var(--color-text-3)' }}>
+                Homologação
               </div>
-              <div>
-                <label style={labelStyle}>Início Homologação *</label>
-                <input
-                  type="date" value={formHomoStart}
-                  onChange={(e) => setFormHomoStart(e.target.value)}
-                  min={formCutoff || undefined}
-                  style={inputStyle}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label htmlFor="rel-form-homo-start" style={{ ...labelStyle, fontSize: 11 }}>Início *</label>
+                  <input
+                    id="rel-form-homo-start"
+                    type="date" value={formHomoStart}
+                    onChange={(e) => setFormHomoStart(e.target.value)}
+                    min={formCutoff || undefined}
+                    aria-label="Data de início da homologação"
+                    aria-invalid={!!formErrors.homoStart}
+                    style={{ ...inputStyle, borderColor: formErrors.homoStart ? 'var(--color-red-mid)' : 'var(--color-border-md)' }}
+                  />
+                  {formErrors.homoStart && <FieldError>{formErrors.homoStart}</FieldError>}
+                </div>
+                <div>
+                  <label htmlFor="rel-form-homo-end" style={{ ...labelStyle, fontSize: 11 }}>Fim *</label>
+                  <input
+                    id="rel-form-homo-end"
+                    type="date" value={formHomoEnd}
+                    onChange={(e) => setFormHomoEnd(e.target.value)}
+                    min={formHomoStart || undefined}
+                    aria-label="Data de fim da homologação"
+                    aria-invalid={!!formErrors.homoEnd}
+                    style={{ ...inputStyle, borderColor: formErrors.homoEnd ? 'var(--color-red-mid)' : 'var(--color-border-md)' }}
+                  />
+                  {formErrors.homoEnd && <FieldError>{formErrors.homoEnd}</FieldError>}
+                </div>
               </div>
-              <div>
-                <label style={labelStyle}>Fim Homologação *</label>
-                <input
-                  type="date" value={formHomoEnd}
-                  onChange={(e) => setFormHomoEnd(e.target.value)}
-                  min={formHomoStart || undefined}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Data Produção *</label>
-                <input
-                  type="date" value={formProdDate}
-                  onChange={(e) => setFormProdDate(e.target.value)}
-                  min={formHomoEnd || undefined}
-                  style={inputStyle}
-                />
-              </div>
+            </div>
+
+            {/* Produção */}
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="rel-form-prod" style={labelStyle}>Data de produção *</label>
+              <input
+                id="rel-form-prod"
+                type="date" value={formProdDate}
+                onChange={(e) => setFormProdDate(e.target.value)}
+                min={formHomoEnd || undefined}
+                aria-label="Data de produção"
+                aria-invalid={!!formErrors.prodDate}
+                style={{ ...inputStyle, borderColor: formErrors.prodDate ? 'var(--color-red-mid)' : 'var(--color-border-md)' }}
+              />
+              {formErrors.prodDate && <FieldError>{formErrors.prodDate}</FieldError>}
             </div>
 
             {/* Actions */}
@@ -557,14 +693,17 @@ export function ReleasesPage() {
               </button>
               <button
                 onClick={handleSave}
+                className="rel-btn-primary"
                 style={{
-                  padding: '8px 18px', borderRadius: 8, border: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', borderRadius: 8, border: '1px solid var(--color-blue)',
                   background: 'var(--color-blue)', color: '#fff',
                   fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   fontFamily: 'var(--font-family-sans)',
+                  transition: 'background 0.12s',
                 }}
               >
-                {editId ? 'Salvar' : 'Criar'}
+                {editId ? <>Salvar alterações</> : <><IconPlus /> Criar Release</>}
               </button>
             </div>
           </div>

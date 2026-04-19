@@ -30,6 +30,116 @@ function errMsg(e: unknown): string {
   return String(e)
 }
 
+// ─── Icons (SVG inline, Lucide paths) ────────────────────────────────────────
+
+function Svg({ size = 14, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >{children}</svg>
+  )
+}
+function IconPlus({ size = 14 }: { size?: number }) { return <Svg size={size}><path d="M12 5v14M5 12h14" /></Svg> }
+function IconMoreHoriz({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></Svg>
+}
+function IconUsers({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></Svg>
+}
+function IconShieldCheck({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" /></Svg>
+}
+function IconUser({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Svg>
+}
+function IconKey({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></Svg>
+}
+function IconClipboardList({ size = 15 }: { size?: number }) {
+  return <Svg size={size}><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></Svg>
+}
+function IconSettings({ size = 15 }: { size?: number }) {
+  return (
+    <Svg size={size}>
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  )
+}
+function IconPencil({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></Svg>
+}
+function IconArchiveBox({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></Svg>
+}
+function IconRotateCcw({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></Svg>
+}
+function IconChevronDown({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><polyline points="6 9 12 15 18 9" /></Svg>
+}
+function IconChevronRight({ size = 11 }: { size?: number }) {
+  return <Svg size={size}><polyline points="9 18 15 12 9 6" /></Svg>
+}
+function IconTrash2({ size = 14 }: { size?: number }) {
+  return <Svg size={size}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></Svg>
+}
+
+// ─── Dropdown hook ────────────────────────────────────────────────────────────
+
+function useDropdown() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!open) return
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return { open, setOpen, ref }
+}
+
+// ─── Menu styles ────────────────────────────────────────────────────────────
+
+const menuStyle: React.CSSProperties = {
+  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 10,
+  boxShadow: '0 12px 32px rgba(17,24,39,.10), 0 2px 6px rgba(17,24,39,.05)',
+  minWidth: 200, padding: 6,
+  zIndex: 500,
+}
+const menuItemStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '8px 10px', width: '100%',
+  fontSize: 13, fontWeight: 500,
+  color: 'var(--color-text)',
+  background: 'transparent', border: 'none', borderRadius: 6,
+  cursor: 'pointer', textAlign: 'left',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'background 0.12s',
+}
+const menuItemDangerStyle: React.CSSProperties = { ...menuItemStyle, color: 'var(--color-red)' }
+
+const HOME_TABS = [
+  { id: 'squads' as const,   label: 'Squads',           Icon: IconUsers,         adminOnly: false },
+  { id: 'profiles' as const, label: 'Perfis de Acesso', Icon: IconShieldCheck,   adminOnly: false },
+  { id: 'users' as const,    label: 'Usuários',         Icon: IconUser,          adminOnly: true  },
+  { id: 'apikeys' as const,  label: 'API Keys',         Icon: IconKey,           adminOnly: true  },
+  { id: 'audit' as const,    label: 'Audit Trail',      Icon: IconClipboardList, adminOnly: true  },
+  { id: 'modules' as const,  label: 'Módulos',          Icon: IconSettings,      adminOnly: true  },
+]
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_LABEL: Record<SquadRole, string> = {
@@ -127,6 +237,7 @@ export function SquadsPage() {
   }
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [squadSearch, setSquadSearch] = useState('')
+  const squadSearchRef = useRef<HTMLInputElement | null>(null)
   const [profileSearch, setProfileSearch] = useState('')
   const [userTabSearch, setUserTabSearch] = useState('')
   const [userFilterRole, setUserFilterRole] = useState<'all' | 'admin' | 'gerente' | 'user'>('all')
@@ -144,6 +255,19 @@ export function SquadsPage() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showUserDropdown])
+
+  // Atalho "/" para focar busca da aba Squads
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (tab !== 'squads') return
+      if (e.key !== '/') return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
+      e.preventDefault()
+      squadSearchRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tab])
 
   // ── Load squads ──────────────────────────────────────────────────────────────
 
@@ -365,7 +489,7 @@ export function SquadsPage() {
       setNewUserEmail('')
       setShowCreateUser(false)
       loadUsers()
-      showToast('Usuário criado com senha Mudar@123', 'success')
+      showToast('Usuário criado com senha Mudar@123!Ts', 'success')
     } catch (e) { setError(errMsg(e)) }
     finally { setCreatingUser(false) }
   }
@@ -382,7 +506,7 @@ export function SquadsPage() {
     try {
       await resetUserPassword(resetPasswordTarget.id)
       setResetPasswordTarget(null)
-      showToast('Senha resetada para Mudar@123', 'success')
+      showToast('Senha resetada para Mudar@123!Ts', 'success')
     } catch (e) { setError(errMsg(e)) }
   }
 
@@ -532,29 +656,41 @@ export function SquadsPage() {
         .sq-btn-archive:hover { background: var(--color-red-light) !important; }
         .sq-btn-remove:hover { background: var(--color-red-light) !important; }
         .sq-dropdown-item:hover { background: var(--color-surface-2) !important; }
+        .sq-kebab-btn:hover { background: var(--color-bg) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+        .sq-menu-item:hover { background: var(--color-bg) !important; }
+        .sq-menu-item-danger:hover { background: var(--color-red-light) !important; }
       `}</style>
 
       {/* ── Tabs ──────────────────────────────────────────────────────────────── */}
-      <div style={{ padding: '0 24px', display: 'flex', gap: 0, borderBottom: '1px solid var(--color-border)' }}>
-        {([
-          ['squads',   '👥 Squads'],
-          ['profiles', '🔐 Perfis de Acesso'],
-          ...(isAdmin ? [['users', '👤 Usuários'] as const] : []),
-          ...(isAdmin ? [['apikeys', '🔑 API Keys'] as const] : []),
-          ...(isAdmin ? [['audit', '📋 Audit Trail'] as const] : []),
-          ...(isAdmin ? [['modules', '⚙️ Módulos'] as const] : []),
-        ] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)} role="tab" aria-selected={tab === t} style={{
-            padding: '8px 16px', background: 'none', border: 'none',
-            borderBottom: tab === t ? '2px solid var(--color-blue)' : '2px solid transparent',
-            marginBottom: -1,
-            color: tab === t ? 'var(--color-blue)' : 'var(--color-text-2)',
-            fontWeight: tab === t ? 600 : 400,
-            fontSize: 13, cursor: 'pointer',
-          }}>
-            {label}
-          </button>
-        ))}
+      <div
+        role="tablist"
+        aria-label="Abas de Cadastros"
+        style={{ padding: '0 24px', display: 'flex', gap: 0, borderBottom: '1px solid var(--color-border)' }}
+      >
+        {HOME_TABS.filter((t) => !t.adminOnly || isAdmin).map(({ id, label, Icon }) => {
+          const active = tab === id
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              role="tab"
+              aria-selected={active}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '9px 14px', background: 'none', border: 'none',
+                borderBottom: active ? '2px solid var(--color-blue)' : '2px solid transparent',
+                marginBottom: -1,
+                color: active ? 'var(--color-blue-text)' : 'var(--color-text-2)',
+                fontWeight: active ? 600 : 500,
+                fontSize: 13, cursor: 'pointer',
+                fontFamily: 'var(--font-family-sans)',
+                transition: 'color 0.15s',
+              }}
+            >
+              <Icon size={15} /> {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* ── Conteúdo ──────────────────────────────────────────────────────────── */}
@@ -571,8 +707,10 @@ export function SquadsPage() {
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
                   </span>
                   <input
+                    ref={squadSearchRef}
                     type="text"
                     placeholder="Buscar squad..."
+                    aria-label="Buscar squad"
                     value={squadSearch}
                     onChange={(e) => setSquadSearch(e.target.value)}
                     style={{ ...inputStyle, paddingLeft: 32, width: '100%' }}
@@ -581,7 +719,9 @@ export function SquadsPage() {
               )}
               <button
                 onClick={() => setShowNewSquadForm(!showNewSquadForm)}
+                aria-label={showNewSquadForm ? 'Cancelar criação de squad' : 'Criar novo squad'}
                 style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 16px', borderRadius: 8, border: 'none',
                   background: showNewSquadForm ? 'var(--color-surface-2)' : 'var(--color-blue)',
                   color: showNewSquadForm ? 'var(--color-text-2)' : '#fff',
@@ -590,7 +730,7 @@ export function SquadsPage() {
                   flexShrink: 0,
                 }}
               >
-                {showNewSquadForm ? 'Cancelar' : '+ Novo Squad'}
+                {showNewSquadForm ? 'Cancelar' : <><IconPlus /> Novo Squad</>}
               </button>
             </div>
 
@@ -641,10 +781,47 @@ export function SquadsPage() {
 
             {/* Empty state */}
             {squads.length === 0 && !showNewSquadForm && (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-3)' }}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 6px' }}>Nenhum squad criado</p>
-                <p style={{ fontSize: 13, margin: 0 }}>Clique em <strong>+ Novo Squad</strong> para começar.</p>
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '44px 20px',
+                  background: 'var(--color-surface)',
+                  border: '1px dashed var(--color-border-md)',
+                  borderRadius: 14,
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 56, height: 56, margin: '0 auto 14px',
+                    borderRadius: 14,
+                    background: 'var(--color-blue-light)',
+                    color: 'var(--color-blue)',
+                    display: 'grid', placeItems: 'center',
+                  }}
+                >
+                  <IconUsers size={26} />
+                </div>
+                <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>
+                  Nenhum squad criado
+                </h3>
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+                  Comece criando o primeiro squad do seu time.
+                </p>
+                <button
+                  onClick={() => setShowNewSquadForm(true)}
+                  aria-label="Criar novo squad"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8,
+                    background: 'var(--color-blue)', color: '#fff',
+                    border: '1px solid var(--color-blue)',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'var(--font-family-sans)',
+                  }}
+                >
+                  <IconPlus /> Novo Squad
+                </button>
               </div>
             )}
 
@@ -690,16 +867,25 @@ export function SquadsPage() {
                         )}
                       </div>
                       {canManage && (
-                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => { setEditingSquad(s); setEditName(s.name); setEditDesc(s.description); setEditColor(s.color) }} style={btnGhost}>Editar</button>
-                          <button
-                            onClick={() => setArchiveSquadTarget(s)}
-                            style={btnDestructive}
-                            className="sq-btn-archive"
-                          >Arquivar</button>
-                        </div>
+                        <SquadActionsMenu
+                          squad={s}
+                          onEdit={() => { setEditingSquad(s); setEditName(s.name); setEditDesc(s.description); setEditColor(s.color) }}
+                          onArchive={() => setArchiveSquadTarget(s)}
+                        />
                       )}
-                      <span style={{ fontSize: 16, color: 'var(--color-text-3)', flexShrink: 0, transition: 'transform 0.15s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 22, height: 22,
+                          color: 'var(--color-text-3)',
+                          flexShrink: 0,
+                          transition: 'transform 0.15s',
+                          transform: isOpen ? 'rotate(180deg)' : 'none',
+                        }}
+                      >
+                        <IconChevronDown />
+                      </span>
                     </button>
 
                     {/* Painel expandido — membros + adicionar */}
@@ -763,11 +949,16 @@ export function SquadsPage() {
                     padding: 0, fontFamily: 'var(--font-family-sans)',
                   }}
                 >
-                  <span style={{
-                    display: 'inline-block', transition: 'transform 0.15s',
-                    transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)',
-                    fontSize: 10,
-                  }}>▶</span>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'transform 0.15s',
+                      transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)',
+                    }}
+                  >
+                    <IconChevronRight />
+                  </span>
                   Squads arquivados {archivedSquads.length > 0 && `(${archivedSquads.length})`}
                 </button>
 
@@ -962,12 +1153,12 @@ export function SquadsPage() {
 
       {deleteProfileTarget && <ConfirmModal title="Excluir Perfil" description={`Excluir "${deleteProfileTarget.name}"? Esta ação não pode ser desfeita.`} confirmLabel="Excluir" onConfirm={handleDeleteProfile} onCancel={() => setDeleteProfileTarget(null)} />}
 
-      {resetPasswordTarget && <ConfirmModal title="Resetar Senha" description={`Resetar a senha de "${resetPasswordTarget.display_name}" para Mudar@123? O usuário será obrigado a trocar no próximo login.`} confirmLabel="Resetar" onConfirm={handleResetPassword} onCancel={() => setResetPasswordTarget(null)} />}
+      {resetPasswordTarget && <ConfirmModal title="Resetar Senha" description={`Resetar a senha de "${resetPasswordTarget.display_name}" para Mudar@123!Ts? O usuário será obrigado a trocar no próximo login.`} confirmLabel="Resetar" onConfirm={handleResetPassword} onCancel={() => setResetPasswordTarget(null)} />}
 
       {showBatchResetConfirm && (
         <ConfirmModal
           title="Resetar Senha em Lote"
-          description={`Resetar a senha de ${selectedUserIds.size} usuário${selectedUserIds.size !== 1 ? 's' : ''} para Mudar@123? Todos serão obrigados a trocar no próximo login.`}
+          description={`Resetar a senha de ${selectedUserIds.size} usuário${selectedUserIds.size !== 1 ? 's' : ''} para Mudar@123!Ts? Todos serão obrigados a trocar no próximo login.`}
           confirmLabel={batchResetting ? 'Resetando...' : `Resetar ${selectedUserIds.size}`}
           onConfirm={handleBatchResetPasswords}
           onCancel={() => setShowBatchResetConfirm(false)}
@@ -1013,3 +1204,57 @@ function avatarStyle(role?: string, isAdmin?: boolean): React.CSSProperties {
 const backdropStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }
 const modalStyle: React.CSSProperties = { background: 'var(--color-surface)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '24px 22px', width: 360, maxWidth: '90vw', boxShadow: 'var(--shadow-xl)' }
 const colorInputStyle: React.CSSProperties = { width: 36, height: 36, padding: 2, border: '0.5px solid var(--color-border)', borderRadius: 8, cursor: 'pointer', background: 'var(--color-bg)' }
+
+// ─── SquadActionsMenu — kebab with Editar/Arquivar ──────────────────────────
+
+function SquadActionsMenu({ squad, onEdit, onArchive }: { squad: Squad; onEdit: () => void; onArchive: () => void }) {
+  const drop = useDropdown()
+  function handle(fn: () => void) { drop.setOpen(false); fn() }
+  return (
+    <div
+      ref={drop.ref}
+      onClick={(e) => e.stopPropagation()}
+      style={{ position: 'relative', flexShrink: 0 }}
+    >
+      <button
+        onClick={() => drop.setOpen((v) => !v)}
+        aria-label={`Mais ações para ${squad.name}`}
+        aria-haspopup="menu"
+        aria-expanded={drop.open}
+        title="Mais ações"
+        className="sq-kebab-btn"
+        style={{
+          width: 30, height: 30, borderRadius: 7,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent',
+          color: 'var(--color-text-2)',
+          border: '1px solid transparent',
+          cursor: 'pointer',
+          transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+        }}
+      >
+        <IconMoreHoriz />
+      </button>
+      {drop.open && (
+        <div role="menu" style={menuStyle}>
+          <button
+            role="menuitem"
+            className="sq-menu-item"
+            style={menuItemStyle}
+            onClick={() => handle(onEdit)}
+          >
+            <IconPencil /> Editar
+          </button>
+          <button
+            role="menuitem"
+            className="sq-menu-item-danger"
+            style={menuItemDangerStyle}
+            onClick={() => handle(onArchive)}
+          >
+            <IconArchiveBox /> Arquivar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

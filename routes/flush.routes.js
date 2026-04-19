@@ -93,6 +93,14 @@ router.post('/status-report-flush', flushLimiter, express.text({ type: '*/*', li
     if (!authorized) {
       return res.status(403).json({ error: 'Sem permissão para este recurso.' });
     }
+    // SEC: H-05 — If record exists, verify caller owns the squad_id (prevent cross-squad hijacking)
+    const { data: existing } = await supabaseAdmin.from('status_reports').select('squad_id').eq('id', payload.id).single();
+    if (existing && existing.squad_id && existing.squad_id !== payload.squad_id) {
+      const canOverride = await isAdminOrGerente(supabaseAdmin, user.id);
+      if (!canOverride) {
+        return res.status(403).json({ error: 'Não é possível sobrescrever recurso de outro squad.' });
+      }
+    }
     const { error: dbError } = await supabaseAdmin.from('status_reports').upsert({
       id: payload.id,
       data: payload.data,
@@ -227,6 +235,14 @@ router.post('/sprint-flush', flushLimiter, express.text({ type: '*/*', limit: '1
     const sprintAuthorized = await isSquadMemberOrAdmin(supabaseAdmin, user.id, payload.squad_id);
     if (!sprintAuthorized) {
       return res.status(403).json({ error: 'Sem permissão para este recurso.' });
+    }
+    // SEC: H-05 — If record exists, verify caller owns the squad_id
+    const { data: existingSprint } = await supabaseAdmin.from('sprints').select('squad_id').eq('id', payload.id).single();
+    if (existingSprint && existingSprint.squad_id && existingSprint.squad_id !== payload.squad_id) {
+      const canOverride = await isAdminOrGerente(supabaseAdmin, user.id);
+      if (!canOverride) {
+        return res.status(403).json({ error: 'Não é possível sobrescrever recurso de outro squad.' });
+      }
     }
     const { error: dbError } = await supabaseAdmin.from('sprints').upsert({
       id: payload.id,

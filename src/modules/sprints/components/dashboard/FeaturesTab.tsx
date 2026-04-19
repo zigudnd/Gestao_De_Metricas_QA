@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSprintStore } from '../../store/sprintStore'
 import type { Feature, TestCase, TestCaseStatus, TestCaseComplexity } from '../../types/sprint.types'
@@ -10,6 +10,62 @@ import { showToast } from '@/app/components/Toast'
 import { NewBugModal } from '@/app/components/NewBugModal'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const FEATURE_TEMPLATE = `# language: pt
+# Template de importação — .feature (Gherkin)
+# Cada "Funcionalidade" vira uma funcionalidade na suite.
+# Cada "Cenário" vira um caso de teste dentro dela.
+# Remova este cabeçalho de comentários antes de importar.
+
+Funcionalidade: Login do Usuário
+
+  Cenário: Login com credenciais válidas
+    Dado que estou na página de login
+    Quando preencho email e senha válidos
+    E clico em "Entrar"
+    Então sou redirecionado para o dashboard
+
+  Cenário: Login com senha incorreta
+    Dado que estou na página de login
+    Quando preencho email válido e senha incorreta
+    E clico em "Entrar"
+    Então vejo a mensagem "Credenciais inválidas"
+
+Funcionalidade: Cadastro de Sprint
+
+  Cenário: Criar sprint com dados obrigatórios
+    Dado que estou na listagem de sprints
+    Quando clico em "Nova Sprint"
+    E preencho título, datas e squad
+    E confirmo a criação
+    Então a sprint aparece na lista
+`
+
+const CSV_TEMPLATE = `Funcionalidade,Cenário,Complexidade,Gherkin
+Login do Usuário,Login com credenciais válidas,Moderada,"Dado que estou na página de login
+Quando preencho email e senha válidos
+Então sou redirecionado para o dashboard"
+Login do Usuário,Login com senha incorreta,Baixa,"Dado que estou na página de login
+Quando preencho senha incorreta
+Então vejo mensagem de erro"
+Cadastro de Sprint,Criar sprint com dados obrigatórios,Alta,"Dado que estou na listagem
+Quando clico em Nova Sprint
+E preencho os campos
+Então a sprint aparece na lista"
+`
+
+function downloadTemplate(type: 'feature' | 'csv') {
+  const content = type === 'feature' ? FEATURE_TEMPLATE : CSV_TEMPLATE
+  const filename = type === 'feature' ? 'template-importacao.feature' : 'template-importacao.csv'
+  const mime = type === 'feature' ? 'text/plain' : 'text/csv'
+  const blob = new Blob([content], { type: `${mime};charset=utf-8` })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 function dayKeyToDate(dayKey: string, startDate: string, excludeWeekends: boolean): string {
   if (!dayKey || !startDate) return ''
@@ -101,6 +157,195 @@ function IconAttach() {
   )
 }
 
+// ─── New icons for UX reform (Lucide paths) ──────────────────────────────────
+function Svg14({ children, rotate }: { children: React.ReactNode; rotate?: number }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+      style={rotate != null ? { transform: `rotate(${rotate}deg)`, transition: 'transform 0.15s' } : undefined}
+    >{children}</svg>
+  )
+}
+function IconChevron({ open }: { open: boolean }) {
+  return <Svg14 rotate={open ? 90 : 0}><polyline points="9 18 15 12 9 6" /></Svg14>
+}
+function IconPlus() {
+  return <Svg14><path d="M12 5v14M5 12h14" /></Svg14>
+}
+function IconMoreHoriz() {
+  return <Svg14><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></Svg14>
+}
+function IconDownload() {
+  return <Svg14><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></Svg14>
+}
+function IconFileText() {
+  return <Svg14><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></Svg14>
+}
+function IconBarChart3() {
+  return <Svg14><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></Svg14>
+}
+function IconPencil() {
+  return <Svg14><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></Svg14>
+}
+function IconCopy() {
+  return <Svg14><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></Svg14>
+}
+function IconTrash2() {
+  return <Svg14><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></Svg14>
+}
+function IconFlask() {
+  return (
+    <Svg14>
+      <path d="M10 2v7.31" />
+      <path d="M14 9.3V1.99" />
+      <path d="M8.5 2h7" />
+      <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
+      <path d="M5.52 16h12.96" />
+    </Svg14>
+  )
+}
+function IconGripDots() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/>
+      <circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>
+      <circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/>
+    </svg>
+  )
+}
+function IconChevronDownSm() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.6, marginLeft: 2 }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
+// ─── Dropdown hook (outside click + Escape) ──────────────────────────────────
+function useDropdown() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!open) return
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return { open, setOpen, ref }
+}
+
+// ─── MetricChip, StackedProgressBar, Menu ────────────────────────────────────
+type ChipTone = 'neutral' | 'ok' | 'warn' | 'danger'
+const chipTones: Record<ChipTone, { bg: string; color: string; border: string; numColor: string }> = {
+  neutral: { bg: 'var(--color-bg)', color: 'var(--color-text-2)', border: 'var(--color-border)', numColor: 'var(--color-text)' },
+  ok: { bg: 'var(--color-green-light)', color: 'var(--color-green)', border: 'transparent', numColor: 'var(--color-green)' },
+  warn: { bg: 'var(--color-amber-light)', color: 'var(--color-amber)', border: 'transparent', numColor: 'var(--color-amber)' },
+  danger: { bg: 'var(--color-red-light)', color: 'var(--color-red)', border: 'transparent', numColor: 'var(--color-red)' },
+}
+function MetricChip({ tone = 'neutral', num, label, ariaLabel }: { tone?: ChipTone; num: number; label: string; ariaLabel: string }) {
+  const t = chipTones[tone]
+  return (
+    <span
+      aria-label={ariaLabel}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        padding: '3px 9px', borderRadius: 999,
+        fontSize: 11, fontWeight: 600,
+        background: t.bg, color: t.color,
+        border: `1px solid ${t.border}`,
+        fontFamily: 'var(--font-family-sans)',
+        whiteSpace: 'nowrap',
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    >
+      <span style={{ fontWeight: 700, color: t.numColor }}>{num}</span>
+      {label}
+    </span>
+  )
+}
+
+function StackedProgressBar({ done, failed, blocked, total }: { done: number; failed: number; blocked: number; total: number }) {
+  if (total === 0) return null
+  const pct = (n: number) => (n / total) * 100
+  const execPct = Math.round(((done + failed + blocked) / total) * 100)
+  return (
+    <span
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+      role="img"
+      aria-label={`${done} de ${total} executados com sucesso. ${failed} falharam, ${blocked} bloqueados. ${execPct}% executados.`}
+    >
+      <span
+        style={{
+          position: 'relative',
+          width: 140, height: 8,
+          background: 'var(--color-surface-2)',
+          borderRadius: 999,
+          overflow: 'hidden',
+          display: 'flex',
+          flexShrink: 0,
+        }}
+        aria-hidden="true"
+      >
+        {done > 0 && <span style={{ width: `${pct(done)}%`, background: 'var(--color-green)' }} />}
+        {failed > 0 && <span style={{ width: `${pct(failed)}%`, background: 'var(--color-red)' }} />}
+        {blocked > 0 && <span style={{ width: `${pct(blocked)}%`, background: 'var(--color-amber)' }} />}
+      </span>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-2)', fontVariantNumeric: 'tabular-nums' }}>
+        <b style={{ color: 'var(--color-text)', fontWeight: 700 }}>{done}</b>/{total}
+      </span>
+    </span>
+  )
+}
+
+// Menu primitives (shared styles)
+const menuStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: 'calc(100% + 6px)',
+  right: 0,
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 10,
+  boxShadow: '0 12px 32px rgba(17,24,39,.10), 0 2px 6px rgba(17,24,39,.05)',
+  minWidth: 240,
+  padding: 6,
+  zIndex: 500,
+}
+const menuItemStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '8px 10px',
+  width: '100%',
+  fontSize: 13, fontWeight: 500,
+  color: 'var(--color-text)',
+  background: 'transparent',
+  border: 'none', borderRadius: 6,
+  cursor: 'pointer',
+  textAlign: 'left',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'background 0.12s',
+}
+const menuItemDangerStyle: React.CSSProperties = {
+  ...menuItemStyle,
+  color: 'var(--color-red)',
+}
+const menuLabelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 700,
+  color: 'var(--color-text-3)',
+  textTransform: 'uppercase', letterSpacing: '0.06em',
+  padding: '6px 10px 2px',
+}
+const menuSepStyle: React.CSSProperties = {
+  height: 1, background: 'var(--color-border)', margin: '4px 2px',
+}
+
 // Ghost action button with hover
 function ActionBtn({ onClick, title, children, danger, 'aria-label': ariaLabel }: React.PropsWithChildren<{ onClick?: () => void; title?: string; danger?: boolean; 'aria-label'?: string }>) {
   return (
@@ -157,13 +402,33 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
   const suites = state.suites ?? []
   const hasFilter = activeSuiteFilter.size > 0
 
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createName, setCreateName] = useState('')
+
+  function handleCreateSuite() {
+    const trimmed = createName.trim()
+    addSuite()
+    // addSuite appends to state.suites — update the last one with the chosen name
+    const latest = useSprintStore.getState().state
+    const lastIdx = latest.suites.length - 1
+    if (lastIdx >= 0) {
+      updateSuite(lastIdx, 'name', trimmed || 'Sem nome')
+    }
+    setCreateName('')
+    setCreateModalOpen(false)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Suite Filter + Management */}
       {suites.length >= 2 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>
-            Filtrar Suites:
+        <div
+          role="toolbar"
+          aria-label="Filtro de suites"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10 }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-2)', flexShrink: 0 }}>
+            Filtrar:
           </span>
           {suites.map((suite) => {
             const active = activeSuiteFilter.size === 0 || activeSuiteFilter.has(String(suite.id))
@@ -172,25 +437,49 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
               <button
                 key={suite.id}
                 onClick={() => toggleSuiteFilter(String(suite.id))}
+                aria-pressed={active}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '3px 10px', borderRadius: 20,
-                  border: active ? '0.5px solid var(--color-blue-light)' : '0.5px solid var(--color-border)',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 10px', borderRadius: 999,
+                  border: active ? '1px solid var(--color-blue)' : '1px solid var(--color-border)',
                   background: active ? 'var(--color-blue-light)' : 'var(--color-bg)',
                   color: active ? 'var(--color-blue)' : 'var(--color-text-2)',
-                  fontWeight: 500, fontSize: 11, cursor: 'pointer',
-                  transition: 'background 0.15s',
+                  fontWeight: 500, fontSize: 12, cursor: 'pointer',
+                  transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                   fontFamily: 'var(--font-family-sans)',
                 }}
               >
                 {suite.name || 'Suite'}
-                <span style={{ fontSize: 11 }}>{count}f</span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    minWidth: 18, height: 16, padding: '0 5px',
+                    fontSize: 10, fontWeight: 700,
+                    background: active ? 'var(--color-blue)' : 'var(--color-surface)',
+                    color: active ? '#fff' : 'var(--color-text-2)',
+                    borderRadius: 8,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {count}
+                </span>
               </button>
             )
           })}
           {hasFilter && (
-            <button onClick={clearSuiteFilter} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 10, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer' }}>
-              ✕ Ver todas
+            <button
+              onClick={clearSuiteFilter}
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontSize: 12, padding: '4px 10px', borderRadius: 6,
+                border: 'none', background: 'transparent',
+                color: 'var(--color-text-2)',
+                cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-family-sans)',
+              }}
+            >
+              Limpar
             </button>
           )}
         </div>
@@ -199,10 +488,73 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
       {/* Suite management — oculto em sprints integradas (suites = squads automáticos) */}
       {!isIntegrated && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button onClick={() => addSuite()} style={btnOutline}>
-            + Nova Suite
+          <button
+            onClick={() => { setCreateName(''); setCreateModalOpen(true) }}
+            style={btnPrimaryFilled}
+            aria-label="Criar nova suite"
+          >
+            <IconPlus /> Nova Suite
           </button>
         </div>
+      )}
+
+      {/* Create Suite Modal */}
+      {createModalOpen && createPortal(
+        <div
+          onClick={(e) => e.target === e.currentTarget && setCreateModalOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Nova Suite"
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-blue)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>
+              Nova Suite
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+              Dê um nome para a nova suite de testes. Você pode editar depois.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label
+                htmlFor="new-suite-name"
+                style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+              >
+                Nome da suite
+              </label>
+              <input
+                id="new-suite-name"
+                autoFocus
+                type="text"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="Ex: API · Mobile · Regressão"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleCreateSuite() }
+                  else if (e.key === 'Escape') setCreateModalOpen(false)
+                }}
+                style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 8, fontSize: 14, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', boxSizing: 'border-box', width: '100%' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setCreateModalOpen(false)}
+                style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid var(--color-border-md)', background: 'transparent', color: 'var(--color-text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateSuite}
+                style={btnPrimaryFilled}
+                aria-label="Criar suite"
+              >
+                <IconPlus /> Criar Suite
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
 
       {/* Suites with features */}
@@ -238,6 +590,16 @@ export function FeaturesTab({ isIntegrated, availableSquads }: FeaturesTabProps 
   )
 }
 
+// ─── Template buttons (inline, no dropdown) ─────────────────────────────────
+
+const templateBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 5, padding: '0 12px',
+  border: '1px solid var(--color-border-md)', borderRadius: 8,
+  background: 'var(--color-bg)', color: 'var(--color-text-2)',
+  fontWeight: 600, fontSize: 12, cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap',
+}
+
 // ─── SuiteAccordion ───────────────────────────────────────────────────────────
 
 function SuiteAccordion({
@@ -259,6 +621,8 @@ function SuiteAccordion({
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const kebabDrop = useDropdown()
+  const importDrop = useDropdown()
   const state = useSprintStore((s) => s.state)
   const activeSuiteFilter = useSprintStore((s) => s.activeSuiteFilter)
   const importFeatures = useSprintStore((s) => s.importFeatures)
@@ -311,130 +675,388 @@ function SuiteAccordion({
   const totalExec = suiteFeatures.reduce((a, { f }) => a + (f.exec || 0), 0)
   const blockedCount = suiteFeatures.filter(({ f }) => f.status === 'Bloqueada').length
 
+  const suiteBodyId = `suite-body-${suiteId}`
+  const suiteDisplayName = suiteName || 'Suite sem nome'
+  const featureCount = suiteFeatures.length
+  const isEmpty = featureCount === 0
+
+  function toggleOpen() { setOpen((o) => !o) }
+  function startRename() { setNameVal(suiteName); setEditingName(true) }
+  function handleReorderKey(domIdx: number, direction: -1 | 1) {
+    const target = domIdx + direction
+    if (target < 0 || target >= suiteFeatures.length) return
+    reorderFeatures(suiteId, domIdx, target)
+  }
+
   return (
-    <div style={{ background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 10, overflow: 'hidden' }}>
+    <div
+      role="region"
+      aria-label={suiteDisplayName}
+      style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'visible', transition: 'border-color 0.12s' }}
+    >
       {/* Suite header */}
       <div
-        style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px',
-          background: 'var(--color-bg)', borderBottom: open ? '1px solid var(--color-border)' : 'none',
-          cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap',
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-controls={suiteBodyId}
+        aria-label={`Suite ${suiteDisplayName}. ${open ? 'Recolher' : 'Expandir'}.`}
+        onClick={toggleOpen}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if ((e.target as HTMLElement).closest('[data-stop-header-key]')) return
+            e.preventDefault()
+            toggleOpen()
+          }
         }}
-        onClick={() => setOpen((o) => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 18px',
+          background: 'var(--color-surface)',
+          borderBottom: open ? '1px solid var(--color-border)' : 'none',
+          cursor: 'pointer', userSelect: 'none', flexWrap: 'wrap',
+          outline: 'none',
+        }}
       >
-        <span style={{ color: 'var(--color-blue)', fontWeight: 700, fontSize: 14 }}>{open ? '▾' : '▸'}</span>
-        <span style={{ width: 4, height: 20, background: 'var(--color-blue)', borderRadius: 4, flexShrink: 0 }} />
-
-        {editingName ? (
-          <input
-            autoFocus
-            type="text"
-            value={nameVal}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => setNameVal(e.target.value)}
-            onBlur={() => { onRename(nameVal); setEditingName(false) }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { onRename(nameVal); setEditingName(false) } }}
-            style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-family-sans)', background: 'var(--color-surface)' }}
-          />
-        ) : (
-          <strong style={{ fontSize: 15, color: 'var(--color-text)' }}>
-            {suiteName || 'Suite sem nome'}
-          </strong>
-        )}
-
-        {blockedCount > 0 && (
-          <span style={{ fontSize: 10, fontWeight: 500, background: 'var(--color-red-light)', color: 'var(--color-red)', border: '0.5px solid var(--color-red-mid)', padding: '2px 8px', borderRadius: 10 }}>
-            {blockedCount} {blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
-          </span>
-        )}
-
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-2)', fontWeight: 600 }}>
-          {suiteFeatures.length} func. · {totalTests} testes · {totalExec} executados
+        {/* Chevron */}
+        <span
+          aria-hidden="true"
+          style={{
+            width: 28, height: 28,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--color-text-2)', borderRadius: 6, flexShrink: 0,
+          }}
+        >
+          <IconChevron open={open} />
         </span>
 
-        <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
-          <ActionBtn
-            onClick={() => { const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId)); exportSuiteAsCSV(suiteName, sFeatures) }}
-            title="Exportar casos desta suite para reimportação (CSV)"
-            aria-label="Exportar CSV da suite"
-          ><IconExportCSV /></ActionBtn>
-          <ActionBtn
-            onClick={() => exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })}
-            title="Exportar cobertura desta suite (CSV)"
-            aria-label="Exportar cobertura da suite"
-          ><IconChart /></ActionBtn>
-          <ActionBtn
-            onClick={() => { setNameVal(suiteName); setEditingName(true) }}
-            title="Renomear suite"
-            aria-label="Renomear suite"
-          ><IconEdit /></ActionBtn>
-          <ActionBtn onClick={onDuplicate} title="Duplicar suite (com todas as funcionalidades)" aria-label="Duplicar suite">
-            <IconDuplicate />
-          </ActionBtn>
-          <ActionBtn onClick={() => setConfirmRemove(true)} title="Excluir suite" danger aria-label="Excluir suite">
-            <IconTrash />
-          </ActionBtn>
+        {/* Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+          <span
+            aria-hidden="true"
+            style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--color-blue)', flexShrink: 0 }}
+          />
+          {editingName ? (
+            <input
+              autoFocus
+              type="text"
+              value={nameVal}
+              data-stop-header-key
+              aria-label="Nome da suite"
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setNameVal(e.target.value)}
+              onBlur={() => { onRename(nameVal); setEditingName(false) }}
+              onKeyDown={(e) => {
+                e.stopPropagation()
+                if (e.key === 'Enter') { onRename(nameVal); setEditingName(false) }
+                else if (e.key === 'Escape') { setNameVal(suiteName); setEditingName(false) }
+              }}
+              style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', border: '1px solid var(--color-border-md)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-family-sans)', background: 'var(--color-surface)' }}
+            />
+          ) : (
+            <>
+              <strong
+                onDoubleClick={(e) => { e.stopPropagation(); startRename() }}
+                title="Clique duas vezes para renomear"
+                style={{
+                  fontSize: 15, fontWeight: 700, color: 'var(--color-text)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  maxWidth: 320,
+                }}
+              >
+                {suiteDisplayName}
+              </strong>
+              <button
+                type="button"
+                data-stop-header-key
+                onClick={(e) => { e.stopPropagation(); startRename() }}
+                aria-label={`Renomear suite ${suiteDisplayName}`}
+                title="Renomear"
+                className="suite-rename-btn"
+                style={{
+                  width: 26, height: 26,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  borderRadius: 6,
+                  color: 'var(--color-text-3)',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+                }}
+              >
+                <IconPencil />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Metric chips */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          role="group"
+          aria-label="Métricas da suite"
+          style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}
+        >
+          <MetricChip
+            num={featureCount}
+            label={featureCount === 1 ? 'func.' : 'func.'}
+            ariaLabel={`${featureCount} ${featureCount === 1 ? 'funcionalidade' : 'funcionalidades'}`}
+          />
+          <MetricChip
+            num={totalTests}
+            label="testes"
+            ariaLabel={`${totalTests} ${totalTests === 1 ? 'teste no total' : 'testes no total'}`}
+          />
+          <MetricChip
+            tone={totalExec > 0 ? 'ok' : 'neutral'}
+            num={totalExec}
+            label="exec."
+            ariaLabel={`${totalExec} ${totalExec === 1 ? 'teste executado' : 'testes executados'}`}
+          />
+          {blockedCount > 0 && (
+            <MetricChip
+              tone="danger"
+              num={blockedCount}
+              label={blockedCount === 1 ? 'bloqueada' : 'bloqueadas'}
+              ariaLabel={`${blockedCount} ${blockedCount === 1 ? 'funcionalidade bloqueada' : 'funcionalidades bloqueadas'}`}
+            />
+          )}
+        </div>
+
+        {/* Kebab dropdown */}
+        <div ref={kebabDrop.ref} onClick={(e) => e.stopPropagation()} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            data-stop-header-key
+            onClick={() => kebabDrop.setOpen((v) => !v)}
+            aria-label="Mais ações da suite"
+            aria-haspopup="menu"
+            aria-expanded={kebabDrop.open}
+            className="suite-kebab-btn"
+            style={{
+              width: 32, height: 32,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent',
+              border: '1px solid transparent',
+              borderRadius: 8,
+              color: 'var(--color-text-2)',
+              cursor: 'pointer',
+              transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+            }}
+          >
+            <IconMoreHoriz />
+          </button>
+          {kebabDrop.open && (
+            <div role="menu" style={menuStyle}>
+              <div style={menuLabelStyle}>Exportar</div>
+              <button
+                role="menuitem"
+                className="suite-menu-item"
+                style={menuItemStyle}
+                onClick={() => {
+                  kebabDrop.setOpen(false)
+                  const sFeatures = state.features.filter((f) => String(f.suiteId) === String(suiteId))
+                  exportSuiteAsCSV(suiteName, sFeatures)
+                }}
+              >
+                <IconDownload /> Baixar CSV (casos)
+              </button>
+              <button
+                role="menuitem"
+                className="suite-menu-item"
+                style={menuItemStyle}
+                onClick={() => {
+                  kebabDrop.setOpen(false)
+                  exportCoverage({ ...state, suites: [{ id: suiteId, name: suiteName }] })
+                }}
+              >
+                <IconBarChart3 /> Baixar cobertura
+              </button>
+              <div style={menuSepStyle} />
+              <button
+                role="menuitem"
+                className="suite-menu-item"
+                style={menuItemStyle}
+                onClick={() => { kebabDrop.setOpen(false); startRename() }}
+              >
+                <IconPencil /> Renomear
+              </button>
+              <button
+                role="menuitem"
+                className="suite-menu-item"
+                style={menuItemStyle}
+                onClick={() => { kebabDrop.setOpen(false); onDuplicate() }}
+              >
+                <IconCopy /> Duplicar
+              </button>
+              <div style={menuSepStyle} />
+              <button
+                role="menuitem"
+                className="suite-menu-item-danger"
+                style={menuItemDangerStyle}
+                onClick={() => { kebabDrop.setOpen(false); setConfirmRemove(true) }}
+              >
+                <IconTrash2 /> Excluir suite
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {open && (
-        <div style={{ padding: '16px 20px 20px' }}>
-          {suiteFeatures.map(({ f, i }, domIdx) => (
-            <div
-              key={f.id}
-              draggable
-              onDragStart={(e) => { setDragIdx(domIdx); e.dataTransfer.effectAllowed = 'move' }}
-              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverIdx(domIdx) }}
-              onDrop={(e) => {
-                e.preventDefault()
-                if (dragIdx !== null && dragIdx !== domIdx) reorderFeatures(suiteId, dragIdx, domIdx)
-                setDragIdx(null); setDragOverIdx(null)
-              }}
-              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
-              style={{
-                opacity: dragIdx === domIdx ? 0.4 : 1,
-                outline: dragOverIdx === domIdx && dragIdx !== domIdx ? '2px dashed var(--color-blue)' : 'none',
-                outlineOffset: 2,
-                borderRadius: 8,
-                transition: 'opacity 0.15s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                <div
-                  title="Arraste para reordenar"
-                  style={{ cursor: 'grab', color: 'var(--color-text-3)', fontSize: 16, padding: '12px 2px 0', flexShrink: 0, userSelect: 'none', lineHeight: 1 }}
-                >
-                  ⠿
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <FeatureAccordion feature={f} featureIndex={i} isIntegrated={isIntegrated} availableSquads={availableSquads} />
+        <div id={suiteBodyId} style={{ padding: '16px 18px 18px' }}>
+          {isEmpty ? (
+            <SuiteEmptyState
+              onAddFeature={onAddFeature}
+              onImportClick={() => importInputRef.current?.click()}
+            />
+          ) : (
+            suiteFeatures.map(({ f, i }, domIdx) => (
+              <div
+                key={f.id}
+                draggable
+                onDragStart={(e) => { setDragIdx(domIdx); e.dataTransfer.effectAllowed = 'move' }}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverIdx(domIdx) }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  if (dragIdx !== null && dragIdx !== domIdx) reorderFeatures(suiteId, dragIdx, domIdx)
+                  setDragIdx(null); setDragOverIdx(null)
+                }}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+                style={{
+                  opacity: dragIdx === domIdx ? 0.4 : 1,
+                  outline: dragOverIdx === domIdx && dragIdx !== domIdx ? '2px dashed var(--color-blue)' : 'none',
+                  outlineOffset: 2,
+                  borderRadius: 8,
+                  transition: 'opacity 0.15s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <button
+                    aria-label={`Reordenar "${f.name || 'funcionalidade'}" (use setas ↑ e ↓ no teclado)`}
+                    title="Arraste ou use ↑/↓"
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp') { e.preventDefault(); handleReorderKey(domIdx, -1) }
+                      else if (e.key === 'ArrowDown') { e.preventDefault(); handleReorderKey(domIdx, 1) }
+                    }}
+                    className="suite-drag-handle"
+                    style={{
+                      width: 28, height: 28,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      marginTop: 10,
+                      background: 'transparent', border: 'none', borderRadius: 6,
+                      color: 'var(--color-text-3)',
+                      cursor: 'grab', flexShrink: 0,
+                      transition: 'background 0.12s, color 0.12s',
+                    }}
+                  >
+                    <IconGripDots />
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <FeatureAccordion feature={f} featureIndex={i} isIntegrated={isIntegrated} availableSquads={availableSquads} />
+                  </div>
                 </div>
               </div>
+            ))
+          )}
+
+          {/* Footer actions (when suite has features) */}
+          {!isEmpty && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--color-border)' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onAddFeature() }}
+                aria-label="Adicionar nova funcionalidade"
+                className="suite-add-feature"
+                style={{
+                  flex: 1, height: 40,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  background: 'var(--color-blue-light)',
+                  color: 'var(--color-blue)',
+                  border: '1px dashed var(--color-blue)',
+                  borderRadius: 8,
+                  fontWeight: 600, fontSize: 13,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-family-sans)',
+                  transition: 'background 0.12s, color 0.12s, border-style 0.12s',
+                }}
+              >
+                <IconPlus /> Adicionar Funcionalidade
+              </button>
+
+              <div ref={importDrop.ref} style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  onClick={() => importDrop.setOpen((v) => !v)}
+                  aria-label="Opções de importação"
+                  aria-haspopup="menu"
+                  aria-expanded={importDrop.open}
+                  style={btnOutlineNeutral}
+                >
+                  <IconDownload /> Importar <IconChevronDownSm />
+                </button>
+                {importDrop.open && (
+                  <div role="menu" style={menuStyle}>
+                    <button
+                      role="menuitem"
+                      className="suite-menu-item"
+                      style={menuItemStyle}
+                      onClick={() => { importDrop.setOpen(false); importInputRef.current?.click() }}
+                    >
+                      <IconFileText />
+                      Importar arquivo
+                      <span style={{ marginLeft: 'auto', color: 'var(--color-text-3)', fontSize: 11 }}>.feature · .csv</span>
+                    </button>
+                    <div style={menuSepStyle} />
+                    <div style={menuLabelStyle}>Baixar template</div>
+                    <button
+                      role="menuitem"
+                      className="suite-menu-item"
+                      style={menuItemStyle}
+                      onClick={() => { importDrop.setOpen(false); downloadTemplate('feature') }}
+                    >
+                      <IconDownload /> Template .feature (Gherkin)
+                    </button>
+                    <button
+                      role="menuitem"
+                      className="suite-menu-item"
+                      style={menuItemStyle}
+                      onClick={() => { importDrop.setOpen(false); downloadTemplate('csv') }}
+                    >
+                      <IconDownload /> Template .csv
+                    </button>
+                  </div>
+                )}
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".feature,.csv"
+                  style={{ display: 'none' }}
+                  onChange={handleImport}
+                />
+              </div>
             </div>
-          ))}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddFeature() }}
-              style={{ flex: 1, padding: 12, border: '2px dashed var(--color-border-md)', borderRadius: 8, background: 'transparent', color: 'var(--color-blue)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)' }}
-            >
-              + Adicionar Funcionalidade
-            </button>
-            <label
-              title="Importar .feature ou .csv"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', border: '1px solid var(--color-border-md)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-family-sans)', whiteSpace: 'nowrap' }}
-            >
-              📥 Importar
-              <input
-                ref={importInputRef}
-                type="file"
-                accept=".feature,.csv"
-                style={{ display: 'none' }}
-                onChange={handleImport}
-              />
-            </label>
-          </div>
+          )}
+
+          {/* Hidden file input also for empty state */}
+          {isEmpty && (
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".feature,.csv"
+              style={{ display: 'none' }}
+              onChange={handleImport}
+            />
+          )}
         </div>
       )}
+
+      <style>{`
+        .suite-kebab-btn:hover { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text); }
+        .suite-drag-handle:hover, .suite-drag-handle:focus { background: var(--color-surface-2); color: var(--color-text-2); outline: none; }
+        .suite-menu-item:hover { background: var(--color-bg); }
+        .suite-menu-item-danger:hover { background: var(--color-red-light); }
+        .suite-add-feature:hover { background: var(--color-blue); color: #fff; border-style: solid; }
+        .suite-rename-btn:hover { background: var(--color-bg); color: var(--color-text); border-color: var(--color-border); }
+      `}</style>
 
       {confirmRemove && (
         <ConfirmModal
@@ -445,6 +1067,52 @@ function SuiteAccordion({
           onCancel={() => setConfirmRemove(false)}
         />
       )}
+    </div>
+  )
+}
+
+// ─── SuiteEmptyState ──────────────────────────────────────────────────────────
+
+function SuiteEmptyState({ onAddFeature, onImportClick }: { onAddFeature: () => void; onImportClick: () => void }) {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: '28px 16px',
+        border: '1px dashed var(--color-border-md)',
+        borderRadius: 10,
+        background: 'var(--color-bg)',
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          width: 48, height: 48,
+          margin: '0 auto 10px',
+          borderRadius: 12,
+          background: 'var(--color-blue-light)',
+          color: 'var(--color-blue)',
+          display: 'grid', placeItems: 'center',
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 2v7.31" /><path d="M14 9.3V1.99" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" /><path d="M5.52 16h12.96" />
+        </svg>
+      </div>
+      <h4 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>
+        Nenhuma funcionalidade ainda
+      </h4>
+      <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.5 }}>
+        Crie manualmente ou importe um arquivo <code style={{ background: 'var(--color-surface-2)', padding: '1px 5px', borderRadius: 4, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12 }}>.feature</code> ou <code style={{ background: 'var(--color-surface-2)', padding: '1px 5px', borderRadius: 4, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12 }}>.csv</code> para começar.
+      </p>
+      <div style={{ display: 'inline-flex', gap: 8 }}>
+        <button onClick={onAddFeature} style={btnPrimaryFilled} aria-label="Adicionar nova funcionalidade">
+          <IconPlus /> Adicionar Funcionalidade
+        </button>
+        <button onClick={onImportClick} style={btnOutlineNeutral} aria-label="Importar arquivo .feature ou .csv">
+          <IconDownload /> Importar arquivo
+        </button>
+      </div>
     </div>
   )
 }
@@ -513,7 +1181,17 @@ function FeatureAccordion({ feature, featureIndex, isIntegrated, availableSquads
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-2)' }}>{open ? '▾' : '▶'}</span>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 20, height: 20,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-text-3)',
+              flexShrink: 0,
+            }}
+          >
+            <IconChevron open={open} />
+          </span>
           <span
             style={{
               fontWeight: 600,
@@ -557,25 +1235,13 @@ function FeatureAccordion({ feature, featureIndex, isIntegrated, availableSquads
           )}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {/* Mini progress dots */}
-          {cases.length > 0 && (
-            <span style={{ display: 'flex', gap: 2 }}>
-              {(() => {
-                const done = cases.filter(c => c.status === 'Concluído').length
-                const failed = cases.filter(c => c.status === 'Falhou').length
-                const blocked = cases.filter(c => c.status === 'Bloqueado').length
-                const pending = cases.length - done - failed - blocked
-                return (
-                  <>
-                    {done > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-green)', background: 'var(--color-green-light)', padding: '1px 5px', borderRadius: 4 }}>{done}✓</span>}
-                    {failed > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-red)', background: 'var(--color-red-light)', padding: '1px 5px', borderRadius: 4 }}>{failed}✗</span>}
-                    {blocked > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-amber)', background: 'var(--color-amber-light)', padding: '1px 5px', borderRadius: 4 }}>{blocked}⊘</span>}
-                    {pending > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-3)' }}>{pending}○</span>}
-                  </>
-                )
-              })()}
-            </span>
-          )}
+          {/* Stacked progress bar */}
+          {cases.length > 0 && (() => {
+            const done = cases.filter(c => c.status === 'Concluído').length
+            const failed = cases.filter(c => c.status === 'Falhou').length
+            const blocked = cases.filter(c => c.status === 'Bloqueado').length
+            return <StackedProgressBar done={done} failed={failed} blocked={blocked} total={cases.length} />
+          })()}
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', flexShrink: 0 }}>
             {feature.tests} Testes
           </span>
@@ -1116,6 +1782,40 @@ const btnOutline: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'var(--font-family-sans)',
+}
+
+const btnPrimaryFilled: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  height: 34,
+  padding: '0 14px',
+  background: 'var(--color-blue)',
+  color: '#fff',
+  border: '1px solid var(--color-blue)',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  transition: 'background 0.12s, border-color 0.12s',
+}
+
+const btnOutlineNeutral: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  height: 40,
+  padding: '0 14px',
+  background: 'var(--color-surface)',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border-md)',
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: 'pointer',
+  fontFamily: 'var(--font-family-sans)',
+  whiteSpace: 'nowrap',
 }
 
 const iconBtn: React.CSSProperties = {

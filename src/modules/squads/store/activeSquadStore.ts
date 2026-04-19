@@ -37,14 +37,24 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
     try {
       const squads = await listMySquads()
       const savedId = localStorage.getItem(LS_KEY)
-      const validSaved = squads.find((s) => s.id === savedId)
+      const isAll = savedId === 'all'
+      const validSaved = isAll ? null : squads.find((s) => s.id === savedId)
 
-      // Auto-select: saved > first > null
-      const activeId = validSaved?.id ?? squads[0]?.id ?? null
+      // Auto-select: saved ('all' ou id válido) > primeiro squad > null
+      // IMPORTANTE: 'all' é um valor válido para admins/gerentes ("Todos os squads").
+      // Não cair para squads[0] quando saved='all' — isso causava o squad voltar
+      // para o primeiro ao trocar aba/funcionalidade.
+      const activeId = isAll ? 'all' : (validSaved?.id ?? squads[0]?.id ?? null)
 
       set({ squads, isLoading: false })
-      if (activeId) await get().setActiveSquad(activeId)
-      else set({ activeSquadId: null, myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
+      if (activeId === 'all') {
+        // 'all' não é um squad real — apenas preserva a seleção e zera role/permissions.
+        set({ activeSquadId: 'all', myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
+      } else if (activeId) {
+        await get().setActiveSquad(activeId)
+      } else {
+        set({ activeSquadId: null, myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
+      }
     } catch (e) {
       if (import.meta.env.DEV) console.warn('[Squads] Failed to load squads:', e)
       set({ squads: [], isLoading: false })
@@ -54,6 +64,13 @@ export const useActiveSquadStore = create<ActiveSquadState>((set, get) => ({
   setActiveSquad: async (squadId: string) => {
     localStorage.setItem(LS_KEY, squadId)
     set({ activeSquadId: squadId })
+
+    // 'all' é valor especial para admins/gerentes — não há squad real para
+    // buscar role/permissions. Evita requisições desnecessárias que falhariam.
+    if (squadId === 'all') {
+      set({ myRole: null, myPermissions: { ...DEFAULT_PERMISSIONS } })
+      return
+    }
 
     try {
       const role = await getMyRole(squadId)
