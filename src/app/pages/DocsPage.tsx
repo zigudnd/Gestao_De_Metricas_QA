@@ -70,15 +70,15 @@ const SECTIONS: DocSection[] = [
         </P>
         <H3>Principais funcionalidades</H3>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li>Gestão de múltiplas Sprints com métricas independentes</li>
-          <li>Suites de teste organizadas por plataforma (Android, iOS, BFF, etc.)</li>
-          <li>Casos de teste com status, complexidade e cenários Gherkin</li>
-          <li>Rastreamento de bugs com severidade, stack, MTTR e retestes</li>
-          <li>Burndown Chart com progresso real vs ideal</li>
-          <li>QA Health Score calculado automaticamente</li>
-          <li>Registro de blockers/impedimentos com horas bloqueadas</li>
-          <li>Daily Report por data e exportação de métricas</li>
-          <li>Alinhamentos técnicos registrados por funcionalidade</li>
+          <li><strong>Cobertura QA</strong> — Sprints com KPIs, Health Score, Burndown, bugs, blockers e alinhamentos</li>
+          <li><strong>Status Report</strong> — Relatórios semanais com seções, itens, Gantt, dependências e export</li>
+          <li><strong>Releases</strong> — Pipeline de releases com fases, checkpoint, cronograma e regressivos</li>
+          <li><strong>Gestão de PRs</strong> — Cadastro, análise e review de Pull Requests por release</li>
+          <li><strong>Comparação de Sprints</strong> — KPIs lado a lado entre múltiplas sprints</li>
+          <li><strong>Cadastros</strong> — Squads, perfis de acesso, usuários, API Keys, Audit Trail</li>
+          <li><strong>Feature Toggles</strong> — Admin pode ativar/desativar módulos do sistema</li>
+          <li><strong>Importação</strong> — .feature (Gherkin) e .csv com templates para download</li>
+          <li><strong>Exportação</strong> — JPG, JSON, CSV cobertura, CSV suite, clipboard</li>
         </ul>
       </div>
     ),
@@ -835,18 +835,22 @@ const SECTIONS: DocSection[] = [
 
         <H3>Como funciona</H3>
         <P>
-          A página de Squads (<strong>/squads</strong>) tem 3 abas:
+          A página de Cadastros (<strong>/squads</strong>) tem 6 abas:
         </P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>👥 Squads</strong> — cards expansíveis com membros, roles e permissões inline</li>
-          <li><strong>🔐 Perfis de Acesso</strong> — templates de permissão reutilizáveis (4 de sistema + custom)</li>
-          <li><strong>👤 Usuários</strong> — somente admin: criar, editar, ativar/desativar, resetar senha</li>
+          <li><strong>Squads</strong> — cards expansíveis com membros, roles e permissões inline</li>
+          <li><strong>Perfis de Acesso</strong> — templates de permissão reutilizáveis (4 de sistema + custom)</li>
+          <li><strong>Usuários</strong> — admin/gerente: criar, editar, ativar/desativar, resetar senha</li>
+          <li><strong>API Keys</strong> — admin/gerente: criar chaves de acesso externo com scopes e squad restrictions</li>
+          <li><strong>Audit Trail</strong> — admin/gerente: visualizar logs de todas as ações (CRUD, roles, permissões)</li>
+          <li><strong>Módulos</strong> — admin/gerente: ativar ou desativar módulos do sistema (feature toggles)</li>
         </ul>
 
         <H3>Roles e Permissões</H3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
           {[
-            ['Admin (global)', 'Acesso total ao sistema: criar usuários, gerenciar todos os squads, alterar roles globais. Definido no perfil do usuário, não no squad.', 'var(--color-amber)'],
+            ['Admin (global)', 'Acesso total ao sistema: criar usuários, gerenciar todos os squads, alterar roles globais, API Keys, Audit Trail e Feature Toggles.', 'var(--color-amber)'],
+            ['Gerente (global)', 'Acesso administrativo similar ao Admin, exceto: não pode criar outros admins nem resetar senhas de admins.', '#8b5cf6'],
             ['QA Lead (squad)', 'Líder do squad: pode adicionar/remover membros, editar permissões, excluir o squad. Atribuído automaticamente ao criador do squad.', 'var(--color-blue)'],
             ['QA (squad)', 'Membro padrão: executa operações dentro do squad conforme suas permissões individuais. Pode sair do squad por conta própria.', 'var(--color-green)'],
             ['Stakeholder (squad)', 'Visibilidade: acesso de leitura ao squad e seus dados. Sem permissões de exclusão por padrão.', 'var(--color-text-3)'],
@@ -863,11 +867,11 @@ const SECTIONS: DocSection[] = [
 
         <H3>Permissões Granulares</H3>
         <P>
-          Cada membro de um squad tem 7 permissões individuais de exclusão que controlam o que ele pode apagar:
+          Cada membro de um squad tem 30 permissões individuais organizadas por recurso (10) e ação (criar, editar, excluir):
         </P>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-          {['Sprints', 'Bugs', 'Funcionalidades', 'Casos de Teste', 'Suites', 'Bloqueios', 'Alinhamentos'].map((p) => (
-            <Chip key={p} label={`Excluir ${p}`} color="var(--color-blue)" />
+          {['Sprints', 'Bugs', 'Funcionalidades', 'Casos de Teste', 'Suites', 'Bloqueios', 'Alinhamentos', 'Releases', 'Status Reports', 'Checkpoints'].map((p) => (
+            <Chip key={p} label={p} color="var(--color-blue)" />
           ))}
         </div>
         <P>
@@ -892,22 +896,292 @@ const SECTIONS: DocSection[] = [
         </div>
         <P>Admins podem criar perfis customizados na aba Perfis de Acesso.</P>
 
-        <H3>Gestão de Usuários (Admin)</H3>
+        <H3>Gestão de Usuários (Admin/Gerente)</H3>
         <P>
-          Na aba Usuários (visível apenas para admins), é possível:
+          Na aba Usuários (visível para admin e gerente), é possível:
         </P>
         <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
-          <li><strong>Criar usuário</strong> — com senha temporária (troca obrigatória no primeiro login)</li>
-          <li><strong>Resetar senha</strong> — gera nova senha temporária com flag de troca obrigatória</li>
-          <li><strong>Editar</strong> — alterar nome e role global (admin/user)</li>
+          <li><strong>Criar usuário</strong> — com senha temporária Mudar@123!Ts (troca obrigatória no primeiro login)</li>
+          <li><strong>Resetar senha</strong> — reseta para Mudar@123!Ts com flag de troca obrigatória</li>
+          <li><strong>Reset em lote</strong> — selecionar múltiplos usuários e resetar senhas de uma vez</li>
+          <li><strong>Editar</strong> — alterar nome e role global (Admin/Gerente/Usuário)</li>
           <li><strong>Ativar/Desativar</strong> — desativar sem excluir (preserva histórico)</li>
-          <li><strong>Filtrar</strong> — por role (Admin/User), status (Ativo/Inativo) e busca por nome/email/squad</li>
+          <li><strong>Filtrar</strong> — por role, status (Ativo/Inativo) e busca por nome/email/squad</li>
         </ul>
 
         <H3>Visibilidade de Sprints</H3>
         <P>
           Sprints vinculadas a um squad só são visíveis para membros daquele squad.
           Admins veem todas as sprints. Sprints sem squad (pessoais/legado) são visíveis para todos os usuários autenticados.
+        </P>
+      </div>
+    ),
+  },
+  {
+    id: 'releases',
+    icon: '🚀',
+    title: 'Pipeline de Releases',
+    group: 'Releases',
+    content: (
+      <div>
+        <H2>Pipeline de Releases</H2>
+        <P>
+          O módulo de Releases gerencia o ciclo de vida completo de uma release de software — do planejamento até a produção.
+          Cada release possui um pipeline de fases, cronograma, eventos e painel de regressivos por squad.
+        </P>
+
+        <H3>Fases do pipeline</H3>
+        <P>Uma release percorre as seguintes fases (transições controladas):</P>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {['Planejada', 'Em Desenvolvimento', 'Corte', 'Em Homologação', 'Em QA', 'Em Regressivo', 'Aguardando Aprovação', 'Aprovada', 'Em Produção', 'Cancelada'].map((s) => (
+            <Chip key={s} label={s} color="var(--color-blue)" />
+          ))}
+        </div>
+
+        <H3>Abas da Release</H3>
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
+          <li><strong>Checkpoint</strong> — Dashboard com KPIs por squad: testes totais, executados, aprovados, falhos, bloqueados, bugs e blockers. Inclui snapshot para registro de ponto de controle.</li>
+          <li><strong>Cronograma</strong> — Timeline visual com as fases e datas planejadas vs reais.</li>
+          <li><strong>Eventos</strong> — Log de eventos relevantes da release (deploys, rollbacks, hotfixes).</li>
+          <li><strong>Regressivos</strong> — Painel por squad com suites, funcionalidades e casos de teste para regressão completa.</li>
+        </ul>
+
+        <H3>Squads na Release</H3>
+        <P>
+          Cada release pode ter múltiplos squads participando. Cada squad traz suas suites de teste, funcionalidades e
+          casos de teste para o regressivo. O checkpoint agrega KPIs de todos os squads em uma visão consolidada.
+        </P>
+      </div>
+    ),
+  },
+  {
+    id: 'prs',
+    icon: '🔀',
+    title: 'Gestão de PRs',
+    group: 'Releases',
+    content: (
+      <div>
+        <H2>Gestão de Pull Requests</H2>
+        <P>
+          O módulo de PRs permite cadastrar, analisar e revisar Pull Requests vinculados a uma release.
+          Acessível via menu lateral (<strong>Gestão de PRs</strong>) ou pela aba PRs dentro de uma release.
+        </P>
+
+        <H3>Cadastro de PR</H3>
+        <P>Ao registrar um PR, os campos incluem:</P>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+          {[
+            ['Link do PR', 'URL do GitHub/GitLab (validado: apenas http/https)'],
+            ['Repositório', 'Nome do repositório (ex: frontend-app)'],
+            ['Tipo de Mudança', 'Feature, Bugfix, Hotfix, Refactor, Config, Docs'],
+            ['Squad', 'Squad responsável pelo PR'],
+            ['Descrição', 'Detalhes sobre o que o PR altera'],
+          ].map(([field, desc]) => (
+            <div key={field} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{field}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <H3>Fluxo de Review</H3>
+        <P>Cada PR segue o fluxo:</P>
+        <P>
+          <Chip label="Pendente" color="var(--color-amber)" /> {'→'} <Chip label="Aprovado" color="var(--color-green)" /> ou <Chip label="Rejeitado" color="var(--color-red)" />
+        </P>
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
+          <li>Apenas admin/gerente podem aprovar ou rejeitar</li>
+          <li>Rejeição exige observação obrigatória com motivo</li>
+          <li>O autor do PR não pode revisar o próprio PR</li>
+          <li>PRs só podem ser criados quando a release está na fase "Corte"</li>
+        </ul>
+
+        <H3>Visão por Squad</H3>
+        <P>
+          A página de PRs exibe resumo de participação por squad: total de PRs, taxa de aprovação, pendentes e distribuição por tipo de mudança.
+        </P>
+      </div>
+    ),
+  },
+  {
+    id: 'compare',
+    icon: '📊',
+    title: 'Comparação de Sprints',
+    group: 'Cobertura QA',
+    content: (
+      <div>
+        <H2>Comparação de Sprints</H2>
+        <P>
+          A página de comparação (<strong>/sprints/compare</strong>) permite visualizar KPIs de múltiplas sprints lado a lado
+          em gráficos de barras agrupadas. Selecione as sprints que deseja comparar na listagem.
+        </P>
+
+        <H3>KPIs comparados</H3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            ['Health Score', 'Saúde geral do processo de QA'],
+            ['Execução %', 'Percentual de testes executados'],
+            ['Capacidade Real %', 'Percentual de testes executáveis (excluindo bloqueados)'],
+            ['Bugs Abertos', 'Quantidade de bugs não resolvidos'],
+            ['Bugs Resolvidos', 'Quantidade de bugs corrigidos'],
+            ['MTTR Global', 'Tempo médio de resolução em horas'],
+            ['Índice de Retrabalho', 'Percentual de retestes sobre total'],
+            ['Horas Bloqueadas', 'Total de horas perdidas por impedimentos'],
+            ['Atraso em Casos', 'Casos atrasados em relação à meta'],
+          ].map(([name, desc]) => (
+            <div key={name} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px', background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 12, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>{name}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'import-export',
+    icon: '📥',
+    title: 'Importação e Exportação',
+    group: 'Cobertura QA',
+    content: (
+      <div>
+        <H2>Importação e Exportação</H2>
+
+        <H3>Importação de Casos de Teste</H3>
+        <P>
+          Na aba Testes, dentro de cada suite, o botão <strong>Importar</strong> aceita arquivos <code>.feature</code> (Gherkin) e <code>.csv</code>.
+          Templates de exemplo podem ser baixados pelos botões <strong>.feature</strong> e <strong>.csv</strong> ao lado.
+        </P>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Formato .feature (Gherkin)</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>
+              Cada <code>Funcionalidade:</code> cria uma funcionalidade. Cada <code>Cenário:</code> cria um caso de teste com o gherkin completo.
+              Suporta <code>Feature:</code> e <code>Scenario:</code> em inglês.
+            </span>
+          </div>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '12px 14px', background: 'var(--color-bg)' }}>
+            <strong style={{ fontSize: 13, color: 'var(--color-text)', display: 'block', marginBottom: 4 }}>Formato .csv</strong>
+            <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>
+              Colunas: <code>Funcionalidade, Cenário, Complexidade, Gherkin</code>. A primeira linha é o header. Complexidade aceita: Baixa, Moderada, Alta.
+            </span>
+          </div>
+        </div>
+
+        <H3>Exportações disponíveis</H3>
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
+          <li><strong>JPG (Overview)</strong> — Captura da aba Resumo como imagem via html2canvas</li>
+          <li><strong>JSON</strong> — Backup completo da sprint (reimportável como nova sprint)</li>
+          <li><strong>CSV Cobertura</strong> — Relatório por suite/funcionalidade com status de cada caso</li>
+          <li><strong>CSV Suite</strong> — Exporta casos de uma suite em formato reimportável</li>
+          <li><strong>Status Report JPG</strong> — Captura do Preview do report</li>
+          <li><strong>Status Report Clipboard</strong> — Texto formatado para Slack/Teams</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'apikeys',
+    icon: '🔑',
+    title: 'API Keys',
+    group: 'Cadastros',
+    content: (
+      <div>
+        <H2>API Keys — Acesso Externo</H2>
+        <P>
+          API Keys permitem que sistemas externos (dashboards, CI/CD, scripts) acessem dados do ToStatos
+          via REST API sem precisar de um JWT de usuário. Gerenciadas na aba <strong>API Keys</strong> do painel de Cadastros.
+        </P>
+
+        <H3>Criação</H3>
+        <P>
+          Ao criar uma API Key, defina um nome descritivo, os scopes de permissão e opcionalmente restrinja
+          a squads específicos e data de expiração. O token completo é exibido <strong>uma única vez</strong> — copie e armazene com segurança.
+        </P>
+
+        <H3>Scopes disponíveis</H3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {['read:metrics', 'read:sprints', 'read:releases', 'read:squads', 'read:prs', 'write:prs'].map((s) => (
+            <Chip key={s} label={s} color="var(--color-blue)" />
+          ))}
+        </div>
+
+        <H3>Segurança</H3>
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
+          <li>Token hasheado com SHA-256 — o valor original nunca é armazenado</li>
+          <li>Prefixo visível para identificação (ex: <code>tok_abc123...</code>)</li>
+          <li>Squad scope: se configurado, a key só acessa dados daqueles squads</li>
+          <li>Revogação instantânea via botão Revogar</li>
+          <li>Registro de <code>last_used_at</code> para auditoria</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'audit',
+    icon: '📋',
+    title: 'Audit Trail',
+    group: 'Cadastros',
+    content: (
+      <div>
+        <H2>Audit Trail — Histórico de Ações</H2>
+        <P>
+          O Audit Trail registra automaticamente todas as ações administrativas realizadas no sistema:
+          criação/edição/exclusão de squads, membros, permissões, usuários, API Keys e alterações de roles.
+        </P>
+
+        <H3>Informações registradas</H3>
+        <ul style={{ paddingLeft: 18, lineHeight: 2, fontSize: 13, color: 'var(--color-text-2)' }}>
+          <li><strong>Entidade</strong> — tipo do recurso afetado (squad, member, user, api_key, etc.)</li>
+          <li><strong>Ação</strong> — o que foi feito (created, updated, deleted, etc.)</li>
+          <li><strong>Ator</strong> — quem realizou a ação (nome + email)</li>
+          <li><strong>Dados anteriores/novos</strong> — diff JSONB do antes e depois</li>
+          <li><strong>Timestamp</strong> — data e hora exata da ação</li>
+        </ul>
+
+        <H3>Acesso</H3>
+        <P>
+          Visível apenas para admin e gerente na aba <strong>Audit Trail</strong> do painel de Cadastros.
+          Logs são read-only e não podem ser editados ou excluídos.
+        </P>
+      </div>
+    ),
+  },
+  {
+    id: 'feature-toggles',
+    icon: '⚙️',
+    title: 'Feature Toggles',
+    group: 'Cadastros',
+    content: (
+      <div>
+        <H2>Feature Toggles — Módulos do Sistema</H2>
+        <P>
+          Admins e gerentes podem ativar ou desativar módulos do sistema pela aba <strong>Módulos</strong>
+          no painel de Cadastros. Módulos desativados ficam ocultos no menu lateral, na página inicial
+          e suas rotas ficam inacessíveis (redirecionam para a Home).
+        </P>
+
+        <H3>Módulos controláveis</H3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+          {[
+            ['Status Report', 'Relatórios de status semanais por squad/projeto'],
+            ['Cobertura QA', 'Dashboard de sprints, métricas e bugs'],
+            ['Releases', 'Pipeline de releases e regressivos'],
+            ['Gestão de PRs', 'Gestão de Pull Requests por release'],
+            ['Documentação', 'Esta página de documentação'],
+          ].map(([name, desc]) => (
+            <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)' }}>
+              <strong style={{ fontSize: 13, color: 'var(--color-text)', minWidth: 120 }}>{name}</strong>
+              <span style={{ fontSize: 12, color: 'var(--color-text-2)' }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <H3>Sempre ativos</H3>
+        <P>
+          A <strong>Página Inicial</strong>, o painel de <strong>Cadastros</strong> e o <strong>Perfil do Usuário</strong> estão
+          sempre ativos e não podem ser desabilitados.
         </P>
       </div>
     ),
