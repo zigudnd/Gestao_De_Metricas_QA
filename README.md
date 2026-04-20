@@ -26,8 +26,8 @@ Hub de Qualidade completo para times de QA e engenharia de software. Centraliza 
 
 | Usuario | Email | Senha |
 |---------|-------|-------|
-| **Admin** | `admin@tostatos.com` | `Admin@123` |
-| **Novos usuarios** | definido pelo admin | `Mudar@123` (troca obrigatoria no primeiro login) |
+| **Admin** | `admin@tostatos.com` | `Admin@123!Ts` |
+| **Novos usuarios** | definido pelo admin | `Mudar@123!Ts` (troca obrigatoria no primeiro login) |
 
 > O usuario admin e criado pelo script `bash setup-admin.sh` ou via API (veja a secao 4).
 > Novos usuarios sao criados pelo admin na aba **Cadastros > Usuarios**.

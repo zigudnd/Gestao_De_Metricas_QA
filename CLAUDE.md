@@ -49,8 +49,8 @@ Alternativa manual: criar usuário direto no banco e depois:
 ### Credenciais padrão
 | | |
 |---|---|
-| **Admin** | `admin@tostatos.com` / `Admin@123` |
-| **Novos usuários** | senha padrão `Mudar@123` (troca obrigatória no primeiro login) |
+| **Admin** | `admin@tostatos.com` / `Admin@123!Ts` |
+| **Novos usuários** | senha padrão `Mudar@123!Ts` (troca obrigatória no primeiro login) |
 
 ---
 

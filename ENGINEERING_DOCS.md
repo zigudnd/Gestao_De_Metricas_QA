@@ -414,5 +414,5 @@ npm run typecheck    # tsc --noEmit
 
 | | |
 |---|---|
-| **Admin** | `admin@tostatos.com` / `Admin@123` |
-| **Novos usuarios** | Senha temporaria aleatoria (troca obrigatoria no primeiro login) |
+| **Admin** | `admin@tostatos.com` / `Admin@123!Ts` |
+| **Novos usuarios** | Senha temporaria `Mudar@123!Ts` (troca obrigatoria no primeiro login) |

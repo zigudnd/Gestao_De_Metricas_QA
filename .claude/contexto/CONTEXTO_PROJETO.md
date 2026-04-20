@@ -170,7 +170,7 @@ server.js                              # Express: serve SPA + API admin + health
 - **ProfilePage** — Editar display_name, alterar senha.
 - **ChangePasswordPage** — Troca obrigatoria no primeiro login. Rota standalone (fora do AppShell) para UX limpa.
 - **Bootstrap** — Ao carregar, `getSession()` restaura sessao existente. `onAuthStateChange` escuta login/logout.
-- **Credenciais padrao:** `admin@tostatos.com` / `Admin@123`. Novos usuarios: `Mudar@123` (troca obrigatoria).
+- **Credenciais padrao:** `admin@tostatos.com` / `Admin@123!Ts`. Novos usuarios: `Mudar@123!Ts` (troca obrigatoria).
 
 ### 5.2 Sprints (`src/modules/sprints/`)
 

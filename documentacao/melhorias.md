@@ -1,4 +1,4 @@
-usuário admin padrão (admin@tostatos.com / Admin@123)
+usuário admin padrão (admin@tostatos.com / Admin@123!Ts)
 
 
 ❯ nao execute ou desenvolva nada no momento, me ajuda com uma duvida, quero exampandir o sistema para que possa     
