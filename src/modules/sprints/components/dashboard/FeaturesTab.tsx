@@ -1550,23 +1550,39 @@ function TestCaseCard({
     } else if (newStatus === 'Falhou') {
       updateTestCase(featureIndex, caseIndex, 'status', 'Falhou')
       // Atribuir data de execução automaticamente (o cenário foi executado e falhou)
-      if (!testCase.executionDay) {
+      if (!testCase.executionDay && startDate) {
         const today = new Date().toISOString().split('T')[0]
-        const dayKey = dateToDayKey(today, startDate, sprintDays, excludeWeekends)
-        if (dayKey) updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey)
+        let dayKey = dateToDayKey(today, startDate, sprintDays, excludeWeekends)
+        if (!dayKey) {
+          const target = new Date(today + 'T00:00:00')
+          const start = new Date(startDate + 'T00:00:00')
+          dayKey = target < start ? 'D1' : `D${sprintDays}`
+        }
+        updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey)
       }
       setShowBugModal(true)
     } else {
       updateTestCase(featureIndex, caseIndex, 'status', newStatus)
+      // Limpar data de execução ao voltar para Pendente ou Bloqueado
+      if (newStatus === 'Pendente' || newStatus === 'Bloqueado') {
+        updateTestCase(featureIndex, caseIndex, 'executionDay', '')
+      }
     }
   }
 
   function confirmConcluido() {
-    updateTestCase(featureIndex, caseIndex, 'status', 'Concluído')
-    if (concluindoDate) {
-      const dayKey = dateToDayKey(concluindoDate, startDate, sprintDays, excludeWeekends)
-      updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey ?? '')
+    if (!concluindoDate) return
+    if (startDate) {
+      let dayKey = dateToDayKey(concluindoDate, startDate, sprintDays, excludeWeekends)
+      // Se a data está fora do range, clamp ao último dia da sprint
+      if (!dayKey) {
+        const target = new Date(concluindoDate + 'T00:00:00')
+        const start = new Date(startDate + 'T00:00:00')
+        dayKey = target < start ? 'D1' : `D${sprintDays}`
+      }
+      updateTestCase(featureIndex, caseIndex, 'executionDay', dayKey)
     }
+    updateTestCase(featureIndex, caseIndex, 'status', 'Concluído')
     setConcluindoDate(null)
   }
 
@@ -1632,8 +1648,9 @@ function TestCaseCard({
             min={startDate || undefined}
             max={endDate || undefined}
             onChange={(e) => handleDateChange(e.target.value)}
-            style={{ ...inputSm, width: 148 }}
-            title={!startDate ? 'Configure a Data de Início para ativar' : 'Data de execução'}
+            disabled={testCase.status === 'Pendente' || testCase.status === 'Bloqueado'}
+            style={{ ...inputSm, width: 148, opacity: testCase.status === 'Pendente' || testCase.status === 'Bloqueado' ? 0.4 : 1 }}
+            title={testCase.status === 'Pendente' || testCase.status === 'Bloqueado' ? 'Disponível após executar o caso (Concluído ou Falhou)' : !startDate ? 'Configure a Data de Início para ativar' : 'Data de execução'}
           />
           {testCase.executionDay && (
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-blue)', background: 'var(--color-blue-light)', border: '1px solid var(--color-blue)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>
@@ -1709,13 +1726,20 @@ function TestCaseCard({
             </div>
             <input
               type="date"
+              required
               value={concluindoDate}
               min={startDate || undefined}
               max={endDate || undefined}
               onChange={(e) => setConcluindoDate(e.target.value)}
-              style={{ padding: '8px 10px', border: '1px solid var(--color-border-md)', borderRadius: 6, fontSize: 14, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && concluindoDate) confirmConcluido() }}
+              style={{ padding: '8px 10px', border: `1px solid ${concluindoDate ? 'var(--color-border-md)' : 'var(--color-red)'}`, borderRadius: 6, fontSize: 14, color: 'var(--color-text)', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
               autoFocus
             />
+            {!concluindoDate && (
+              <div style={{ fontSize: 12, color: 'var(--color-red)', fontWeight: 500 }}>
+                A data de execução é obrigatória para concluir o caso de teste.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConcluindoDate(null)}

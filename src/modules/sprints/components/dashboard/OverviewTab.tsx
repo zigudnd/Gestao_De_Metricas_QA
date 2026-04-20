@@ -106,10 +106,15 @@ export function OverviewTab() {
     return `D${i + 1}`
   })
 
-  const idealLine = Array.from({ length: sprintDays + 1 }, (_, i) => Math.max(0, testesExecutaveis - exactMeta * i))
+  // Burndown: ponto de partida = totalTests (não testesExecutaveis)
+  // porque testes executados antes de serem bloqueados devem constar no real.
+  // A linha ideal usa totalTests com meta diária proporcional.
+  const burndownStart = totalTests
+  const burndownMeta = totalTests > 0 ? totalTests / sprintDays : 0
+  const idealLine = Array.from({ length: sprintDays + 1 }, (_, i) => Math.max(0, Math.round(burndownStart - burndownMeta * i)))
 
-  const realLine: (number | null)[] = [testesExecutaveis]
-  let cumBurn = testesExecutaveis
+  const realLine: (number | null)[] = [burndownStart]
+  let cumBurn = burndownStart
   for (let i = 1; i <= sprintDays; i++) {
     if (i <= maxDay) { cumBurn -= globalExec[`D${i}`] || 0; realLine.push(cumBurn) }
     else realLine.push(null)
