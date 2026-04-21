@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+
+// Fallback placeholder para ambientes sem Supabase (CI, testes unitários, modo offline).
+// O client é criado mas todas as chamadas vão falhar silenciosamente — o app opera via localStorage.
+const FALLBACK_URL = 'http://localhost:54321'
+const FALLBACK_KEY = 'placeholder'
 
 if (!url || !key) {
   if (import.meta.env.DEV) {
@@ -9,4 +14,4 @@ if (!url || !key) {
   }
 }
 
-export const supabase = createClient(url ?? '', key ?? '')
+export const supabase = createClient(url || FALLBACK_URL, key || FALLBACK_KEY)
